@@ -1,0 +1,596 @@
+﻿@page "/dia"
+@inject NavigationManager navigate
+
+<br />
+<button @onclick="@ir">
+    calendario
+</button>
+<button @onclick="@OpenModal">Abrir Modal</button>
+
+<div class="@(ShowModal ? "modal-container visible" : "modal-container")"
+     @onclick="CheckClose">
+    <div class="modal-content" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <h2>Crear nuevo</h2>
+            <span class="close-button" @onclick="CheckClose">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="modal-body-content">
+                <div class="form-type-selector">
+                    <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">Evento</button>
+                    <button @onclick="() => SetFormType(FormTypes.Tarea)" class="@(FormType == FormTypes.Tarea ? "active" : "")">Tarea</button>
+                    <button @onclick="() => SetFormType(FormTypes.Administrativa)" class="@(FormType == FormTypes.Administrativa ? "active" : "")">Administrativa</button>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-group @(FormType == FormTypes.Tarea ? "disabled-group" : "")">
+                        <label>Título / Nombre:</label>
+                        <input type="text" class="form-control" disabled="@(FormType == FormTypes.Tarea)" />
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Tarea ? "disabled-group" : "")">
+                        <label>Nombre de Tarea:</label>
+                        <select class="form-control" @onchange="HandleTaskNameChange" disabled="@(FormType != FormTypes.Tarea)">
+                            <option value="">Seleccione un listado</option>
+                            <option value="Revisión de informe">Revisión de informe</option>
+                            <option value="Preparar presentación">Preparar presentación</option>
+                            <option value="Llamar a clientes">Llamar a clientes</option>
+                            <option value="otra">Otra...</option>
+                        </select>
+                        @if (showOtherTaskNameInput)
+                        {
+                            <input type="text" class="form-control mt-2" placeholder="Ingrese otro nombre de tarea" />
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prioridad:</label>
+                        <select class="form-control form-control-small">
+                            <option>Alta</option>
+                            <option>Media</option>
+                            <option>Baja</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Recurrencias:</label>
+                        <select class="form-control">
+                            <option>No repetir</option>
+                            <option>Diario</option>
+                            <option>Semanal</option>
+                            <option>Mensual</option>
+                            <option>Quincenal</option>
+                            <option>Anual</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-full">
+                        
+                        <div class="form-group-inline">
+                           <div>
+                                <label>Fecha y Horario:</label>
+                                <input type="date" class="form-control" />
+                           </div>
+                           <br />
+                            <div>
+                                <label>Hora inicio</label>
+                                <input type="time" class="form-control @(FormType != FormTypes.Evento ? "disabled-group" : "")" disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+                            <br />
+                            <div>
+                                <label>Hora vencimiento:</label>
+                                <input type="time" class="form-control @(FormType != FormTypes.Evento ? "disabled-group" : "")" disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Ubicación:</label>
+                        <select class="form-control" @onchange="HandleLocationChange" disabled="@(FormType != FormTypes.Evento)">
+                            <option value="">Seleccione una opción</option>
+                            <option value="Sala de juntas">Sala de juntas</option>
+                            <option value="Oficina principal">Oficina principal</option>
+                            <option value="online">Reunión en línea</option>
+                            <option value="otra">Otra...</option>
+                        </select>
+                        @if (showOtherLocationInput && FormType == FormTypes.Evento)
+                        {
+                            <input type="text" class="form-control mt-2" placeholder="Ingrese otra ubicación" />
+                        }
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Participantes:</label>
+                        <input type="text" class="form-control" placeholder="Asistentes, invitados..." disabled="@(FormType != FormTypes.Evento)" />
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Todo el día:</label>
+                        <input type="checkbox" disabled="@(FormType != FormTypes.Evento)" />
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Tarea ? "disabled-group" : "")">
+                        <label>Sub tareas añadidas:</label>
+                        <div class="input-group">
+                            <input @bind="newSubtask" @onkeydown="AddSubtaskOnEnter" class="form-control" placeholder="Añadir nueva sub-tarea" disabled="@(FormType != FormTypes.Tarea)" />
+                            <button class="btn btn-secondary" @onclick="AddSubtask" disabled="@(FormType != FormTypes.Tarea)">Añadir</button>
+                        </div>
+                        <ul class="todo-list">
+                            @if (FormType == FormTypes.Tarea)
+                            {
+                                @foreach (var task in subtasks)
+                                {
+                                    <li>
+                                        <input type="checkbox" />
+                                        <span>@task</span>
+                                        <button class="delete-button" @onclick="() => RemoveSubtask(task)">
+                                            <span class="delete-icon">&times;</span>
+                                        </button>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Descripción:</label>
+                        <textarea class="form-control"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" @onclick="CheckSave">Guardar</button>
+            <button class="btn btn-primary" @onclick="CheckClose">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+@if (showAlert)
+{
+    <div class="alert-container">
+        <h4>@alertTitle</h4>
+        <p>@alertMessage</p>
+        <div class="alert-buttons">
+            @if (alertType == "confirm")
+            {
+                <button class="btn btn-danger" @onclick="ConfirmClose">Sí, cerrar</button>
+                <button class="btn btn-primary" @onclick="CancelAlert">No</button>
+            }
+            else
+            {
+                <button class="btn btn-success" @onclick="ConfirmSaveAndClose">Aceptar</button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    public bool ShowModal { get; set; } = false;
+    public enum FormTypes { Evento, Tarea, Administrativa }
+    public FormTypes FormType { get; set; } = FormTypes.Evento;
+
+    public bool showAlert { get; set; } = false;
+    public string alertTitle { get; set; } = "";
+    public string alertMessage { get; set; } = "";
+    public string alertType { get; set; } = "";
+
+    public bool showOtherLocationInput { get; set; } = false;
+    public bool showOtherTaskNameInput { get; set; } = false;
+
+    private string newSubtask = string.Empty;
+    private List<string> subtasks = new List<string>();
+
+   
+
+    public void OpenModal()
+    {
+        ShowModal = true;
+    }
+
+    public void CheckClose()
+    {
+        alertTitle = "Confirmar";
+        alertMessage = "¿Seguro que quieres cerrar sin guardar?";
+        alertType = "confirm";
+        showAlert = true;
+    }
+
+    public void ConfirmClose()
+    {
+        CloseModal();
+        CancelAlert();
+    }
+
+    public void CloseModal()
+    {
+        ShowModal = false;
+    }
+
+    public void CheckSave()
+    {
+        alertTitle = "Guardado Exitoso";
+        alertMessage = $"El {FormType.ToString().ToLower()} se guardó exitosamente.";
+        alertType = "info";
+        showAlert = true;
+    }
+
+    public void ConfirmSaveAndClose()
+    {
+        CloseModal();
+        CancelAlert();
+    }
+
+    public void CancelAlert()
+    {
+        showAlert = false;
+    }
+
+    public void ir()
+    {
+        navigate.NavigateTo("/calendar");
+        CloseModal();
+    }
+
+    private void SetFormType(FormTypes type)
+    {
+        FormType = type;
+    }
+
+    private void HandleLocationChange(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            showOtherLocationInput = e.Value.ToString() == "otra";
+        }
+    }
+
+    private void HandleTaskNameChange(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            showOtherTaskNameInput = e.Value.ToString() == "otra";
+        }
+    }
+
+    private void AddSubtask()
+    {
+        if (!string.IsNullOrWhiteSpace(newSubtask))
+        {
+            subtasks.Add(newSubtask.Trim());
+            newSubtask = string.Empty;
+        }
+    }
+
+    private void AddSubtaskOnEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AddSubtask();
+        }
+    }
+
+    private void RemoveSubtask(string taskToRemove)
+    {
+        subtasks.Remove(taskToRemove);
+    }
+}
+<style scoped>
+    /* Estilos del modal y responsive */
+    :root {
+        --primary-color: #007bff;
+        --primary-dark-color: #0056b3;
+        --secondary-color: #6c757d;
+        --secondary-dark-color: #5a6268;
+        --background-color: #f8f9fa;
+        --text-color: #333;
+        --border-color: #e9ecef;
+        --input-bg-color: #fff;
+    }
+
+    .modal-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+
+        .modal-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .modal-content {
+        background-color: var(--input-bg-color);
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 900px;
+        height: auto;
+        max-height: 90vh;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .modal-container.visible .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+        .modal-header h2 {
+            margin: 0 auto; /* Centra el título */
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+
+    .close-button {
+        font-size: 2rem;
+        font-weight: 300;
+        color: #aaa;
+        cursor: pointer;
+        transition: color 0.2s ease-in-out;
+        position: absolute;
+        right: 1.5rem;
+        top: 1.5rem;
+    }
+
+        .close-button:hover {
+            color: #666;
+        }
+
+    .modal-body {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+
+    .modal-body-content {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .form-type-selector {
+        position: sticky;
+        top: 0;
+        height: min-content;
+        align-self: flex-start;
+        display: flex;
+        flex-direction: column;
+        width: 180px;
+        border-right: 2px solid var(--border-color);
+        padding-right: 1.5rem;
+        gap: 0.75rem;
+    }
+
+        .form-type-selector button {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            border-radius: 4px;
+            text-align: left;
+        }
+
+            .form-type-selector button:hover {
+                background-color: #e2e6ea;
+            }
+
+            .form-type-selector button.active {
+                background-color: var(--primary-color);
+                color: #fff;
+                border-color: var(--primary-color);
+            }
+
+    .form-section {
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .form-group {
+        flex: 1 1 45%;
+        min-width: 200px;
+    }
+
+    .form-group-full {
+        flex: 1 1 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group-inline {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+        .form-group-inline input {
+            flex: 1 1 auto;
+        }
+
+    .form-control-small {
+        width: auto;
+        flex-grow: 0;
+        max-width: 120px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: var(--text-color);
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+    .disabled-group label, .disabled-group input, .disabled-group select, .disabled-group textarea {
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    .disabled-group input, .disabled-group select, .disabled-group textarea {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+    }
+
+    .disabled-group button {
+        cursor: not-allowed !important;
+        background-color: #e9ecef !important;
+        color: #999 !important;
+    }
+
+    .btn {
+        padding: 0.7rem 1.2rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: #fff;
+    }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark-color);
+        }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        color: #fff;
+    }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark-color);
+        }
+
+    .input-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .todo-list {
+        list-style-type: none;
+        padding: 0;
+        margin-top: 0.5rem;
+    }
+
+        .todo-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background-color: #f4f4f4;
+            border-radius: 4px;
+        }
+
+        .todo-list input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        .todo-list span {
+            flex: 1;
+        }
+
+    .delete-button {
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+
+        .delete-button:hover {
+            color: #ff0000;
+        }
+
+    /* Estilos para las alertas */
+    .alert-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: var(--input-bg-color);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        text-align: center;
+        min-width: 300px;
+    }
+
+        .alert-container h4 {
+            margin-top: 0;
+            color: var(--text-color);
+        }
+
+    .alert-buttons {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+        .alert-buttons button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+    .btn-success {
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: #fff;
+    }
+</style>

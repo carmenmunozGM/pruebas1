@@ -1,0 +1,24 @@
+﻿@page "/Home"
+@inject NavigationManager navigate
+
+<button @onclick="@ir">
+    calendario
+</button>
+
+
+<button >Abrir Modal</button>
+
+
+@code{
+    public void ir()
+    {
+        navigate.NavigateTo("/calendar");
+
+    }
+    public void dia ()
+    {
+        navigate.NavigateTo("/dia");
+    }
+   
+
+}

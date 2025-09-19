@@ -1,0 +1,495 @@
+﻿@page "/"
+@using System.Globalization
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+
+
+
+<style>
+    .fecha-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+        font-family: Arial, sans-serif;
+    }
+
+    .fecha-texto {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .calendar-btn {
+        background: #ffffff;
+        border: 1.5px solid #007bff;
+        color: #007bff;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .calendar-btn:hover {
+            background: #007bff;
+            color: #fff;
+        }
+
+    /* Modal calendario */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 50%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        justify-content:center;
+        width: 340px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+    }
+
+    .calendar-day {
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+        .calendar-day:hover {
+            background: #007bff;
+            color: white;
+        }
+
+    .calendar-today {
+        background: #007bff;
+        color: white;
+        font-weight: bold;
+    }
+
+    .calendar-other-month {
+        color: #aaa;
+    }
+
+    /* === Estilos de tus bloques y subtareas === */
+    .blocks {
+        max-width: 1000px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .block {
+        border: 1.5px solid #ccc;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .block-header {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        cursor: pointer;
+        background: #fdfdfd;
+        transition: background 0.3s;
+    }
+
+        .block-header:hover {
+            background: #f3f3f3;
+        }
+
+    .color-indicator {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 1px solid #999;
+    }
+
+    .status.completed {
+        margin-left: auto;
+        color: green;
+        font-weight: bold;
+    }
+
+    .tasks {
+        padding: 12px 24px;
+    }
+
+    .task {
+        margin-bottom: 10px;
+    }
+
+    .subtasks {
+        margin-left: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+
+
+<!-- Encabezado con fecha y botones -->
+<div class="fecha-header">
+    <button class="calendar-btn" @onclick="DiaAnterior">
+        <i class="bi bi-arrow-left-circle"></i>
+    </button>
+
+    <span class="fecha-texto">@FechaFormateada</span>
+
+    <button class="calendar-btn" @onclick="DiaSiguiente">
+        <i class="bi bi-arrow-right-circle"></i>
+    </button>
+
+    <button class="calendar-btn" @onclick="AbrirCalendario">
+        <i class="bi bi-calendar-event"></i>
+    </button>
+</div>
+
+<!-- Modal con calendario visual -->
+@if (MostrarModal)
+{
+    <div class="modal-backdrop" @onclick="CerrarCalendario">
+        <div class="modal-content" @onclick:stopPropagation>
+            <div class="calendar-header">
+                <button class="calendar-btn" @onclick="MesAnterior"><i class="bi bi-chevron-left"></i></button>
+                <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
+                <button class="calendar-btn" @onclick="MesSiguiente"><i class="bi bi-chevron-right"></i></button>
+            </div>
+
+            <div class="calendar-grid">
+                @foreach (var dia in DiasSemana)
+                {
+                    <div><strong>@dia</strong></div>
+                }
+
+                @foreach (var day in DiasDelCalendario)
+                {
+                    <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
+                         @onclick="() => SeleccionarFecha(day)">
+                        @day.Day
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Bloques de tareas -->
+<div class="blocks">
+    @if (Blocks.Any())
+    {
+        @foreach (var block in Blocks)
+        {
+            <div class="block">
+                <div class="block-header" @onclick="() => ToggleBlock(block)">
+                    <span class="color-indicator" style="background:@block.Color"></span>
+                    <strong>@block.Title</strong>
+                    @if (block.IsCompleted)
+                    {
+                        <span class="status completed">✅ Completado</span>
+                    }
+                </div>
+
+                @if (ExpandedBlocks.Contains(block))
+                {
+                    <div class="tasks">
+                        @foreach (var task in block.Tasks)
+                        {
+                            <div class="task">
+                                <label>
+                                    <input type="checkbox" checked="@task.IsCompleted" disabled />
+                                    @task.Title
+                                </label>
+
+                                <div class="subtasks">
+                                    @foreach (var sub in task.SubTasks)
+                                    {
+                                        <label>
+                                            <input type="checkbox" @bind="sub.IsCompleted" />
+                                            @sub.Title
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <p style="text-align:center; color:gray;">No hay tareas para este día.</p>
+    }
+</div>
+
+@code {
+    private DateTime FechaSeleccionada = DateTime.Now;
+    private DateTime MesActual = DateTime.Now;
+    private bool MostrarModal = false;
+
+    private string FechaFormateada =>
+        FechaSeleccionada.ToString("dddd, dd 'de' MMMM yyyy", new CultureInfo("es-ES"));
+
+    private string[] DiasSemana = new[] { "L", "M", "X", "J", "V", "S", "D" };
+    private List<DateTime> DiasDelCalendario = new();
+
+    private List<Block> Blocks = new();
+    private HashSet<Block> ExpandedBlocks = new();
+
+    protected override void OnInitialized()
+    {
+        GenerarCalendario();
+        CargarTareasDelDia();
+    }
+
+    private void DiaAnterior()
+    {
+        FechaSeleccionada = FechaSeleccionada.AddDays(-1);
+        CargarTareasDelDia();
+    }
+
+    private void DiaSiguiente()
+    {
+        FechaSeleccionada = FechaSeleccionada.AddDays(1);
+        CargarTareasDelDia();
+    }
+
+    private void AbrirCalendario() => MostrarModal = true;
+    private void CerrarCalendario() => MostrarModal = false;
+
+    private void MesAnterior()
+    {
+        MesActual = MesActual.AddMonths(-1);
+        GenerarCalendario();
+    }
+
+    private void MesSiguiente()
+    {
+        MesActual = MesActual.AddMonths(1);
+        GenerarCalendario();
+    }
+
+    private void GenerarCalendario()
+    {
+        DiasDelCalendario.Clear();
+
+        var primerDiaMes = new DateTime(MesActual.Year, MesActual.Month, 1);
+        int offset = ((int)primerDiaMes.DayOfWeek + 6) % 7; // Para que Lunes = 0
+        var inicio = primerDiaMes.AddDays(-offset);
+
+        for (int i = 0; i < 42; i++)
+        {
+            DiasDelCalendario.Add(inicio.AddDays(i));
+        }
+    }
+
+    private void SeleccionarFecha(DateTime dia)
+    {
+        FechaSeleccionada = dia;
+        MesActual = dia;
+        CargarTareasDelDia();
+        MostrarModal = false;
+    }
+
+    private void CargarTareasDelDia()
+    {
+        Blocks = new List<Block>();
+
+        // Solo ejemplo: si la fecha es hoy, muestro los 5 bloques
+        if (FechaSeleccionada.Date == DateTime.Now.Date)
+        {
+            Blocks = ObtenerBloquesEjemplo();
+        }
+    }
+
+    private List<Block> ObtenerBloquesEjemplo()
+    {
+        return new List<Block>
+        {
+            new Block
+            {
+                Title = "Tareas Administrativas",
+                Color = "#FFD1DC",
+                Tasks = new List<TaskItem>
+                {
+                    new TaskItem
+                    {
+                        Title = "Gestión de correos",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Revisar bandeja de entrada" },
+                            new SubTask { Title = "Responder mensajes importantes" }
+                        }
+                    },
+                    new TaskItem
+                    {
+                        Title = "Archivar documentos",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Clasificar papeles" },
+                            new SubTask { Title = "Subir digitalizados" }
+                        }
+                    }
+                }
+            },
+            new Block
+            {
+                Title = "Órdenes de Trabajo",
+                Color = "#B5EAD7",
+                Tasks = new List<TaskItem>
+                {
+                    new TaskItem
+                    {
+                        Title = "Generar órdenes",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Revisar solicitudes" },
+                            new SubTask { Title = "Asignar responsable" }
+                        }
+                    },
+                    new TaskItem
+                    {
+                        Title = "Seguimiento",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Monitorear progreso" },
+                            new SubTask { Title = "Actualizar estado" }
+                        }
+                    }
+                }
+            },
+            new Block
+            {
+                Title = "Tareas",
+                Color = "#FFDAC1",
+                Tasks = new List<TaskItem>
+                {
+                    new TaskItem
+                    {
+                        Title = "Reuniones",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Agendar reunión semanal" },
+                            new SubTask { Title = "Redactar acta" }
+                        }
+                    },
+                    new TaskItem
+                    {
+                        Title = "Proyectos",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Dividir en fases" },
+                            new SubTask { Title = "Asignar recursos" }
+                        }
+                    }
+                }
+            },
+            new Block
+            {
+                Title = "Autoevaluación",
+                Color = "#E2F0CB",
+                Tasks = new List<TaskItem>
+                {
+                    new TaskItem
+                    {
+                        Title = "Revisión personal",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Analizar logros" },
+                            new SubTask { Title = "Identificar mejoras" }
+                        }
+                    },
+                    new TaskItem
+                    {
+                        Title = "Plan de acción",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Definir metas" },
+                            new SubTask { Title = "Establecer tiempos" }
+                        }
+                    }
+                }
+            },
+            new Block
+            {
+                Title = "Servicio al Cliente",
+                Color = "#C7CEEA",
+                Tasks = new List<TaskItem>
+                {
+                    new TaskItem
+                    {
+                        Title = "Atención",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Responder llamadas" },
+                            new SubTask { Title = "Atender correos" }
+                        }
+                    },
+                    new TaskItem
+                    {
+                        Title = "Soporte",
+                        SubTasks = new List<SubTask>
+                        {
+                            new SubTask { Title = "Resolver tickets" },
+                            new SubTask { Title = "Registrar incidencias" }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private void ToggleBlock(Block block)
+    {
+        if (ExpandedBlocks.Contains(block))
+            ExpandedBlocks.Remove(block);
+        else
+            ExpandedBlocks.Add(block);
+    }
+
+    public class SubTask
+    {
+        public string Title { get; set; } = string.Empty;
+        public bool IsCompleted { get; set; }
+    }
+
+    public class TaskItem
+    {
+        public string Title { get; set; } = string.Empty;
+        public bool IsCompleted => SubTasks.All(st => st.IsCompleted);
+        public List<SubTask> SubTasks { get; set; } = new();
+    }
+
+    public class Block
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Color { get; set; } = "#4CAF50";
+        public bool IsCompleted => Tasks.All(t => t.IsCompleted);
+        public List<TaskItem> Tasks { get; set; } = new();
+    }
+}

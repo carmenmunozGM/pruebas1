@@ -1,0 +1,173 @@
+﻿@inject NavigationManager navigate
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<nav class="navbar navbar-expand navbar-dark navbar-custom">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        
+        <!-- Marca -->
+        <div class="d-flex align-items-center">
+            <a class="navbar-brand me-4" href="/calendario">Agenda GM
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+                </svg>
+            </a>
+            
+        </div>
+
+        <!-- Enlaces del centro -->
+        <div class="d-flex align-items-center ">
+            <div class="navbar-nav" > 
+                <a class="nav-link" href="/programa-de-trabajo" >
+                    
+                    Programa de trabajo
+                </a>
+                <a class="nav-link" href="/autoevaluacion">
+                   
+                    Autoevaluación
+                </a>
+            </div>
+        </div>
+        
+        <!-- Menú de usuario -->
+        <div class="dropdown">
+            <a class="nav-link text-white dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              
+                Usuario
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li>
+                    <a class="dropdown-item" href="/perfil">
+                     
+                        Perfil
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="/configuracion">
+               
+                        Configuración
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="#">
+             
+                        Cerrar sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<br />
+<br />
+<br />
+<br />
+<div class="subnav d-flex justify-content-center py-2 shadow-sm">
+    <button class="btn btn-subnav mx-2" @onclick="@dias"> 
+        Día
+    </button>
+    <button class="btn btn-subnav mx-2" @onclick="@semanas">
+        
+        Semana
+    </button>
+    <button class="btn btn-subnav mx-2" @onclick="@mes">
+      
+        Mes
+    </button>
+</div>
+
+
+<style scoped>
+    .navbar-custom {
+        background-color: #0B3C4A; /* Color más fuerte */
+    }
+
+        
+
+    .nav-link{
+        color:floralwhite;
+        color: white;
+        float: left;
+        font-size: 1.2rem; /* Letras más grandes */
+        font-weight: 500;
+        left:auto;
+    }
+
+           
+    .dropdown-menu {
+        min-width: 160px;
+        font-size: 1rem;
+    }
+
+    .icon-spacing {
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    .menu-link {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .subnav {
+        background-color: #E9F1F3;
+        position: fixed; /* flotante */
+        top: 70px; /* separado del navbar */
+        left: 20px; /* un poco hacia adentro */
+        z-index: 1030;
+        padding: 8px 16px; /* espacio interno */
+        border-radius: 30px; /* medio redondo */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* sombra ligera */
+    }
+
+    .btn-subnav {
+        background-color: transparent;
+        border: none;
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #0B3C4A;
+        transition: all 0.2s ease;
+        border-radius: 20px; /* botones más suaves */
+        padding: 6px 14px;
+    }
+
+        .btn-subnav:hover {
+            background-color: #d6e9ef; /* efecto al pasar */
+            color: #007BFF;
+        }
+
+</style>
+
+@code {
+    private string vistaActual = "mes";
+  
+
+    private void dias()
+    {
+        
+        navigate.NavigateTo("/");
+    }   
+     private void semanas()
+    {
+        navigate.NavigateTo("/semanal");
+    }   
+     private void mes()
+    {
+        navigate.NavigateTo("/calendar");
+    }   
+  
+
+
+    private void CambiarVista(string vista)
+    {
+        vistaActual = vista;
+        // Aquí puedes hacer lo que necesites: cargar datos, cambiar componente, etc.
+        Console.WriteLine($"Vista cambiada a: {vista}");
+    }
+
+}
+

@@ -1,0 +1,198 @@
+﻿@page "/calendar"
+<div class="calendar-container">
+    <div class="calendar-header">
+        <button class="nav-button prev-month" @onclick="GoToPreviousMonth">&lt;</button>
+        <h2 class="current-month">@CurrentDate.ToString("MMMM yyyy")</h2>
+        <button class="nav-button next-month" @onclick="GoToNextMonth">&gt;</button>
+    </div>
+    <div class="weekdays-grid">
+        <div class="weekday">Lun</div>
+        <div class="weekday">Mar</div>
+        <div class="weekday">Mié</div>
+        <div class="weekday">Jue</div>
+        <div class="weekday">Vie</div>
+        <div class="weekday">Sáb</div>
+    </div>
+    <div class="days-grid">
+        @foreach (var day in DaysInMonth)
+        {
+            if (day.HasValue)
+            {
+                <div class="day @(day.Value.Date == DateTime.Today.Date ? "current-day" : "")">
+                    @day.Value.Day
+                </div>
+            }
+            else
+            {
+                <div class="day empty"></div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #007bff;
+        --text-color: #333;
+        --border-color: #e0e0e0;
+        --bg-color-light: #f8f9fa;
+        --today-bg: #d0e7ff;
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .calendar-container {
+        font-family: var(--font-family);
+        width: 95vw;
+        height: 90vh;
+        margin: 2vh auto;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5vh 3vw;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .calendar-header h2 {
+            font-size: 4vh;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+    .nav-button {
+        background: none;
+        border: none;
+        font-size: 5vh;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 0 2vw;
+        transition: color 0.2s;
+    }
+
+        .nav-button:hover {
+            color: var(--primary-color);
+        }
+
+    .weekdays-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* 6 columnas para Lunes a Sábado */
+        text-align: center;
+        font-weight: 600;
+        color: #777;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .weekday {
+        padding: 2vh 0;
+        text-transform: uppercase;
+        font-size: 2.5vh;
+    }
+
+    .days-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr); /* ¡Ahora solo 6 columnas! */
+        flex-grow: 1;
+        padding: 1vw;
+    }
+
+    .day {
+        padding: 2vh 1vw;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.2s;
+        position: relative;
+        overflow: hidden;
+        font-size: 2.5vh;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+        .day:hover {
+            background-color: var(--bg-color-light);
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .day.empty {
+            background-color: #f5f5f5;
+            cursor: default;
+            border: none;
+            visibility: hidden;
+        }
+
+            .day.empty:hover {
+                background-color: #f5f5f5;
+                transform: none;
+                box-shadow: none;
+            }
+
+        .day.current-day {
+            background-color: var(--today-bg);
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            z-index: 5;
+        }
+</style>
+
+@code {
+    private DateTime CurrentDate { get; set; } = DateTime.Today;
+    private List<DateTime?> DaysInMonth { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        GenerateCalendarDays();
+    }
+
+    private void GenerateCalendarDays()
+    {
+        DaysInMonth.Clear();
+        var firstDayOfMonth = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
+
+        // Ajusta el primer día para que la semana comience en Lunes (1)
+        int offset = (int)firstDayOfMonth.DayOfWeek;
+        if (offset == 0) // Si el día de la semana es Domingo (0), el offset será 6
+        {
+            offset = 6;
+        }
+        else // Para los demás días, le restamos 1
+        {
+            offset -= 1;
+        }
+
+        // Rellena con días vacíos al principio
+        for (int i = 0; i < offset; i++)
+        {
+            DaysInMonth.Add(null);
+        }
+
+        // Rellena con los días del mes
+        for (int i = 1; i <= daysInMonth; i++)
+        {
+            DaysInMonth.Add(new DateTime(CurrentDate.Year, CurrentDate.Month, i));
+        }
+    }
+
+    private void GoToPreviousMonth()
+    {
+        CurrentDate = CurrentDate.AddMonths(-1);
+        GenerateCalendarDays();
+    }
+
+    private void GoToNextMonth()
+    {
+        CurrentDate = CurrentDate.AddMonths(1);
+        GenerateCalendarDays();
+    }
+}
