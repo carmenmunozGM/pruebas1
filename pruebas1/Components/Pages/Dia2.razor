@@ -1,64 +1,151 @@
-﻿@page "/"
+﻿@page "/dia2"
 @using System.Linq
 @using System.Globalization
+@inject NavigationManager navigate
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-@inject NavigationManager navigate
-@using Microsoft.AspNetCore.Components.Routing
-@using pruebas1.Components
-
-
-<div class="agenda-container">
-      <!-- Mover el componente CalendarSubNav dentro del contenedor principal -->
-    <CalendarSubNav />
-    <div class="top-bar-container">
-
-        <div class="fecha-header">
-            <button class="calendar-btn" @onclick="DiaAnterior">
-                <i class="bi bi-arrow-left-circle"></i>
-            </button>
-
-            <span class="fecha-texto">@FechaFormateada</span>
-
-            <button class="calendar-btn" @onclick="DiaSiguiente">
-                <i class="bi bi-arrow-right-circle"></i>
-            </button>
-
-            <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
+<!-- modall formulario -->
+<button class="btn btn-success" @onclick="@OpenModal">➕ Abrir Modal de Creación</button>
+<br />
+<br />
+<br />
+<!-- MODAL -->
+<div class="modal-container @(ShowModal ? "visible" : "")" @onclick="CloseModal">
+    <div class="modal-content" @onclick:stopPropagation="true">
+        <!-- CABECERA -->
+        <div class="modal-header">
+            <h2 class="modal-title">Crear Nuevo @FormType</h2>
+            <span class="close-button" @onclick="CloseModal">&times;</span>
         </div>
 
-
-    </div>
-    <br />
-    @if (MostrarModal)
-    {
-        <div class="modal-popover">
-            <div class="calendar-header">
-                <button class="calendar-btn" @onclick="MesAnterior"><i class="bi bi-chevron-left"></i></button>
-                <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
-                <button class="calendar-btn" @onclick="MesSiguiente"><i class="bi bi-chevron-right"></i></button>
+        <!-- CUERPO DIVIDIDO -->
+        <div class="modal-body-wrapper">
+            <!-- Sidebar: selector de tipo -->
+            <div class="form-type-selector">
+                <button class="@(FormType == FormTypes.Evento ? "active" : "")"
+                        @onclick="@(() => SetFormType(FormTypes.Evento))">
+                    📅 Evento
+                </button>
+                <button class="@(FormType == FormTypes.Tarea ? "active" : "")"
+                        @onclick="@(() => SetFormType(FormTypes.Tarea))">
+                    ✅ Tarea
+                </button>
+                <button class="@(FormType == FormTypes.Administrativa ? "active" : "")"
+                        @onclick="@(() => SetFormType(FormTypes.Administrativa))">
+                    🗂️ Administrativa
+                </button>
             </div>
 
-            <div class="calendar-grid">
-                @foreach (var dia in DiasSemana)
+            <!-- Formulario dinámico -->
+            <div class="form-section-wrapper">
+                @if (FormType == FormTypes.Evento)
                 {
-                    <div class="calendar-week-day"><strong>@dia</strong></div>
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>Título del evento</label>
+                            <input class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" class="form-control" />
+                        </div>
+                    </div>
                 }
-
-                @foreach (var day in DiasDelCalendario)
+                else if (FormType == FormTypes.Tarea)
                 {
-                    <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
-                         @onclick="() => SeleccionarFecha(day)">
-                        @day.Day
+                    <div class="form-section">
+                        <div class="form-group form-group-span-2">
+                            <label>Nombre de la tarea</label>
+                            <input class="form-control" />
+                        </div>
+                        <div class="form-group form-group-span-2">
+                            <label>Subtareas</label>
+                            <div class="input-group">
+                                <input class="form-control"
+                                       @bind="newSubtask"
+                                       @onkeydown="AddSubtaskOnEnter"
+                                       placeholder="Escribe y presiona Enter" />
+                                <button class="btn btn-success" @onclick="AddSubtask">➕</button>
+                            </div>
+                            <ul class="todo-list">
+                                @foreach (var t in subtasks)
+                                {
+                                    <li>
+                                        <input type="checkbox" />
+                                        <span>@t</span>
+                                        <button class="delete-button" @onclick="() => RemoveSubtask(t)">✖</button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+                else if (FormType == FormTypes.Administrativa)
+                {
+                    <div class="form-section">
+                        <div class="form-group form-group-span-2">
+                            <label>Descripción administrativa</label>
+                            <textarea class="form-control tall-textarea"></textarea>
+                        </div>
                     </div>
                 }
             </div>
-            <div style="margin-top:10px; text-align:center;">
-                <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+            <button class="btn btn-success" @onclick="CloseModal">Guardar</button>
+        </div>
+    </div>
+</div>
+<div class="agenda-container">
+    <!-- BARRA SUPERIOR CON FECHA Y BOTONES DE NAVEGACIÓN -->
+    <div class="top-bar-container">
+        <div class="fecha-header">
+            <button class="calendar-btn" @onclick="DiaAnterior"><i class="bi bi-arrow-left-circle"></i></button>
+            <span class="fecha-texto">@FechaFormateada</span>
+            <button class="calendar-btn" @onclick="DiaSiguiente"><i class="bi bi-arrow-right-circle"></i></button>
+
+            <div class="calendar-wrapper">
+                <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
+
+                @if (MostrarModal)
+                {
+                    <!-- CALENDARIO POPUP -->
+                    <div class="modal-popover" @onclick:stopPropagation="true">
+                        <div class="calendar-header">
+                            <button class="calendar-btn" @onclick="MesAnterior"><i class="bi bi-chevron-left"></i></button>
+                            <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
+                            <button class="calendar-btn" @onclick="MesSiguiente"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+
+                        <div class="calendar-grid">
+                            @foreach (var dia in DiasSemana)
+                            {
+                                <div class="calendar-week-day"><strong>@dia</strong></div>
+                            }
+                            @foreach (var day in DiasDelCalendario)
+                            {
+                                <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
+                                     @onclick="() => SeleccionarFecha(day)">
+                                    @day.Day
+                                </div>
+                            }
+                        </div>
+
+                        <div style="margin-top:10px; text-align:center;">
+                            <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-    }
+    </div>
 
+    <br />
+
+    <!-- MENSAJES SI NO HAY ACTIVIDADES -->
     @if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
     {
         <div class="col-12 text-center">
@@ -67,7 +154,7 @@
             </div>
         </div>
     }
-    else if (!Categories.Any()) // Se activa por la simulación de CargarTareasPorFecha
+    else if (!Categories.Any())
     {
         <div class="col-12 text-center">
             <div class="alert alert-info shadow-sm">
@@ -77,12 +164,13 @@
     }
     else
     {
+        <!-- BLOQUES DE CATEGORÍAS -->
         @foreach (var cat in Categories)
         {
             <div class="card block-card @cat.ColorClass">
                 <div class="card-header block-header" @onclick="() => Toggle(cat)">
                     <div class="header-left">
-                        <button class="toggle-btn" aria-label="expand/collapse">@((cat.IsOpen) ? "▾" : "▸")</button>
+                        <button class="toggle-btn">@((cat.IsOpen) ? "▾" : "▸")</button>
                         <h3 class="block-title">@cat.Name</h3>
                     </div>
                     <div class="header-right">
@@ -106,14 +194,14 @@
                                 <li class="subtask-item">
                                     <input type="checkbox" id="@st.Id" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(cat, st)" />
                                     <label for="@st.Id" class="subtask-label @(st.IsDone ? "done" : "")">
-                                        <span class="subtask-text" @onclick="() => ToggleTable(st, cat.Name)">@st.Title</span>
+                                        <span class="subtask-text">@st.Title</span>
                                         @if (st.IsDone)
                                         {
                                             <small class="done-text">Hecho</small>
                                         }
                                     </label>
 
-                                    @if ((cat.Name == "Órdenes de Trabajo" || cat.Name == "Tareas Administrativas") && st.ShowTable)
+                                    @if ((cat.Name == "Tareas Administrativas") && st.ShowTable)
                                     {
                                         <div class="table-wrapper">
                                             <table class="subtask-table">
@@ -142,7 +230,6 @@
                                 </li>
                             }
                         </ul>
-
                         <div class="actions">
                             <button class="btn small" @onclick="() => MarkAll(cat, true)">Marcar todo</button>
                             <button class="btn small outline" @onclick="() => MarkAll(cat, false)">Desmarcar todo</button>
@@ -152,22 +239,11 @@
             </div>
         }
     }
-    @if (ShowModal)
-    {
-        <div class="modal-overlay">
-            <div class="modal">
-                <h3>Agregar Nueva Tarea</h3>
-                <input placeholder="Título de la tarea" @bind="NewTaskTitle" />
-                <div class="modal-actions">
-                    <button class="btn small" @onclick="SaveTask">Guardar</button>
-                    <button class="btn small outline" @onclick="CloseModal">Cancelar</button>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
+
 <style>
+
     /* VARIABLES DE COLOR - PALETA MÁS MODERNA */
     :root {
         --primary-color: #5b5b9e; /* Un tono de morado/azul más profundo y moderno */
@@ -181,6 +257,7 @@
         --input-bg-color: #fff;
         --sidebar-bg: #e9ecef; /* Fondo claro para el selector */
     }
+   
 
     /* ---------------- MODAL BASE ---------------- */
     .modal-container {
@@ -696,6 +773,7 @@
 
     .subtask-table {
         width: 100%;
+
         border-collapse: collapse;
         font-size: 0.9rem;
     }
@@ -756,7 +834,7 @@
 
     /* Nuevos colores pastel más ejecutivos */
     .pastel-blue .block-header {
-        background: linear-gradient(90deg, #e6f0fa, #f7fbfe);
+        background: linear-gradient(90deg, #FFD1DC, #FFD1DC);
     }
 
     .pastel-green .block-header {
@@ -861,25 +939,41 @@
         text-align: center;
     }
 
-    /* CALENDARIO - HECHO MÁS PEQUEÑO Y RESPONSIVE */
+    /* Contenedor principal para el botón y el modal. ¡CLAVE: position: relative! */
+    .calendar-wrapper {
+        position: relative;
+        display: inline-block; /* Para que el div no ocupe todo el ancho */
+    }
+
+    /* El botón del calendario */
+    .calendar-btn {
+        /* (Manten los estilos de tu botón aquí: padding, border, etc.) */
+        font-size: 1.5rem; /* Ejemplo para el emoji */
+        padding: 8px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+    }
+
+    /* CALENDARIO - HECHO MÁS PEQUEÑO Y COLOCADO AL LADO */
     .modal-popover {
-        position: absolute; /* CLAVE */
+        /* POSICIONAMIENTO CLAVE: Se posiciona absolutamente dentro del .calendar-wrapper */
+        position: absolute;
+        top: 0; /* Alinéalo con la parte superior del botón */
+        left: 100%; /* ¡CLAVE! Lo coloca justo a la derecha del botón */
+        /* Estilos de apariencia */
         z-index: 1000;
         background: white;
         border: 1px solid #ccc;
         border-radius: 8px;
         padding: 10px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        /* --- CAMBIOS CLAVE: TAMAÑO Y POSICIÓN --- */
-        width: 250px; /* Reducido para verse compacto */
-        max-width: none; /* Ignora el max-width anterior */
-        /* POSICIONAMIENTO RELATIVO AL .fecha-header */
-        top: 40px; /* Mueve el modal justo debajo del icono */
-        right: 0; /* Lo ancla a la derecha de .fecha-header */
-        left: auto; /* Deshace cualquier alineación a la izquierda */
-        transform: none; /* Deshace la centrado horizontal */
-        /* ------------------------------------------ */
+        margin-left: 10px; /* Un pequeño espacio para separar del botón */
+        /* Estilos de tamaño que ya tienes y funcionan bien para ser pequeño */
+        width: 250px;
     }
+
+    /* --- El resto de tus estilos del calendario (calendar-header, calendar-grid, etc.) están bien para el diseño compacto --- */
 
     .calendar-header {
         display: flex;
@@ -902,7 +996,7 @@
     }
 
     .calendar-day {
-        padding: 5px 3px; /* Reducido */
+        padding: 5px 3px;
         cursor: pointer;
         border-radius: 4px;
         transition: background-color 0.2s;
@@ -921,125 +1015,43 @@
         background-color: #d1e7ff;
         color: #0d6efd;
     }
+
+    .verde-menta .block-header {
+        background: #B5EAD7;
+    }
+
+    .naranja-melocoton .block-header {
+        background: #FFDAC1;
+    }
+
+    .verde-lima .block-header {
+        background: #E2F0CB;
+    }
+
+    .azul-lavanda .block-header {
+        background: #E2F0CB;
+    }
+
+    .rosa-pastel .block-header {
+        background: #FDE2E4;
+    }
+
+    .rosa-administrativa .block-header {
+        background-color: #FFD1DC;
+    }
 </style>
 
 @code {
-    public bool ShowModal { get; set; } = false;
-    public enum FormTypes { Evento, Tarea, Administrativa }
-    public FormTypes FormType { get; set; } = FormTypes.Administrativa;
+    // FECHA ACTUAL SELECCIONADA
+    private DateTime FechaSeleccionada { get; set; } = DateTime.Now.Date;
+    private DateTime MesActual { get; set; } = DateTime.Now.Date;
 
-    public bool showAlert { get; set; } = false;
-    public string alertTitle { get; set; } = "";
-    public string alertMessage { get; set; } = "";
-    public string alertType { get; set; } = "";
+    // CALENDARIO
+    private bool MostrarModal { get; set; } = false;
+    private string[] DiasSemana = { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
+    private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
 
-    public bool showOtherLocationInput { get; set; } = false;
-    public bool showOtherTaskNameInput { get; set; } = false;
-
-    private string newSubtask = string.Empty;
-    private List<string> subtasks = new List<string>();
-
-
-    public void OpenModal()
-    {
-        ShowModal = true;
-    }
-
-    public void CloseModal()
-    {
-        
-    }
-
-    public void CheckClose()
-    {
-        alertTitle = "Confirmar";
-        alertMessage = "¿Seguro que quieres cerrar sin guardar?";
-        alertType = "confirm";
-        showAlert = true;
-    }
-
-    public void ConfirmClose()
-    {
-        CloseModal();
-        CancelAlert();
-    }
-
- 
-    public void CheckSave()
-    {
-        alertTitle = "Guardado Exitoso";
-        alertMessage = $"El {FormType.ToString().ToLower()} se guardó exitosamente.";
-        alertType = "info";
-        showAlert = true;
-    }
-
-    public void ConfirmSaveAndClose()
-    {
-        CloseModal();
-        CancelAlert();
-    }
-
-    public void CancelAlert()
-    {
-        showAlert = false;
-    }
-
-    public void ir()
-    {
-        navigate.NavigateTo("/calendar");
-        CloseModal();
-    }
-
-    private void SetFormType(FormTypes type)
-    {
-        FormType = type;
-        showOtherLocationInput = false;
-        showOtherTaskNameInput = false;
-        // Limpiar subtasks al cambiar de tipo para simular formulario nuevo
-        if (type != FormTypes.Tarea)
-        {
-            subtasks.Clear();
-        }
-        StateHasChanged();
-    }
-
-    private void HandleLocationChange(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
-            showOtherLocationInput = e.Value.ToString() == "otra";
-        }
-    }
-
-    private void HandleTaskNameChange(ChangeEventArgs e)
-    {
-        if (e.Value != null)
-        {
-            showOtherTaskNameInput = e.Value.ToString() == "otra";
-        }
-    }
-
-    private void AddSubtask()
-    {
-        if (!string.IsNullOrWhiteSpace(newSubtask))
-        {
-            subtasks.Add(newSubtask.Trim());
-            newSubtask = string.Empty;
-        }
-    }
-
-    private void AddSubtaskOnEnter(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            AddSubtask();
-        }
-    }
-
-    private void RemoveSubtask(string taskToRemove)
-    {
-        subtasks.Remove(taskToRemove);
-    }
+    // CATEGORÍAS Y SUBTAREAS
     class SubtaskModel
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -1057,19 +1069,18 @@
         public string ColorClass { get; set; } = "pastel-blue";
     }
 
-    // Usamos una lista temporal para guardar la lista maestra de tareas
+    // Opcional: Manejar el evento cuando se guarda exitosamente
+    private void HandleSaveSuccess()
+    {
+        // Lógica que solo aplica a la página /dia, como recargar una lista
+        Console.WriteLine("Guardado completado en la vista /dia. Recargando datos...");
+        // StateHasChanged(); // Si necesitas recargar algo en esta página
+    }
+
     private List<CategoryModel> MasterCategories = new();
     List<CategoryModel> Categories { get; set; } = new();
 
-    string NewTaskTitle = string.Empty;
-
-    private DateTime FechaSeleccionada { get; set; } = DateTime.Now.Date;
-    private DateTime MesActual { get; set; } = DateTime.Now.Date;
-    private bool MostrarModal { get; set; } = false;
-
     private string FechaFormateada => FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"));
-    private string[] DiasSemana = { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
-    private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
 
     protected override void OnInitialized()
     {
@@ -1078,43 +1089,47 @@
         GenerarDiasCalendario();
     }
 
-    // Método para definir la lista completa de categorías/tareas
     private void InitializeMasterCategories()
     {
+        // BLOQUES CON SUBTAREAS SIMULADAS
         MasterCategories = new List<CategoryModel>
         {
-            new CategoryModel { Name = "Tareas Administrativas", ColorClass = "#E5E4CF", Subtasks = new List<SubtaskModel>
+            new CategoryModel { Name = "Tareas Administrativas", ColorClass= "rosa-administrativa", Subtasks = new List<SubtaskModel>
                 {
-                    new SubtaskModel{ Title = "Revisar facturas", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Detalle 1"}, new SubtaskModel{ Title="Detalle 2" } } },
-                    new SubtaskModel{ Title = "Archivar documentos" },
+                    new SubtaskModel{ Title = "Seguimiento a control de suscripciones", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Detalle 1"}, new SubtaskModel{ Title="Detalle 2" } } },
+                    new SubtaskModel{ Title = "Revisión de informes y programas de trabajo." },
                 }
             },
-            new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "pastel-green", Subtasks = new List<SubtaskModel>
-                {
-                    new SubtaskModel{ Title = "Asignar técnico", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Técnico A"}, new SubtaskModel{ Title="Técnico B" } } },
-                }
-            },
-            new CategoryModel { Name = "Tareas", ColorClass = "pastel-mauve", Subtasks = new List<SubtaskModel>
+            new CategoryModel { Name = "Tareas Operativas",  ColorClass= "verde-menta" , Subtasks = new List<SubtaskModel>
                 {
                     new SubtaskModel{ Title = "Planificar semana" },
                     new SubtaskModel{ Title = "Reunión equipo" },
+                    new SubtaskModel{ Title = "Entregar reporte semanal" },
+                }
+            },
+            new CategoryModel { Name = "Órdenes de Trabajo", ColorClass= "naranja-melocoton", Subtasks = new List<SubtaskModel>
+                {
+                    new SubtaskModel{ Title = "ORD-13683" }
+                }
+            },
+            new CategoryModel { Name = "Autoevaluación", ColorClass= "azul-lavanda", Subtasks = new List<SubtaskModel>
+                {
+                    new SubtaskModel{ Title = "Revisión de limpieza y orden del área de TI" },
+                    new SubtaskModel{ Title = "Validación de vales de papelería" }
                 }
             },
         };
     }
 
-    // Lógica para simular días sin trabajo o actividades
     private void CargarTareasPorFecha()
     {
-        // 1. Simulación: Si es sábado o el día 15 del mes, simular "No hubo actividades"
+        // Simulación: si sábado o día 15, sin tareas
         if (FechaSeleccionada.DayOfWeek == DayOfWeek.Saturday || FechaSeleccionada.Day == 15)
         {
             Categories = new List<CategoryModel>();
         }
-        // 2. Si es un día normal, cargar todas las tareas
         else
         {
-            // Clonamos la lista maestra para que las marcas de "done" sean específicas de la vista
             Categories = MasterCategories.Select(c => new CategoryModel
             {
                 Name = c.Name,
@@ -1122,7 +1137,7 @@
                 IsOpen = c.IsOpen,
                 Subtasks = c.Subtasks.Select(st => new SubtaskModel
                 {
-                    Id = Guid.NewGuid().ToString(), // IDs deben ser únicos
+                    Id = Guid.NewGuid().ToString(),
                     Title = st.Title,
                     IsDone = st.IsDone,
                     ShowTable = st.ShowTable,
@@ -1132,96 +1147,59 @@
         }
     }
 
-
-    // MÉTODOS DE NAVEGACIÓN CON SALTO DE DOMINGO
+    // NAVEGACIÓN DÍAS
     private void DiaAnterior()
     {
         FechaSeleccionada = FechaSeleccionada.AddDays(-1);
-        // Si al mover la fecha es domingo, salta un día más.
         if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
-        {
             FechaSeleccionada = FechaSeleccionada.AddDays(-1);
-        }
         MesActual = FechaSeleccionada;
         GenerarDiasCalendario();
-        CargarTareasPorFecha(); // Actualiza la simulación de tareas
+        CargarTareasPorFecha();
     }
 
     private void DiaSiguiente()
     {
         FechaSeleccionada = FechaSeleccionada.AddDays(1);
-        // Si al mover la fecha es domingo, salta un día más.
         if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
-        {
             FechaSeleccionada = FechaSeleccionada.AddDays(1);
-        }
         MesActual = FechaSeleccionada;
         GenerarDiasCalendario();
-        CargarTareasPorFecha(); // Actualiza la simulación de tareas
+        CargarTareasPorFecha();
     }
 
-    // MÉTODOS DEL CALENDARIO
-    private void AbrirCalendario()
-    {
-        MesActual = FechaSeleccionada;
-        GenerarDiasCalendario();
-        MostrarModal = true;
-    }
-
+    // CALENDARIO
+    private void AbrirCalendario() => MostrarModal = true;
     private void CerrarCalendario() => MostrarModal = false;
 
-    private void MesAnterior()
-    {
-        MesActual = MesActual.AddMonths(-1);
-        GenerarDiasCalendario();
-    }
-
-    private void MesSiguiente()
-    {
-        MesActual = MesActual.AddMonths(1);
-        GenerarDiasCalendario();
-    }
+    private void MesAnterior() { MesActual = MesActual.AddMonths(-1); GenerarDiasCalendario(); }
+    private void MesSiguiente() { MesActual = MesActual.AddMonths(1); GenerarDiasCalendario(); }
 
     private void SeleccionarFecha(DateTime nuevaFecha)
     {
         FechaSeleccionada = nuevaFecha.Date;
         CerrarCalendario();
-        CargarTareasPorFecha(); // Actualiza la simulación de tareas al seleccionar una fecha
+        CargarTareasPorFecha();
     }
 
     private void GenerarDiasCalendario()
     {
         var primerDiaDelMes = new DateTime(MesActual.Year, MesActual.Month, 1);
-
-        // Ajuste para que la semana empiece en Lunes (DayOfWeek.Monday)
         var offset = (int)primerDiaDelMes.DayOfWeek - (int)DayOfWeek.Monday;
         if (offset < 0) offset += 7;
-
         var diaInicio = primerDiaDelMes.AddDays(-offset);
         var dias = new List<DateTime>();
-
-        for (int i = 0; i < 42; i++)
-        {
-            dias.Add(diaInicio.AddDays(i));
-        }
-
+        for (int i = 0; i < 42; i++) dias.Add(diaInicio.AddDays(i));
         DiasDelCalendario = dias;
     }
 
-    // ... (El resto de tus métodos de manipulación de tareas)
+    // FUNCIONES DE TOGGLE
     void Toggle(CategoryModel cat) => cat.IsOpen = !cat.IsOpen;
     void ToggleSubtask(CategoryModel cat, SubtaskModel st) => st.IsDone = !st.IsDone;
-
     void ToggleInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
     {
         inner.IsDone = !inner.IsDone;
         parent.IsDone = parent.Subtasks.All(x => x.IsDone);
-    }
-
-    void ToggleTable(SubtaskModel st, string categoryName)
-    {
-        if (categoryName == "Órdenes de Trabajo" || categoryName == "Tareas Administrativas")
-            st.ShowTable = !st.ShowTable;
     }
 
     bool AllCompleted(CategoryModel cat)
@@ -1249,32 +1227,50 @@
                 foreach (var s2 in st.Subtasks) s2.IsDone = done;
         }
     }
+    // modal
+    public bool ShowModal { get; set; } = false;
 
+    public enum FormTypes { Evento, Tarea, Administrativa }
+    public FormTypes FormType { get; set; } = FormTypes.Administrativa;
 
+    private string newSubtask = string.Empty;
+    private List<string> subtasks = new List<string>();
 
-    void SaveTask()
+    public void OpenModal() => ShowModal = true;
+    public void CloseModal() => ShowModal = false;
+
+    public void ir()
     {
-        if (!string.IsNullOrWhiteSpace(NewTaskTitle))
-        {
-            // Añadir tarea a la primera categoría (o la que corresponda a la fecha)
-            if (Categories.Any())
-            {
-                Categories.First().Subtasks.Add(new SubtaskModel { Title = NewTaskTitle });
-            }
-            else
-            {
-                // Si no hay categorías (simulación de día sin tareas), inicializa la lista para añadirla
-                Categories = MasterCategories.Select(c => new CategoryModel
-                {
-                    Name = c.Name,
-                    ColorClass = c.ColorClass,
-                    Subtasks = new List<SubtaskModel>()
-                }).ToList();
-                Categories.First().Subtasks.Add(new SubtaskModel { Title = NewTaskTitle });
-            }
+        navigate.NavigateTo("/calendar");
+        CloseModal();
+    }
 
-            NewTaskTitle = string.Empty;
-            ShowModal = false;
+    private void SetFormType(FormTypes type)
+    {
+        FormType = type;
+        if (type != FormTypes.Tarea)
+        {
+            subtasks.Clear(); // limpiar subtareas si no es tarea
         }
     }
+
+    private void AddSubtask()
+    {
+        if (!string.IsNullOrWhiteSpace(newSubtask))
+        {
+            subtasks.Add(newSubtask.Trim());
+            newSubtask = string.Empty;
+        }
+    }
+
+    private void AddSubtaskOnEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AddSubtask();
+        }
+    }
+
+    private void RemoveSubtask(string taskToRemove) => subtasks.Remove(taskToRemove);
+}
 }

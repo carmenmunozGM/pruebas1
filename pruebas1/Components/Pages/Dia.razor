@@ -1,15 +1,180 @@
-﻿@page "/dia"
+﻿@page "/"
 @inject NavigationManager navigate
 
 <br />
 <button class="btn btn-primary" @onclick="@ir">
     📅 Ir a Calendario
 </button>
-<CalendarSubNav />
+
 <button class="btn btn-success" @onclick="@OpenModal">➕ Abrir Modal de Creación</button>
-<br />
-<br />
-<br />
+
+<div class="@(ShowModal ? "modal-container visible" : "modal-container")"
+     @onclick="CheckClose">
+    <div class="modal-content" @onclick:stopPropagation="true">
+
+        <div class="modal-header">
+            <h2 class="modal-title">Crear Nuevo Elemento</h2>
+            <span class="close-button" @onclick="CheckClose">&times;</span>
+        </div>
+
+        <div class="modal-body-wrapper">
+            <div class="form-type-selector">
+                <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">
+                    <span class="icon">🗓️</span> Evento
+                </button>
+                <button @onclick="() => SetFormType(FormTypes.Tarea)" class="@(FormType == FormTypes.Tarea ? "active" : "")">
+                    <span class="icon">✅</span> Tarea
+                </button>
+                <button @onclick="() => SetFormType(FormTypes.Administrativa)" class="@(FormType == FormTypes.Administrativa ? "active" : "")">
+                    <span class="icon">💼</span> Administrativa
+                </button>
+            </div>
+
+            <div class="form-section-wrapper">
+                <div class="form-section">
+
+                    <div class="form-group @(FormType == FormTypes.Tarea ? "disabled-group" : "")">
+                        <label>Título / Nombre:</label>
+                        <input type="text" class="form-control" placeholder="Ej: Reunión Semanal de Proyecto" disabled="@(FormType == FormTypes.Tarea)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prioridad:</label>
+                        <select class="form-control">
+                            <option>Alta</option>
+                            <option selected>Media</option>
+                            <option>Baja</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Tarea ? "disabled-group" : "")">
+                        <label>Nombre de Tarea:</label>
+                        <select class="form-control" @onchange="HandleTaskNameChange" disabled="@(FormType != FormTypes.Tarea)">
+                            <option value="">Seleccione un listado</option>
+                            <option value="Revisión de informe">Revisión de informe</option>
+                            <option value="Preparar presentación">Preparar presentación</option>
+                            <option value="Llamar a clientes">Llamar a clientes</option>
+                            <option value="otra">Otra...</option>
+                        </select>
+                        @if (showOtherTaskNameInput && FormType == FormTypes.Tarea)
+                        {
+                            <input type="text" class="form-control mt-2" placeholder="Ingrese otro nombre de tarea" />
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Recurrencias:</label>
+                        <select class="form-control">
+                            <option>No repetir</option>
+                            <option>Diario</option>
+                            <option>Semanal</option>
+                            <option>Mensual</option>
+                            <option value="Quincenal">Quincenal</option>
+                            <option>Anual</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-span-2">
+                        <label class="section-label">Fecha y Horario</label>
+                        <div class="form-group-inline">
+                            <div class="inline-control-group">
+                                <label>Día</label>
+                                <input type="date" class="form-control" />
+                            </div>
+                            <div class="inline-control-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                                <label>Hora inicio</label>
+                                <input type="time" class="form-control" disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+                            <div class="inline-control-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                                <label>Hora vencimiento</label>
+                                <input type="time" class="form-control" disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+                            <div class="inline-control-group form-group-checkbox @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                                <label>Todo el día:</label>
+                                <input type="checkbox" disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Ubicación:</label>
+                        <select class="form-control" @onchange="HandleLocationChange" disabled="@(FormType != FormTypes.Evento)">
+                            <option value="">Seleccione una opción</option>
+                            <option value="Sala de juntas">Sala de juntas</option>
+                            <option value="Oficina principal">Oficina principal</option>
+                            <option value="online">Reunión en línea</option>
+                            <option value="otra">Otra...</option>
+                        </select>
+                        @if (showOtherLocationInput && FormType == FormTypes.Evento)
+                        {
+                            <input type="text" class="form-control mt-2" placeholder="Ingrese otra ubicación" />
+                        }
+                    </div>
+
+                    <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Participantes:</label>
+                        <input type="text" class="form-control" placeholder="Asistentes, invitados..." disabled="@(FormType != FormTypes.Evento)" />
+                    </div>
+
+                    <div class="form-group-span-2 @(FormType != FormTypes.Tarea ? "disabled-group" : "")">
+                        <label class="section-label">Sub Tareas Añadidas:</label>
+                        <div class="input-group">
+                            <input @bind="newSubtask" @onkeydown="AddSubtaskOnEnter" class="form-control" placeholder="Añadir nueva sub-tarea" disabled="@(FormType != FormTypes.Tarea)" />
+                            <button class="btn btn-secondary" @onclick="AddSubtask" disabled="@(FormType != FormTypes.Tarea)">Añadir</button>
+                        </div>
+                        <ul class="todo-list">
+                            @if (FormType == FormTypes.Tarea)
+                            {
+                                @foreach (var task in subtasks)
+                                {
+                                    <li>
+                                        <input type="checkbox" />
+                                        <span>@task</span>
+                                        <button class="delete-button" @onclick="() => RemoveSubtask(task)">
+                                            <span class="delete-icon">&times;</span>
+                                        </button>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="form-group-span-2">
+                        <label class="section-label">Descripción:</label>
+                        <textarea class="form-control tall-textarea" placeholder="Escriba los detalles aquí..."></textarea>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="CheckClose">Cancelar</button>
+            <button class="btn btn-primary" @onclick="CheckSave">Guardar</button>
+        </div>
+    </div>
+</div>
+
+@if (showAlert)
+{
+    <div class="alert-backdrop" @onclick="CancelAlert"></div>
+    <div class="alert-container">
+        <h4>@alertTitle</h4>
+        <p>@alertMessage</p>
+        <div class="alert-buttons">
+            @if (alertType == "confirm")
+            {
+                <button class="btn btn-danger" @onclick="ConfirmClose">Sí, cerrar</button>
+                <button class="btn btn-primary" @onclick="CancelAlert">No</button>
+            }
+            else
+            {
+                <button class="btn btn-success" @onclick="ConfirmSaveAndClose">Aceptar</button>
+            }
+        </div>
+    </div>
+}
 
 @code {
     public bool ShowModal { get; set; } = false;
@@ -132,8 +297,8 @@
 <style scoped>
     /* VARIABLES DE COLOR - PALETA MÁS MODERNA */
     :root {
-        --primary-color: #0B3C4A; /* Un tono de morado/azul más profundo y moderno */
-        --primary-dark-color: #0B3C4A;
+        --primary-color: #5b5b9e; /* Un tono de morado/azul más profundo y moderno */
+        --primary-dark-color: #4a4a81;
         --secondary-color: #6c757d;
         --success-color: #28a745;
         --danger-color: #dc3545;
@@ -444,7 +609,7 @@
     .delete-button {
         background: none;
         border: none;
-        color: #861B2D;
+        color: #888;
         font-size: 1.5rem;
         cursor: pointer;
         padding: 0;

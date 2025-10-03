@@ -8,15 +8,24 @@
 
             <div class="d-flex align-items-center">
                 <div class="navbar-nav ms-auto">
-                    <a class="nav-link" @onclick="@plan">
-                        Programa de trabajo
-                    </a>
-                    <a class="nav-link" href="/autoevaluacion">
+                    <button class="subnav-btn" @onclick="@dias">
+                        Día
+                    </button>
+                    <button class="subnav-btn" @onclick="@semanas">
+                        Semana
+                    </button>
+                    <button class="subnav-btn" @onclick="@mes">
+                        Mes
+                    </button>
+                    <button class="subnav-btn" @onclick="@plan">
+                         Servicio al cliente
+                    </button>
+                    <button class="subnav-btn" @onclick="@mes">
                         Autoevaluación
-                    </a>
+                    </button>
                 </div>
             </div>
-
+         
             <div class="dropdown">
                 <a class="nav-link text-white dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     celestemartinez
@@ -30,20 +39,6 @@
             </div>
         </div>
     </nav>
-
-    <div class="subnav-float d-flex justify-content-center">
-        <div class="subnav-pill rounded-pill shadow-sm">
-            <button class="subnav-btn" @onclick="@dias">
-                Día
-            </button>
-            <button class="subnav-btn" @onclick="@semanas">
-                Semana
-            </button>
-            <button class="subnav-btn" @onclick="@mes">
-                Mes
-            </button>
-        </div>
-    </div>
 </div>
 
 
@@ -95,7 +90,7 @@
         /* AUMENTAMOS EL TAMAÑO DE LA FUENTE */
         font-size: 1.15rem; /* Era 1rem */
         font-weight: 600;
-        color: #0B3C4A;
+        color: #FFFF;
         transition: all 0.2s ease;
         border-radius: 18px;
         /* AUMENTAMOS EL RELLENO (PADDING) DEL BOTÓN */
