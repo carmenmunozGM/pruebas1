@@ -1,662 +1,431 @@
 ﻿@page "/plantrabajo"
-@inject NavigationManager navigate
-@inject IJSRuntime JsRuntime
-@using System.Globalization
+<br />
 
-<PageTitle>Programa de Trabajo</PageTitle>
+<h2 class="title">🏢 Servicio a Cliente</h2>
 
-<style>
-    /* ------------------------------------- */
-    /* PALETA DE COLORES ELEGANTES */
-    /* ------------------------------------- */
-    :root {
-        --color-petroleo: #0B3C4A; /* Azul Oscuro (Primario) */
-        --color-acento: #FF9800; /* Naranja/Oro para resaltar interactividad */
-        --color-claro: #FFFFFF;
-        --color-fondo-pagina: #f4f6f9; /* Gris Claro muy sutil */
-        --color-fondo-tarjeta: #ffffff;
-        --color-borde: #e0e6ed;
-        --color-texto: #34495e; /* Gris Oscuro para texto principal */
-    }
+<div class="service-container">
+    <!-- Columna izquierda: Grupos de clientes -->
+    <div class="column">
+        <h3 class="section-title">Grupos de Clientes</h3>
 
-    body {
-        background-color: var(--color-fondo-pagina);
-        font-family: 'Arial', sans-serif;
-        color: var(--color-texto);
-    }
-
-    h2 {
-        color: var(--color-petroleo);
-        margin-bottom: 25px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    h3 {
-        color: var(--color-acento);
-        border-left: 5px solid var(--color-acento);
-        padding-left: 10px;
-        margin-top: 30px;
-        margin-bottom: 15px;
-    }
-
-    /* ------------------------------------- */
-    /* ESTILOS DE TABLA Y ESTRUCTURA */
-    /* ------------------------------------- */
-    .programa-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: var(--color-fondo-tarjeta);
-    }
-
-        .programa-table th, .programa-table td {
-            border: 1px solid var(--color-borde);
-            padding: 15px;
-            text-align: left;
-        }
-
-    /* Encabezado Principal */
-    .header-row th, .info-header th {
-        background-color: var(--color-petroleo);
-        color: var(--color-claro);
-        font-weight: 600;
-        text-transform: capitalize;
-    }
-
-    /* Información Fija (Datos del Empleado) */
-    .info-data td {
-        background-color: var(--color-claro);
-        font-weight: 500;
-    }
-
-    /* Estilos del Bloque Desplegable */
-    .block-header {
-        background-color: #34495e; /* Un gris azulado oscuro para el fondo del bloque */
-        color: var(--color-claro);
-        cursor: pointer;
-        font-weight: 700;
-        transition: background-color 0.3s;
-    }
-
-        .block-header:hover {
-            background-color: #2c3e50; /* Tono más oscuro al hacer hover */
-        }
-
-    /* Indicador de Despliegue */
-    .toggle-indicator {
-        display: inline-block;
-        margin-right: 10px;
-        width: 15px;
-        text-align: center;
-        transition: transform 0.3s;
-    }
-
-    .block-header .toggle-indicator-open {
-        transform: rotate(90deg); /* Flecha girada cuando está abierto */
-    }
-
-    /* Tareas/Actividades */
-    .block-activities {
-        max-height: 1000px;
-        transition: max-height 0.4s ease-in-out;
-        overflow: hidden;
-        background-color: #fcfcfc;
-    }
-
-        .block-activities.collapsed {
-            max-height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-
-    .activity-list {
-        list-style: none; /* Quitar viñetas por defecto */
-        padding: 0;
-        margin: 0;
-    }
-
-    .activity-item {
-        cursor: pointer;
-        padding: 10px 15px;
-        border-bottom: 1px dashed var(--color-borde);
-        transition: background-color 0.2s, color 0.2s;
-        display: flex;
-        align-items: flex-start;
-    }
-
-        .activity-item:hover {
-            background-color: #e8f1f8; /* Un azul muy claro */
-            color: var(--color-petroleo);
-        }
-
-    .activity-item-number {
-        font-weight: bold;
-        color: var(--color-acento);
-        margin-right: 10px;
-        width: 20px;
-        flex-shrink: 0;
-    }
-
-    /* ------------------------------------- */
-    /* ESTILOS DE MODAL (Popup) */
-    /* ------------------------------------- */
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .modal-content {
-        background-color: var(--color-claro);
-        padding: 35px;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 950px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: modal-fadein 0.3s ease-out;
-    }
-
-
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-
-    .close-btn {
-        float: right;
-        font-size: 30px;
-        font-weight: normal;
-        cursor: pointer;
-        color: #888;
-        line-height: 1;
-    }
-
-        .close-btn:hover {
-            color: var(--color-petroleo);
-        }
-
-    .modal-semana-info {
-        font-weight: 400;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .semana-header {
-        background-color: #f0f4f7; /* Fondo para el acordeón de semanas */
-        padding: 15px;
-        margin-top: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        color: var(--color-petroleo);
-        border: 1px solid var(--color-borde);
-        transition: background-color 0.2s;
-    }
-
-        .semana-header:hover {
-            background-color: #e5eef5;
-        }
-
-    .detalle-grid-container {
-        padding: 15px 0;
-        border-left: 3px solid var(--color-acento);
-        margin-bottom: 20px;
-    }
-
-    .detalle-grid-header {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 15px;
-        font-weight: 700;
-        background-color: #f7f7f7;
-        padding: 10px 15px;
-        border-bottom: 2px solid var(--color-acento);
-        color: var(--color-petroleo);
-    }
-
-    .detalle-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 15px;
-        padding: 10px 15px;
-        border-bottom: 1px solid #eee;
-    }
-
-        .detalle-grid div {
-            display: flex;
-            align-items: center;
-        }
-
-        .detalle-grid label {
-            font-weight: 600;
-            margin-right: 8px;
-            min-width: 60px;
-            color: #555;
-        }
-
-    .input-horas {
-        width: 60px;
-        text-align: center;
-        padding: 8px;
-        border: 1px solid var(--color-borde);
-        border-radius: 4px;
-    }
-
-    .input-horario {
-        flex-grow: 1;
-        padding: 8px;
-        border: 1px solid var(--color-borde);
-        border-radius: 4px;
-    }
-
-    .btn-guardar {
-        background-color: var(--color-acento);
-        color: var(--color-petroleo);
-        padding: 12px 30px;
-        border: none;
-        border-radius: 5px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-
-        .btn-guardar:hover {
-            background-color: #ffb74d;
-        }
-</style>
-
-<h2>Programa de Trabajo Mensual</h2>
-
-<table class="programa-table">
-    <thead>
-        <tr class="info-header">
-            <th colspan="4">Información del Programa</th>
-        </tr>
-        <tr class="header-row">
-            <th>No. de Empleado</th>
-            <th>Mes</th>
-            <th colspan="2">Período (Del al)</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="info-data">
-            <td>@Encabezado.NoEmpleado</td>
-            <td>@Encabezado.Mes</td>
-            <td>@Encabezado.PeriodoDel</td>
-            <td>@Encabezado.PeriodoAl</td>
-        </tr>
-    </tbody>
-</table>
-
-<hr style="border-top: 1px solid var(--color-borde); margin: 30px 0;" />
-
-<h3>Actividades por Bloque</h3>
-
-<table class="programa-table">
-    <thead>
-        <tr class="header-row">
-            <th style="width: 30%;">Bloque</th>
-            <th>Actividades / Tareas (Haga clic para detallar)</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var bloque in Bloques)
+        @foreach (var grupo in GruposClientes)
         {
-            <tr class="block-header" @onclick="() => ToggleBloque(bloque.NombreBloque)">
-                <td colspan="2">
-                    <span class="toggle-indicator @(BloquesVisibilidad[bloque.NombreBloque] ? "toggle-indicator-open" : "")">
-                        ►
-                    </span>
-                    @bloque.NombreBloque
-                </td>
-            </tr>
-
-            <tr class="@(BloquesVisibilidad[bloque.NombreBloque] ? "block-activities" : "block-activities collapsed")">
-                <td colspan="2" style="padding: 0;">
-                    <ul class="activity-list">
-                        @{
-                            int contador = 1;
-                        }
-                        @foreach (var actividad in bloque.Actividades)
-                        {
-                            <li class="activity-item" @onclick="() => AbrirModal(actividad)">
-                                <span class="activity-item-number">@contador.</span> @actividad
-                            </li>
-                            contador++;
-                        }
-                    </ul>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-@if (MostrarModal)
-{
-    <div class="modal-backdrop" @onclick="CerrarModal">
-        <div class="modal-content" @onclick:stopPropagation>
-            <span class="close-btn" @onclick="CerrarModal">&times;</span>
-
-            <h3>Detalle de Tarea</h3>
-            <p class="modal-semana-info">
-                **Actividad:** @TareaActual.Actividad | **Período:** @TareaActual.MesAnio
-            </p>
-            <hr />
-
-            @foreach (var semana in TareaActual.Semanas)
-            {
-                <div class="semana-header" @onclick="() => ToggleSemana(semana.NombreSemana)">
-                    <span class="toggle-indicator @(SemanasVisibilidad[semana.NombreSemana] ? "toggle-indicator-open" : "")">
-                        ►
-                    </span>
-                    @semana.NombreSemana
+            <div class="group-block">
+                <div class="group-header" @onclick="() => ToggleGrupo(grupo)">
+                    <span>@grupo.Nombre</span>
+                    <span class="arrow">@(grupo.Expandido ? "⯆" : "⯈")</span>
                 </div>
 
-                @if (SemanasVisibilidad[semana.NombreSemana])
+                @if (grupo.Expandido)
                 {
-                    <div class="detalle-grid-container">
-                        <div class="detalle-grid-header">
-                            <div>Día</div>
-                            <div>Horas Programadas</div>
-                            <div>Horario</div>
-                        </div>
-
-                        @foreach (var dia in semana.Dias)
+                    <ul class="empresa-list">
+                        @foreach (var empresa in grupo.Empresas)
                         {
-                            <div class="detalle-grid">
-                                <div>@dia.Dia</div>
-                                <div>
-                                    <label>Hrs:</label>
-                                    <input type="number" @bind="dia.HorasProgramadas" min="0" class="input-horas" />
-                                </div>
-                                <div>
-                                    <label>De:</label>
-                                    <input type="text" @bind="dia.Horario" class="input-horario" />
-                                </div>
-                            </div>
+                            <li @onclick="() => OpenModal(empresa.Nombre, true)">
+                                🏢 @empresa.Nombre
+                            </li>
                         }
-                    </div>
+                    </ul>
                 }
-            }
+            </div>
+        }
+    </div>
 
-            <div style="text-align: right; margin-top: 30px;">
-                <button @onclick="CerrarModal" class="btn-guardar">
-                    💾 Guardar y Cerrar
-                </button>
+    <!-- Columna derecha: Clientes individuales -->
+    <div class="column">
+        <h3 class="section-title">Clientes Individuales</h3>
+
+        <ul class="empresa-list">
+            @foreach (var cliente in ClientesIndividuales)
+            {
+                <li @onclick="() => OpenModal(cliente.Nombre, false)">
+                    🧾 @cliente.Nombre
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+@if (ShowModal)
+{
+    <div class="overlay" @onclick="CloseModal">
+        <div class="modal large" @onclick:stopPropagation="true">
+            <h3 class="modal-title">@ModalEmpresa</h3>
+
+            <table class="activities-table">
+                <thead>
+                    <tr>
+                        <th>Actividad</th>
+                        <th>Fecha</th>
+                        <th>Observaciones</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var actividad in Actividades)
+                    {
+                        <tr>
+                            <td>@actividad.Nombre</td>
+                            <td>
+                                <input type="date" @bind="actividad.Fecha" class="input-date small" />
+                            </td>
+                            <td>
+                                <textarea @bind="actividad.Observaciones" class="input-text"></textarea>
+                            </td>
+                           
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="modal-footer">
+                <button class="btn-save" @onclick="GuardarActividades">Guardar</button>
+                <button class="btn-cancel" @onclick="CloseModal">Cerrar</button>
             </div>
         </div>
     </div>
 }
 
 @code {
-    // #######################################################
-    // ################ CLASES DE MODELO DE DATOS ############
-    // #######################################################
-
-    // Clase para el encabezado de información personal y periodo
-    public class EncabezadoTrabajo
+    public class Actividad
     {
-        public string NoEmpleado { get; set; } // Número de empleado
-        public string Mes { get; set; }        // Mes del programa de trabajo
-        public string PeriodoDel { get; set; } // Inicio del periodo
-        public string PeriodoAl { get; set; }  // Fin del periodo
+        public string Nombre { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; } = DateTime.Today;
+        public string Observaciones { get; set; } = string.Empty;
+        public bool Completado { get; set; }
     }
 
-    // Clase para definir cada bloque de actividades
-    public class BloqueActividades
+    public class Empresa
     {
-        public string NombreBloque { get; set; } // Nombre del bloque de actividades
-        public List<string> Actividades { get; set; } // Lista de actividades dentro del bloque
+        public string Nombre { get; set; } = string.Empty;
+        public List<Actividad> Actividades { get; set; } = new();
     }
 
-    // Clase para el detalle de un día en el modal
-    public class DetalleDia
+    public class GrupoCliente
     {
-        public string Dia { get; set; } // Lunes, Martes, etc.
-        public int HorasProgramadas { get; set; } = 0; // Horas a registrar
-        public string Horario { get; set; } = "9:00 - 18:00"; // Ejemplo de horario
+        public string Nombre { get; set; } = string.Empty;
+        public bool Expandido { get; set; }
+        public List<Empresa> Empresas { get; set; } = new();
     }
 
-    // Clase para el detalle de una semana en el modal
-    public class DetalleSemana
-    {
-        public string NombreSemana { get; set; }
-        public List<DetalleDia> Dias { get; set; }
+    private List<GrupoCliente> GruposClientes { get; set; } = new();
+    private List<Empresa> ClientesIndividuales { get; set; } = new();
 
-        public DetalleSemana(string nombreSemana)
-        {
-            NombreSemana = nombreSemana;
-            // Inicializar los días de la semana (Lunes a Sábado)
-            Dias = new List<DetalleDia>
-            {
-                new DetalleDia { Dia = "Lunes" },
-                new DetalleDia { Dia = "Martes" },
-                new DetalleDia { Dia = "Miércoles" },
-                new DetalleDia { Dia = "Jueves" },
-                new DetalleDia { Dia = "Viernes" },
-                new DetalleDia { Dia = "Sábado" }
-            };
-        }
-    }
-
-    // Clase para la tarea seleccionada en el modal
-    public class TareaSeleccionada
-    {
-        public string Actividad { get; set; }
-        public string MesAnio { get; set; }
-        public List<DetalleSemana> Semanas { get; set; }
-    }
-
-    // #######################################################
-    // ################ PROPIEDADES Y MÉTODOS C# #############
-    // #######################################################
-
-    // Información general del programa
-    private EncabezadoTrabajo Encabezado { get; set; }
-    private List<BloqueActividades> Bloques { get; set; }
-
-    // Control de visibilidad de los bloques principales (Tabla de Actividades)
-    private Dictionary<string, bool> BloquesVisibilidad = new Dictionary<string, bool>();
-
-    // Control del Modal
-    private bool MostrarModal { get; set; } = false; // Estado para mostrar/ocultar el modal
-    private TareaSeleccionada TareaActual { get; set; } = new TareaSeleccionada(); // Objeto para la tarea en edición
-
-    // Control de visibilidad de las semanas dentro del modal
-    private Dictionary<string, bool> SemanasVisibilidad = new Dictionary<string, bool>();
-
-    // ############ Ciclo de Vida del Componente ############
+    private bool ShowModal { get; set; }
+    private string ModalEmpresa { get; set; } = string.Empty;
+    private List<Actividad> Actividades { get; set; } = new();
 
     protected override void OnInitialized()
     {
-        // 1. Carga de datos del Encabezado
-        Encabezado = new EncabezadoTrabajo
+        GruposClientes = new()
         {
-            NoEmpleado = "1756",
-            Mes = "Octubre",
-            PeriodoDel = "01/10/2025",
-            PeriodoAl = "31/10/2025"
+            new GrupoCliente
+            {
+                Nombre = "Grupo VITA",
+                Empresas = new()
+                {
+                    new Empresa
+                    {
+                        Nombre = "1658 CASAS Y DESARROLLOS VITA SAPI DE CV",
+                        Actividades = new()
+                        {
+                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
+                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
+                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                             new Actividad { Nombre = "Llenado de libros de bancos(entrada y salidas,facturación emiitda y recibida)" },
+                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                        }
+                    },
+                    new Empresa
+                    {
+                        Nombre = "1235 CONSTRUCCIONES Y DESARROLLLOS NELSAN SA DE CV",
+                        Actividades = new()
+                        {
+                             new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
+                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
+                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                        }
+                    },
+                    new Empresa
+                    {
+                        Nombre = "1395 DESARROLLOS INMOBILIARIOS JND",
+
+                        Actividades = new()
+                        {
+                             new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
+                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
+                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                        }
+                    }
+                }
+            },
+            new GrupoCliente
+            {
+                Nombre = "Grupo NAMRON",
+                Empresas = new()
+                {
+                    new Empresa
+                    {
+                        Nombre = "2389 RODAROSA,SA DE CV",
+                        Actividades = new()
+                        {
+                            new Actividad { Nombre = "Actualizar base de datos" },
+                            new Actividad { Nombre = "Enviar cotización" }
+                        }
+                    },
+                    new Empresa
+                    {
+                        Nombre = "2390 CASA 2B SA DE CV",
+                        Actividades = new()
+                        {
+                            new Actividad { Nombre = "Revisión de inventario" }
+                        }
+                    },
+                      new Empresa
+                    {
+                        Nombre = "2391 EUROPREMIOS SA DE CV",
+                        Actividades = new()
+                        {
+                            new Actividad { Nombre = "Revisión de inventario" }
+                        }
+                    }
+                }
+            }
         };
 
-        // 2. Carga de datos de los Bloques de Actividades
-        Bloques = ObtenerBloques();
-
-        // 3. Inicialización de visibilidad de bloques: todos visibles al inicio
-        foreach (var bloque in Bloques)
+        ClientesIndividuales = new()
         {
-            BloquesVisibilidad.Add(bloque.NombreBloque, true);
-        }
-    }
-
-    // Función que carga los datos de los bloques (Actividades)
-    private List<BloqueActividades> ObtenerBloques()
-    {
-        return new List<BloqueActividades>
-        {
-            new BloqueActividades
+            new Empresa
             {
-                NombreBloque = "Control Administrativo del SPEC",
-                Actividades = new List<string>
+                Nombre = "2003  Vertisol",
+                Actividades = new()
                 {
-                    "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional.",
-                    "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI.",
-                    "Elaboré y compartí al área de Administración las solicitudes de pago del activo fijo de las que es responsable TI.",
-                    "Di seguimiento a la recepción de facturas de acuerdo con las solicitudes de pago y las entregue a Administración.",
-                    "Me cercioré de que el personal entregara en tiempo y forma sus informes, programas de trabajo y autoevaluaciones correspondientes.",
-                    "Validé que los vales de papelería relacionados con los insumos de TI se encuentren llenados correctamente; realicé el escaneo de los mismos y entregué a Servicios de oficina.",
-                    "Me aseguré de que el personal de TI llevara a cabo de manera completa el proceso de inducción al personal de nuevo ingreso (recopilación de check list del proceso).",
-                    "Generé los Movimientos múltiples (quejas, amonestaciones, sanciones) del personal de la firma que incumplió con el establecido en el Capítulo 7. Uso de computadoras, internet y correo electrónico del Reglamento Interior de Trabajo (RIT).",
-                    "Mantuve actualizado el Resumen de evaluación del personal para su evaluación del desempeño.",
-                    "Me aseguré que la Gerencia de TI llevó a cabo el proceso de evaluación y retroalimentación del desempeño del personal a su cargo.",
-                    "Me aseguré que se firmen los acuerdos de Programación Individual de Vacaciones del personal que cumple su aniversario en el mes.",
-                    "Realicé el reporte de productividad, lo revisé con la Gerencia y entregué a Dirección."
+                    new Actividad { Nombre = "Entrega de reporte semanal" },
+                    new Actividad { Nombre = "Seguimiento post-venta" }
                 }
             },
-            new BloqueActividades
+            new Empresa
             {
-                NombreBloque = "Comunicación",
-                Actividades = new List<string>
+                Nombre = "2205 CHILAQUILES Y ALGO MAS SA DE CV",
+                Actividades = new()
                 {
-                    "Confirmé con el personal de TI, al menos 2 veces al día, las actividades programadas de acuerdo con su programa de trabajo.",
-                    "Efectué las llamadas que me solicitaron y mantuve actualizado el control de llamadas y asuntos pendientes del área, así como los mensajes recibidos en los medios de comunicación y me cercioré de que fueran atendidas por la persona indicada."
+                    new Actividad { Nombre = "Verificar documentación" }
                 }
             },
-            new BloqueActividades
+            new Empresa
             {
-                NombreBloque = "Agenda",
-                Actividades = new List<string>
+                Nombre = "585  RECORP CONCEPTS SAÍ DE CV",
+                Actividades = new()
                 {
-                    "Mantuve actualizada la agenda (electrónica y en papel) y notifiqué de manera oportuna los recados, llamadas con el gerente y/o personal del área.",
-                    "Programé las citas inteligentemente y comunique al área y/o responsable del trabajo.",
-                    "Me aseguré de que la gerencia del área participara en las reuniones institucionales, junta de socios, juntas operativas y de mejora continua programadas.",
-                    "Acordé con las demás asistentes la entrega oportuna de información/documentación necesaria para atender la reunión/cita y entregué oportunamente.",
-                    "Programé las evaluaciones del personal con Dirección y entregué la documentación del proceso una semana antes de la reunión.",
-                    "Revisé con el personal del área los pendientes.",
-                    "Revisé con el gerente de TI los pendientes del área."
-                }
-            },
-            new BloqueActividades
-            {
-                NombreBloque = "Apoyo al Servicio",
-                Actividades = new List<string>
-                {
-                    "Validé que la información proporcionada por otras áreas (indicadores, boletines, ¿Sabías qué?, vacantes) se publicó correctamente en los medios de comunicación y que las bases de datos de los boletines se encuentren actualizadas.",
-                    "Di seguimieto a los Reportes de la RedGM (errores reportados por los usuarios).",
-                    "Participé activamente en las juntas de mejora continua.",
-                    "Realicé en tiempo y forma las tareas específicas solicitadas por la Gerencia de TI."
-                }
-            },
-            new BloqueActividades
-            {
-                NombreBloque = "Archivo",
-                Actividades = new List<string>
-                {
-                    "Mantuve al día y en estado de uso el archivo general de TI (Guarda conforme a la entrega y depura de acuerdo a instrucciones)",
-                    "Mantuve al día los Expediente de TI de acuerdo con la plantilla establecida."
-                }
-            },
-            new BloqueActividades
-            {
-                NombreBloque = "REDGM",
-                Actividades = new List<string>
-                {
-                    "Generé y di seguimiento a las órdenes de trabajo generadas por y para el área.",
-                    "Reporté mensualmente a Dirección las órdenes de trabajo pendientes y vencidas con explicación y compromisos de los responsables.",
-                    "Generé el Reporte de error al proveedor de la RedGM y me cercioré de que fuera atendido.",
-                    "Di seguimiento a los mensajes de Baja de personal.",
-                    "Generé en tiempo y forma los movimientos múltiples (permisos, vacaciones, amonestaciones, etc.) del personal de TI autorizados por la Gerencia de TI.",
-                    "Coadyuve con las demás asistentes para que las bases de datos de los clientes y proveedores estén actualizados."
-                }
-            },
-            new BloqueActividades
-            {
-                NombreBloque = "Seguimiento a la Funcionalidad de la RedGM",
-                Actividades = new List<string>
-                {
-                    "Reporté las incidencias, fallas, problemas, que a usuarios de la firma se les suscitó al usar la RedGM.",
-                    "Darle seguimiento al problema reportado en caso de que ese mismo día no quede resuelto.",
-                    "Verifiqué con el usuario que el error reportado se haya resuelto."
-                }
-            },
-            new BloqueActividades
-            {
-                NombreBloque = "Capacitación",
-                Actividades = new List<string>
-                {
-                    "Asistí a curso y participé activamente."
+                    new Actividad { Nombre = "Envío de factura" }
                 }
             }
         };
     }
 
-    // ############ Lógica del Componente ############
-
-    // Función para alternar el estado de despliegue/colapso del bloque principal
-    private void ToggleBloque(string nombreBloque)
+    private void ToggleGrupo(GrupoCliente grupo)
     {
-        // Invierte el estado de visibilidad del bloque
-        BloquesVisibilidad[nombreBloque] = !BloquesVisibilidad[nombreBloque];
+        grupo.Expandido = !grupo.Expandido;
     }
 
-    // Función para alternar el estado de despliegue/colapso de las semanas en el modal
-    private void ToggleSemana(string nombreSemana)
+    private void OpenModal(string empresaNombre, bool esGrupo)
     {
-        // Invierte el estado de visibilidad de la semana
-        SemanasVisibilidad[nombreSemana] = !SemanasVisibilidad[nombreSemana];
+        ModalEmpresa = empresaNombre;
+        Actividades = esGrupo
+            ? GruposClientes.SelectMany(g => g.Empresas)
+                .FirstOrDefault(e => e.Nombre == empresaNombre)?.Actividades ?? new()
+            : ClientesIndividuales
+                .FirstOrDefault(e => e.Nombre == empresaNombre)?.Actividades ?? new();
+
+        ShowModal = true;
     }
 
-    // Función para abrir el modal con la tarea seleccionada
-    private void AbrirModal(string actividad)
+    private void GuardarActividades()
     {
-        // 1. Crea la estructura de datos para la tarea actual
-        TareaActual = new TareaSeleccionada
-        {
-            Actividad = actividad,
-            // Obtiene el nombre del mes y el año actual en español
-            MesAnio = DateTime.Now.ToString("MMMM yyyy", new CultureInfo("es-ES")),
-            Semanas = new List<DetalleSemana>
-            {
-                new DetalleSemana("Semana 1"),
-                new DetalleSemana("Semana 2"),
-                new DetalleSemana("Semana 3"),
-                new DetalleSemana("Semana 4")
-            }
-        };
-
-        // 2. Inicializa la visibilidad de las semanas: todas visibles al inicio del modal
-        SemanasVisibilidad.Clear();
-        foreach (var semana in TareaActual.Semanas)
-        {
-            // Inicializamos todas colapsadas para que el usuario elija
-            SemanasVisibilidad.Add(semana.NombreSemana, false);
-        }
-
-        // 3. Muestra el modal
-        MostrarModal = true;
+        ShowModal = false;
     }
 
-    // Función para cerrar el modal
-    private void CerrarModal()
+    private void CloseModal()
     {
-        // Implementar lógica de guardado de datos de horas/horario aquí.
-        MostrarModal = false;
-        TareaActual = new TareaSeleccionada(); // Limpiar el objeto de tarea
+        ShowModal = false;
     }
 }
+
+<style>
+    .title {
+        text-align: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+
+    .service-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        width: 95%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .column {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        color: #1a237e;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .group-block {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .group-header {
+        background: #f4f4f8;
+        padding: 0.6rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+        .group-header:hover {
+            background: #e8eaf6;
+        }
+
+    .empresa-list {
+        list-style: none;
+        margin: 0;
+        padding: 0.5rem 1rem;
+    }
+
+        .empresa-list li {
+            padding: 0.4rem 0.6rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+            .empresa-list li:hover {
+                background: #f1f1f1;
+            }
+
+    /* ✅ Modal */
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal.large {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1.5rem;
+        width: 90%;
+        max-width: 850px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        animation: fadeIn 0.25s ease-in-out;
+    }
+
+    .modal-title {
+        text-align: center;
+        font-size: 1.3rem;
+        color: #1a237e;
+        margin-bottom: 0.5rem;
+    }
+
+    .activities-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+        .activities-table th, .activities-table td {
+            padding: 0.6rem;
+            border: 1px solid #eee;
+            text-align: left;
+        }
+
+        .activities-table th {
+            background: #f4f4f8;
+            color: #333;
+        }
+
+    .input-date {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .input-text {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 0.4rem;
+        font-size: 0.9rem;
+        resize: vertical;
+    }
+
+    .check-cell {
+        text-align: center;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-save, .btn-cancel {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .btn-save {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-save:hover {
+        background: #0056b3;
+    }
+
+    .btn-cancel {
+        background: #f1f1f1;
+        color: #333;
+    }
+
+    .btn-cancel:hover {
+        background: #e0e0e0;
+    }
+</style>

@@ -3,53 +3,49 @@
 @using System
 @using System.Collections.Generic
 
-
 <div class="agenda-container">
+    <!-- Encabezado -->
     <header class="agenda-header">
         <div class="header-controls">
-            <button class="btn" @onclick="PrevMonth">Mes anterior</button>
+            <button class="btn" @onclick="PrevMonth">
+                <span class="arrow">&#9664;</span> Mes anterior
+            </button>
         </div>
         <h1>@MonthName @CurrentDate.Year</h1>
         <div class="header-controls">
-            <button class="btn primary" @onclick="NextMonth">Mes siguiente</button>
+            <button class="btn primary" @onclick="NextMonth">
+                Mes siguiente <span class="arrow">&#9654;</span>
+            </button>
         </div>
     </header>
 
+    <!-- Grid de días -->
     <div class="days-grid-mensual">
-        <div class="day-name-header">Lunes</div>
-        <div class="day-name-header">Martes</div>
-        <div class="day-name-header">Miércoles</div>
-        <div class="day-name-header">Jueves</div>
-        <div class="day-name-header">Viernes</div>
-        <div class="day-name-header">Sábado</div>
-        <div class="day-name-header">Domingo</div>
+        @foreach (var dayName in new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo" })
+        {
+            <div class="day-name-header">@dayName</div>
+        }
 
         @foreach (var day in Days)
         {
             @if (day != null)
             {
                 <div class="day-card @(day.Date.DayOfWeek == DayOfWeek.Sunday ? "sunday" : "")">
-                    <div class="day-header">
-                        <span class="day-name">@day.Date.ToString("dd")</span>
-                    </div>
+                    <div class="day-header">@day.Date.ToString("dd")</div>
 
                     @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
                     {
-                        <div class="no-laboral">
-                            <span>No Laboral</span>
-                        </div>
+                        <div class="no-laboral">No Laboral</div>
                     }
                     else
                     {
                         <div class="blocks-list">
                             @foreach (var block in day.Blocks)
                             {
-                                <div class="list-item" style="background-color:@block.Color">
+                                <div class="list-item" style="background-color:@block.Color" @onclick="() => OpenBlockModal(block)">
                                     <div class="list-title">
                                         @block.Title
-                                        <span class="task-count">
-                                            @block.SubTasks.Count()
-                                        </span>
+                                        <span class="task-count">@block.SubTasks.Count</span>
                                     </div>
                                 </div>
                             }
@@ -65,8 +61,99 @@
     </div>
 </div>
 
+<!-- Modal -->
+@if (SelectedBlock != null)
+{
+    <div class="modal-overlay" @onclick="CloseBlockModal">
+        <div class="modal-content modern-modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <span class="modal-icon">@GetIcon(SelectedBlock.Title)</span>
+                <h2>@SelectedBlock.Title</h2>
+            </div>
+
+            <div class="modal-body">
+                @if (SelectedBlock.Title == "Órdenes de Trabajo" || SelectedBlock.Title == "Autoevaluación")
+                {
+                    <ul class="collapsible-list">
+                        @foreach (var task in SelectedBlock.SubTasks)
+                        {
+                            <li class="task-item">@task.Nombre</li>
+                        }
+                    </ul>
+                }
+                else if (SelectedBlock.Title == "Servicio a Cliente")
+                {
+                    @foreach (var task in SelectedBlock.SubTasks)
+                    {
+                        <h4>@task.Nombre</h4>
+                        @if (task.Subtareas?.Any() == true)
+                        {
+                            <table class="subtasks-table">
+                                <thead>
+                                    <tr>
+                                        <th>Actividad</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var st in task.Subtareas)
+                                    {
+                                        <tr>
+                                            <td>@st</td>
+                                            <td>✅</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    }
+                }
+                else if (SelectedBlock.Title == "Tareas Administrativas" || SelectedBlock.Title == "Tareas Operativas")
+                {
+                    <ul class="collapsible-list">
+                        @foreach (var task in SelectedBlock.SubTasks)
+                        {
+                            <li>
+                                <div class="collapsible-header" @onclick="() => ToggleTask(task)">
+                                    @task.Nombre
+                                    <span class="toggle-icon">@((ExpandedTasks.Contains(task) ? "▲" : "▼"))</span>
+                                </div>
+
+                                @if (ExpandedTasks.Contains(task))
+                                {
+                                    <div class="task-details">
+                                        <p><strong>Descripción:</strong> @task.Descripcion</p>
+                                        <p><strong>Fecha Inicio:</strong> @task.FechaInicio.ToShortDateString()</p>
+                                        <p><strong>Fecha Fin:</strong> @task.FechaFin.ToShortDateString()</p>
+                                        <p><strong>Prioridad:</strong> @task.Prioridad</p>
+                                        @if (task.Subtareas.Any())
+                                        {
+                                            <p><strong>Subtareas:</strong></p>
+                                            <ul>
+                                                @foreach (var sub in task.Subtareas)
+                                                {
+                                                    <li>@sub</li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn primary" @onclick="CloseBlockModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+
 <style>
-    /* Estilos generales */
+    /* Contenedor del calendario */
     .agenda-container {
         font-family: Inter, system-ui, sans-serif;
         background: #fff;
@@ -83,64 +170,68 @@
         flex-direction: column;
     }
 
-    /* --- Encabezado del Mes y Controles (MODIFICADO para alineación lateral) --- */
+    /* Encabezado */
     .agenda-header {
         display: flex;
-        justify-content: space-between; /* Alinea ítems a los extremos */
+        justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        padding: 0 10px; /* Pequeño padding para no pegar a los bordes */
+        padding: 0 10px;
     }
 
         .agenda-header h1 {
             font-size: 32px;
-            margin: 0; /* Centrado por flexbox, no necesita margen */
-            color: #333;
+            margin: 0;
+            color: #000;
+            font-weight: 700;
         }
 
-    /* Controles de botones (contenedor sin centrado) */
+    /* Controles de botones */
     .header-controls {
         display: flex;
         gap: 15px;
     }
 
-    /* Asegura que el contenedor de la izquierda se mantenga pequeño, envolviendo solo su botón */
     .agenda-header > .header-controls:first-child {
-        min-width: 150px; /* Espacio para que el título no se desplace */
+        min-width: 150px;
         justify-content: flex-start;
     }
 
-    /* Asegura que el contenedor de la derecha se mantenga pequeño, envolviendo solo su botón */
     .agenda-header > .header-controls:last-child {
-        min-width: 150px; /* Espacio simétrico */
+        min-width: 150px;
         justify-content: flex-end;
     }
 
+    /* Botones */
     .btn {
-        background: #E0E7FF; /* Pastel Azul Claro */
-        color: #4338CA; /* Texto Azul Oscuro */
+        background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
+        color: white;
         border: none;
         padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: 600;
-        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 140px;
+        justify-content: center;
     }
 
-        .btn:hover {
-            background: #C7D2FE;
-        }
-
         .btn.primary {
-            background: #4338CA; /* Azul Índigo para el botón principal */
-            color: white;
+            background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
         }
 
-            .btn.primary:hover {
-                background: #3730A3;
-            }
+        .btn:hover {
+            background: linear-gradient(90deg, #155d2b, #062b35);
+            color: white;
+            transform: translateY(-1px);
+        }
 
-    /* --- Grid del Calendario --- */
+    .arrow {
+        font-weight: 700;
+    }
+
+    /* Grid de días */
     .days-grid-mensual {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -195,7 +286,7 @@
         color: #9CA3AF;
     }
 
-    /* --- Bloques de Tareas --- */
+    /* Bloques de tareas */
     .blocks-list {
         display: flex;
         flex-direction: column;
@@ -240,15 +331,196 @@
         text-align: center;
         margin-top: 10px;
     }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 25px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80%;
+        overflow-y: auto;
+    }
+
+    .modern-modal {
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border-radius: 20px;
+        padding: 25px;
+        max-width: 500px;
+        width: 90%;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(90deg, #1e7a3a, #0b3c4a);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 15px;
+        margin: -25px -25px 20px -25px;
+    }
+
+    .modal-icon {
+        font-size: 1.8rem;
+        margin-right: 10px;
+    }
+
+    .modern-modal h2 {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    .modal-body {
+        padding: 10px 5px;
+    }
+
+    /* Listado de tareas y actividades */
+    .task-list {
+        list-style: none;
+        padding: 0;
+    }
+
+        .task-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+    /* Detalles de tareas (Administrativas/Operativas) */
+    .task-details {
+        background: #f9fafb;
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 12px;
+    }
+
+        .task-details p, .task-details ul {
+            margin: 5px 0;
+        }
+
+        .task-details ul {
+            padding-left: 20px;
+        }
+
+    /* Tabla para Servicio a Cliente */
+    .subtasks-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+        .subtasks-table th, .subtasks-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .subtasks-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .subtasks-table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+    /* Footer del modal */
+    .modal-footer {
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    /* Hover en items de tarea */
+    .task-item {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+    }
+
+        .task-item:hover {
+            background: #f0f0f0;
+        }
+
+    /* Animación fadeIn */
+   
+
+    }
+
+    .collapsible-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .collapsible-header {
+        cursor: pointer;
+        padding: 8px;
+        background-color: #f3f4f6;
+        border-radius: 6px;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+
+        .collapsible-header:hover {
+            background-color: #e5e7eb;
+        }
+
+    .toggle-icon {
+        font-size: 0.9rem;
+        color: #555;
+    }
+
 </style>
 
+
 @code {
+    class TaskItem
+    {
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string Prioridad { get; set; }
+        public List<string> Subtareas { get; set; } = new();
+    }
+
+    HashSet<TaskItem> ExpandedTasks = new();
+
+    void ToggleTask(TaskItem task)
+    {
+        if (ExpandedTasks.Contains(task))
+            ExpandedTasks.Remove(task);
+        else
+            ExpandedTasks.Add(task);
+    }
+
     class Block
     {
         public string Title { get; set; }
-        public List<string> SubTasks { get; set; } = new();
+        public List<TaskItem> SubTasks { get; set; } = new();
         public string Color { get; set; }
     }
+
     class DayColumn
     {
         public DateTime Date { get; set; }
@@ -257,23 +529,7 @@
 
     List<DayColumn> Days = new();
     DateTime CurrentDate = DateTime.Today;
-
-    // Paleta de Colores Pasteles Empresariales
-    private readonly Dictionary<string, string> BlockColors = new Dictionary<string, string>
-    {
-        {"Tareas Administrativas", "#B5EAD7"}, // Verde Menta Pastel
-        {"Órdenes de Trabajo", "#FFDAC1"},    // Naranja Melocotón Pastel
-        {"Tareas", "#E2F0CB"},                // Verde Lima Pastel
-        {"Autoevalución", "#C7CEEA"},         // Azul Lavanda Pastel (Usamos este para reemplazar 'Servicio al Cliente' con 'Autoevaluación')
-    };
-
-    // Lista de títulos de bloques a usar
-    private readonly List<string> definedTitles = new List<string> {
-        "Tareas Administrativas",
-        "Órdenes de Trabajo",
-        "Tareas",
-        "Autoevalución"
-    };
+    Block SelectedBlock = null;
 
     string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
 
@@ -283,16 +539,13 @@
     {
         Days.Clear();
         var firstDayOfMonth = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
-        var firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
-        // Ajusta el primer día para empezar en Lunes (1), no en Domingo (0)
-        var startPadding = (firstDayOfWeek == 0) ? 6 : firstDayOfWeek - 1;
+        int firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+        int padding = firstDayOfWeek == 0 ? 6 : firstDayOfWeek - 1;
 
-        for (int i = 0; i < startPadding; i++)
-        {
+        for (int i = 0; i < padding; i++)
             Days.Add(null);
-        }
 
-        var daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
+        int daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
         for (int i = 1; i <= daysInMonth; i++)
         {
             var date = new DateTime(CurrentDate.Year, CurrentDate.Month, i);
@@ -302,65 +555,111 @@
 
     DayColumn CreateDay(DateTime date)
     {
-        var d = new DayColumn { Date = date };
-        if (date.DayOfWeek == DayOfWeek.Sunday)
+        var day = new DayColumn { Date = date };
+        if (date.DayOfWeek == DayOfWeek.Sunday) return day;
+
+        // Bloques
+        day.Blocks.Add(new Block
         {
-            return d;
-        }
-
-        var random = new Random();
-
-        // Selecciona de 1 a 4 tipos de bloques diferentes al azar
-        int blockCount = random.Next(1, definedTitles.Count + 1);
-        var selectedTitles = definedTitles.OrderBy(x => random.Next()).Take(blockCount).ToList();
-
-        foreach (var title in selectedTitles)
-        {
-            d.Blocks.Add(new Block
+            Title = "Tareas Administrativas",
+            Color = "#FFD1DC",
+            SubTasks = new List<TaskItem>
             {
-                Title = title,
-                SubTasks = GetRandomSubTasks(title), // Genera las subtareas para obtener el conteo
-                Color = BlockColors[title]
-            });
-        }
+                new TaskItem
+                {
+                    Nombre = "Área de TI limpia",
+                    Descripcion = "Área y estación de insumos de TI limpia y ordenada.",
+                    FechaInicio = date,
+                    FechaFin = date,
+                    Prioridad = "Alta",
+                    Subtareas = new List<string> { "Limpieza general", "Ordenar insumos" }
+                },
+                new TaskItem
+                {
+                    Nombre = "Control de suscripciones",
+                    Descripcion = "Seguimiento de suscripciones responsables de TI.",
+                    FechaInicio = date,
+                    FechaFin = date,
+                    Prioridad = "Media"
+                }
+            }
+        });
 
-        return d;
-    }
-
-    List<string> GetRandomSubTasks(string title)
-    {
-        var random = new Random();
-        var subtasks = new List<string>();
-
-        // Define un mínimo y máximo de tareas para que el número sea variable (2 a 7)
-        int maxTasks = random.Next(2, 8);
-
-        switch (title)
+        day.Blocks.Add(new Block
         {
-            case "Tareas Administrativas":
-                for (int i = 1; i <= maxTasks; i++)
-                    subtasks.Add($"Revisión administrativa #{i}");
-                break;
-            case "Órdenes de Trabajo":
-                for (int i = 1; i <= maxTasks; i++)
-                    subtasks.Add($"Orden T. #{random.Next(100, 999)}");
-                break;
-            case "Tareas":
-                for (int i = 1; i <= maxTasks; i++)
-                    subtasks.Add($"Tarea de Proyecto P-{random.Next(1, 10)}");
-                break;
-            case "Autoevalución":
-                for (int i = 1; i <= maxTasks; i++)
-                    subtasks.Add($"Criterio de Autoevaluación #{i}");
-                break;
-            default:
-                for (int i = 1; i <= maxTasks; i++)
-                    subtasks.Add("Tarea Genérica");
-                break;
-        }
-        return subtasks;
+            Title = "Tareas Operativas",
+            Color = "#B5EAD7",
+            SubTasks = new List<TaskItem>
+            {
+                new TaskItem
+                {
+                    Nombre = "Entregar reporte semanal",
+                    Descripcion = "Revisar los reportes de la semana.",
+                    FechaInicio = date,
+                    FechaFin = date,
+                    Prioridad = "Alta"
+                }
+            }
+        });
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Órdenes de Trabajo",
+            Color = "#FFDAC1",
+            SubTasks = new List<TaskItem>
+            {
+                new TaskItem { Nombre = "ORD-13683" },
+                new TaskItem { Nombre = "ORD-13503" },
+                new TaskItem { Nombre = "ORD-13296" }
+            }
+        });
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Autoevaluación",
+            Color = "#E2F0CB",
+            SubTasks = new List<TaskItem>
+            {
+                new TaskItem { Nombre = "Revisar limpieza de área" },
+                new TaskItem { Nombre = "Validar vales de papelería" },
+                new TaskItem { Nombre = "Confirmar actividades programadas" }
+            }
+        });
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Servicio a Cliente",
+            Color = "#D7D1DD",
+            SubTasks = new List<TaskItem>
+            {
+                new TaskItem
+                {
+                    Nombre = "Empresa XYZ",
+                    Subtareas = new List<string> { "Actividad 1", "Actividad 2", "Actividad 3" }
+                },
+                new TaskItem
+                {
+                    Nombre = "Empresa ABC",
+                    Subtareas = new List<string> { "Actividad A", "Actividad B" }
+                }
+            }
+        });
+
+        return day;
     }
 
     void PrevMonth() { CurrentDate = CurrentDate.AddMonths(-1); BuildMonth(); }
     void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
-}
+    void OpenBlockModal(Block block) => SelectedBlock = block;
+    void CloseBlockModal() => SelectedBlock = null;
+
+    string GetIcon(string title) => title switch
+    {
+        "Órdenes de Trabajo" => "🧾",
+        "Tareas Administrativas" => "🗂️",
+        "Tareas Operativas" => "⚙️",
+        "Autoevaluación" => "⭐",
+        "Servicio a Cliente" => "🏢",
+        _ => "📋"
+    };
+}   

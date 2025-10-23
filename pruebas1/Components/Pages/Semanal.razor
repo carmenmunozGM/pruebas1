@@ -3,7 +3,7 @@
 @using System.Collections.Generic
 @using System.Globalization
 @inject IJSRuntime JSRuntime
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="agenda-container">
 
@@ -12,7 +12,10 @@
             <span class="arrow">&#9664;</span> Semana anterior
         </button>
 
-        <h1>Semana @WeekNumber - @MonthName</h1>
+        <div class="header-center">
+            <h1>Semana @WeekNumber -@MonthName @CurrentDate.Year</h1>
+            
+        </div>
 
         <button class="btn primary" @onclick="NextWeek">
             Semana siguiente <span class="arrow">&#9654;</span>
@@ -34,7 +37,7 @@
                         <div class="list-item" style="background-color:@block.Color">
                             <div class="list-title" @onclick="() => ToggleBlock(block)">
                                 @block.Title
-                                <span style="float:right">@((block.IsExpanded ? "▼" : "►"))</span>
+                                <span class="chev">@((block.IsExpanded ? "▼" : "►"))</span>
                             </div>
 
                             @if (block.IsExpanded)
@@ -47,23 +50,46 @@
                                             {
                                                 @if (block.Title != "Órdenes de Trabajo")
                                                 {
-                                                    <input type="checkbox" @bind="bt.IsCompleted" />
-                                                    <span class="task-name" @onclick="() => OpenTaskModal(bt, false)">
+                                                    <input type="checkbox"
+                                                           @onchange="(e) => ToggleComplete(bt, e)"
+                                                           checked="@bt.IsCompleted"
+                                                           @onclick:stopPropagation />
+                                                    <span class="task-name @(bt.IsCompleted ? "completed" : "")"
+                                                          @onclick="() => OpenTaskModal(bt, false)">
                                                         @bt.Name
                                                     </span>
-                                                    <button class="edit-btn" title="Editar" @onclick="() => OpenTaskModal(bt, true)">✏️</button>
-                                                    <button class="delete-btn" title="Eliminar" @onclick="() => DeleteTask(bt)">🗑️</button>
+                                                    <div class="task-actions">
+                                                        <button class="edit-btn"
+                                                                title="Editar"
+                                                                @onclick="(MouseEventArgs e) => OpenTaskModal(bt, true)"
+                                                                @onclick:stopPropagation="true">
+                                                            ✏️
+                                                        </button>
+
+                                                        <button class="delete-btn"
+                                                                title="Eliminar"
+                                                                @onclick="(MouseEventArgs e) => ConfirmDelete(bt)"
+                                                                @onclick:stopPropagation="true">
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+
                                                 }
                                                 else
                                                 {
-                                                    <!-- Órdenes de Trabajo: solo mostrar nombre, nada más -->
-                                                    <span>@bt.Name</span>
+                                                    <!-- Órdenes de Trabajo: solo mostrar nombre -->
+                                                    <span class="workorder">@bt.Name</span>
                                                 }
                                             }
                                             else if (task is SelfAssessment sa)
                                             {
-                                                <input type="checkbox" @bind="sa.IsCompleted" />
-                                                <span class="task-name" @onclick="() => OpenTaskModal(sa, false)">
+                                               
+                                                <input type="checkbox"
+                                                       @onchange="(e) => ToggleCompleteSelf(sa, e)"
+                                                       checked="@sa.IsCompleted"
+                                                       @onclick:stopPropagation />
+                                                <span class="task-name @(sa.IsCompleted ? "completed" : "")"
+                                                      @onclick="() => OpenTaskModal(sa, false)">
                                                     @sa.ActivityName
                                                 </span>
                                             }
@@ -80,11 +106,12 @@
     </div>
 </div>
 
+<!-- Modal de Tarea (editar/ver) -->
 @if (IsModalOpen && SelectedTaskObject != null)
 {
     <div class="modal-backdrop" @onclick="CloseTaskModal"></div>
 
-    <div class="modal-content">
+    <div class="modal-content" @onclick:stopPropagation>
         <div class="modal-header">
             <h2>@GetModalTitle()</h2>
             <button class="close-btn" @onclick="CloseTaskModal">&times;</button>
@@ -141,10 +168,7 @@
         <div class="modal-footer">
             @if (IsEditMode)
             {
-
-
                 <button class="action-btn save" @onclick="SaveTask">💾 Guardar</button>
-
                 <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
             }
             else
@@ -155,6 +179,26 @@
     </div>
 }
 
+<!-- Modal de Confirmación de Borrado -->
+@if (ShowConfirmDelete)
+{
+    <div class="modal-backdrop" @onclick="() => ShowConfirmDelete = false"></div>
+    <div class="confirm-modal" @onclick:stopPropagation>
+        <h3>¿Eliminar tarea?</h3>
+        <p>¿Estás seguro que quieres eliminar "<strong>@TaskToDelete?.Name</strong>"?</p>
+        <div class="confirm-actions">
+            <button class="action-btn cancel" @onclick="() => { ShowConfirmDelete = false; TaskToDelete = null; }">Cancelar</button>
+            <button class="action-btn save" @onclick="() => DeleteConfirmedAsync()">Eliminar</button>
+        </div>
+    </div>
+}
+
+<!-- Toast -->
+@if (ShowToast)
+{
+    <div class="toast">@ToastMessage</div>
+}
+
 @code {
     enum BlockType { AdminTask, WorkOrder, GeneralTask, SelfAssessment }
 
@@ -162,8 +206,8 @@
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public BlockType Type { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
         public string Priority { get; set; } = "Media";
         public string Recurrence { get; set; } = "No repetir";
         public bool IsCompleted { get; set; } = false;
@@ -172,16 +216,6 @@
         public List<object> SubTasks { get; set; } = new();
         public Block ParentBlock { get; set; }
     }
-    async Task ShowAlert(string message)
-    {
-        await JSRuntime.InvokeVoidAsync("alert", message);
-    }
-
-    void ToggleBlock(Block block)
-    {
-        block.IsExpanded = !block.IsExpanded;
-    }
-
 
     class AdminTask : BaseTask { }
     class GeneralTask : BaseTask { }
@@ -190,16 +224,16 @@
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string ActivityName { get; set; }
+        public string ActivityName { get; set; } = "";
         public bool IsCompleted { get; set; } = false;
         public Block ParentBlock { get; set; }
     }
 
     class Block
     {
-        public string Title { get; set; }
+        public string Title { get; set; } = "";
         public List<object> SubTasks { get; set; } = new();
-        public string Color { get; set; }
+        public string Color { get; set; } = "#fff";
         public bool IsExpanded { get; set; } = false;
     }
 
@@ -214,6 +248,14 @@
     object SelectedTaskObject { get; set; }
     bool IsModalOpen { get; set; } = false;
     bool IsEditMode { get; set; } = false;
+
+    // Confirm delete
+    bool ShowConfirmDelete { get; set; } = false;
+    BaseTask TaskToDelete { get; set; }
+
+    // Toast
+    bool ShowToast { get; set; } = false;
+    string ToastMessage { get; set; } = "";
 
     int WeekNumber => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(CurrentDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
     string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
@@ -297,44 +339,126 @@
         IsModalOpen = false;
         IsEditMode = false;
     }
-
-    void SaveTask()
+    async Task SaveTask()
     {
         IsEditMode = false;
+        IsModalOpen = false;
+
+        if (SelectedTaskObject is BaseTask bt)
+        {
+            await ShowSuccessAlert($"✅ La tarea '{bt.Name}' se guardó correctamente");
+        }
     }
+    // Método para mostrar alerta bonita tipo SweetAlert2
+    async Task ShowSuccessAlert(string message)
+    {
+        await JSRuntime.InvokeVoidAsync("Swal.fire", new
+        {
+            icon = "success",
+            title = message,
+            showConfirmButton = true,
+            confirmButtonColor = "#0B3C4A",
+            timer = 2000
+        });
+    }
+
+
 
     void CancelEdit()
     {
+        // No guardamos cambios; se podría recargar datos originales si se mantiene snapshot (no implementado aquí).
         IsEditMode = false;
     }
 
-    void DeleteTask(BaseTask bt)
+    // Abrir confirmación para borrar
+    void ConfirmDelete(BaseTask bt)
     {
-        if (bt.Type == BlockType.AdminTask || bt.Type == BlockType.GeneralTask)
+        TaskToDelete = bt;
+        ShowConfirmDelete = true;
+    }
+
+    // Borrar confirmado (async para UX)
+    async Task DeleteConfirmedAsync()
+    {
+        if (TaskToDelete != null)
         {
-            if (!JSRuntime.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar la tarea '{bt.Name}'?").Result)
-                return;
+            TaskToDelete.ParentBlock?.SubTasks.Remove(TaskToDelete);
+            await ShowTemporaryToastAsync("Tarea eliminada");
         }
-        bt.ParentBlock?.SubTasks.Remove(bt);
+        TaskToDelete = null;
+        ShowConfirmDelete = false;
+    }
+
+    // Manejo checkbox para BaseTask
+    async Task ToggleComplete(BaseTask bt, ChangeEventArgs e)
+    {
+        if (e?.Value is bool b)
+            bt.IsCompleted = b;
+        else
+        {
+            // algunos navegadores mandan "on"/"off", intentar parse
+            bool parsed = false;
+            if (e?.Value is string s)
+                parsed = string.Equals(s, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "on", StringComparison.OrdinalIgnoreCase);
+            bt.IsCompleted = parsed;
+        }
+
+        // Opcional: persistir, notificar
+        if (bt.IsCompleted)
+            await ShowTemporaryToastAsync($"Marcaste '{bt.Name}' como completada");
+        else
+            await ShowTemporaryToastAsync($"Desmarcaste '{bt.Name}'");
+    }
+
+    // Manejo checkbox para SelfAssessment
+    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
+    {
+        if (e?.Value is bool b) sa.IsCompleted = b;
+        else
+        {
+            bool parsed = false;
+            if (e?.Value is string s) parsed = string.Equals(s, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "on", StringComparison.OrdinalIgnoreCase);
+            sa.IsCompleted = parsed;
+        }
+
+        if (sa.IsCompleted)
+            await ShowTemporaryToastAsync($"Autoevaluación marcada");
+        else
+            await ShowTemporaryToastAsync($"Autoevaluación desmarcada");
+    }
+
+    void ToggleBlock(Block block)
+    {
+        block.IsExpanded = !block.IsExpanded;
     }
 
     void PrevWeek() { CurrentDate = CurrentDate.AddDays(-7); BuildWeek(); }
     void NextWeek() { CurrentDate = CurrentDate.AddDays(7); BuildWeek(); }
+
+    async Task ShowTemporaryToastAsync(string message, int milliseconds = 1600)
+    {
+        ToastMessage = message;
+        ShowToast = true;
+        StateHasChanged();
+        await Task.Delay(milliseconds);
+        ShowToast = false;
+        StateHasChanged();
+    }
 }
 
 <style>
-    / /* Contenedor principal */
+    /* Contenedor principal */
     .agenda-container {
-        font-family: Inter, sans-serif;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         background: #fff;
-        padding: 20px;
+        padding: 18px;
         border-radius: 12px;
         width: 100vw;
-        height: 100vh; /* Ocupa toda la pantalla */
+        height: 100vh;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        overflow: hidden; /* Evita espacios extra */
+        overflow: hidden;
     }
 
     /* Header */
@@ -342,31 +466,61 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
         margin-bottom: 12px;
     }
 
-        .agenda-header h1 {
+    .header-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1 1 auto;
+    }
+
+        .header-center h1 {
             margin: 0;
-            flex-grow: 1;
-            text-align: center;
+            font-size: 30px;
+            font-weight: 700;
         }
+
+    .month-pill {
+        margin-top: 6px;
+        background: linear-gradient(90deg,#f7f7f7,#fff);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 600;
+        color: #0b3c4a;
+        box-shadow: 0 2px 6px rgba(11,60,74,0.06);
+    }
 
     /* Botones */
     .btn {
-        background: #0B3C4A;
+        background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
         color: white;
         border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
+        padding: 8px 12px;
+        border-radius: 8px;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
+        min-width: 140px;
+        justify-content: center;
     }
 
-        .btn:hover {
-            background: #09333e;
+        .btn.primary {
+            background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
         }
+
+        .btn:hover {
+            background: linear-gradient(90deg, #155d2b, #062b35); /* tonos más oscuros */
+            color: white; /* asegura que el texto siga siendo blanco */
+            transform: translateY(-1px);
+        }
+
+    .arrow {
+        font-weight: 700;
+    }
 
     /* Grid de días */
     .days-grid.weekly {
@@ -374,17 +528,18 @@
         grid-template-columns: repeat(6, 1fr);
         gap: 12px;
         flex-grow: 1;
-        overflow-y: auto; /* Scroll si se excede altura */
+        overflow-y: auto;
+        padding-right: 6px;
     }
 
     /* Tarjetas de día */
     .day-card {
         background: #f9fafb;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
         max-height: 100%;
         overflow-y: auto;
     }
@@ -393,7 +548,7 @@
     .day-header {
         display: flex;
         justify-content: space-between;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: capitalize;
     }
 
@@ -401,23 +556,35 @@
     .blocks-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
 
     /* Bloques individuales */
     .list-item {
-        border-radius: 8px;
-        padding: 8px 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        cursor: pointer;
-        transition: all 0.2s ease;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        transition: transform .12s ease;
     }
 
-    /* Título del bloque */
+        .list-item:hover {
+            transform: translateY(-3px);
+        }
+
     .list-title {
-        font-weight: 600;
-        margin-bottom: 4px;
+        font-weight: 700;
+        margin-bottom: 8px;
         user-select: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .chev {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-left: 10px;
     }
 
     /* Subtareas */
@@ -427,9 +594,9 @@
         margin: 0;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
         max-height: 300px;
-        overflow-y: auto; /* Scroll interno si muchas subtareas */
+        overflow-y: auto;
     }
 
     /* Ítems de tarea */
@@ -437,14 +604,52 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 6px 0;
-        border-bottom: 1px solid #ddd;
+        gap: 8px;
+        padding: 6px 4px;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+
+    input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        margin-right: 8px;
+        cursor: pointer;
     }
 
     /* Nombre de la tarea */
     .task-name {
         flex-grow: 1;
         cursor: pointer;
+        user-select: none;
+        padding-right: 8px;
+        transition: all 0.2s ease;
+    }
+
+    /* Línea superior para tareas completadas */
+    .task-item.completed-task .task-name {
+        border-top: 3px solid #0B3C4A; /* Línea encima más visible */
+        padding-top: 4px; /* Espacio entre línea y texto */
+        opacity: 0.85;
+    }
+    /* === Igual funcionalidad que subtareas === */
+    .task-name.completed {
+        text-decoration: line-through; /* misma línea encima */
+        opacity: 0.6; /* más tenue */
+        transition: all 0.2s ease;
+    }
+
+    /* Acciones de la tarea (botones) */
+    .task-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    /* Opcional: efecto al pasar el mouse por encima */
+    .task-item:hover .task-name {
+        color: #0B3C4A;
+        font-weight: 600;
     }
 
     /* Botones de editar y eliminar */
@@ -453,7 +658,20 @@
         background: none;
         border: none;
         cursor: pointer;
-        margin-left: 4px;
+        padding: 6px;
+        border-radius: 8px;
+    }
+
+        .edit-btn:hover {
+            background: rgba(0,0,0,0.04);
+        }
+
+        .delete-btn:hover {
+            background: rgba(255,0,0,0.06);
+        }
+
+    .workorder {
+        font-weight: 700;
     }
 
     /* Modal */
@@ -463,7 +681,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(11,60,74,0.7);
+        background: rgba(11,60,74,0.65);
         z-index: 1000;
     }
 
@@ -473,24 +691,21 @@
         left: 50%;
         transform: translate(-50%,-50%);
         background: #FEFEFE;
-        padding: 20px;
+        padding: 18px;
         border-radius: 12px;
         z-index: 1001;
         width: 90%;
-        max-width: 600px;
+        max-width: 640px;
         max-height: 80vh;
         overflow-y: auto;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.2);
     }
 
-    /* Header del modal */
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 12px;
-        border-bottom: 2px solid #FFDAC1;
-        padding-bottom: 5px;
     }
 
     .close-btn {
@@ -501,68 +716,44 @@
         color: #0B3C4A;
     }
 
-    /* Formulario dentro del modal */
     .form-group {
         margin-bottom: 10px;
     }
 
         .form-group label {
             display: block;
-            font-weight: 600;
-            margin-bottom: 2px;
+            font-weight: 700;
+            margin-bottom: 4px;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
-            padding: 6px 8px;
-            border-radius: 6px;
-            border: 1px solid #FFDAC1;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #eee;
             box-sizing: border-box;
         }
 
-    textarea {
-        min-height: 50px;
-        resize: vertical;
+    input:disabled, textarea:disabled, select:disabled {
+        background: #f5f5f5;
+        color: #444;
     }
 
-        input:disabled, textarea:disabled, select:disabled {
-            background: #f7f7f7;
-            color: #555;
-        }
-
-    /* Tabla de sub-tareas */
-    .subtask-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 6px;
-    }
-
-        .subtask-table th, .subtask-table td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: left;
-        }
-
-    /* Footer modal */
     .modal-footer {
         display: flex;
         justify-content: flex-end;
-        gap: 6px;
+        gap: 8px;
         padding-top: 8px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid #f0f0f0;
     }
 
-    /* Botones de acción */
     .action-btn {
-        padding: 6px 12px;
+        padding: 8px 12px;
         font-weight: 700;
         color: white;
         border: none;
-        border-radius: 50px;
+        border-radius: 999px;
         cursor: pointer;
-        font-size: 14px;
     }
 
         .action-btn.save {
@@ -573,4 +764,48 @@
             background: #ef4444;
         }
 
+    /* Confirm modal */
+    .confirm-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        z-index: 1002;
+        background: white;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+        width: 90%;
+        max-width: 420px;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 12px;
+    }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        background: linear-gradient(90deg,#0B3C4A,#1e7a3a);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        z-index: 2000;
+        font-weight: 700;
+    }
+
+    
+
+    .btn {
+        min-width: auto;
+        padding: 8px 10px;
+    }
+
+    }
 </style>

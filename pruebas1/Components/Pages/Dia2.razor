@@ -3,10 +3,13 @@
 @using System.Globalization
 @inject NavigationManager navigate
 @using Microsoft.AspNetCore.Components.Web
-@using pruebas1.Components
+
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<ReusableModal />
+
+
+<ReusableModal OnSave="AgregarTarea" />
 <div class="agenda-container">
     <!-- BARRA SUPERIOR CON FECHA Y BOTONES DE NAVEGACIÓN -->
     <div class="top-bar-container">
@@ -50,7 +53,6 @@
     </div>
 
     <br />
-
     <!-- MENSAJES SI NO HAY ACTIVIDADES -->
     @if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
     {
@@ -73,10 +75,11 @@
         <!-- BLOQUES DE CATEGORÍAS -->
         @foreach (var cat in Categories)
         {
+            
             <div class="card block-card @cat.ColorClass">
                 <div class="block-header" @onclick="() => ToggleCollapse(cat)">
                     <div class="header-left">
-                        <h3 class="block-title">@cat.Name</h3>
+                        <h3 class="categoria-titulo">@cat.Icon @cat.Name</h3>
                     </div>
                     <div class="header-right">
                         @if (AllCompleted(cat))
@@ -97,8 +100,11 @@
                 {
                     <div class="card-body block-body">
                         <ul class="subtask-list">
+
                             @foreach (var st in cat.Subtasks)
                             {
+                                
+
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone ? "done" : "")">
                                         @if (cat.Name != "Órdenes de Trabajo")
@@ -110,34 +116,86 @@
                                         {
                                             <small class="done-text">Hecho</small>
                                         }
+
+                                        @* BOTONES FIJOS A LA DERECHA *@
+                                        @if (cat.Name == "Tareas Administrativas" || cat.Name == "Tareas Operativas")
+                                        {
+                                            <div class="subtask-actions">
+                                                <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(cat, st)">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteSubtask(cat, st)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        }
                                     </div>
 
-                                    @if ((cat.Name == "Tareas Administrativas" || cat.Name == "Tareas Operativas") && st.Subtasks.Any())
+                                    @* Subtareas internas *@
+                                    @if ((cat.Name == "Tareas Administrativas" || cat.Name == "Tareas Operativas" || cat.Name == "Servicio a Cliente") && st.Subtasks.Any())
                                     {
                                         <div class="table-wrapper">
-                                            <table class="subtask-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Subtarea</th>
-                                                        <th>Descripción</th>
-                                                        <th>Hecho</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach (var s2 in st.Subtasks)
-                                                    {
+                                            @if (cat.Name == "Servicio a Cliente")
+                                            {
+                                                <!-- Tabla simplificada solo con Actividad y Hecho -->
+                                                <table class="subtask-table">
+                                                    <thead>
                                                         <tr>
-                                                            <td>@s2.Title</td>
-                                                            <td>@($"Objetivo de {s2.Title}")</td>
-                                                            <td>
-                                                                <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(cat, st, s2)" />
-                                                            </td>
+                                                            <th>Actividad</th>
+                                                            <th>Hecho</th>
                                                         </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var s2 in st.Subtasks)
+                                                        {
+                                                            <tr>
+                                                                <td>@s2.Title</td>
+                                                                <td>
+                                                                    <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(cat, st, s2)" />
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            }
+                                            else
+                                            {
+                                                <!-- Tabla completa para Operativas y Administrativas -->
+                                                <table class="subtask-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Subtarea</th>
+                                                            <th>Descripción</th>
+                                                            <th>Hecho</th>
+                                                            <th>Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var s2 in st.Subtasks)
+                                                        {
+                                                            <tr>
+                                                                <td>@s2.Title</td>
+                                                                <td>@($"Objetivo de {s2.Title}")</td>
+                                                                <td>
+                                                                    <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(cat, st, s2)" />
+                                                                </td>
+                                                                <td class="inner-actions">
+                                                                    <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditInnerModal(cat, st, s2)">
+                                                                        
+                                                                        <i class="bi bi-pencil-square"></i>
+                                                                    </button>
+                                                                    <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteInnerSubtask(cat, st, s2)">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            }
                                         </div>
                                     }
+
                                 </li>
                             }
                         </ul>
@@ -205,10 +263,67 @@
         overflow: hidden;
     }
 
+    
+
     .modal-container.visible .modal-content {
         transform: scale(1);
     }
 
+    /* ---------------- botones de editar ---------------- */
+    .subtask-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* elementos a los extremos */
+        gap: 10px;
+    }
+
+    .subtask-text {
+        flex: 1; /* ocupa todo el espacio disponible */
+    }
+
+    .subtask-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .inner-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: 0.2s;
+    }
+
+        .icon-btn.edit {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+            .icon-btn.edit:hover {
+                background-color: #e0a800;
+            }
+
+        .icon-btn.delete {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+            .icon-btn.delete:hover {
+                background-color: #c82333;
+            }
+    
+ 
     /* ---------------- CABECERA ---------------- */
     .modal-header {
         padding: 1.5rem 2rem;
@@ -532,7 +647,7 @@
         border: none;
         cursor: pointer;
         font-weight: 600;
-        background: rgba(0,0,0,0.06);
+        background: #000000;
     }
 
         .btn.small {
@@ -541,7 +656,7 @@
         }
 
         .btn.outline {
-            background: transparent;
+            background: #000000;
             border: 1px solid rgba(0,0,0,0.08);
         }
 
@@ -705,6 +820,9 @@
         background: #E2F0CB;
     }
 
+    .azul-morado .block-header {
+        background: #D7D1DD;
+    }
     .rosa-pastel .block-header {
         background: #FDE2E4;
     }
@@ -776,6 +894,15 @@
     private string[] DiasSemana = { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
     private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
     private string FechaFormateada => FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"));
+   
+    private string titulo = string.Empty;
+    private string descripcion = string.Empty;
+    private List<string> subtasks = new List<string>();
+
+    private CategoryModel editCategory;
+    private SubtaskModel editSubtask;
+    private SubtaskModel editInnerSubtask;
+    private bool ShowModal = false;
 
     // ---- MODAL REUSABLE ----
     private bool ShowReusableModal { get; set; } = false;
@@ -797,8 +924,116 @@
         public List<SubtaskModel> Subtasks { get; set; } = new();
         public string ColorClass { get; set; } = "pastel-blue";
         public bool IsCollapsed { get; set; } = false;
+        public string Icon { get; set; } // <--- Aquí
+    }
+    private void AgregarTarea(ReusableModal.TareaCreada nueva)
+    {
+        var categoria = Categories.FirstOrDefault(c =>
+            (nueva.Tipo == "Tarea" && c.Name == "Tareas Operativas") ||
+            (nueva.Tipo == "Administrativa" && c.Name == "Tareas Administrativas")
+        );
+
+        if (categoria != null)
+        {
+            var nuevaSubtask = new SubtaskModel
+            {
+                Title = nueva.Titulo,
+                IsDone = false,
+                Subtasks = nueva.Subtareas.Select(s => new SubtaskModel { Title = s, IsDone = false }).ToList()
+            };
+
+            categoria.Subtasks.Add(nuevaSubtask);
+        }
+
+        StateHasChanged();
+    }
+    // ---- ACTIVIDADES ----
+    void EditSubtask(CategoryModel cat, SubtaskModel st)
+    {
+        // Aquí puedes abrir tu modal para editar título o subtareas
+        Console.WriteLine($"Editar actividad: {st.Title} en {cat.Name}");
     }
 
+    void DeleteSubtask(CategoryModel cat, SubtaskModel st)
+    {
+        cat.Subtasks.Remove(st);
+    }
+
+    // ---- SUBTAREAS ----
+    void EditInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
+    {
+        // Aquí también podrías abrir modal para editar
+        Console.WriteLine($"Editar subtarea: {inner.Title} en {parent.Title}");
+    }
+
+    void DeleteInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
+    {
+        parent.Subtasks.Remove(inner);
+    }
+    // Enum para tipos de formulario
+    enum FormTypes
+    {
+        Evento,
+        Tarea,
+        Administrativa
+    }
+    
+
+    // Campo que controla el tipo de formulario abierto en el modal
+    private FormTypes FormType = FormTypes.Tarea;
+
+    void OpenEditModal(CategoryModel cat, SubtaskModel st)
+    {
+        editCategory = cat;
+        editSubtask = st;
+        editInnerSubtask = null;
+
+        titulo = st.Title;
+        descripcion = "";
+        subtasks = st.Subtasks.Select(s => s.Title).ToList();
+
+        FormType = cat.Name == "Tareas Administrativas" ? FormTypes.Administrativa : FormTypes.Tarea;
+
+        ShowModal = true;
+    }
+
+
+    void OpenEditInnerModal(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
+    {
+        editCategory = cat;
+        editSubtask = parent;
+        editInnerSubtask = inner;
+
+        titulo = inner.Title;
+        descripcion = ""; // si hay descripción
+        subtasks = inner.Subtasks.Select(s => s.Title).ToList(); // si hay subtareas dentro de la subtarea
+
+        FormType = cat.Name == "Tareas Administrativas" ? FormTypes.Administrativa : FormTypes.Tarea;
+
+        ShowModal = true;
+    }
+
+    // Guardar cambios del modal
+    void CheckSave()
+    {
+        if (editInnerSubtask != null)
+        {
+            editInnerSubtask.Title = titulo;
+            // aquí actualizarías descripción o subtareas si quieres
+        }
+        else if (editSubtask != null)
+        {
+            editSubtask.Title = titulo;
+            // actualizar descripción y subtareas
+            editSubtask.Subtasks = subtasks.Select(s => new SubtaskModel { Title = s }).ToList();
+        }
+
+        // Limpiar variables
+        editCategory = null;
+        editSubtask = null;
+        editInnerSubtask = null;
+        ShowModal = false;
+    }
     private List<CategoryModel> MasterCategories = new();
     private List<CategoryModel> Categories { get; set; } = new();
 
@@ -808,12 +1043,21 @@
         CargarTareasPorFecha();
         GenerarDiasCalendario();
     }
-
+    string GetIcon(string title) => title switch
+    {
+        "Órdenes de Trabajo" => "🧾",
+        "Tareas Administrativas" => "🗂️",
+        "Tareas Operativas" => "⚙️",
+        "Autoevaluación" => "⭐",
+        "Servicio a Cliente" => "🏢",
+        _ => "📋"
+    };
     private void InitializeMasterCategories()
     {
         MasterCategories = new List<CategoryModel>
         {
-            new CategoryModel { Name = "Tareas Administrativas", ColorClass= "rosa-administrativa", Subtasks = new List<SubtaskModel>
+
+            new CategoryModel { Name = "Tareas Administrativas",ColorClass= "rosa-administrativa", Subtasks = new List<SubtaskModel>
                 {
                     new SubtaskModel{ Title = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional.", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Detalle 1"}, new SubtaskModel{ Title="Detalle 2" } } },
                     new SubtaskModel{ Title = "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI." },
@@ -821,7 +1065,7 @@
                      new SubtaskModel{ Title = "Programé las citas inteligentemente y comunique al área y/o responsable del trabajo. " },
                 }
             },
-            new CategoryModel { Name = "Tareas Operativas",  ColorClass= "verde-menta" , Subtasks = new List<SubtaskModel>
+            new CategoryModel { Name = "Tareas Operativas",   ColorClass= "verde-menta" , Subtasks = new List<SubtaskModel>
                 {
                     new SubtaskModel{ Title = "Planificar semana" },
                     new SubtaskModel{ Title = "Reunión equipo" },
@@ -829,29 +1073,41 @@
                     
                 }
             },
-            new CategoryModel { Name = "Órdenes de Trabajo", ColorClass= "naranja-melocoton", Subtasks = new List<SubtaskModel>
+            new CategoryModel { Name = "Órdenes de Trabajo",  ColorClass= "naranja-melocoton", Subtasks = new List<SubtaskModel>
                 {
                     new SubtaskModel{ Title = "ORD-13683" },
                     new SubtaskModel{ Title = "ORD-13503" },
                     new SubtaskModel{ Title = "ORD-13296" }
                 }
             },
-            new CategoryModel { Name = "Autoevaluación", ColorClass= "azul-lavanda", Subtasks = new List<SubtaskModel>
+            new CategoryModel { Name = "Autoevaluación",ColorClass= "azul-lavanda", Subtasks = new List<SubtaskModel>
                 {
                     new SubtaskModel{ Title = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional." },
                     new SubtaskModel{ Title = "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI." },
                     new SubtaskModel{ Title = "Elaboré y compartí al área de Administración las solicitudes de pago del activo fijo de las que es responsable TI." }
                 }
             },
+              new CategoryModel { Name = "Servicio a Cliente", ColorClass= "azul-morado", Subtasks = new List<SubtaskModel>
+                {
+                   new SubtaskModel{ Title = "1658 Casas y desarrollos VITA SAPI de CV", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Acordar con Lic.Gerardo cuando dara el informe"}, new SubtaskModel{ Title="Solicitar a TI descargar de CFDIS" } } },
+                   new SubtaskModel{ Title = "1235 Construcciones y desarrollo nelsan SA de CV", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Asegurar la recepción de documentos enviados por el Lic.Gerardo"}, new SubtaskModel{ Title="Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" } } }
+                }
+            },
         };
+        // Asigna el icono automáticamente usando GetIcon(Name)
+        foreach (var category in MasterCategories)
+        {
+            category.Icon = GetIcon(category.Name);
+        }
     }
-
+   
     private void CargarTareasPorFecha()
     {
         Categories = MasterCategories.Select(c => new CategoryModel
         {
             Name = c.Name,
             ColorClass = c.ColorClass,
+            Icon = c.Icon, // <-- importante, copiar el icono
             Subtasks = c.Subtasks.Select(st => new SubtaskModel
             {
                 Id = Guid.NewGuid().ToString(),

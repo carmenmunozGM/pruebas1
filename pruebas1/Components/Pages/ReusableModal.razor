@@ -1,5 +1,10 @@
 ﻿@page "/modal-optimizado"
 @using Microsoft.AspNetCore.Components.Web
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+@inject IJSRuntime JSRuntime
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script src="/js/alerts.js"></script>
 
 <button class="btn-floating" @onclick="OpenModal">➕ Crear Nuevo</button>
 
@@ -10,44 +15,40 @@
 
             <!-- Header -->
             <div class="reusable-modal-header">
-                <h2 class="modal-title">Crear Nuevo:</h2>
+                <h2 class="modal-title">Crear Nuevo</h2>
                 <span class="close-button" @onclick="CheckClose">&times;</span>
             </div>
 
             <!-- Body -->
             <div class="reusable-modal-body-wrapper">
-                <!-- Menu tipo -->
+
+                <!-- Selector de tipo -->
                 <div class="form-type-selector-horizontal">
-                    <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">
-                        🗓️ Evento
-                    </button>
-                    <button @onclick="() => SetFormType(FormTypes.Tarea)" class="@(FormType == FormTypes.Tarea ? "active" : "")">
-                        ✅ Tarea Operativa
-                    </button>
-                    <button @onclick="() => SetFormType(FormTypes.Administrativa)" class="@(FormType == FormTypes.Administrativa ? "active" : "")">
-                        💼 Tarea Administrativa
-                    </button>
+                    <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">🗓️ Evento</button>
+                    <button @onclick="() => SetFormType(FormTypes.Tarea)" class="@(FormType == FormTypes.Tarea ? "active" : "")">✅ Tarea Operativa</button>
+                    <button @onclick="() => SetFormType(FormTypes.Administrativa)" class="@(FormType == FormTypes.Administrativa ? "active" : "")">💼 Tarea Administrativa</button>
                 </div>
 
+                <!-- Formulario -->
                 <div class="form-section">
-                    <!-- Título -->
-                    <div class="form-group">
-                        <label>Título / Nombre:</label>
-                        <input type="text" class="form-control" placeholder="Ej: Reunión Semanal de Proyecto" />
+
+                    <div class="form-group-span-2">
+                        <label>Título / Nombre</label>
+                        <input type="text" class="form-control" placeholder="Ej: Reunión Semanal de Proyecto" @bind="titulo" />
                     </div>
 
-                    <!-- Prioridad y recurrencia lado a lado -->
                     <div class="form-group-inline">
                         <div class="form-group">
-                            <label>Prioridad:</label>
+                            <label>Prioridad</label>
                             <select class="form-control priority-select">
                                 <option value="alta">🔴 Alta</option>
                                 <option value="media" selected>🟡 Media</option>
                                 <option value="baja">🟢 Baja</option>
                             </select>
                         </div>
+
                         <div class="form-group">
-                            <label>Recurrencia:</label>
+                            <label>Recurrencia</label>
                             <select class="form-control">
                                 <option>No repetir</option>
                                 <option>Diario</option>
@@ -59,7 +60,6 @@
                         </div>
                     </div>
 
-                    <!-- Fecha y hora inicio/termino -->
                     <div class="form-group-inline">
                         <div class="inline-control-group">
                             <label>Fecha inicio</label>
@@ -79,60 +79,55 @@
                         </div>
                     </div>
 
-                    <!-- Ubicación -->
                     <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
-                        <label>Ubicación:</label>
+                        <label>Ubicación</label>
                         <select class="form-control" @onchange="HandleLocationChange" disabled="@(FormType != FormTypes.Evento)">
                             <option value="">Seleccione una opción</option>
-                            <option value="grupo industrial">Grupo Industrial</option>
-                            <option value="textil gitsa">Textil Gitsa</option>
-                            <option value="duramil">Duramil</option>
-                            <option value="comedor gm">Comedor GM</option>
-                            <option value="deverona">Deverona</option>
-                            <option value="el reloj">El Reloj</option>
-                            <option value="meeting">Meeting</option>
-                            <option value="virtual 1">Virtual 1</option>
-                            <option value="virtual 2">Virtual 2</option>
+                            <option>Grupo Industrial</option>
+                            <option>Textil Gitsa</option>
+                            <option>Duramil</option>
+                            <option>Comedor GM</option>
+                            <option>Deverona</option>
+                            <option>El Reloj</option>
+                            <option>Meeting</option>
+                            <option>Virtual 1</option>
+                            <option>Virtual 2</option>
                             <option value="otra">Otra...</option>
                         </select>
+
                         @if (showOtherLocationInput && FormType == FormTypes.Evento)
                         {
                             <input type="text" class="form-control mt-2" placeholder="Ingrese otra ubicación" />
                         }
                     </div>
 
-                    <!-- Participantes -->
                     <div class="form-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
-                        <label>Participantes:</label>
-                        <input type="text" class="form-control" placeholder="Asistentes, invitados..." disabled="@(FormType != FormTypes.Evento)" />
+                        <label>Participantes</label>
+                        <input type="text" class="form-control" placeholder="Asistentes o invitados..." disabled="@(FormType != FormTypes.Evento)" />
                     </div>
 
-                    <!-- Descripción y subtareas lado a lado -->
-                    <div class="form-group-inline">
-                        <div class="form-group-span-2">
-                            <label>Descripción:</label>
-                            <textarea class="form-control tall-textarea" placeholder="Escriba los detalles aquí..."></textarea>
+                    <div class="form-group-span-2">
+                        <label>Descripción</label>
+                        <textarea class="form-control tall-textarea" placeholder="Escriba los detalles aquí..." @bind="descripcion"></textarea>
+                    </div>
+
+                    <!-- Subtareas habilitadas para Tarea y Administrativa -->
+                    <div class="form-group-span-2 @(FormType == FormTypes.Evento ? "disabled-group" : "")">
+                        <label>Sub Tareas</label>
+                        <div class="input-group">
+                            <input @bind="newSubtask" @onkeydown="AddSubtaskOnEnter" class="form-control" placeholder="Añadir nueva sub-tarea" disabled="@(FormType == FormTypes.Evento)" />
+                            <button class="btn btn-secondary" @onclick="AddSubtask" disabled="@(FormType == FormTypes.Evento)">Añadir</button>
                         </div>
-                        <div class="form-group @(FormType != FormTypes.Tarea ? "disabled-group" : "")">
-                            <label>Sub Tareas:</label>
-                            <div class="input-group">
-                                <input @bind="newSubtask" @onkeydown="AddSubtaskOnEnter" class="form-control" placeholder="Añadir nueva sub-tarea" disabled="@(FormType != FormTypes.Tarea)" />
-                                <button class="btn btn-secondary" @onclick="AddSubtask" disabled="@(FormType != FormTypes.Tarea)">Añadir</button>
-                            </div>
-                            <div class="subtasks-container">
-                                <ul class="todo-list">
-                                    @if (FormType == FormTypes.Tarea)
-                                    {
-                                        @foreach (var task in subtasks)
-                                        {
-                                            <li>
-                                                <span>@task</span>
-                                                <button class="delete-button" @onclick="() => RemoveSubtask(task)">🗑️</button>
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </div>
+                        <div class="subtasks-container">
+                            <ul class="todo-list">
+                                @foreach (var task in subtasks)
+                                {
+                                    <li>
+                                        <span>@task</span>
+                                        <button class="delete-button" @onclick="() => RemoveSubtask(task)">🗑️</button>
+                                    </li>
+                                }
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -140,8 +135,8 @@
 
             <!-- Footer -->
             <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="CheckClose">Cancelar</button>
-                <button class="btn btn-primary" @onclick="CheckSave">Guardar</button>
+                <button class="btn btn-danger" @onclick="CheckClose">Cancelar</button>
+                <button class="btn btn-success" @onclick="CheckSave">Guardar</button>
             </div>
         </div>
     </div>
@@ -153,22 +148,83 @@
     public FormTypes FormType { get; set; } = FormTypes.Administrativa;
 
     private string newSubtask = string.Empty;
-    private List<string> subtasks = new List<string>();
+    private List<string> subtasks = new();
     public bool showOtherLocationInput { get; set; } = false;
 
-    private void OpenModal() => ShowModal = true;
-    private void CheckClose() => ShowModal = false;
-    private void CheckSave() => ShowModal = false;
+    private string titulo = string.Empty;
+    private string descripcion = string.Empty;
+
+    // 🔹 Evento para notificar al padre
+    [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
+
+    private void OpenModal()
+    {
+        LimpiarCampos();
+        ShowModal = true;
+    }
+
+    private void CheckClose()
+    {
+        LimpiarCampos();
+        ShowModal = false;
+    }
+
+    private async Task CheckSave()
+    {
+        if (string.IsNullOrWhiteSpace(titulo))
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Falta el título",
+                text = "Por favor escribe un título o nombre antes de guardar."
+            });
+            return;
+        }
+
+        var nuevaTarea = new TareaCreada
+        {
+            Tipo = FormType.ToString(),
+            Titulo = titulo,
+            Descripcion = descripcion,
+            Subtareas = subtasks.ToList()
+        };
+
+        await OnSave.InvokeAsync(nuevaTarea);
+
+        // 🔹 Alerta bonita
+        await JSRuntime.InvokeVoidAsync("Swal.fire", new
+        {
+            icon = "success",
+            title = $"{FormType} creada exitosamente 🎉",
+            showConfirmButton = false,
+            timer = 1800
+        });
+
+        LimpiarCampos();
+        ShowModal = false;
+    }
+
+    private void LimpiarCampos()
+    {
+        titulo = string.Empty;
+        descripcion = string.Empty;
+        newSubtask = string.Empty;
+        subtasks.Clear();
+        showOtherLocationInput = false;
+        FormType = FormTypes.Administrativa;
+    }
 
     private void SetFormType(FormTypes type)
     {
         FormType = type;
         showOtherLocationInput = false;
-        if (type != FormTypes.Tarea) subtasks.Clear();
+        if (type == FormTypes.Evento) subtasks.Clear();
         StateHasChanged();
     }
 
-    private void HandleLocationChange(ChangeEventArgs e) => showOtherLocationInput = e.Value?.ToString() == "otra";
+    private void HandleLocationChange(ChangeEventArgs e) =>
+        showOtherLocationInput = e.Value?.ToString() == "otra";
 
     private void AddSubtask()
     {
@@ -179,8 +235,21 @@
         }
     }
 
-    private void AddSubtaskOnEnter(KeyboardEventArgs e) { if (e.Key == "Enter") AddSubtask(); }
+    private void AddSubtaskOnEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") AddSubtask();
+    }
+
     private void RemoveSubtask(string taskToRemove) => subtasks.Remove(taskToRemove);
+
+    // 🔹 Modelo que enviará al padre
+    public class TareaCreada
+    {
+        public string Tipo { get; set; }
+        public string Titulo { get; set; }
+        public string Descripcion { get; set; }
+        public List<string> Subtareas { get; set; } = new();
+    }
 }
 
 <style>
@@ -188,190 +257,179 @@
     .btn-floating {
         float: right;
         margin: 10px 2% 20px 0;
-        background: linear-gradient(90deg,#0B3C4A,#3FBDE2);
-        color: white;
+        background: linear-gradient(90deg, #155d2b, #062b35); /* tonos más oscuros */
+        color: #fff;
         border: none;
         border-radius: 50px;
-        padding: 10px 20px;
-        font-weight: 500;
+        padding: 10px 22px;
+        font-weight: 600;
         font-size: 0.95rem;
         cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         transition: 0.25s;
     }
 
-        .btn-floating:hover {
-            transform: translateY(-2px);
-            background: linear-gradient(90deg,#09556b,#2aaed8);
-        }
+    .btn-floating:hover {
+        background: #374151;
+        transform: translateY(-2px);
+    }
 
     /* Modal */
     .reusable-modal-container {
         position: fixed;
         inset: 0;
-        background: rgba(15,23,42,0.55);
+        background: rgba(0,0,0,0.35);
         display: flex;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(6px);
         z-index: 1000;
     }
 
     .modal-content {
         width: 75%;
-        max-width: 900px;
-        max-height: 90vh;
-        background: #fff;
-        border-radius: 14px;
+        max-width: 950px;
+        background: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
     }
 
     .reusable-modal-header {
-        background: linear-gradient(90deg,#0B3C4A,#3FBDE2);
+        background: #F0F0F0;
         color: white;
-        padding: 12px 20px;
+        padding: 14px 22px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
     .modal-title {
-        font-size: 1.25rem;
+        font-size: 1.4rem;
         font-weight: 600;
-        margin: 0;
+        letter-spacing: 0.5px;
     }
 
     .close-button {
+        font-size: 1.8rem;
         cursor: pointer;
-        font-size: 1.6rem;
         font-weight: bold;
         transition: 0.2s;
     }
 
-        .close-button:hover {
-            color: #facc15;
-        }
+    .close-button:hover { color: #facc15; }
 
-    /* Body */
     .reusable-modal-body-wrapper {
-        padding: 10px 20px;
+        padding: 20px 25px;
         background: #f9fafb;
         flex: 1;
         overflow-y: auto;
     }
 
-    /* Menu horizontal */
+    /* Selector */
     .form-type-selector-horizontal {
         display: flex;
         gap: 10px;
-        margin-bottom: 15px;
+        justify-content: center;
+        margin-bottom: 18px;
         flex-wrap: wrap;
     }
 
-        .form-type-selector-horizontal button.active {
-            background: #0080FF;
-            color: white;
-            border-radius: 8px;
-        }
+    .form-type-selector-horizontal button {
+        flex: 1;
+        min-width: 160px;
+        padding: 8px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #334155;
+        font-weight: 500;
+        cursor: pointer;
+        transition: 0.25s;
+    }
+
+    .form-type-selector-horizontal button:hover { background: #f1f5f9; }
+
+    .form-type-selector-horizontal button.active {
+                background: #0B3C4A;
+        color: #fff;
+        border: none;
+    }
 
     /* Formulario */
     .form-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-        gap: 10px;
-    }
-
-    .form-group, .form-group-span-2 {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-group-span-2 {
-        grid-column: span 2;
+        grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+        gap: 16px;
     }
 
     label {
         font-weight: 600;
-        margin-bottom: 2px;
-        color: #475569;
+        color: #334155;
+        margin-bottom: 4px;
     }
 
     .form-control {
         border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 6px 8px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #fff;
         font-size: 0.95rem;
         transition: 0.2s;
     }
 
-        .form-control:focus {
-            border-color: #0080FF;
-            box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
-            outline: none;
-        }
-
-    .form-group-inline {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+    .form-control:focus {
+        border-color: #22C55E;
+        box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+        outline: none;
     }
 
-    .inline-control-group {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .priority-select option[value="alta"]::before {
-        content: "🔴 ";
-    }
-
-    .priority-select option[value="media"]::before {
-        content: "🟡 ";
-    }
-
-    .priority-select option[value="baja"]::before {
-        content: "🟢 ";
+    .tall-textarea {
+        min-height: 100px;
+        resize: vertical;
     }
 
     /* Subtareas */
-    .subtasks-container {
-        max-height: 180px;
-        overflow-y: auto;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 5px;
+    .input-group {
+        display: flex;
+        gap: 8px;
     }
 
-        .subtasks-container li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 6px;
-            border-bottom: 1px solid #e2e8f0;
-            word-wrap: break-word;
-        }
+    .subtasks-container {
+        margin-top: 8px;
+        max-height: 180px;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .subtasks-container li {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
 
     .delete-button {
         background: none;
         border: none;
-        cursor: pointer;
-        font-size: 1.2rem;
         color: #ef4444;
+        cursor: pointer;
+        font-size: 1.1rem;
         transition: 0.2s;
     }
 
         .delete-button:hover {
-            color: #b91c1c;
+            color: #FF0000;
         }
 
     /* Footer */
     .modal-footer {
-        background: #f1f5f9;
-        padding: 10px 20px;
+     
+        padding: 14px 22px;
         display: flex;
         justify-content: flex-end;
         gap: 10px;
@@ -379,58 +437,41 @@
     }
 
     .btn {
-        border-radius: 6px;
+        border-radius: 8px;
+        padding: 9px 18px;
         font-weight: 500;
-        padding: 8px 14px;
-        cursor: pointer;
         border: none;
-        transition: 0.25s;
+        cursor: pointer;
+        transition: 0.2s ease;
+        color: #fff;
     }
 
-    .btn-primary {
-        background: #0080FF;
-        color: white;
-    }
+   
+       * Quitar efecto gris */
+.btn-success {
+    background-color: #16a34a; /* Verde sólido */
+}
+.btn-success:hover {
+    background-color: #21A366;
+}
 
-        .btn-primary:hover {
-            background: #0080FF;
-        }
+.btn-danger {
+    background-color: #dc2626; /* Rojo sólido */
+}
+.btn-danger:hover {
+    background-color: #ef4444;
+}
 
-    .btn-secondary {
-        background: #e2e8f0;
-        color: #1e293b;
-    }
+.btn-secondary {
+    background-color: #0b3c4a;
+    color: #fff;
+}
+.btn-secondary:hover {
+    background-color: #155d74;
+}
 
-        .btn-secondary:hover {
-            background: #cbd5e1;
-        }
-
-    /* Scroll */
-    .reusable-modal-body-wrapper::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .reusable-modal-body-wrapper::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-    }
-
-    .subtasks-container::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    .subtasks-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-    }
-
-    /* Responsive */
-    @@media(max - width:768px) {
-        .form-group-inline
-
-    {
-        flex-direction: column;
-    }
-
+    .disabled-group {
+        opacity: 0.6;
+        pointer-events: none;
     }
 </style>
