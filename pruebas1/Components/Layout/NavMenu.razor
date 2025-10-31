@@ -1,5 +1,8 @@
-﻿@inject NavigationManager navigate
+﻿@using pruebas1.Components.DTOs
+@using pruebas1.Servicios
 
+@inject NavigationManager navigate
+@inject LoginService loginService
 
 <div class="menu-container sticky-top">
     <nav class="navbar navbar-expand navbar-dark navbar-custom shadow-lg">
@@ -28,13 +31,13 @@
          
             <div class="dropdown">
                 <a class="nav-link text-white dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    celestemartinez
+                  @nombreusuario
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="/perfil">Perfil</a></li>
-                    <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
+                    <li><a class="dropdown-item" href="/">Perfil</a></li>
+                    <li><a class="dropdown-item" href="/">Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Cerrar sesión</a></li>
+                    <li><a class="dropdown-item" style="cursor:pointer" @onclick="cerrarsesion">Cerrar sesión</a></li>
                 </ul>
             </div>
         </div>
@@ -59,6 +62,24 @@
         color: #0B3C4A;
         font-size: 1.2rem;
         font-weight: 500;
+    }
+
+    .navbar-custom {
+        background-color: #0D5C6D;
+    }
+
+        .navbar-custom .nav-link,
+        .navbar-custom .navbar-brand {
+            color: white;
+        }
+
+            .navbar-custom .nav-link:hover,
+            .navbar-custom .dropdown-item:hover {
+                color: #AEC8CE;
+            }
+
+    .dropdown-menu {
+        min-width: 150px;
     }
 
     /* 3. Contenedor de la píldora del Submenú */
@@ -142,6 +163,19 @@
     private void autoevaluacion()
     {
         navigate.NavigateTo("/autoevaluacion");
+    }
+     public string nombreusuario { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        UsuarioLoginDTO obj = loginService.obtenerUsuarioLogueado();
+        nombreusuario = obj.nombreusuario;
+    }
+
+    public async Task cerrarsesion()
+    {
+        loginService.cerrarSesion();
+        navigate.NavigateTo("/");
     }
     /*modaal de agregar*/
     public bool ShowModal { get; set; } = false;

@@ -1,12 +1,23 @@
 ﻿@page "/modal-optimizado"
 @using Microsoft.AspNetCore.Components.Web
+
+@using System.Globalization;
+@using Microsoft.JSInterop;
+
+@inject ReglasRecurrenciaServices RecurreciaServices
+@using pruebas1.Entidades
+@using pruebas1.Servicios
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @inject IJSRuntime JSRuntime
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="/js/alerts.js"></script>
 
-<button class="btn-floating" @onclick="OpenModal">➕ Crear Nuevo</button>
+<div class="btn-container">
+    <button class="btn-floating" @onclick="@OpenModal">➕ Crear Nuevo</button>
+</div>
+
 
 @if (ShowModal)
 {
@@ -15,7 +26,7 @@
 
             <!-- Header -->
             <div class="reusable-modal-header">
-                <h2 class="modal-title">Crear Nuevo</h2>
+                <h2 class="modal-title">📝Crear Nuevo</h2>
                 <span class="close-button" @onclick="CheckClose">&times;</span>
             </div>
 
@@ -24,9 +35,9 @@
 
                 <!-- Selector de tipo -->
                 <div class="form-type-selector-horizontal">
-                    <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">🗓️ Evento</button>
                     <button @onclick="() => SetFormType(FormTypes.Tarea)" class="@(FormType == FormTypes.Tarea ? "active" : "")">✅ Tarea Operativa</button>
                     <button @onclick="() => SetFormType(FormTypes.Administrativa)" class="@(FormType == FormTypes.Administrativa ? "active" : "")">💼 Tarea Administrativa</button>
+                    <button @onclick="() => SetFormType(FormTypes.Evento)" class="@(FormType == FormTypes.Evento ? "active" : "")">🗓️ Evento- TA</button>
                 </div>
 
                 <!-- Formulario -->
@@ -40,22 +51,35 @@
                     <div class="form-group-inline">
                         <div class="form-group">
                             <label>Prioridad</label>
-                            <select class="form-control priority-select">
-                                <option value="alta">🔴 Alta</option>
-                                <option value="media" selected>🟡 Media</option>
-                                <option value="baja">🟢 Baja</option>
+                            <select class="form-control priority-select" @bind="selectedPrioridadId">
+                                @if (prioridadesDisponibles == null || !prioridadesDisponibles.Any())
+                                {
+                                    <option disabled>Cargando...</option>
+                                }
+                                else
+                                {
+                                    @foreach (var p in prioridadesDisponibles)
+                                    {
+                                        <option value="@p.Id">@p.Titulo</option>
+                                    }
+                                }
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label>Recurrencia</label>
-                            <select class="form-control">
-                                <option>No repetir</option>
-                                <option>Diario</option>
-                                <option>Semanal</option>
-                                <option>Mensual</option>
-                                <option>Quincenal</option>
-                                <option>Anual</option>
+                            <select class="form-control" @bind="selectedFrecuenciaId">
+                                @if (frecuencias == null || !frecuencias.Any())
+                                {
+                                    <option disabled>Cargando...</option>
+                                }
+                                else
+                                {
+                                    @foreach (var f in frecuencias)
+                                    {
+                                        <option value="@f.Id">@f.Descripcion</option>
+                                    }
+                                }
                             </select>
                         </div>
                     </div>
@@ -63,15 +87,18 @@
                     <div class="form-group-inline">
                         <div class="inline-control-group">
                             <label>Fecha inicio</label>
-                            <input type="date" class="form-control" />
+                            <InputDate @bind-Value="fechaInicio" class="form-control" />
+
                         </div>
+
                         <div class="inline-control-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
                             <label>Hora inicio</label>
                             <input type="time" class="form-control" disabled="@(FormType != FormTypes.Evento)" />
                         </div>
                         <div class="inline-control-group">
                             <label>Fecha término</label>
-                            <input type="date" class="form-control" />
+                            <input type="text" class="form-control" placeholder="dd/mm/yyyy"
+                                   @bind="fechaTerminoTexto" />
                         </div>
                         <div class="inline-control-group @(FormType != FormTypes.Evento ? "disabled-group" : "")">
                             <label>Hora término</label>
@@ -142,11 +169,21 @@
     </div>
 }
 
+
 @code {
+    private List<FrecuenciaRecurrencia> frecuencias = new();
+    private List<Prioridad> prioridadesDisponibles = new();
+    private List<PlantillaReglaRecurrencia> plantillas = new();
+    private int? selectedPrioridadId;
+    private int? selectedFrecuenciaId;
+
+    var culture = new CultureInfo("es-ES");
+    CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
+
     private bool ShowModal { get; set; } = false;
     public enum FormTypes { Evento, Tarea, Administrativa }
     public FormTypes FormType { get; set; } = FormTypes.Administrativa;
-
     private string newSubtask = string.Empty;
     private List<string> subtasks = new();
     public bool showOtherLocationInput { get; set; } = false;
@@ -154,7 +191,7 @@
     private string titulo = string.Empty;
     private string descripcion = string.Empty;
 
-    // 🔹 Evento para notificar al padre
+    // Evento para notificar al padre
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
 
     private void OpenModal()
@@ -168,7 +205,28 @@
         LimpiarCampos();
         ShowModal = false;
     }
+    private DateTime fechaInicio = DateTime.Now;
+    private DateTime fechaTermino = DateTime.Now;
 
+    private string fechaInicioTexto
+    {
+        get => fechaInicio.ToString("dd/MM/yyyy");
+        set
+        {
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt))
+                fechaInicio = dt;
+        }
+    }
+
+    private string fechaTerminoTexto
+    {
+        get => fechaTermino.ToString("dd/MM/yyyy");
+        set
+        {
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt))
+                fechaTermino = dt;
+        }
+    }
     private async Task CheckSave()
     {
         if (string.IsNullOrWhiteSpace(titulo))
@@ -192,7 +250,6 @@
 
         await OnSave.InvokeAsync(nuevaTarea);
 
-        // 🔹 Alerta bonita
         await JSRuntime.InvokeVoidAsync("Swal.fire", new
         {
             icon = "success",
@@ -213,6 +270,8 @@
         subtasks.Clear();
         showOtherLocationInput = false;
         FormType = FormTypes.Administrativa;
+        selectedPrioridadId = null;
+        selectedFrecuenciaId = null;
     }
 
     private void SetFormType(FormTypes type)
@@ -242,7 +301,7 @@
 
     private void RemoveSubtask(string taskToRemove) => subtasks.Remove(taskToRemove);
 
-    // 🔹 Modelo que enviará al padre
+    // Modelo que enviará al padre
     public class TareaCreada
     {
         public string Tipo { get; set; }
@@ -250,12 +309,33 @@
         public string Descripcion { get; set; }
         public List<string> Subtareas { get; set; } = new();
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        prioridadesDisponibles = await RecurreciaServices.GetPrioridad();
+        frecuencias = await RecurreciaServices.GetFrecuencia();
+
+        Console.WriteLine($"Prioridades: {prioridadesDisponibles.Count}");
+        foreach (var p in prioridadesDisponibles) Console.WriteLine(p.Titulo);
+
+        Console.WriteLine($"Frecuencias: {frecuencias.Count}");
+        foreach (var f in frecuencias) Console.WriteLine(f.Nombre);
+    }
+
+
 }
 
+
+
 <style>
+    .btn-container {
+    display: flex;
+    justify-content: flex-end; /* 🔹 Lo manda completamente a la derecha */
+    padding-right: 2%;
+}
     /* Botón flotante */
     .btn-floating {
-        float: right;
+
         margin: 10px 2% 20px 0;
         background: linear-gradient(90deg, #155d2b, #062b35); /* tonos más oscuros */
         color: #fff;
@@ -274,204 +354,240 @@
         transform: translateY(-2px);
     }
 
-    /* Modal */
+
+    /* === Contenedor principal === */
     .reusable-modal-container {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.35);
+        background: rgba(0, 0, 0, 0.45);
         display: flex;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(6px);
+        backdrop-filter: blur(5px);
         z-index: 1000;
     }
 
+    /* === Modal === */
     .modal-content {
-        width: 75%;
-        max-width: 950px;
-        background: #ffffff;
-        border-radius: 16px;
-        overflow: hidden;
+        width: 70%;
+        max-width: 900px;
+        background: #fff;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        animation: fadeIn 0.25s ease;
     }
 
+    /* === Header === */
     .reusable-modal-header {
         background: #F0F0F0;
         color: white;
-        padding: 14px 22px;
+        padding: 14px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
     .modal-title {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         font-weight: 600;
-        letter-spacing: 0.5px;
     }
 
     .close-button {
         font-size: 1.8rem;
-        cursor: pointer;
         font-weight: bold;
-        transition: 0.2s;
+        cursor: pointer;
+        transition: transform 0.2s ease, color 0.2s ease;
     }
 
-    .close-button:hover { color: #facc15; }
+        .close-button:hover {
+            color: #facc15;
+            transform: rotate(90deg);
+        }
 
+    /* === Cuerpo === */
     .reusable-modal-body-wrapper {
-        padding: 20px 25px;
-        background: #f9fafb;
+        padding: 18px 22px;
+        background: #f8fafc;
         flex: 1;
         overflow-y: auto;
     }
 
-    /* Selector */
+    /* === Selector de tipo === */
     .form-type-selector-horizontal {
         display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-bottom: 18px;
-        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 14px;
+        justify-content: space-around;
     }
 
-    .form-type-selector-horizontal button {
-        flex: 1;
-        min-width: 160px;
-        padding: 8px 14px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        background: #fff;
-        color: #334155;
-        font-weight: 500;
-        cursor: pointer;
-        transition: 0.25s;
-    }
+        .form-type-selector-horizontal button {
+            flex: 1;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            font-weight: 500;
+            font-size: 0.92rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
 
-    .form-type-selector-horizontal button:hover { background: #f1f5f9; }
+            .form-type-selector-horizontal button:hover {
+                background: #f1f5f9;
+            }
 
-    .form-type-selector-horizontal button.active {
-                background: #0B3C4A;
-        color: #fff;
-        border: none;
-    }
+            .form-type-selector-horizontal button.active {
+                background: #0b3c4a;
+                color: #fff;
+                border: none;
+                box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+            }
 
-    /* Formulario */
+    /* === Formulario === */
     .form-section {
         display: grid;
-        grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
     }
 
     label {
         font-weight: 600;
-        color: #334155;
-        margin-bottom: 4px;
+        font-size: 0.9rem;
+        color: #374151;
+        margin-bottom: 2px;
     }
 
     .form-control {
         border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        padding: 8px 10px;
-        background: #fff;
-        font-size: 0.95rem;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 0.9rem;
+        width: 100%;
         transition: 0.2s;
     }
 
-    .form-control:focus {
-        border-color: #22C55E;
-        box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
-        outline: none;
-    }
+        .form-control:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+            outline: none;
+        }
 
     .tall-textarea {
-        min-height: 100px;
+        min-height: 90px;
         resize: vertical;
     }
 
-    /* Subtareas */
-    .input-group {
+    /* === Grupos === */
+    .form-group-inline {
         display: flex;
         gap: 8px;
     }
 
+    .inline-control-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* === Subtareas === */
+    .input-group {
+        display: flex;
+        gap: 6px;
+    }
+
     .subtasks-container {
-        margin-top: 8px;
-        max-height: 180px;
+        margin-top: 6px;
+        max-height: 160px;
         overflow-y: auto;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
         background: #fff;
     }
 
-    .subtasks-container li {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 8px;
-        border-bottom: 1px solid #f1f5f9;
-    }
+        .subtasks-container ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .subtasks-container li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
 
     .delete-button {
         background: none;
         border: none;
-        color: #ef4444;
+        color: #dc2626;
         cursor: pointer;
         font-size: 1.1rem;
         transition: 0.2s;
     }
 
         .delete-button:hover {
-            color: #FF0000;
+            color: #ef4444;
         }
 
-    /* Footer */
+    /* === Footer === */
     .modal-footer {
-     
-        padding: 14px 22px;
+        padding: 12px 20px;
+        background: #f1f5f9;
+        border-top: 1px solid #e5e7eb;
         display: flex;
         justify-content: flex-end;
         gap: 10px;
-        border-top: 1px solid #e2e8f0;
     }
 
+    /* === Botones === */
     .btn {
-        border-radius: 8px;
-        padding: 9px 18px;
+        border-radius: 6px;
+        padding: 8px 16px;
         font-weight: 500;
+        font-size: 0.9rem;
         border: none;
         cursor: pointer;
-        transition: 0.2s ease;
         color: #fff;
+        transition: all 0.2s ease;
     }
 
-   
-       * Quitar efecto gris */
-.btn-success {
-    background-color: #16a34a; /* Verde sólido */
-}
-.btn-success:hover {
-    background-color: #21A366;
-}
+    .btn-success {
+        background-color: #16a34a;
+    }
 
-.btn-danger {
-    background-color: #dc2626; /* Rojo sólido */
-}
-.btn-danger:hover {
-    background-color: #ef4444;
-}
+        .btn-success:hover {
+            background-color: #15803d;
+        }
 
-.btn-secondary {
-    background-color: #0b3c4a;
-    color: #fff;
-}
-.btn-secondary:hover {
-    background-color: #155d74;
-}
+    .btn-danger {
+        background-color: #dc2626;
+    }
 
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+    .btn-secondary {
+        background-color: #0b3c4a;
+    }
+
+        .btn-secondary:hover {
+            background-color: #134e64;
+        }
+
+    /* === Estados deshabilitados === */
     .disabled-group {
         opacity: 0.6;
         pointer-events: none;
     }
+
+    /* === Animación === */
+   
 </style>
