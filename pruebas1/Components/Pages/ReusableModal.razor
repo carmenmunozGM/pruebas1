@@ -31,7 +31,7 @@
                 <div class="activity-type-selector">
                     <button @onclick="() => SetFormType(FormTypes.Administrativa)"
                             class="@(FormType == FormTypes.Administrativa ? "type-btn active-type-btn" : "type-btn")">
-                        💼 Tarea Administrativa
+                        ✅ Tarea
                     </button>
                     <button @onclick="() => SetFormType(FormTypes.Evento)"
                             class="@(FormType == FormTypes.Evento ? "type-btn active-type-btn" : "type-btn")">
@@ -82,31 +82,30 @@
 
                     <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>🗓️ Fecha</label>
+                            <label>🗓️ Fecha Inicio (dd/mm/aaaa)</label>
                             <InputDate @bind-Value="NuevaFecha"
                                        class="form-input date-control"
                                        Culture="@(new CultureInfo("es-MX"))" />
                         </div>
 
-                        <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field" : "")">
+                        <div class="form-control-group">
                             <label>Hora Inicio</label>
-                            <InputDate @bind-Value="FechaSeleccionada" TValue="DateTime" class="form-input time-control" disabled="@(FormType != FormTypes.Evento)" />
-
+                            @* Se mantiene InputDate para la hora, pero se recomienda usar InputTime si Blazor lo soporta bien o input type="time" *@
+                            <input type="time" class="form-input time-control" />
                         </div>
 
                         <div class="form-control-group">
-                            <label>Fecha Término</label>
-                            <input type="text" class="form-input" placeholder="dd/mm/yyy"
-                                   @bind="fechaTerminoTexto" />
+                            <label>🗓️ Fecha Inicio (dd/mm/aaaa)</label>
+                            <input type="text" class="form-input" placeholder="dd/mm/yyyy" @bind="fechaTerminoTexto" />
                         </div>
 
-                        <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field" : "")">
+                        <div class="form-control-group">
                             <label>Hora Término</label>
-                            <input type="time" class="form-input time-control" disabled="@(FormType != FormTypes.Evento)" />
+                            <input type="time" class="form-input time-control" />
                         </div>
                     </div>
 
-                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field" : "")">
+                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>Ubicación</label>
                         <select class="form-input" @onchange="HandleLocationChange" disabled="@(FormType != FormTypes.Evento)">
                             <option value="">Seleccione una opción</option>
@@ -128,7 +127,7 @@
                         }
                     </div>
 
-                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field" : "")">
+                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>Participantes</label>
                         <input type="text" class="form-input" placeholder="Nombre o correo de asistentes..." disabled="@(FormType != FormTypes.Evento)" />
                     </div>
@@ -335,16 +334,16 @@
     }
 }
 <style>
-    /* === Colores Base === */
+    /* === Paleta de Colores Nueva (Azul y Amarillo/Naranja) === */
     :root {
-        --color-primary: #0b3c4a; /* Azul marino/verdoso oscuro (para fondo/botones principales) */
-        --color-secondary: #0a9396; /* Verde azulado brillante (para acentos) */
-        --color-success: #16a34a; /* Verde para éxito */
-        --color-danger: #dc2626; /* Rojo para cancelar/peligro */
-        --color-background-light: #f8fafc; /* Gris muy claro para el cuerpo */
-        --color-border: #e2e8f0; /* Borde suave */
-        --color-text-dark: #334155; /* Texto oscuro */
-        --color-text-light: #64748b; /* Texto secundario */
+        --color-primary: #0077b6; /* Azul Oscuro (Para Header, Botones principales) */
+        --color-secondary: #C6E9F0; /* Amarillo/Dorado (Para Acentos y Activo) */
+        --color-success: #28a745; /* Verde para éxito (Guardar) */
+        --color-danger: #dc3545; /* Rojo para cancelar */
+        --color-background-light: #f8f9fa; /* Gris muy claro para el cuerpo */
+        --color-border: #ced4da; /* Borde suave */
+        --color-text-dark: #343a40; /* Texto oscuro */
+        --color-text-light: #6c757d; /* Texto secundario */
     }
 
     /* === Botón Flotante === */
@@ -357,11 +356,11 @@
     .action-button-floating {
         margin: 10px 2% 20px 0;
         background-color: var(--color-secondary);
-        color: #fff;
+        color: var(--color-primary); /* Texto oscuro en el botón amarillo */
         border: none;
         border-radius: 50px;
         padding: 12px 24px;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
@@ -369,9 +368,10 @@
     }
 
         .action-button-floating:hover {
-            background-color: #00b4d8; /* Un poco más claro */
+       
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+            border-block-color:black;
         }
 
     /* === Contenedor principal del Modal (Fondo Oscuro) === */
@@ -384,20 +384,20 @@
         justify-content: center;
         backdrop-filter: blur(4px);
         z-index: 1000;
-        padding: 20px; /* Padding para móviles */
+        padding: 20px;
     }
 
     /* === Tarjeta Modal === */
     .task-modal-card {
         width: 95%;
-        max-width: 950px; /* Aumentado para mejor visualización de 4 columnas */
+        max-width: 950px;
         background: #fff;
-        border-radius: 16px; /* Borde más suave */
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
         overflow: hidden;
-        animation: scaleIn 0.3s ease-out; /* Animación más "animalica" */
+        animation: scaleIn 0.3s ease-out;
         max-height: 90vh;
     }
 
@@ -441,7 +441,7 @@
     }
 
         .close-btn:hover {
-            color: #ff99c8; /* Color suave para hover */
+            color: var(--color-secondary); /* Color suave para hover */
             transform: rotate(90deg) scale(1.1);
             opacity: 1;
         }
@@ -459,7 +459,7 @@
         display: flex;
         gap: 10px;
         margin-bottom: 20px;
-        background: #e2e8f0; /* Fondo sutil para el selector */
+        background: #e9ecef; /* Fondo sutil para el selector */
         padding: 5px;
         border-radius: 10px;
     }
@@ -479,7 +479,7 @@
     }
 
         .type-btn:hover {
-            background: #cbd5e1; /* Gris de hover */
+            background: #dcdcdc; /* Gris de hover */
         }
 
     .active-type-btn {
@@ -493,7 +493,7 @@
     /* === Estructura del Formulario (Grid) === */
     .main-form-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4 columnas para escritorio */
+        grid-template-columns: repeat(4, 1fr);
         gap: 15px;
     }
 
@@ -508,10 +508,13 @@
         gap: 15px;
     }
 
+    .btn btn-secondary-action{
+
+    }
     /* Responsive Grid */
     @@media (max-width: 1024px) {
         .main-form-grid, .date-time-group {
-            grid-template-columns: repeat(2, 1fr); /* 2 columnas en tablet */
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .col-span-2 {
@@ -521,7 +524,7 @@
 
     @@media (max-width: 600px) {
         .main-form-grid, .date-time-group {
-            grid-template-columns: 1fr; /* 1 columna en móvil */
+            grid-template-columns: 1fr;
         }
     }
 
@@ -549,8 +552,8 @@
     }
 
         .form-input:focus {
-            border-color: var(--color-secondary);
-            box-shadow: 0 0 0 2px rgba(10, 147, 150, 0.3); /* Sombra de acento */
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(0, 119, 182, 0.3); /* Sombra de acento */
             outline: none;
         }
 
@@ -563,16 +566,22 @@
         margin-top: 8px;
     }
 
-    /* === Estado Deshabilitado === */
+    /* === Estado Deshabilitado (Solo para ubicacion/participantes en Tarea) === */
     .disabled-field {
+        /* Mantiene el estilo de opacidad para Sub Tareas en Eventos */
         opacity: 0.45;
         pointer-events: none;
         user-select: none;
     }
 
-        .disabled-field label {
-            color: var(--color-text-light);
-        }
+    /* NUEVO: Mantener campos de Evento deshabilitados si no es Evento */
+    .disabled-field-if-tarea {
+        /* Usa la clase 'disabled-field' para Ubicación y Participantes si es Tarea */
+        opacity: 0.45;
+        pointer-events: none;
+        user-select: none;
+    }
+
 
     /* === Checklist / Subtareas === */
     .input-with-button-group {
@@ -646,8 +655,8 @@
     }
 
         .btn-primary-action:hover {
-            background-color: #15803d;
-            box-shadow: 0 2px 5px rgba(22, 163, 74, 0.3);
+            background-color: #1e7e34;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
         }
 
     .btn-secondary-action {
@@ -655,7 +664,7 @@
     }
 
         .btn-secondary-action:hover {
-            background-color: #b91c1c;
+            background-color: #bd2130;
         }
 
     .btn-add {
@@ -665,6 +674,6 @@
     }
 
         .btn-add:hover {
-            background-color: #134e64;
+            background-color: #005f99;
         }
 </style>

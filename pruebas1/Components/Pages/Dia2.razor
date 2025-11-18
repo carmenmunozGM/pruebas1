@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/dia2"
 @using System.Linq
 @using System.Globalization
 @inject NavigationManager navigate
@@ -49,9 +49,9 @@
             </div>
 
         </div>
-        <div class="modal-button-container"> <ReusableModal OnSave="AgregarTarea" /> </div>
+        
     </div>
-
+    <div class="modal-button-container"> <ReusableModal OnSave="AgregarTarea" /> </div>
     <br />
 
     @if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
@@ -126,9 +126,7 @@
                                                             <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
                                                             <span class="subtask-text">@($"Objetivo de {s2.Title}")</span>
                                                             <div class="subtask-actions">
-                                                                <button class="icon-btn edit" title="Modificar fecha" @onclick="() => OpenModificarModal(tareasCat, st)">
-                                                                    <i class="bi bi-calendar"></i>
-                                                                </button>
+                                                                
                                                                 <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditInnerModal(tareasCat, st, s2)">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
@@ -281,15 +279,33 @@
                             {
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone && cat.Name != "Autoevaluación" ? "done" : "")">
-                                        @if (cat.Name.Trim() != "Órdenes de Trabajo")
+                                        @if (cat.Name.Trim() == "Autoevaluación")
+                                        {
+                                            <select @bind="st.Estado" class="auto-select">
+                                                <option value="">--</option>
+                                                <option value="No realicé">No realicé</option>
+                                                <option value="Sí realicé">Sí realicé</option>
+                                                <option value="Día inhábil">Día inhábil</option>
+                                                <option value="Permiso">Permiso</option>
+                                                <option value="Falta">Falta</option>
+                                                <option value="Vacaciones">Vacaciones</option>
+                                                <option value="Incapacidad">Incapacidad</option>
+                                            </select>
+                                        }
+                                        else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
                                             <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(cat, st)" />
                                         }
+
                                         <span class="subtask-text">@st.Title</span>
+                                        
+
                                         @if (st.IsDone)
                                         {
                                             <small class="done-text">Hecho</small>
                                         }
+                                       
+                                        
                                         @if (cat.Name.Trim() == "Tareas")
                                         {
                                             <div class="subtask-actions">
@@ -370,6 +386,84 @@
 </div>
 
 
+<!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
+@if (ShowModificarFechaModal)
+{
+    <div class="modal-overlay" @onclick="CerrarModificarModal">
+        <div class="modal-card" @onclick:stopPropagation="true">
+            <h2 class="modal-title">
+                <i class="bi bi-calendar-check"></i> Modificar Fecha
+            </h2>
+
+            @if (MostrarAlerta)
+            {
+                <div class="alerta @TipoAlerta">
+                    @MensajeAlerta
+                </div>
+            }
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>📅 Fecha actual</label>
+                    <input type="text" class="form-control" value="@FechaActual.ToString("dd/MM/yyyy")" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label>🗓️ Nueva fecha</label>
+                    <input type="date" class="form-control" @bind="NuevaFecha" />
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Motivo del cambio <span style="color:red;">*</span></label>
+                    <textarea class="form-control" rows="3" placeholder="Escribe el motivo del cambio..." @bind="Motivo"></textarea>
+                </div>
+
+                @if (HistorialCambios.Any())
+                {
+                    <div class="historial">
+                        <h4>📜 Historial de cambios</h4>
+                        <div class="historial-scroll">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fecha anterior</th>
+                                    <th>Nueva fecha</th>
+                                    <th>Motivo</th>
+                                    <th>Fecha de modificación</th>
+                                </tr>
+                            </thead>
+                              
+                            <tbody>
+                              
+                                @foreach (var h in HistorialCambios.OrderByDescending(x => x.FechaModificacion))
+                                {
+                                    <tr>
+                                        <td>@h.FechaAnterior.ToString("dd/MM/yyyy")</td>
+                                        <td>@h.FechaNueva.ToString("dd/MM/yyyy")</td>
+                                        <td>@h.Motivo</td>
+                                        <td>@h.FechaModificacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                                
+                            </tbody>
+                  
+                        </table>
+                    </div>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-guardar" @onclick="GuardarCambioFecha">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+                <button class="btn-cancelar" @onclick="CerrarModificarModal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
 @if (ShowOrderModal && SelectedOrden != null)
@@ -452,78 +546,7 @@
 }
 
 
-<!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
-@if (ShowModificarFechaModal)
-{
-    <div class="modal-overlay" @onclick="CerrarModificarModal">
-        <div class="modal-card" @onclick:stopPropagation="true">
-            <h2 class="modal-title">
-                <i class="bi bi-calendar-check"></i> Modificar Fecha
-            </h2>
 
-            @if (MostrarAlerta)
-            {
-                <div class="alerta @TipoAlerta">
-                    @MensajeAlerta
-                </div>
-            }
-
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>📅 Fecha actual</label>
-                    <input type="text" class="form-control" value="@FechaActual.ToString("dd/MM/yyyy")" readonly />
-                </div>
-
-                <div class="form-group">
-                    <label>🗓️ Nueva fecha</label>
-                    <input type="date" class="form-control" @bind="NuevaFecha" />
-                </div>
-
-                <div class="form-group">
-                    <label>📝 Motivo del cambio <span style="color:red;">*</span></label>
-                    <textarea class="form-control" rows="3" placeholder="Escribe el motivo del cambio..." @bind="Motivo"></textarea>
-                </div>
-
-                @if (HistorialCambios.Any())
-                {
-                    <div class="historial">
-                        <h4>📜 Historial de cambios</h4>
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Fecha anterior</th>
-                                    <th>Nueva fecha</th>
-                                    <th>Motivo</th>
-                                    <th>Fecha de modificación</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var h in HistorialCambios.OrderByDescending(x => x.FechaModificacion))
-                                {
-                                    <tr>
-                                        <td>@h.FechaAnterior.ToString("dd/MM/yyyy")</td>
-                                        <td>@h.FechaNueva.ToString("dd/MM/yyyy")</td>
-                                        <td>@h.Motivo</td>
-                                        <td>@h.FechaModificacion.ToString("dd/MM/yyyy HH:mm")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-guardar" @onclick="GuardarCambioFecha">
-                    <i class="bi bi-save"></i> Guardar
-                </button>
-                <button class="btn-cancelar" @onclick="CerrarModificarModal">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-}
 
 
 @code {
@@ -534,7 +557,7 @@
     private string[] DiasSemana = { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
     private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
     private string FechaFormateada => FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"));
-
+  
     // ---- MODELOS PARA EL BLOQUE DE ÓRDENES (D1) ----
     public class TareaOrdenModel
     {
@@ -556,7 +579,9 @@
         public List<TareaOrdenModel> Subtasks { get; set; } = new();
         public OrdenStatus Status { get; set; } = OrdenStatus.Normal;
     }
-    //MODIFICARINICIO
+
+    //inicia DEL MODAL fechasmotivo
+    
     private bool ShowModificarFechaModal = false;
     private DateTime FechaActual { get; set; } = DateTime.Now;
     private DateTime NuevaFecha { get; set; } = DateTime.Now;
@@ -607,10 +632,7 @@
         TipoAlerta = "exito";
         MensajeAlerta = "¡Fecha modificada correctamente!";
 
-        // puedes actualizar el objeto subtarea real aquí
-        // st.FechaConclusion = NuevaFecha;
-        // st.HistorialFechas = HistorialCambios;
-
+  
         StateHasChanged();
     }
 
@@ -638,7 +660,9 @@
         public string Motivo { get; set; } = string.Empty;
         public DateTime FechaModificacion { get; set; } = DateTime.Now;
     }
-    //cerrar
+
+    //TERMINA EL MODADAL DE MODIFCAR FECHA
+
     void ToggleCollapse(CategoryModel cat)
     {
         cat.IsCollapsed = !cat.IsCollapsed;
@@ -650,7 +674,9 @@
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Title { get; set; }
         public bool IsDone { get; set; }
+        public string Estado { get; set; } = "";   // <-- NUEVA PROPIEDAD
         public List<SubtaskModel> Subtasks { get; set; } = new();
+
 
         // Campos opcionales (si se usaran)
         public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
@@ -691,7 +717,7 @@
     {
         "Órdenes de Trabajo" => "🧾",
         "Tareas " => "🗂️",
-        "Autoevalu00ación" => "⭐",
+        "Autoevaluación" => "⭐",
         "Servicio a Cliente" => "🏢",
         _ => "📋"
     };
@@ -979,15 +1005,26 @@
     }
 }
 
-        
-        
+
         <style>
-    /*MODAL INICIO D MODIFICAR*/
+    .auto-select {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        background: #fff;
+        cursor: pointer;
+        width: 130px;
+        margin-left: 8px;
+    }
+
+
+            /*MODAL DE MDOFICAR FECHA*/
     .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        width:100%;
+        width: 100%;
         height: 100%;
         background-color: rgba(0,0,0,0.5);
         display: flex;
@@ -1000,12 +1037,12 @@
     .modal-card {
         background-color: #ffffff;
         border-radius: 15px;
-        width: 980px;
-        max-width: 99%;
+        width: 850px;
+        max-width: 95%;
         padding: 25px 30px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         animation: slideUp 0.3s ease-in-out;
-        max-height: 100vh;
+        max-height: 95vh;
         overflow-y: auto;
     }
 
@@ -1117,9 +1154,18 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-/*MODAL TERMIO D MODIFICAR*/
 
+    /* Scroll para historial */
+    .historial-scroll {
+        max-height: 200px; /* ← Cambia aquí si lo quieres más grande */
+        overflow-y: auto; /* ← Activa el scroll vertical */
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+    }
 
+   
+/*fin de los esilos de modificar fecha*/
     .modal-backdrop {
         position: fixed;
         top: 0;
@@ -1173,7 +1219,7 @@
         align-items: flex-start;
     }
 
-    /* Column accents but without explicit titles */
+    /*------------- ESTILOS ORDENES DE TRABAJO--------------*/
     .column-normal {
     }
 
@@ -1253,9 +1299,15 @@
         color: #c5303a;
     }
 
+    /* ✅ NUEVO: badge para las órdenes normales (verde) */
+    .badge-normal {
+        background: rgba(34,197,94,0.1);
+        color: #166534;
+    }
+
     /* Accents for types (subtle strip on the left of column cards) */
     .column-normal .ot-card {
-        border-left: 6px solid rgba(59,130,246,0.06);
+        border-left: 6px solid rgba(34,197,94,0.4); /* ✅ Verde suave */
     }
 
     .column-soon .ot-card {
@@ -1272,6 +1324,13 @@
 
     .ot-expired {
         background: linear-gradient(180deg, rgba(255,235,238,0.6), #fff);
+    }
+
+    /* ✅ NUEVO: fondo degradado para las normales (verde) */
+    .ot-normal {
+        background: linear-gradient(180deg, rgba(240,253,244,0.6), #fff);
+    }
+
     }
 
     /* Tasks table minimal (style A) */
@@ -1314,30 +1373,6 @@
         color: #111827;
     }
 
-    /* ---------------- VARIABLES DE COLOR ---------------- */
-    .modal-button-container {
-        display: flex;
-        justify-content: flex-end; /* mueve el botón a la derecha */
-        padding: 8px; /* espacio alrededor */
-    }
-
-        .modal-button-container button {
-            background-color: #4a90e2; /* color azul */
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 20px 20px; /* tamaño más pequeño */
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-        }
-
-            .modal-button-container button:hover {
-                background-color: #357ABD; /* efecto hover */
-                transform: translateY(-2px);
-            }
-
     :root {
         --primary-color: #5b5b9e;
         --primary-dark-color: #4a4a81;
@@ -1372,28 +1407,6 @@
             opacity: 1;
             visibility: visible;
         }
-
-    .modal-content {
-        background: var(--input-bg-color);
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        width: 90%;
-        max-width: 1000px;
-        height: 90vh;
-        max-height: 800px;
-        transform: scale(0.95);
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-
-
-    .modal-container.visible .modal-content {
-        transform: scale(1);
-    }
-
     /* ---------------- botones de editar ---------------- */
     .subtask-label {
         display: flex;
@@ -1459,7 +1472,75 @@
             }
 
 
+    :root {
+        --primary-color: #5b5b9e;
+        --primary-dark-color: #4a4a81;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --background-color: #f4f7f6;
+        --text-color: #343a40;
+        --border-color: #ced4da;
+        --input-bg-color: #fff;
+        --sidebar-bg: #e9ecef;
+    }
 
+    /* ---------------- MODAL BASE ---------------- */
+    .modal-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.3s;
+    }
+
+        .modal-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    :root {
+        --primary-color: #5b5b9e;
+        --primary-dark-color: #4a4a81;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --background-color: #f4f7f6;
+        --text-color: #343a40;
+        --border-color: #ced4da;
+        --input-bg-color: #fff;
+        --sidebar-bg: #e9ecef;
+    }
+
+    /* ---------------- MODAL BASE ---------------- */
+    .modal-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.3s;
+    }
+
+        .modal-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
     /* ---------------- CABECERA ---------------- */
     .modal-header {
         padding: 1.5rem 2rem;
@@ -1555,7 +1636,6 @@
         padding-bottom: 0.5rem;
         display: block;
     }
-
     /* INPUTS Y TEXTAREA */
     .form-group label {
         display: block;
@@ -1823,6 +1903,7 @@
         border: 1px solid rgba(0,0,0,0.05);
     }
 
+
     /* PASTEL COLORS */
     .pastel-blue .block-header {
         background: linear-gradient(90deg, #FFD1DC, #FFD1DC);
@@ -2027,4 +2108,5 @@
         }
     }
 
-</style>
+
+        </style>

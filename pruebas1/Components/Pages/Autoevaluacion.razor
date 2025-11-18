@@ -1,4 +1,6 @@
 ﻿@page "/autoevaluacion"
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@inject IJSRuntime JS
 
 <br />
 
@@ -42,79 +44,101 @@
 </div>
 
 <div class="save-container">
-    <button class="btn-save" @onclick="ConfirmarGuardar" disabled="@IsLocked">Guardar Autoevaluación</button>
+    <button class="btn-save" @onclick="Guardar" disabled="@IsLocked">Guarda Autoevaluación</button>
 </div>
 
 <!-- Modal para seleccionar día/fecha -->
 @if (ShowModal)
 {
-    <div class="overlay" @onclick="CloseModal">
-        <div class="modal small" @onclick:stopPropagation="true">
-            <h3 class="modal-title">@ModalTitle</h3>
+    <div class="confirm-overlay">
+        <div class="confirm-modal" style="max-width: 400px;">
 
-            <div class="modal-body">
+            <h3 class="confirm-title">@ModalTitle</h3>
+
+            <div class="confirm-message">
+
+                @* SEMANAL *@
                 @if (IsWeekly)
                 {
-                    <label>Selecciona el día de la semana:</label>
-                    <div class="weekdays small">
-                        @for (int i = 0; i < WeekDays.Length; i++)
-                        {
-                            <label class="day-option small @(IsLocked ? "locked" : "")">
-                                <input type="radio"
-                                       name="weekday"
-                                       @bind-Value="SelectedWeekIndex"
-                                       @bind-Value:event="onchange"
-                                       disabled="@IsLocked" />
-                                <span>@WeekDays[i]</span>
-                            </label>
-                        }
+                    <p>Seleccione el día programado:</p>
+
+                    <div class="weekdays" style="display:flex; justify-content:center;">
+                        <select @bind="SelectedWeekIndex" class="select-days">
+                            @for (int j = 0; j < WeekDays.Length; j++)
+                            {
+                                <option value="@j">@WeekDays[j]</option>
+                            }
+                        </select>
                     </div>
                 }
-                else if (IsMonthly)
+
+                @* MENSUAL *@
+                @if (IsMonthly)
                 {
-                    <label>Selecciona la fecha:</label>
-                    <input type="date" @bind="SelectedDate" class="input-date small" disabled="@IsLocked" />
+                    <p>Seleccione la fecha del mes:</p>
+                    <input class="input-date" type="date" @bind="SelectedDate" />
                 }
-                else if (IsAnnual)
+
+                @* ANUAL *@
+                @if (IsAnnual)
                 {
-                    <label>Selecciona el mes y año:</label>
-                    <input type="month" @bind="SelectedDate" class="input-date small" disabled="@IsLocked" />
+                    <p>Seleccione mes y año:</p>
+                    <input class="input-date" type="month" @bind="SelectedDate" />
                 }
+
             </div>
 
-            <div class="modal-footer">
-                <button class="btn-save" @onclick="SaveModal" disabled="@IsLocked">Guardar</button>
-                <button class="btn-cancel" @onclick="CloseModal" disabled="@IsLocked">Cancelar</button>
+            <div class="confirm-footer">
+                <button class="btn-confirm" @onclick="SaveModal">Guardar</button>
+                <button class="btn-cancel" @onclick="CloseModal">Cancelar</button>
             </div>
+
         </div>
     </div>
 }
 
+
 @if (ShowConfirm)
 {
-    <div class="overlay" @onclick="() => ShowConfirm = false">
-        <div class="modal small" @onclick:stopPropagation="true">
-            <h3 class="modal-title">Confirmar Guardado</h3>
-            <div class="modal-body">
-                ¿Seguro que desea guardar la autoevaluación? Solo podrá editar hasta fin de mes.
-            </div>
-            <div class="modal-footer">
-                <button class="btn-save" @onclick="GuardarAutoevaluacionFinal">Sí, guardar</button>
+    <div class="confirm-overlay">
+        <div class="confirm-modal">
+            <h3 class="confirm-title">Confirmar guardado</h3>
+            <p class="confirm-message">¿Seguro que desea guardar la autoevaluación? Solo podrá editar hasta fin de mes.</p>
+
+            <div class="confirm-footer">
+                <button class="btn-confirm" @onclick="GuardarAutoevaluacionFinal">Sí, guardar</button>
                 <button class="btn-cancel" @onclick="() => ShowConfirm = false">Cancelar</button>
             </div>
         </div>
     </div>
 }
 
-@if (!string.IsNullOrEmpty(AlertMessage))
+@if (ShowAlertModal)
 {
-    <div class="alert-modal @AlertType">
-        <span>@AlertMessage</span>
-        <button class="close-alert" @onclick="() => AlertMessage = string.Empty">×</button>
+    <div class="alert-overlay">
+        <div class="alert-modal">
+            <h3 class="alert-title">@AlertTitle</h3>
+            <p class="alert-message">@AlertMessage</p>
+
+            <div class="alert-footer">
+                <button class="btn-confirm" @onclick="() => ShowAlertModal = false">Aceptar</button>
+            </div>
+        </div>
     </div>
 }
 
+
 @code {
+    bool ShowAlertModal = false;
+    string AlertTitle = "Mensaje";
+    string AlertMessage = "";
+    void ShowAlert(string title, string message)
+    {
+        AlertTitle = title;
+        AlertMessage = message;
+        ShowAlertModal = true;
+    }
+
     public class Tarea
     {
         public string Nombre { get; set; } = "";
@@ -141,11 +165,62 @@
 
     public string[] WeekDays = new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" };
     public int SelectedWeekIndex { get; set; } = -1;
+    int SelectedMonthDay = 0;
+    int SelectedYearMonth = 0;
+    string SelectedTime = "";
     public DateTime SelectedDate { get; set; } = DateTime.Today;
     private Tarea? CurrentTask;
 
-    private string AlertMessage { get; set; } = "";
+
     private string AlertType { get; set; } = "info";
+    async Task Guardar()
+    {
+        // VALIDACIONES
+        if (IsWeekly && SelectedWeekIndex < 0)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Falta seleccionar un día",
+                text = "Debes elegir un día de la semana antes de guardar."
+            });
+            return;
+        }
+
+        if (IsMonthly && SelectedMonthDay <= 0)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Falta seleccionar un día del mes",
+                text = "Selecciona un día del 1 al 31."
+            });
+            return;
+        }
+
+        if (IsAnnual && SelectedYearMonth <= 0)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Falta seleccionar un mes del año",
+                text = "Selecciona un mes válido antes de guardar."
+            });
+            return;
+        }
+
+        // SI TODO ESTÁ BIEN → GUARDAR
+        await JS.InvokeVoidAsync("Swal.fire", new
+        {
+            icon = "success",
+            title = "¡Guardado exitosamente!",
+            showConfirmButton = false,
+            timer = 1500
+        });
+
+        // Cerrar modal
+        ShowModal = false;
+    }
 
     protected override void OnInitialized()
     {
@@ -199,7 +274,11 @@
 
             // Si ya tiene valor, selecciona el día correcto
             SelectedWeekIndex = Array.IndexOf(WeekDays, tarea.RegistradoProgramado);
-            if (SelectedWeekIndex < 0) SelectedWeekIndex = 0; // default
+
+            // Si no tenía nada registrado, NO seleccionamos ninguno aún
+            if (SelectedWeekIndex < 0)
+                SelectedWeekIndex = -1;
+
 
             ShowModal = true;
         }
@@ -230,6 +309,13 @@
         {
             if (IsWeekly)
             {
+                // Validación correcta para evitar el error
+                if (SelectedWeekIndex < 0 || SelectedWeekIndex >= WeekDays.Length)
+                {
+                    ShowAlert("Error", "Seleccione un día antes de guardar.");
+                    return;
+                }
+
                 CurrentTask.Realizado = true;
                 CurrentTask.RegistradoProgramado = WeekDays[SelectedWeekIndex];
             }
@@ -244,8 +330,17 @@
                 CurrentTask.RegistradoProgramado = SelectedDate.ToString("MMMM yyyy");
             }
         }
+        // 🔥 REINICIAR FLAGS
+        IsWeekly = false;
+        IsMonthly = false;
+        IsAnnual = false;
+
+        // 🔥 REINICIAR EL DÍA / MES
+        SelectedWeekIndex = -1;
+
         ShowModal = false;
     }
+
 
     private void CloseModal() => ShowModal = false;
 
@@ -254,28 +349,38 @@
 
     private void ConfirmarGuardar()
     {
-        var incomplete = Bloques.SelectMany(b => b.Tareas)
-                                .Where(t => t.Realizado && string.IsNullOrEmpty(t.RegistradoProgramado))
-                                .ToList();
+        var incomplete = Bloques
+            .SelectMany(b => b.Tareas)
+            .Where(t => t.Realizado && string.IsNullOrEmpty(t.RegistradoProgramado))
+            .ToList();
+
         if (incomplete.Any())
         {
-            AlertMessage = "No puede guardar hasta que llene los días de todas las tareas marcadas";
-            AlertType = "error";
+            ShowAlert("Faltan datos", "No puede guardar hasta que programe todas las actividades marcadas.");
             return;
         }
+
+        // RESETEAR flags por seguridad
+        IsWeekly = false;
+        IsMonthly = false;
+        IsAnnual = false;
+
         ShowConfirm = true;
     }
 
+
     private void GuardarAutoevaluacionFinal()
     {
-        IsLocked = true;
+        IsLocked = true;   // 🔒 BLOQUEA TODO
         ShowConfirm = false;
-        AlertMessage = "Autoevaluación guardada correctamente. No podrá editar hasta fin de mes.";
-        AlertType = "success";
+
+        ShowAlert("Éxito", "Autoevaluación guardada correctamente. Ya no podrá editar hasta fin de mes.");
     }
+
 }
 
 <style>
+    /* -------------------- ESTILOS -------------------- */
     /* -------------------- ESTILOS -------------------- */
     .title {
         text-align: center;
@@ -283,6 +388,86 @@
         margin-bottom: 1.5rem;
         color: #333;
     }
+    /* ---- MODAL DE ALERTA ---- */
+
+
+    /* ------------ MODAL CONFIRMACIÓN / ALERTA (SweetAlert Style) ------------ */
+
+    .confirm-overlay,
+    .alert-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+
+    .confirm-modal,
+    .alert-modal {
+        background: #fff;
+        padding: 1.8rem 1.5rem;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 380px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        animation: pop 0.25s ease-out;
+        text-align: center;
+    }
+
+    .confirm-title,
+    .alert-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: .8rem;
+    }
+
+    .confirm-message,
+    .alert-message {
+        color: #555;
+        font-size: 0.95rem;
+        margin-bottom: 1.3rem;
+    }
+
+    .confirm-footer,
+    .alert-footer {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .btn-confirm {
+        background: #007bff;
+        border: none;
+        padding: 0.55rem 1rem;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+        .btn-confirm:hover {
+            background: #0056b3;
+        }
+
+    .btn-cancel {
+        background: #eee;
+        border: none;
+        padding: 0.55rem 1rem;
+        color: #333;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+        .btn-cancel:hover {
+            background: #ddd;
+        }
+
+
+
 
     .evaluation-container {
         display: flex;
@@ -481,40 +666,6 @@
         display: flex;
         justify-content: flex-end;
         gap: 0.8rem;
-    }
-
-    /* Alertas */
-    .alert-modal {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        padding: 1rem 1.2rem;
-        border-radius: 10px;
-        color: white;
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-        .alert-modal.info {
-            background: #2196f3;
-        }
-
-        .alert-modal.success {
-            background: #4caf50;
-        }
-
-        .alert-modal.error {
-            background: #f44336;
-        }
-
-    .close-alert {
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
     }
 
 </style>

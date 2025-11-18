@@ -2,7 +2,7 @@
 @using pruebas1.Components.Layout
 @using pruebas1.Servicios
 @layout LoginLayout
-@page "/login"
+@page "/"
 @inject LoginService loginService
 @inject NavigationManager navigate
 
@@ -30,7 +30,14 @@
             <InputText type="password" class="form-control custom-input" @bind-Value="@loginDTO.contraseña" />
             <ValidationMessage For="(() => loginDTO.contraseña)" />
         </div>
+        <br />
 
+        @if (!string.IsNullOrEmpty(mensajeError))
+{
+<div class="alert alert-danger" role="alert">
+        @mensajeError
+</div>
+}
 
         @if (Loading)
         {
@@ -134,25 +141,26 @@
 @code {
     public LoginDTO loginDTO { get; set; } = new LoginDTO();
     private bool Loading { get; set; } = false;
-
-    private async Task Ingresar()
+    private string mensajeError = string.Empty;
+ 
+private async Task Ingresar()
+{
+    Loading = true;
+    mensajeError = string.Empty; // Limpia mensaje anterior
+ 
+    var usuariologin = await loginService.login(loginDTO);
+ 
+    if (usuariologin.Idusuario == 0)
     {
-        Loading = true;
-           
-        var usuariologin = await loginService.login(loginDTO);
-        if (usuariologin.Idusuario == 0)
-        {
-            Loading = false;
-System.Diagnostics.Debug.WriteLine($"Usuario ID: {usuariologin.Idusuario}");
-
-
-        }
-        else
-        {
-            Loading = false;
-
-            loginService.guardarUsuario(usuariologin);
-            navigate.NavigateTo("/dia2");
-        }
+        Loading = false;
+        mensajeError = "Usuario o contraseña incorrectos.";
     }
+    else
+    {
+        Loading = false;
+        loginService.guardarUsuario(usuariologin);
+        navigate.NavigateTo("/dia2");
+    }
+}
+ 
 }
