@@ -33,11 +33,12 @@
         <br />
 
         @if (!string.IsNullOrEmpty(mensajeError))
-{
-<div class="alert alert-danger" role="alert">
-        @mensajeError
-</div>
-}
+        {
+            <div class="alert alert-danger" role="alert">
+                @mensajeError
+            </div>
+        }
+
 
         @if (Loading)
         {
@@ -142,14 +143,14 @@
     public LoginDTO loginDTO { get; set; } = new LoginDTO();
     private bool Loading { get; set; } = false;
     private string mensajeError = string.Empty;
- 
+
 private async Task Ingresar()
 {
     Loading = true;
     mensajeError = string.Empty; // Limpia mensaje anterior
- 
+
     var usuariologin = await loginService.login(loginDTO);
- 
+
     if (usuariologin.Idusuario == 0)
     {
         Loading = false;
@@ -162,5 +163,5 @@ private async Task Ingresar()
         navigate.NavigateTo("/dia2");
     }
 }
- 
+
 }

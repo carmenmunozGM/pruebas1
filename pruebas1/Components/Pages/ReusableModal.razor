@@ -5,6 +5,7 @@
 @inject ReglasRecurrenciaServices RecurreciaServices
 @using pruebas1.Entidades
 @using pruebas1.Servicios
+@using pruebas1.Components
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @inject IJSRuntime JSRuntime
 
@@ -82,11 +83,11 @@
 
                     <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>🗓️ Fecha Inicio (dd/mm/aaaa)</label>
-                            <InputDate @bind-Value="NuevaFecha"
-                                       class="form-input date-control"
-                                       Culture="@(new CultureInfo("es-MX"))" />
+                            <label>🗓️ Fecha Inicio</label>
+                            <DatePicker @bind-Value="NuevaFecha"
+                                        CssClass="form-control" />
                         </div>
+                    </div>
 
                         <div class="form-control-group">
                             <label>Hora Inicio</label>
@@ -94,10 +95,13 @@
                             <input type="time" class="form-input time-control" />
                         </div>
 
+                    <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>🗓️ Fecha Inicio (dd/mm/aaaa)</label>
-                            <input type="text" class="form-input" placeholder="dd/mm/yyyy" @bind="fechaTerminoTexto" />
+                            <label>Fecha Termino</label>
+                                <DatePicker @bind-Value="NuevaFecha"
+                                            CssClass="form-control" />
                         </div>
+                    </div>
 
                         <div class="form-control-group">
                             <label>Hora Término</label>
@@ -163,7 +167,6 @@
                 <button class="btn btn-primary-action" @onclick="CheckSave">Guardar Actividad</button>
             </div>
         </div>
-    </div>
 }
 
 @code {
@@ -502,11 +505,10 @@
     }
 
     .date-time-group {
-        grid-column: span 4;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-    }
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
 
     .btn btn-secondary-action{
 

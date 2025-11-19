@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace pruebas1.Components.DTOs
 {
-    public class UsuarioLoginDTO
+    public class LoginResponseDTO
     {
-        public int Idusuario { get; set; }
         public string Token { get; set; }
-        public string nombreusuario { get; set; }
-        public List<int> idAgendasAsignadas { get; set; }
-
+        public UsuarioLoginDTO Usuario { get; set; }
     }
+
 }

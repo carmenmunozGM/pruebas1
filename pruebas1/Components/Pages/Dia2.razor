@@ -4,6 +4,7 @@
 @inject NavigationManager navigate
 @using Microsoft.AspNetCore.Components.Web
 @using pruebas1.Entidades
+@using pruebas1.Components
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -415,12 +416,17 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>📅 Fecha actual</label>
-                    <input type="text" class="form-control" value="@FechaActual.ToString("dd/MM/yyyy")" readonly />
+                    <DatePicker @bind-Value="NuevaFecha"
+                                CssClass="date-control" />
                 </div>
 
                 <div class="form-group">
                     <label>🗓️ Nueva fecha</label>
-                    <input type="date" class="form-control" @bind="NuevaFecha" />
+                    <div class="datepicker-wrapper">
+                        <DatePicker @bind-Value="NuevaFecha"
+                                    CssClass="date-control" />
+
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -432,7 +438,6 @@
                 {
                     <div class="historial">
                         <h4>📜 Historial de cambios</h4>
-                        <div class="historial-scroll">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
@@ -442,9 +447,7 @@
                                     <th>Fecha de modificación</th>
                                 </tr>
                             </thead>
-                              
                             <tbody>
-                              
                                 @foreach (var h in HistorialCambios.OrderByDescending(x => x.FechaModificacion))
                                 {
                                     <tr>
@@ -454,11 +457,8 @@
                                         <td>@h.FechaModificacion.ToString("dd/MM/yyyy HH:mm")</td>
                                     </tr>
                                 }
-                                
                             </tbody>
-                  
                         </table>
-                    </div>
                     </div>
                 }
             </div>
@@ -555,9 +555,15 @@
     </div>
 }
 
-
-
-
+            <div class="modal-footer">
+                <button class="btn-guardar" @onclick="GuardarCambioFecha">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+                <button class="btn-cancelar" @onclick="CerrarModificarModal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+            </div>
+}
 
 @code {
     // ---- FECHAS Y CALENDARIO ----
@@ -594,7 +600,7 @@
     
     private bool ShowModificarFechaModal = false;
     private DateTime FechaActual { get; set; } = DateTime.Now;
-    private DateTime NuevaFecha { get; set; } = DateTime.Now;
+    private DateTime? NuevaFecha { get; set; } = DateTime.Now;
     private string Motivo { get; set; } = string.Empty;
 
     private List<HistorialFechaCambio> HistorialCambios { get; set; } = new();
@@ -607,7 +613,7 @@
     private void OpenModificarModal(CategoryModel cat, SubtaskModel st)
     {
         FechaActual = st?.FechaConclusion != default ? st.FechaConclusion : DateTime.Now;
-        NuevaFecha = FechaActual;
+        NuevaFecha = FechaActual ;
         Motivo = string.Empty;
 
         // si la subtarea tiene historial
@@ -631,12 +637,12 @@
         HistorialCambios.Add(new HistorialFechaCambio
         {
             FechaAnterior = FechaActual,
-            FechaNueva = NuevaFecha,
+            FechaNueva = NuevaFecha ?? DateTime.Now,
             Motivo = Motivo,
             FechaModificacion = DateTime.Now
         });
 
-        FechaActual = NuevaFecha;
+        FechaActual = NuevaFecha ?? DateTime.Now;;
 
         MostrarAlerta = true;
         TipoAlerta = "exito";
@@ -1018,6 +1024,4 @@
 
         StateHasChanged();
     }
-
-
 }

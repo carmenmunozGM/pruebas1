@@ -1,0 +1,39 @@
+﻿@inject IJSRuntime JS
+
+<input @ref="inputRef"
+       class="date-control @CssClass"
+       placeholder="dd/MM/yyyy" />
+
+@code {
+    [Parameter] public DateTime? Value { get; set; }
+    [Parameter] public EventCallback<DateTime?> ValueChanged { get; set; }
+    [Parameter] public string CssClass { get; set; } = "date-control";
+
+    private ElementReference inputRef;
+    private DotNetObjectReference<DatePicker>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+
+            await JS.InvokeVoidAsync(
+                "flatpickrInit",
+                inputRef,
+                Value,
+                dotNetRef
+            );
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnDateSelected(string isoDate)
+    {
+        var fecha = string.IsNullOrWhiteSpace(isoDate)
+            ? (DateTime?)null
+            : DateTime.Parse(isoDate);
+
+        await ValueChanged.InvokeAsync(fecha);
+    }
+}
