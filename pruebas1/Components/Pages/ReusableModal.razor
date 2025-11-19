@@ -29,8 +29,8 @@
             <div class="task-modal-body">
 
                 <div class="activity-type-selector">
-                    <button @onclick="() => SetFormType(FormTypes.Administrativa)"
-                            class="@(FormType == FormTypes.Administrativa ? "type-btn active-type-btn" : "type-btn")">
+                    <button @onclick="() => SetFormType(FormTypes.Tareas)"
+                            class="@(FormType == FormTypes.Tareas ? "type-btn active-type-btn" : "type-btn")">
                         ✅ Tarea
                     </button>
                     <button @onclick="() => SetFormType(FormTypes.Evento)"
@@ -189,8 +189,8 @@
 
     }
     // Solo dos tipos ahora: Evento y Administrativa
-    public enum FormTypes { Evento, Administrativa }
-    public FormTypes FormType { get; set; } = FormTypes.Administrativa;
+    public enum FormTypes { Evento, Tareas }
+    public FormTypes FormType { get; set; } = FormTypes.Tareas;
 
     private string newSubtask = string.Empty;
     private List<string> subtasks = new();
@@ -279,7 +279,7 @@
         newSubtask = string.Empty;
         subtasks.Clear();
         showOtherLocationInput = false;
-        FormType = FormTypes.Administrativa;
+        FormType = FormTypes.Tareas;
         selectedPrioridadId = null;
         selectedFrecuenciaId = null;
     }
@@ -336,7 +336,7 @@
 <style>
     /* === Paleta de Colores Nueva (Azul y Amarillo/Naranja) === */
     :root {
-        --color-primary: #0077b6; /* Azul Oscuro (Para Header, Botones principales) */
+      
         --color-secondary: #C6E9F0; /* Amarillo/Dorado (Para Acentos y Activo) */
         --color-success: #28a745; /* Verde para éxito (Guardar) */
         --color-danger: #dc3545; /* Rojo para cancelar */
@@ -417,7 +417,7 @@
     /* === Encabezado === */
     .task-modal-header {
         background: var(--color-primary);
-        color: #fff;
+        color: #000;
         padding: 16px 25px;
         display: flex;
         justify-content: space-between;

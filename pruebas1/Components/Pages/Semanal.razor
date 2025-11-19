@@ -44,7 +44,26 @@
                             {
                                 <ul class="subtasks">
                                     @foreach (var task in block.SubTasks)
+
                                     {
+                                        @if (task is ClientServiceTask cs)
+                                        {
+                                            <li class="task-item">
+
+                                                <input type="checkbox"
+                                                       checked="@cs.IsCompleted"
+                                                       @onchange="(e) => ToggleCompleteClient(cs, e)"
+                                                       @onclick:stopPropagation />
+
+                                                <span class="task-name @(cs.IsCompleted ? "completed" : "")"
+                                                      @onclick="() => OpenClientModal(cs)">
+                                                    @cs.CompanyName
+                                                </span>
+
+                                                <!-- SIN EDITAR / SIN BORRAR -->
+                                            </li>
+                                        }
+
                                         <li class="task-item">
                                             @if (task is BaseTask bt)
                                             {
@@ -178,6 +197,33 @@
         </div>
     </div>
 }
+@if (IsClientModalOpen && SelectedClientTask != null)
+{
+    <div class="modal-backdrop" @onclick="CloseClientModal"></div>
+
+    <div class="modal-content" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h2>Detalles del Cliente</h2>
+            <button class="close-btn" @onclick="CloseClientModal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Empresa</label>
+                <p class="read-only-field">@SelectedClientTask.CompanyName</p>
+            </div>
+
+            <div class="form-group">
+                <label>Actividad</label>
+                <p class="read-only-field">@SelectedClientTask.ActivityDetail</p>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="action-btn save" @onclick="CloseClientModal">Cerrar</button>
+        </div>
+    </div>
+}
 
 <!-- Modal de Confirmación de Borrado -->
 @if (ShowConfirmDelete)
@@ -201,6 +247,20 @@
 
 @code {
     enum BlockType { AdminTask, WorkOrder, GeneralTask, SelfAssessment }
+    ClientServiceTask SelectedClientTask { get; set; }
+    bool IsClientModalOpen { get; set; } = false;
+
+    void OpenClientModal(ClientServiceTask cs)
+    {
+        SelectedClientTask = cs;
+        IsClientModalOpen = true;
+    }
+
+    void CloseClientModal()
+    {
+        SelectedClientTask = null;
+        IsClientModalOpen = false;
+    }
 
     class BaseTask
     {
@@ -235,6 +295,15 @@
         public List<object> SubTasks { get; set; } = new();
         public string Color { get; set; } = "#fff";
         public bool IsExpanded { get; set; } = false;
+    }
+    async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
+    {
+        if (e.Value is bool b)
+            cs.IsCompleted = b;
+
+        await ShowTemporaryToastAsync(
+            cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada"
+        );
     }
 
     class DayColumn
@@ -303,8 +372,40 @@
         autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Confirmé con el personal de TI, al menos 2 veces al día, las actividades programadas de acuerdo con su programa de trabajo.", ParentBlock = autoBlock });
         day.Blocks.Add(autoBlock);
 
-    
+        // Servicio al cliente
+        var sertoBlock = new Block { Title = "Servicio al Clinte", Color = "#D7D1DD" };
+        sertoBlock.SubTasks.Add(new ClientServiceTask
+        {
+            CompanyName = "1658 Casas y Desarrollos VITA SAPI de CV",
+            ActivityDetail = "Revisión semanal de incidencias y seguimiento de pendientes",
+            ParentBlock = sertoBlock
+        });
+        sertoBlock.SubTasks.Add(new ClientServiceTask
+        {
+            CompanyName = "235 Construcciones y Desarrollo Nelsan SA de CV",
+            ActivityDetail = "Verificación de avances y comunicación con responsable de sitio",
+            ParentBlock = sertoBlock
+        });
+        sertoBlock.SubTasks.Add(new ClientServiceTask
+        {
+            CompanyName = "GRUPO MENDI",
+            ActivityDetail = "Revisión general y retroalimentación de actividades",
+            ParentBlock = sertoBlock
+        });
+
+        day.Blocks.Add(sertoBlock);
+
+
         return day;
+    }
+
+    class ClientServiceTask
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string CompanyName { get; set; }
+        public string ActivityDetail { get; set; }
+        public bool IsCompleted { get; set; }
+        public Block ParentBlock { get; set; }
     }
 
     string GetModalTitle()
