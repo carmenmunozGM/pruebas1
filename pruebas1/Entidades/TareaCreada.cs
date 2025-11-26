@@ -27,6 +27,10 @@ namespace pruebas1.Entidades
         public string? Ubicacion { get; set; }
         public string? Participantes { get; set; }
 
+        // 🔥 CAMPOS REQUERIDOS POR LA API
+        public int IdAgenda { get; set; }
+        public int IdCreador { get; set; }
+        public int IdResponsable { get; set; }
     }
     public class SubtaskModel
     {

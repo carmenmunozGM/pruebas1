@@ -1,4 +1,19 @@
-﻿.auto-select {
+﻿
+:root {
+    --primary-color: #5b5b9e;
+    --primary-dark-color: #4a4a81;
+    --secondary-color: #6c757d;
+    --success-color: #16a085;
+    --danger-color: #dc3545;
+    --background-color: #f4f7f6;
+    --text-color: #343a40;
+    --border-color: #ced4da;
+    --input-bg-color: #fff;
+    --sidebar-bg: #e9ecef;
+    --suceso-color: #000;
+}
+
+.auto-select {
     padding: 4px 6px;
     font-size: 0.8rem;
     border-radius: 6px;
@@ -8,6 +23,25 @@
     width: 130px;
     margin-left: 8px;
 }
+/*ESTILO DEL EDITAR */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1040;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+}
+
 /*aqui esta el estilo de los iconos del bloque de tareas*/
 .tag-evento {
     background: #007bff;
@@ -27,8 +61,6 @@
     margin-right: 5px;
 }
 /*AQUI TERMINA*/
-
-/*MODAL DE MDOFICAR FECHA*/
 /*MODAL DE MDOFICAR FECHA*/
 .modal-overlay {
     position: fixed;
@@ -56,11 +88,11 @@
     overflow-y: auto;
 }
 
-.modal-title {
+.fecha-title {
     margin-bottom: 20px;
     text-align: center;
     font-size: 1.5rem;
-    color: #333;
+    color: #000;
 }
 
 .form-group {
@@ -176,6 +208,7 @@
 }
 
 /*fin de los esilos de modificar fecha*/
+
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -188,17 +221,10 @@
     align-items: center;
 }
 
-.modal-container {
-    background: white;
-    padding: 20px;
-    width: 420px;
-    border-radius: 8px;
 
-}
 
 .form-group {
     margin-bottom: 12px;
-   
 }
 
 .modal-buttons {
@@ -343,7 +369,6 @@
     background: linear-gradient(180deg, rgba(240,253,244,0.6), #fff);
 }
 
-}
 
 /* Tasks table minimal (style A) */
 .tasks-table-minimal {
@@ -385,40 +410,8 @@
     color: #111827;
 }
 
-:root {
-    --primary-color: #5b5b9e;
-    --primary-dark-color: #4a4a81;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --background-color: #f4f7f6;
-    --text-color: #343a40;
-    --border-color: #ced4da;
-    --input-bg-color: #fff;
-    --sidebar-bg: #e9ecef;
-}
 
-/* ---------------- MODAL BASE ---------------- */
-.modal-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: 0.3s;
-}
 
-    .modal-container.visible {
-        opacity: 1;
-        visibility: visible;
-    }
 /* ---------------- botones de editar ---------------- */
 .subtask-label {
     display: flex;
@@ -483,251 +476,237 @@
             border-color: #c0392b;
         }
 
+/* ------------------------------------------------ */
+/* ------------------------------------------------ */
+/*        MODAL SUAVE MINIMALISTA (RESPONSIVE)      */
+/* ------------------------------------------------ */
 
-:root {
-    --primary-color: #5b5b9e;
-    --primary-dark-color: #4a4a81;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --background-color: #f4f7f6;
-    --text-color: #343a40;
-    --border-color: #ced4da;
-    --input-bg-color: #fff;
-    --sidebar-bg: #e9ecef;
-}
-
-/* ---------------- MODAL BASE ---------------- */
 .modal-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
     opacity: 0;
-    visibility: hidden;
-    transition: 0.3s;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 9999;
 }
 
     .modal-container.visible {
         opacity: 1;
-        visibility: visible;
+        pointer-events: auto;
     }
 
-:root {
-    --primary-color: #5b5b9e;
-    --primary-dark-color: #4a4a81;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --background-color: #f4f7f6;
-    --text-color: #343a40;
-    --border-color: #ced4da;
-    --input-bg-color: #fff;
-    --sidebar-bg: #e9ecef;
-}
-
-/* ---------------- MODAL BASE ---------------- */
-.modal-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
+/* MODAL MÁS PEQUEÑO */
+.modal-content {
+    background: #ffffff;
+    width: 90%;
+    max-width: 650px; /* más pequeño */
+    height: 80vh; /* más compacto */
+    border-radius: 14px;
+    overflow: hidden;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: 0.3s;
+    flex-direction: column;
+    box-shadow: 0 8px 35px rgba(0,0,0,0.12);
+    animation: fadeUp .25s ease;
 }
 
-    .modal-container.visible {
-        opacity: 1;
-        visibility: visible;
+/* Animación suave */
+@keyframes fadeUp {
+    from {
+        transform: translateY(25px);
+        opacity: 0;
     }
-/* ---------------- CABECERA ---------------- */
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ------------------------------------------------ */
+/*                     HEADER                       */
+/* ------------------------------------------------ */
+
 .modal-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.4rem;
+    background: #fff; /* color suave */
+    border-bottom: 1px solid #e0e0e0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 10px; /* evita desborde */
+    flex-wrap: wrap; /* RESPONSIVE */
 }
 
 .modal-title {
-    font-size: 1.75rem;
-    color: var(--primary-color);
     margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #fff;
+    flex: 1;
+    min-width: 200px; /* evita cortes */
+    word-break: break-word; /* si se hace muy largo */
 }
 
 .close-button {
-    font-size: 2.5rem;
-    color: var(--secondary-color);
+    font-size: 1.6rem;
     cursor: pointer;
+    color: #666;
+    transition: .2s;
 }
 
     .close-button:hover {
-        color: var(--danger-color);
+        color: #c0392b;
     }
 
-/* ---------------- CUERPO ---------------- */
+/* ------------------------------------------------ */
+/*                     BODY                         */
+/* ------------------------------------------------ */
+
 .modal-body-wrapper {
-    flex-grow: 1;
-    display: flex;
-    overflow: hidden;
-    background-color: var(--background-color);
-}
-
-.form-type-selector {
-    flex-shrink: 0;
-    width: 220px;
     padding: 1.5rem;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+    background: #ffffff;
 }
-
-    .form-type-selector button {
-        padding: 0.8rem 1rem;
-        border: none;
-        background: transparent;
-        color: var(--text-color);
-        font-weight: 500;
-        border-radius: 6px;
-        text-align: left;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-        .form-type-selector button:hover {
-            background: #dee2e6;
-        }
-
-        .form-type-selector button.active {
-            background: var(--primary-color);
-            color: #fff;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
 
 .form-section-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
 .form-section {
     display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 1.5rem 2rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
 }
 
 .form-group-span-2 {
-    grid-column: 1 / -1;
+    grid-column: span 2;
 }
 
 .section-label {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--primary-dark-color);
-    margin-bottom: 0.75rem !important;
-    border-bottom: 1px dashed var(--border-color);
-    padding-bottom: 0.5rem;
-    display: block;
-}
-/* INPUTS Y TEXTAREA */
-.form-group label {
-    display: block;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-    color: var(--text-color);
+    color: #7a7a7a;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 2px;
 }
 
-.form-control {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1rem;
-    background: var(--input-bg-color);
+/* ------------------------------------------------ */
+/*                TABLA DE TAREAS                   */
+/* ------------------------------------------------ */
+
+.tasks-table-minimal {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-    .form-control:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.2rem rgba(91,91,158,0.25);
+.tasks-header {
+    background: #f2f2f2;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #333;
+    display: grid;
+    grid-template-columns: 1.3fr 2fr 0.5fr;
+}
+
+.tasks-row {
+    background: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e8e8e8;
+    display: grid;
+    grid-template-columns: 1.3fr 2fr 0.5fr;
+    transition: background .2s ease;
+}
+
+    .tasks-row:hover {
+        background: #f7f7f7;
     }
 
-.tall-textarea {
-    min-height: 120px;
-    resize: vertical;
+.col-name {
+    font-weight: 600;
+    color: #2e2e2e;
 }
 
-.mt-2 {
-    margin-top: 0.5rem;
+.col-desc {
+    color: #555;
 }
 
-
-/* SUBTAREAS */
-.todo-list {
-    list-style: none;
-    padding: 0;
-    margin-top: 1rem;
+.col-adv {
+    text-align: center;
+    font-weight: 600;
+    color: #444;
 }
 
-    .todo-list li {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.4rem;
-        padding: 0.6rem 1rem;
-        background: var(--input-bg-color);
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-    }
+/* ------------------------------------------------ */
+/*                     FOOTER                       */
+/* ------------------------------------------------ */
 
-    .todo-list input[type="checkbox"] {
-        width: 1.1rem;
-        height: 1.1rem;
-        flex-shrink: 0;
-    }
-
-.delete-button {
-    background: none;
-    border: none;
-    color: #861B2D;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-}
-
-    .delete-button:hover {
-        color: var(--danger-color);
-    }
-
-/* MODAL FOOTER */
 .modal-footer {
-    padding: 1rem 2rem;
-    border-top: 1px solid var(--border-color);
+    padding: 0.9rem 1.4rem;
+    background: #fafafa;
+    border-top: 1px solid #e6e6e6;
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
 }
+
+/* Botón simple y elegante */
+.btn.small {
+    background: #eaeaea;
+    color: #333;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background .2s ease;
+}
+
+    .btn.small:hover {
+        background: #dcdcdc;
+    }
+
+/* ------------------------------------------------ */
+/*            RESPONSIVE PARA MOVILES               */
+/* ------------------------------------------------ */
+
+@media (max-width: 700px) {
+    .form-section {
+        grid-template-columns: 1fr; /* 1 columna */
+    }
+
+    .form-group-span-2 {
+        grid-column: span 1;
+    }
+
+    .modal-content {
+        height: 88vh;
+        max-width: 95%;
+    }
+
+    .modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+    }
+}
+
+
 
 /* ALERTAS */
 .alert-backdrop {
@@ -810,7 +789,6 @@
 /* 🔹 Cada bloque individual (card de categoría) */
 .block-card {
     width: 100%;
-    
     border-radius: 14px;
     background-color: #fff;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
@@ -915,27 +893,8 @@
     border: 1px solid rgba(0,0,0,0.05);
 }
 
+/*fin del uso de los bloques */
 
-/* PASTEL COLORS */
-.pastel-blue .block-header {
-    background: linear-gradient(90deg, #FFD1DC, #FFD1DC);
-}
-
-.pastel-green .block-header {
-    background: linear-gradient(90deg, #eaf8f1, #f8fefb);
-}
-
-.pastel-mauve .block-header {
-    background: linear-gradient(90deg, #f3edf7, #fbf8fd);
-}
-
-.pastel-beige .block-header {
-    background: linear-gradient(90deg, #f9f6f2, #fefdfb);
-}
-
-.pastel-teal .block-header {
-    background: linear-gradient(90deg, #e9f9f7, #f7fdfd);
-}
 
 /* FECHA Y CALENDARIO */
 .top-bar-container {
@@ -1070,7 +1029,7 @@
 }
 
 /* MEDIA QUERIES ---------------- */
-@@media (max-width:992px) {
+@media (max-width:992px) {
     .modal-content {
         max-width: 700px;
         height: 95vh;
@@ -1097,25 +1056,87 @@
             padding: 0.6rem 0.8rem;
         }
 
-    .form-section-wrapper {
-        padding: 1.5rem;
-    }
-
-    .form-section {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .form-group-span-2 {
-        grid-column: auto;
-    }
-
-    .form-group-inline {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .inline-control-group {
-        min-width: 100%;
+    .auto-select {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        background: #fff;
+        cursor: pointer;
+        width: 130px;
+        margin-left: 8px;
     }
 }
+
+.subtask-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    /* Color de acento para la casilla de verificación marcada */
+    accent-color: var(--suceso-color); /* Utiliza la variable --color-success, que es verde (#2ecc71) */
+    cursor: pointer;
+}
+/* Dentro de la Sección 4: Estilos de Bloque de Categoría (Reemplaza el .btn-floating existente) */
+
+.btn-floating {
+    /* Eliminamos las propiedades de width, height, padding, font-size que chocaban */
+    background-color: transparent; /* Fondo transparente por defecto */
+    color: var(--color-primary); /* Color de la flecha: Azul oscuro */
+    border: 2px solid var(--color-info); /* Borde azul claro/celeste (usando --color-info) */
+    border-radius: 50%; /* Hace que el borde sea circular */
+    width: 28px; /* Ancho fijo para el círculo */
+    height: 28px; /* Alto fijo para el círculo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer; /* Indica que es clickeable */
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s; /* Transiciones suaves */
+    font-size: 0.9rem; /* Tamaño de la flecha dentro del círculo */
+    padding: 0; /* Elimina padding interno que podría deformar el círculo */
+}
+
+    .btn-floating:hover {
+        background-color: var(--color-info); /* Fondo azul claro al pasar el ratón */
+        color: white; /* Flecha blanca al pasar el ratón */
+        border-color: var(--color-info); /* Mantiene el borde o lo refuerza */
+    }
+
+    /* Opcional: Si necesitas controlar el ícono dentro del botón de forma más granular */
+    .btn-floating .collapse-icon {
+        line-height: 1; /* Asegura que el ícono esté centrado verticalmente */
+    }
+
+/* Ajuste para el contenedor header-right para asegurar el espacio */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Asegura un buen espacio entre el badge y el botón */
+}
+/* 🔥 Scroll universal para cualquier bloque con mucho contenido */
+.block-scroll {
+    max-height: 300px; /* 👉 Ajusta altura del scroll aquí */
+    overflow-y: auto; /* Activa scroll vertical */
+    overflow-x: hidden; /* Bloquea scroll horizontal */
+    padding-right: 6px; /* Evita que la barra tape texto */
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #bfbfbf #f1f1f1;
+}
+
+    /* Estilo del scroll (Chrome, Edge, Safari) */
+    .block-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .block-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 8px;
+    }
+
+    .block-scroll::-webkit-scrollbar-thumb {
+        background: #bfbfbf;
+        border-radius: 8px;
+    }
+
+        .block-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9d9d9d;
+        }

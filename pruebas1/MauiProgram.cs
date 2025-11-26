@@ -26,6 +26,7 @@ namespace pruebas1
             builder.Services.AddScoped<LoginService>();
             builder.Services.AddScoped<SalasEmService>();
             builder.Services.AddScoped<AgendaService>();
+            builder.Services.AddSingleton<UsuarioState>();
 
 
             builder.Services.AddMauiBlazorWebView();

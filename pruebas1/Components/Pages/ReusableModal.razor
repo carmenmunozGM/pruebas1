@@ -7,6 +7,8 @@
 @inject ReglasRecurrenciaServices RecurreciaServices
 @inject IJSRuntime JSRuntime
 
+@inject UsuarioState UsuarioState
+
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
@@ -292,8 +294,14 @@
             Ubicacion = ubicacionSeleccionada,
             Participantes = participantes,
             Subtareas = subtasks.ToList(),
-            IsEvento = FormType == FormTypes.Evento
+            IsEvento = FormType == FormTypes.Evento,
+
+            // 🔥 Datos correctos del usuario
+            IdAgenda = UsuarioState.IdAgenda,
+            IdCreador = UsuarioState.IdUsuario,
+            IdResponsable = UsuarioState.IdUsuario
         };
+
 
         bool ok = false;
 

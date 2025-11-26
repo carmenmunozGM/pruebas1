@@ -5,6 +5,7 @@
 @page "/"
 @inject LoginService loginService
 @inject NavigationManager navigate
+@inject UsuarioState UsuarioState
 
 
 <EditForm Model="@loginDTO" OnValidSubmit="Ingresar" class="login-container">
