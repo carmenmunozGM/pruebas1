@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace pruebas1.Components
 {
-    public class EventoApi
+    public class EventoApiDTO
     {
         public int id { get; set; }
         public int idAgenda { get; set; }

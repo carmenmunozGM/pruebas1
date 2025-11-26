@@ -1,4 +1,5 @@
-﻿using System;
+﻿using pruebas1.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +26,9 @@ namespace pruebas1.Entidades
 
         // 🔥 Extras
         public string? Ubicacion { get; set; }
-        public string? Participantes { get; set; }
+        public string Participantes { get; set; }
+
+
 
         // 🔥 CAMPOS REQUERIDOS POR LA API
         public int IdAgenda { get; set; }
@@ -52,7 +55,10 @@ namespace pruebas1.Entidades
         public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
         public DateTime? FechaSolicitud { get; set; } = null;
         public string Ubicacion { get; set; } = string.Empty;
-        public string Participantes { get; set; } = string.Empty;
+        //public string Participantes { get; set; } = string.Empty;
+        public string Participantes { get; set; }
+
+
         public string Autor { get; set; } = string.Empty;
         public string Cliente { get; set; } = string.Empty;
         public string Objetivo { get; set; } = string.Empty;

@@ -45,7 +45,8 @@
         </ul>
     </div>
 </div>
-
+<br />
+<br />
 @if (ShowModal)
 {
     <div class="overlay" @onclick="CloseModal">
@@ -57,8 +58,10 @@
                     <tr>
                         <th>Actividad</th>
                         <th>Fecha</th>
+                        <th>Modificar fecha</th>
+                        <th>Minuta</th>
                         <th>Observaciones</th>
-                        
+
                     </tr>
                 </thead>
                 <tbody>
@@ -70,9 +73,15 @@
                                 <input type="date" @bind="actividad.Fecha" class="input-date small" />
                             </td>
                             <td>
+                                <button class="btn-calendar" @onclick="() => AbrirSubModal(actividad)" aria-label="Modificar fecha">📅</button>
+                            </td>
+                            <td>
+                                <input type="checkbox" @bind="actividad.Completado" />
+                            </td>
+                            <td>
                                 <textarea @bind="actividad.Observaciones" class="input-text"></textarea>
                             </td>
-                           
+
                         </tr>
                     }
                 </tbody>
@@ -82,10 +91,29 @@
                 <button class="btn-save" @onclick="GuardarActividades">Guardar</button>
                 <button class="btn-cancel" @onclick="CloseModal">Cerrar</button>
             </div>
+
+            @if (ShowSubModal)
+            {
+                <div class="submodal-overlay" @onclick="CerrarSubModal">
+                    <div class="submodal" @onclick:stopPropagation="true">
+                        <h4>Modificar fecha para: @ActividadSeleccionada?.Nombre</h4>
+
+                        <label>Selecciona nueva fecha:</label>
+                        <input type="date" @bind="NuevaFecha" class="input-date" />
+
+                        <label>Motivo del cambio:</label>
+                        <textarea @bind="MotivoCambio" class="input-text"></textarea>
+
+                        <div class="modal-footer">
+                            <button class="btn-save" @onclick="GuardarCambioFecha">Guardar</button>
+                            <button class="btn-cancel" @onclick="CerrarSubModal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 }
-
 @code {
     public class Actividad
     {
@@ -110,10 +138,13 @@
 
     private List<GrupoCliente> GruposClientes { get; set; } = new();
     private List<Empresa> ClientesIndividuales { get; set; } = new();
-
+    bool ShowSubModal = false;
     private bool ShowModal { get; set; }
     private string ModalEmpresa { get; set; } = string.Empty;
     private List<Actividad> Actividades { get; set; } = new();
+    Actividad ActividadSeleccionada;
+    DateTime NuevaFecha = DateTime.Today;
+    string MotivoCambio = "";
 
     protected override void OnInitialized()
     {
@@ -250,13 +281,167 @@
         ShowModal = false;
     }
 
-    private void CloseModal()
+    /*private void CloseModal()
     {
         ShowModal = false;
+    }*/
+    void AbrirSubModal(Actividad actividad)
+    {
+        ActividadSeleccionada = actividad;
+        NuevaFecha = actividad.Fecha;
+        MotivoCambio = "";
+        ShowSubModal = true;
     }
+
+    void CerrarSubModal()
+    {
+        ShowSubModal = false;
+        ActividadSeleccionada = null;
+    }
+    void CloseModal()
+    {
+        ShowModal = false;
+        ShowSubModal = false;
+        ActividadSeleccionada = null;
+    }
+    void GuardarCambioFecha()
+    {
+        if (ActividadSeleccionada != null)
+        {
+            ActividadSeleccionada.Fecha = NuevaFecha;
+            // Aquí puedes manejar MotivoCambio: guardarlo o mostrarlo si quieres
+
+            ShowSubModal = false;
+            ActividadSeleccionada = null;
+        }
+    }
+
 }
 
-<style>
+<style scoped>
+    .column:nth-child(1) {
+        background: #e3f2fd;
+        border: 2px solid #90caf9;
+    }
+
+    .column:nth-child(2) {
+        background: #e8f5e9;
+        border: 2px solid #81c784;
+    }
+
+
+    .activities-table input[type="date"],
+    .activities-table textarea {
+        width: 100%;
+        font-size: 0.95rem;
+        padding: 0.4rem 0.5rem;
+        border: 1.5px solid #bdc3c7;
+        border-radius: 8px;
+        transition: border-color 0.3s;
+        font-family: inherit;
+        resize: vertical;
+    }
+
+        .activities-table input[type="date"]:focus,
+        .activities-table textarea:focus {
+            border-color: #273c75;
+            outline: none;
+            box-shadow: 0 0 8px rgba(39, 60, 117, 0.3);
+        }
+
+    .input-text {
+        min-height: 40px;
+    }
+
+    /* Botones */
+    .btn-save, .btn-cancel, .btn-calendar {
+        padding: 0.5rem 1.3rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        user-select: none;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn-save {
+        background-color: #273c75;
+        color: #fff;
+    }
+
+        .btn-save:hover {
+            background-color: #1b2861;
+        }
+
+    .btn-cancel {
+        background-color: #dcdde1;
+        color: #333;
+    }
+
+        .btn-cancel:hover {
+            background-color: #b6b8bb;
+        }
+
+    .btn-calendar {
+        background-color: #4cd137;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 8px;
+    }
+
+        .btn-calendar:hover {
+            background-color: #44bd32;
+        }
+
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    /* Footer del modal */
+    .modal-footer {
+    }
+    /* Sub-modal (modificación de fecha) */
+    .submodal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1100;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .submodal {
+        background: #fff;
+        border-radius: 14px;
+        padding: 1.8rem 2.2rem;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        animation: fadeIn 0.3s ease forwards;
+        position: relative;
+    }
+
+        .submodal h4 {
+            margin-bottom: 1rem;
+            color: #273c75;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .submodal label {
+            font-weight: 600;
+            margin-top: 0.5rem;
+            color: #555;
+        }
+
     .title {
         text-align: center;
         font-size: 1.8rem;
@@ -327,35 +512,70 @@
             }
 
     /* ✅ Modal */
+    /*.overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }*/
+
     .overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.45);
+        background: rgba(0, 0, 0, 0.45);
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Cambiado de center a flex-start */
         justify-content: center;
+        padding-top: 80px; /* Espacio para separar del nav */
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-bottom: 1rem;
         z-index: 1000;
+        overflow-y: auto;
     }
-
+    /*.modal.large {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 850px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            animation: fadeIn 0.25s ease-in-out;
+        }*/
+    /* Contenedor del modal principal centrado */
     .modal.large {
+        width: 90%;
+        max-width: 1100px;
+        max-height: 90vh; /* Máximo 90% de la altura de la ventana */
         background: #fff;
         border-radius: 14px;
-        padding: 1.5rem;
-        width: 90%;
-        max-width: 850px;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        padding: 2rem 2.5rem;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
         animation: fadeIn 0.25s ease-in-out;
+        position: relative;
+        overflow-y: auto; /* Scroll vertical interno si contenido es muy alto */
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        word-wrap: break-word; /* Para que el texto largo no se salga */
     }
 
     .modal-title {
         text-align: center;
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         color: #1a237e;
-        margin-bottom: 0.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
     }
+
 
     .activities-table {
         width: 100%;
@@ -416,16 +636,39 @@
         color: white;
     }
 
-    .btn-save:hover {
-        background: #0056b3;
-    }
+        .btn-save:hover {
+            background: #0056b3;
+        }
 
     .btn-cancel {
         background: #f1f1f1;
         color: #333;
     }
 
-    .btn-cancel:hover {
-        background: #e0e0e0;
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+    /* Para pantallas pequeñas, mejorar padding y tamaño */
+    @@media (max-width: 600px) {
+        .modal.large {
+            width: 95%;
+            max-width: 95%;
+            padding: 1.5rem 1.8rem;
+            font-size: 0.9rem;
+            max-height: 85vh;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
     }
+
+    /* Para pantallas muy pequeñas en altura */
+    @@media (max-height: 500px) {
+        .overlay {
+            align-items: flex-start;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
 </style>

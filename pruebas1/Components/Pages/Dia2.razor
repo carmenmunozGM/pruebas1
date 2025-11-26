@@ -7,9 +7,10 @@
 @using pruebas1.Entidades
 @using pruebas1.Components
 @using pruebas1.Servicios
-@inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
+@inject HttpClient Http
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -19,6 +20,7 @@
             <button class="calendar-btn" @onclick="DiaAnterior"><i class="bi bi-arrow-left-circle"></i></button>
             <span class="fecha-texto">@FechaFormateada</span>
             <button class="calendar-btn" @onclick="DiaSiguiente"><i class="bi bi-arrow-right-circle"></i></button>
+
 
             <div class="calendar-wrapper">
                 <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
@@ -814,6 +816,7 @@
         "Servicio a Cliente" => "🏢",
         _ => "📋"
     };
+    
 
     /*private void InitializeMasterCategoriesAsync()
     {
@@ -866,8 +869,7 @@
         // Trae tareas desde tu endpoint. AgendaService.ObtenerTareasApi debe llamar a:
         // GET https://redgm.site:9096/tareas?idAgenda=3
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-        //var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
-
+    
         var tareasCategory = new CategoryModel
         {
             Name = "Tareas",
@@ -894,24 +896,12 @@
                 }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
         };
-        // 🔥🔥🔥 AÑADIR EVENTOS AL MISMO BLOQUE DE “Tareas”
-        /*tareasCategory.Subtasks.AddRange(
-            eventosApi.Select(ev => new SubtaskModel
-            {
-                Title = ev.titulo,
-                Descripcion = ev.descripcion ?? string.Empty,
-                IsDone = ev.completada,
-                Tipo = "Evento",   // MUY IMPORTANTE
-                FechaInicio = ev.fechaInicio,
-                FechaFin = ev.fechaFin,
-                Autor = ev.id.ToString(),
-                Subtasks = new List<SubtaskModel>() // los eventos no tienen subtareas
-            })
-        );*/
+  
+      
 
         // Añadimos el bloque dinámico y mantenemos los demás bloques estáticos como tenías
         MasterCategories.Add(tareasCategory);
-
+       
         MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new List<SubtaskModel>() });
@@ -924,6 +914,10 @@
         CargarTareasPorFecha();
     }
 
+    private async Task Recargar()
+    {
+        await InitializeMasterCategoriesAsync();
+    }
 
     private void CargarTareasPorFecha()
     {
