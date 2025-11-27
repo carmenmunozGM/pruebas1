@@ -5,7 +5,9 @@
 @page "/"
 @inject LoginService loginService
 @inject NavigationManager navigate
-@inject UsuarioState UsuarioState
+@inject UsuarioService UsuarioService   
+@inject AgendaService AgendaService
+
 
 
 <EditForm Model="@loginDTO" OnValidSubmit="Ingresar" class="login-container">
@@ -145,14 +147,14 @@
     private bool Loading { get; set; } = false;
     private string mensajeError = string.Empty;
 
-private async Task Ingresar()
+/*private async Task Ingresar()
 {
     Loading = true;
     mensajeError = string.Empty; // Limpia mensaje anterior
 
     var usuariologin = await loginService.login(loginDTO);
 
-    if (usuariologin.Idusuario == 0)
+    if (usuariologin.IdUsuario == 0)
     {
         Loading = false;
         mensajeError = "Usuario o contraseña incorrectos.";
@@ -163,6 +165,34 @@ private async Task Ingresar()
         loginService.guardarUsuario(usuariologin);
         navigate.NavigateTo("/dia2");
     }
-}
+}*/
+    private async Task Ingresar()
+    {
+        Loading = true;
+        mensajeError = string.Empty;
+
+        // Llamamos al servicio de login
+        var usuario = await loginService.login(loginDTO);
+
+        if (usuario.IdUsuario == 0)
+        {
+            Loading = false;
+            mensajeError = "Usuario o contraseña incorrectos.";
+            return;
+        }
+
+        // 1️⃣ Obtener agendas asignadas del usuario
+        usuario.IdAgendasAsignadas = await AgendaService.ObtenerAgendaAsignadasAsync();
+
+        // 2️⃣ Guardar usuario COMPLETO (con token y agendas) en LoginService
+        loginService.guardarUsuario(usuario);
+
+        Loading = false;
+
+        // 3️⃣ Redirigir a la página principal después de login
+        navigate.NavigateTo("/dia2");
+    }
+
+
 
 }

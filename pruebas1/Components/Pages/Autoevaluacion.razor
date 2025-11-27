@@ -1,6 +1,8 @@
 ﻿@page "/autoevaluacion"
+@using pruebas1.Servicios
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @inject IJSRuntime JS
+@inject AutoevaluacionService AutoService
 
 <br />
 
@@ -226,43 +228,33 @@
         ShowModal = false;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Bloques = new List<Bloque>
+        Bloques = new List<Bloque>();
+
+        // ← cargar autoevaluación desde tu API
+        await CargarAutoevaluacionAsync();
+    }
+    private async Task CargarAutoevaluacionAsync()
+    {
+        var data = await AutoService.ObtenerAutoevaluacion();
+
+        foreach (var bloqueApi in data)
         {
-            new Bloque
+            var nuevoBloque = new Bloque
             {
-                Nombre = "CONTROL ADMINISTRATIVO DEL SPEC",
-                Tareas = new List<Tarea>
+                Nombre = bloqueApi.Bloque,
+                Tareas = bloqueApi.Tareas.Select(t => new Tarea
                 {
-                    new() { Nombre = "Área limpia y funcional", Periodicidad = "Diario" },
-                    new() { Nombre = "Control de suscripciones TI", Periodicidad = "Semanal" },
-                    new() { Nombre = "Solicitudes de pago activo fijo", Periodicidad = "Mensual" },
-                    new() { Nombre = "Seguimiento a reportes de pago", Periodicidad = "Mensual" },
-                    new() { Nombre = "Entrega de informes y autoevaluaciones", Periodicidad = "Semanal" }
-                }
-            },
-            new Bloque
-            {
-                Nombre = "COMUNICACIÓN",
-                Tareas = new List<Tarea>
-                {
-                    new() { Nombre = "Confirmé actividades programadas", Periodicidad = "Diario" },
-                    new() { Nombre = "Efectué llamadas y control de asuntos pendientes", Periodicidad = "Diario" }
-                }
-            },
-            new Bloque
-            {
-                Nombre = "AGENDA",
-                Tareas = new List<Tarea>
-                {
-                    new() { Nombre = "Actualización de agenda y recados", Periodicidad = "Diario" },
-                    new() { Nombre = "Programé citas y comuniqué responsables", Periodicidad = "Diario" },
-                    new() { Nombre = "Revisión de pendientes", Periodicidad = "Semanal" },
-                    new() { Nombre = "Retroalimentación psicométrica", Periodicidad = "Anual" }
-                }
-            }
-        };
+                    Nombre = t.Tarea,
+                    Periodicidad = t.Periodicidad,
+                    Realizado = false,
+                    RegistradoProgramado = ""
+                }).ToList()
+            };
+
+            Bloques.Add(nuevoBloque);
+        }
     }
 
     private void OnCheckChanged(Tarea tarea, bool value)

@@ -213,7 +213,7 @@
     protected override async Task OnInitializedAsync()
     {
         UsuarioLoginDTO obj = loginService.obtenerUsuarioLogueado();
-        nombreusuario = obj.nombreusuario;
+        nombreusuario = obj.NombreUsuario;
     }
 
     public async Task cerrarsesion()

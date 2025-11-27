@@ -16,37 +16,29 @@ namespace pruebas1
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
-            // 👇 Establece cultura mexicana
+            // Cultura mexicana
             var cultura = new CultureInfo("es-MX");
             CultureInfo.DefaultThreadCurrentCulture = cultura;
             CultureInfo.DefaultThreadCurrentUICulture = cultura;
 
-
-            builder.Services.AddScoped<ReglasRecurrenciaServices>();
+            // Servicios
             builder.Services.AddScoped<LoginService>();
-            builder.Services.AddScoped<SalasEmService>();
             builder.Services.AddScoped<AgendaService>();
+            builder.Services.AddScoped<ReglasRecurrenciaServices>();
+            builder.Services.AddScoped<SalasEmService>();
             builder.Services.AddSingleton<UsuarioState>();
-
+            builder.Services.AddScoped<UsuarioService>();
+            builder.Services.AddScoped<AutoevaluacionService>();
 
             builder.Services.AddMauiBlazorWebView();
 
+            // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
-                var http = new HttpClient
+                return new HttpClient
                 {
                     BaseAddress = new Uri("https://redgm.site:9096/")
-                    //BaseAddress = new Uri("http://localhost:5231/")
                 };
-
-                var token = Preferences.Get("token", "");
-                if (!string.IsNullOrWhiteSpace(token))
-                {
-                    http.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                }
-
-                return http;
             });
 
 #if DEBUG
@@ -57,5 +49,4 @@ namespace pruebas1
             return builder.Build();
         }
     }
-
 }

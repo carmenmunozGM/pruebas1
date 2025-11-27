@@ -7,10 +7,11 @@
 @using pruebas1.Entidades
 @using pruebas1.Components
 @using pruebas1.Servicios
+@using static pruebas1.Servicios.AgendaService
 @inject AgendaService AgendaService
 @inject LoginService LoginService
 @inject HttpClient Http
-
+@inject UsuarioService UsuarioService
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -299,16 +300,9 @@
                                     <div class="subtask-label @(st.IsDone && cat.Name != "Autoevaluación" ? "done" : "")">
                                         @if (cat.Name.Trim() == "Autoevaluación")
                                         {
-                                            <select @bind="st.Estado" class="auto-select">
-                                                <option value="">--</option>
-                                                <option value="No realicé">No realicé</option>
-                                                <option value="Sí realicé">Sí realicé</option>
-                                                <option value="Día inhábil">Día inhábil</option>
-                                                <option value="Permiso">Permiso</option>
-                                                <option value="Falta">Falta</option>
-                                                <option value="Vacaciones">Vacaciones</option>
-                                                <option value="Incapacidad">Incapacidad</option>
-                                            </select>
+
+                                            <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(cat, st)" />
+                                        }
                                         }
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
@@ -607,7 +601,7 @@
         public List<TareaOrdenModel> Subtasks { get; set; } = new();
         public OrdenStatus Status { get; set; } = OrdenStatus.Normal;
     }
-    
+
     async Task ToggleTareaApi(TareaApi t)
     {
         t.completada = !t.completada;
@@ -631,8 +625,9 @@
     }
 
     async Task CargarTareas()
-{
-    TareasDelDia = await AgendaService.ObtenerTareasApi(3);
+    {
+        TareasDelDia = await AgendaService.ObtenerTareasApi(UsuarioService.IdAgendaUsuario);
+        //TareasDelDia = await AgendaService.ObtenerTareasApi(3);
 //Eventos = await AgendaService.ObtenerEventosApi(3);
 
     StateHasChanged();
@@ -866,10 +861,9 @@
     {
         MasterCategories = new();
 
-        // Trae tareas desde tu endpoint. AgendaService.ObtenerTareasApi debe llamar a:
-        // GET https://redgm.site:9096/tareas?idAgenda=3
-        var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-    
+        
+        var tareasApi = await AgendaService.ObtenerTareasApi(UsuarioService.IdAgendaUsuario);
+   
         var tareasCategory = new CategoryModel
         {
             Name = "Tareas",
