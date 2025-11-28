@@ -45,12 +45,10 @@
     }
 </div>
 
-
-
 <div class="save-container">
-<button class="btn-save" @onclick="ConfirmarGuardar" disabled="@IsLocked">
-    Guarda Autoevaluación
-</button>
+    <button class="btn-save" @onclick="ConfirmarGuardar" disabled="@IsLocked">
+        Guarda Autoevaluación
+    </button>
 </div>
 
 <!-- Modal para seleccionar día/fecha -->
@@ -85,6 +83,15 @@
                     <input class="input-date" type="date" @bind="SelectedDate" />
                 }
 
+                @* EVENTUAL *@
+                @if (IsEventual)
+                {
+                    <div class="modal-section">
+                        <label>Seleccione la fecha del evento:</label>
+                        <input class="input-date" type="date" @bind="SelectedDate" />
+                    </div>
+                }
+
                 @* ANUAL *@
                 @if (IsAnnual)
                 {
@@ -102,7 +109,6 @@
         </div>
     </div>
 }
-
 
 @if (ShowConfirm)
 {
@@ -168,6 +174,7 @@
     public string ModalTitle { get; set; } = string.Empty;
     public bool IsLocked { get; set; } = false;
     public bool ShowConfirm { get; set; } = false;
+    bool IsEventual = false; // NUEVO 🔥
 
     public string[] WeekDays = new[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" };
     public int SelectedWeekIndex { get; set; } = -1;
@@ -176,6 +183,7 @@
     string SelectedTime = "";
     public DateTime SelectedDate { get; set; } = DateTime.Today;
     private Tarea? CurrentTask;
+    private DateTime? FechaEventual { get; set; }
 
 
     private string AlertType { get; set; } = "info";
@@ -270,6 +278,7 @@
             SelectedDate = DateTime.Today;
             CurrentTask = null;
             ShowModal = false;
+            IsEventual = false; // asegurar reset
             return;
         }
 
@@ -279,7 +288,7 @@
 
         if (tarea.Periodicidad == "Semanal")
         {
-            IsWeekly = true; IsMonthly = false; IsAnnual = false;
+            IsWeekly = true; IsMonthly = false; IsAnnual = false; IsEventual = false;
             ModalTitle = tarea.Nombre;
 
             // Si ya tiene un día programado, cargarlo
@@ -292,18 +301,26 @@
         }
         else if (tarea.Periodicidad == "Mensual")
         {
-            IsWeekly = false; IsMonthly = true; IsAnnual = false;
+            IsWeekly = false; IsMonthly = true; IsAnnual = false; IsEventual = false;
             ModalTitle = tarea.Nombre;
             SelectedDate = DateTime.Today;
             ShowModal = true;
         }
         else if (tarea.Periodicidad == "Anual")
         {
-            IsWeekly = false; IsMonthly = false; IsAnnual = true;
+            IsWeekly = false; IsMonthly = false; IsAnnual = true; IsEventual = false;
             ModalTitle = tarea.Nombre;
             SelectedDate = DateTime.Today;
             ShowModal = true;
         }
+        else if (tarea.Periodicidad == "Eventual") // NUEVO 🔥
+        {
+            IsWeekly = false; IsMonthly = false; IsAnnual = false; IsEventual = true;
+            ModalTitle = tarea.Nombre ;
+            SelectedDate = DateTime.Today;
+            ShowModal = true;
+        }
+
         else
         {
             // Diario → marcar directo
@@ -337,12 +354,17 @@
                 CurrentTask.Realizado = true;
                 CurrentTask.RegistradoProgramado = SelectedDate.ToString("MMMM yyyy");
             }
+            else if (IsEventual) // NUEVO 🔥
+            {
+                CurrentTask.Realizado = true;
+                CurrentTask.RegistradoProgramado = SelectedDate.ToString("dd/MM/yyyy");
+            }
         }
         // 🔥 REINICIAR FLAGS
         IsWeekly = false;
         IsMonthly = false;
         IsAnnual = false;
-
+        IsEventual = false;
         // 🔥 REINICIAR EL DÍA / MES
         SelectedWeekIndex = -1;
 
@@ -350,7 +372,15 @@
     }
 
 
-    private void CloseModal() => ShowModal = false;
+    private void CloseModal()
+    {
+        // Resetear estados visuales para evitar duplicados
+        IsWeekly = false;
+        IsMonthly = false;
+        IsAnnual = false;
+        IsEventual = false;
+        ShowModal = false;
+    }
 
     private string GetTextDecoration(Tarea tarea)
         => (tarea.Realizado && !string.IsNullOrEmpty(tarea.RegistradoProgramado)) ? "subrayado" : "";
@@ -400,6 +430,7 @@
 
 
 }
+
 
 <style>
     /* -------------------- ESTILOS -------------------- */

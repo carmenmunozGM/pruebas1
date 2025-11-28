@@ -61,7 +61,6 @@
                         <th>Modificar fecha</th>
                         <th>Minuta</th>
                         <th>Observaciones</th>
-
                     </tr>
                 </thead>
                 <tbody>
@@ -70,18 +69,20 @@
                         <tr>
                             <td>@actividad.Nombre</td>
                             <td>
-                                <input type="date" @bind="actividad.Fecha" class="input-date small" />
+                                <!-- DatePicker custom: enlazamos Value / ValueChanged con DateTime? -->
+                                <DatePicker Value="actividad.Fecha"
+                                            ValueChanged="@(fecha => actividad.Fecha = fecha)"
+                                            CssClass="input-date small" />
                             </td>
                             <td>
                                 <button class="btn-calendar" @onclick="() => AbrirSubModal(actividad)" aria-label="Modificar fecha">📅</button>
                             </td>
-                            <td>
+                            <td class="check-cell">
                                 <input type="checkbox" @bind="actividad.Completado" />
                             </td>
                             <td>
                                 <textarea @bind="actividad.Observaciones" class="input-text"></textarea>
                             </td>
-
                         </tr>
                     }
                 </tbody>
@@ -98,16 +99,59 @@
                     <div class="submodal" @onclick:stopPropagation="true">
                         <h4>Modificar fecha para: @ActividadSeleccionada?.Nombre</h4>
 
-                        <label>Selecciona nueva fecha:</label>
-                        <input type="date" @bind="NuevaFecha" class="input-date" />
+                        <!-- Fecha actual (no editable) -->
+                        <label>Fecha actual (no editable):</label>
+                        <input type="date" value="@(OriginalFecha?.ToString("yyyy-MM-dd") ?? String.Empty)" disabled class="input-date" />
 
-                        <label>Motivo del cambio:</label>
+                        <!-- Nueva fecha (obligatoria) -->
+                        <label>Selecciona nueva fecha <span class="required">*</span>:</label>
+                        <DatePicker Value="NuevaFecha"
+                                    ValueChanged="@(fecha => NuevaFecha = fecha)"
+                                    CssClass="form-control" />
+
+                        @if (MostrarErrorFecha)
+                        {
+                            <div class="error-msg">La nueva fecha es obligatoria.</div>
+                        }
+
+                        <!-- Motivo del cambio (obligatorio) -->
+                        <label>Motivo del cambio <span class="required">*</span>:</label>
                         <textarea @bind="MotivoCambio" class="input-text"></textarea>
+                        @if (MostrarErrorMotivo)
+                        {
+                            <div class="error-msg">El motivo es obligatorio.</div>
+                        }
 
                         <div class="modal-footer">
                             <button class="btn-save" @onclick="GuardarCambioFecha">Guardar</button>
                             <button class="btn-cancel" @onclick="CerrarSubModal">Cancelar</button>
                         </div>
+
+                        <!-- Historial compacto con scroll -->
+                        <label style="margin-top:8px;">Historial de cambios:</label>
+                        <div class="historial-box">
+                            @if (ActividadSeleccionada?.HistorialFechas != null && ActividadSeleccionada.HistorialFechas.Any())
+                            {
+                                <ul class="historial-list">
+                                    @foreach (var h in ActividadSeleccionada.HistorialFechas.OrderByDescending(x => x.FechaMovimiento))
+                                    {
+                                        <li>
+                                            <div class="hist-row">
+                                                <div><strong>@(h.FechaMovimiento.ToString("g"))</strong></div>
+                                                <div>De: @(h.FechaAnterior?.ToString("yyyy-MM-dd") ?? "—")</div>
+                                                <div> A: @(h.FechaNueva?.ToString("yyyy-MM-dd") ?? "—")</div>
+                                                <div>Motivo: @h.Motivo</div>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="muted">No hay cambios registrados.</div>
+                            }
+                        </div>
+
                     </div>
                 </div>
             }
@@ -115,12 +159,26 @@
     </div>
 }
 @code {
+
+    // Clase para historial de cambios
+    public class CambioFecha
+    {
+        public DateTime? FechaAnterior { get; set; }
+        public DateTime? FechaNueva { get; set; }
+        public string Motivo { get; set; } = string.Empty;
+        public DateTime FechaMovimiento { get; set; } = DateTime.Now;
+    }
+
     public class Actividad
     {
         public string Nombre { get; set; } = string.Empty;
-        public DateTime Fecha { get; set; } = DateTime.Today;
+        // Fecha nullable para que no tenga valor hasta que el usuario la elija
+        public DateTime? Fecha { get; set; }
         public string Observaciones { get; set; } = string.Empty;
         public bool Completado { get; set; }
+
+        // Historial de cambios de fecha
+        public List<CambioFecha> HistorialFechas { get; set; } = new();
     }
 
     public class Empresa
@@ -143,8 +201,15 @@
     private string ModalEmpresa { get; set; } = string.Empty;
     private List<Actividad> Actividades { get; set; } = new();
     Actividad ActividadSeleccionada;
-    DateTime NuevaFecha = DateTime.Today;
+
+    // Campos para el submodal
+    private DateTime? NuevaFecha { get; set; }
+    private DateTime? OriginalFecha { get; set; }
     string MotivoCambio = "";
+
+    // Validación
+    bool MostrarErrorFecha = false;
+    bool MostrarErrorMotivo = false;
 
     protected override void OnInitialized()
     {
@@ -162,35 +227,34 @@
                         {
                             new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
                             new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                             new Actividad { Nombre = "Llenado de libros de bancos(entrada y salidas,facturación emiitda y recibida)" },
-                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                            new Actividad { Nombre = "Llenado de libros de bancos(entrada y salidas,facturación emiitda y recibida)" },
+                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
                         }
                     },
                     new Empresa
                     {
-                        Nombre = "1235 CONSTRUCCIONES Y DESARROLLLOS NELSAN SA DE CV",
+                        Nombre = "1235 CONSTRUCCIONES Y DESARROLLOS NELSAN SA DE CV",
                         Actividades = new()
                         {
-                             new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
+                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
                             new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
                         }
                     },
                     new Empresa
                     {
                         Nombre = "1395 DESARROLLOS INMOBILIARIOS JND",
-
                         Actividades = new()
                         {
-                             new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
+                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
                             new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                             new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                             new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                             new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
+                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
+                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
+                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
                         }
                     }
                 }
@@ -217,7 +281,7 @@
                             new Actividad { Nombre = "Revisión de inventario" }
                         }
                     },
-                      new Empresa
+                    new Empresa
                     {
                         Nombre = "2391 EUROPREMIOS SA DE CV",
                         Actividades = new()
@@ -281,15 +345,14 @@
         ShowModal = false;
     }
 
-    /*private void CloseModal()
-    {
-        ShowModal = false;
-    }*/
     void AbrirSubModal(Actividad actividad)
     {
         ActividadSeleccionada = actividad;
-        NuevaFecha = actividad.Fecha;
+        OriginalFecha = actividad.Fecha; // fecha actual (no editable)
+        NuevaFecha = actividad.Fecha; // prellenamos con la fecha actual por conveniencia (puedes dejar null si prefieres)
         MotivoCambio = "";
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
         ShowSubModal = true;
     }
 
@@ -297,27 +360,70 @@
     {
         ShowSubModal = false;
         ActividadSeleccionada = null;
+        NuevaFecha = null;
+        OriginalFecha = null;
+        MotivoCambio = "";
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
     }
+
     void CloseModal()
     {
         ShowModal = false;
         ShowSubModal = false;
         ActividadSeleccionada = null;
+        NuevaFecha = null;
+        OriginalFecha = null;
+        MotivoCambio = "";
     }
+
     void GuardarCambioFecha()
     {
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
+
+        // Validaciones
+        if (NuevaFecha == null)
+        {
+            MostrarErrorFecha = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(MotivoCambio))
+        {
+            MostrarErrorMotivo = true;
+        }
+
+        if (MostrarErrorFecha || MostrarErrorMotivo)
+        {
+            return; // no guardamos hasta que todo esté correcto
+        }
+
         if (ActividadSeleccionada != null)
         {
-            ActividadSeleccionada.Fecha = NuevaFecha;
-            // Aquí puedes manejar MotivoCambio: guardarlo o mostrarlo si quieres
+            // Añadimos registro al historial
+            var cambio = new CambioFecha
+            {
+                FechaAnterior = OriginalFecha,
+                FechaNueva = NuevaFecha,
+                Motivo = MotivoCambio,
+                FechaMovimiento = DateTime.Now
+            };
 
+            ActividadSeleccionada.HistorialFechas.Add(cambio);
+
+            // Actualizamos la fecha de la actividad
+            ActividadSeleccionada.Fecha = NuevaFecha;
+
+            // Cerrar modal y limpiar
             ShowSubModal = false;
             ActividadSeleccionada = null;
+            NuevaFecha = null;
+            OriginalFecha = null;
+            MotivoCambio = "";
         }
     }
 
 }
-
 <style scoped>
     .column:nth-child(1) {
         background: #e3f2fd;
@@ -420,7 +526,7 @@
         border-radius: 14px;
         padding: 1.8rem 2.2rem;
         width: 100%;
-        max-width: 450px;
+        max-width: 600px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.25);
         display: flex;
         flex-direction: column;
@@ -512,16 +618,6 @@
             }
 
     /* ✅ Modal */
-    /*.overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }*/
-
     .overlay {
         position: fixed;
         inset: 0;
@@ -536,19 +632,7 @@
         z-index: 1000;
         overflow-y: auto;
     }
-    /*.modal.large {
-            background: #fff;
-            border-radius: 14px;
-            padding: 1.5rem;
-            width: 90%;
-            max-width: 850px;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.25);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            animation: fadeIn 0.25s ease-in-out;
-        }*/
-    /* Contenedor del modal principal centrado */
+
     .modal.large {
         width: 90%;
         max-width: 1100px;
@@ -587,6 +671,7 @@
             padding: 0.6rem;
             border: 1px solid #eee;
             text-align: left;
+            vertical-align: middle;
         }
 
         .activities-table th {
@@ -594,12 +679,13 @@
             color: #333;
         }
 
-    .input-date {
+    .input-date, .form-control {
         width: 100%;
         padding: 0.4rem;
         border: 1px solid #ccc;
         border-radius: 8px;
         font-size: 0.9rem;
+        height: 38px;
     }
 
     .input-text {
@@ -648,27 +734,93 @@
         .btn-cancel:hover {
             background: #e0e0e0;
         }
+
+    /* Historial box */
+    .historial-box {
+        margin-top: 8px;
+        border: 1px solid #e6e6e6;
+        border-radius: 8px;
+        padding: 0.6rem;
+        max-height: 180px; /* límite de alto para scroll */
+        overflow-y: auto;
+        background: #fafafa;
+    }
+
+    .historial-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .hist-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        padding: 6px 4px;
+        border-bottom: 1px solid #eee;
+        font-size: 0.85rem;
+    }
+
+    .muted {
+        color: #777;
+        font-size: 0.9rem;
+        padding: 6px 4px;
+    }
+
+    .required {
+        color: #d32f2f;
+        margin-left: 4px;
+    }
+
+    .error-msg {
+        color: #d32f2f;
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+
     /* Para pantallas pequeñas, mejorar padding y tamaño */
     @@media (max-width: 600px) {
-        .modal.large {
-            width: 95%;
-            max-width: 95%;
-            padding: 1.5rem 1.8rem;
-            font-size: 0.9rem;
-            max-height: 85vh;
-        }
+        .modal.large
 
-        .modal-title {
-            font-size: 1.3rem;
-            margin-bottom: 0.8rem;
-        }
+    {
+        width: 95%;
+        max-width: 95%;
+        padding: 1.5rem 1.8rem;
+        font-size: 0.9rem;
+        max-height: 85vh;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.8rem;
+    }
+
     }
 
     /* Para pantallas muy pequeñas en altura */
     @@media (max-height: 500px) {
-        .overlay {
-            align-items: flex-start;
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
+        .overlay
+
+    {
+        align-items: flex-start;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
 </style>

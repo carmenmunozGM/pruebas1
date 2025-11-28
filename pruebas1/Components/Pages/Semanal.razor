@@ -36,9 +36,16 @@
                     {
                         <div class="list-item" style="background-color:@block.Color">
                             <div class="list-title" @onclick="() => ToggleBlock(block)">
-                                @block.Title
+                                <span>@block.Title</span>
+
+                                <span class="badge-pendientes">
+                                    @(PendingCount(block) == 0 ? "Completado" : PendingCount(block))
+                                </span>
+
+
                                 <span class="chev">@((block.IsExpanded ? "▼" : "►"))</span>
                             </div>
+
 
                             @if (block.IsExpanded)
                             {
@@ -540,6 +547,34 @@
         ShowToast = false;
         StateHasChanged();
     }
+    int PendingCount(Block block)
+    {
+        int count = 0;
+
+        foreach (var t in block.SubTasks)
+        {
+            switch (t)
+            {
+                case BaseTask bt:
+                    if (!bt.IsCompleted) count++;
+                    break;
+
+                case SelfAssessment sa:
+                    if (!sa.IsCompleted) count++;
+                    break;
+
+                case ClientServiceTask cs:
+                    if (!cs.IsCompleted) count++;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        return count;
+    }
+
 }
 
 <style>
@@ -555,6 +590,21 @@
         flex-direction: column;
         box-sizing: border-box;
         overflow: hidden;
+    }
+
+    .badge-pendientes {
+        background-color: rgba(255, 255, 255, 0.5);
+        color: #333;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        /* Corregido */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 28px; /* Tamaño perfecto */
+        height: 22px; /* Mantiene forma uniforme */
     }
 
     /* Header */
