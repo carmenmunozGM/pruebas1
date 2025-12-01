@@ -30,13 +30,40 @@
                             <td>
                                 <span class="badge @tarea.Periodicidad.ToLower()">@tarea.Periodicidad</span>
                             </td>
-                            <td class="check-cell">@tarea.RegistradoProgramado</td>
+                 <td class="check-cell"
+                        title="@string.Join(", ", FechasEventuales.Select(f => f.ToString("dd/MM/yyyy")))" >
+
+                        <div class="fechas-multiline">
+    @foreach (var linea in tarea.RegistradoProgramado.Split('\n'))
+    {
+        <div class="fecha-linea">@linea</div>
+    }
+</div>
+
+
+                    </td>
+       @* CLase  que maneja el chek del eventual y añade el boton de editar*@              
                             <td class="check-cell">
-                                <input type="checkbox"
-                                       checked="@tarea.Realizado"
-                                       @onchange="(e) => OnCheckChanged(tarea, e.Value is bool b && b)"
-                                       disabled="@IsLocked" />
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <input type="checkbox"
+                                           checked="@tarea.Realizado"
+                                           @onchange="(e) => OnCheckChanged(tarea, e.Value is bool b && b)"
+                                           disabled="@IsLocked" />
+
+                                    @* 🔥 NUEVO — BOTÓN EDITAR SOLO PARA EVENTUALES (junto al checkbox) *@
+                                   @if (tarea.Periodicidad == "Eventual"
+                                     && !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado)
+                                     && tarea.Realizado
+                                     && !IsLocked)
+{
+                                        <button class="btn-confirm" style="padding:4px 8px; font-size:12px;"
+                                                @onclick="() => EditarEventual(tarea)">
+                                            ✏️
+                                        </button>
+                                    }
+                                </div>
                             </td>
+
                         </tr>
                     }
                 </tbody>
@@ -83,14 +110,42 @@
                     <input class="input-date" type="date" @bind="SelectedDate" />
                 }
 
-                @* EVENTUAL *@
-                @if (IsEventual)
-                {
-                    <div class="modal-section">
-                        <label>Seleccione la fecha del evento:</label>
-                        <input class="input-date" type="date" @bind="SelectedDate" />
-                    </div>
-                }
+           @* EVENTUAL (AHORA SOPORTA VARIAS FECHAS - CORREGIDO) *@
+@if (IsEventual)
+{
+    <div class="modal-section">
+
+        <label>Seleccione una o varias fechas del evento:</label>
+
+        <div class="eventual-scroll">
+            @for (int i = 0; i < FechasEventuales.Count; i++)
+            {
+                var localIndex = i;
+
+                <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
+                    <input type="date"
+                           class="input-date"
+                           value="@FechasEventuales[localIndex].ToString("yyyy-MM-dd")"
+                           @onchange="(e) => OnFechaEventualChange(localIndex, e.Value?.ToString())" />
+
+                    @if (FechasEventuales.Count > 1)
+                    {
+                        <button class="btn-cancel" style="padding:6px 10px; height:38px;"
+                                @onclick="() => RemoveFechaEventual(localIndex)">
+                            ❌
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <button class="btn-confirm" style="margin-top:10px;" @onclick="AddNuevaFechaEventual">
+            ➕ Añadir nueva fecha
+        </button>
+
+    </div>
+}
+
 
                 @* ANUAL *@
                 @if (IsAnnual)
@@ -185,6 +240,14 @@
     private Tarea? CurrentTask;
     private DateTime? FechaEventual { get; set; }
 
+    // ---------- NUEVO: lista de fechas para Eventual ----------
+    public List<DateTime> FechasEventuales { get; set; } = new();
+
+
+    // ===== BACKUP PARA CANCELACIÓN =====
+    private bool BackupRealizado;
+    private string BackupRegistradoProgramado = "";
+    private List<DateTime> BackupFechasEventuales = new();
 
     private string AlertType { get; set; } = "info";
     async Task Guardar()
@@ -265,68 +328,181 @@
         }
     }
 
-    private void OnCheckChanged(Tarea tarea, bool value)
+   private void OnCheckChanged(Tarea tarea, bool value)
+{
+    if (IsLocked) return;
+
+    // ✔ SI DESMARCA → LIMPIAR TODO
+    if (!value)
     {
-        if (IsLocked) return;
+        tarea.Realizado = false;
+        tarea.RegistradoProgramado = "";
+        SelectedWeekIndex = -1;
+        SelectedDate = DateTime.Today;
+        CurrentTask = null;
+        ShowModal = false;
+        IsEventual = false; // asegurar reset
+        FechasEventuales = new List<DateTime>(); // limpiar listas de fechas
+        return;
+    }
 
-        // ✔ SI DESMARCA → LIMPIAR TODO
-        if (!value)
+    // ✔ SI MARCA → ABRIR EL MODAL SEGÚN PERIODICIDAD O SOLO MARCAR SI YA ESTÁ PROGRAMADA (Eventual)
+    CurrentTask = tarea;
+
+    ////// 🔥 BACKUP DE DATOS PARA CANCELAR
+    BackupRealizado = tarea.Realizado;
+    BackupRegistradoProgramado = tarea.RegistradoProgramado;
+    try
+    {
+        BackupFechasEventuales = FechasEventuales?.ToList() ?? new List<DateTime>();
+        if (BackupFechasEventuales == null || !BackupFechasEventuales.Any())
         {
-            tarea.Realizado = false;
-            tarea.RegistradoProgramado = "";
-            SelectedWeekIndex = -1;
-            SelectedDate = DateTime.Today;
-            CurrentTask = null;
-            ShowModal = false;
-            IsEventual = false; // asegurar reset
-            return;
-        }
-
-        // ✔ SI MARCA → ABRIR EL MODAL SEGÚN PERIODICIDAD
-        CurrentTask = tarea;
-        tarea.Realizado = true;
-
-        if (tarea.Periodicidad == "Semanal")
-        {
-            IsWeekly = true; IsMonthly = false; IsAnnual = false; IsEventual = false;
-            ModalTitle = tarea.Nombre;
-
-            // Si ya tiene un día programado, cargarlo
-            SelectedWeekIndex = Array.IndexOf(WeekDays, tarea.RegistradoProgramado);
-
-            if (SelectedWeekIndex < 0)
-                SelectedWeekIndex = -1;
-
-            ShowModal = true;
-        }
-        else if (tarea.Periodicidad == "Mensual")
-        {
-            IsWeekly = false; IsMonthly = true; IsAnnual = false; IsEventual = false;
-            ModalTitle = tarea.Nombre;
-            SelectedDate = DateTime.Today;
-            ShowModal = true;
-        }
-        else if (tarea.Periodicidad == "Anual")
-        {
-            IsWeekly = false; IsMonthly = false; IsAnnual = true; IsEventual = false;
-            ModalTitle = tarea.Nombre;
-            SelectedDate = DateTime.Today;
-            ShowModal = true;
-        }
-        else if (tarea.Periodicidad == "Eventual") // NUEVO 🔥
-        {
-            IsWeekly = false; IsMonthly = false; IsAnnual = false; IsEventual = true;
-            ModalTitle = tarea.Nombre ;
-            SelectedDate = DateTime.Today;
-            ShowModal = true;
-        }
-
-        else
-        {
-            // Diario → marcar directo
-            tarea.RegistradoProgramado = "Registrado";
+            // intentar parsear desde tarea.RegistradoProgramado
+            var tmp = new List<DateTime>();
+            if (!string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+            {
+                foreach (var linea in tarea.RegistradoProgramado.Split('\n'))
+                {
+                    foreach (var fechaStr in linea.Split(',', StringSplitOptions.TrimEntries))
+                    {
+                        if (DateTime.TryParseExact(fechaStr, "dd/MM/yyyy",
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.None, out var dt))
+                        {
+                            tmp.Add(dt);
+                        }
+                    }
+                }
+            }
+            BackupFechasEventuales = tmp;
         }
     }
+    catch
+    {
+        BackupFechasEventuales = new List<DateTime>();
+    }
+
+    // marca la tarea
+    tarea.Realizado = true;
+
+    // ***** NUEVO: SI ES EVENTUAL Y YA TIENE FECHAS → NO ABRIR MODAL *****
+    if (tarea.Periodicidad == "Eventual" &&
+        !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+    {
+        // Solo marcar, NO abrir modal
+        return;
+    }
+
+    // === el resto: abrir modal según periodicidad ===
+    if (tarea.Periodicidad == "Semanal")
+    {
+        IsWeekly = true; IsMonthly = false; IsAnnual = false; IsEventual = false;
+        ModalTitle = tarea.Nombre;
+
+        // Si ya tiene un día programado, cargarlo
+        SelectedWeekIndex = Array.IndexOf(WeekDays, tarea.RegistradoProgramado);
+
+        if (SelectedWeekIndex < 0)
+            SelectedWeekIndex = -1;
+
+        ShowModal = true;
+    }
+    else if (tarea.Periodicidad == "Mensual")
+    {
+        IsWeekly = false; IsMonthly = true; IsAnnual = false; IsEventual = false;
+        ModalTitle = tarea.Nombre;
+        SelectedDate = DateTime.Today;
+        ShowModal = true;
+    }
+    else if (tarea.Periodicidad == "Anual")
+    {
+        IsWeekly = false; IsMonthly = false; IsAnnual = true; IsEventual = false;
+        ModalTitle = tarea.Nombre;
+        SelectedDate = DateTime.Today;
+        ShowModal = true;
+    }
+    else if (tarea.Periodicidad == "Eventual") // NUEVO 🔥 (primera vez que marcas o si no tiene fechas)
+    {
+        IsWeekly = false; IsMonthly = false; IsAnnual = false; IsEventual = true;
+        ModalTitle = tarea.Nombre;
+        SelectedDate = DateTime.Today;
+        ShowModal = true;
+
+        // Inicializa la lista de fechas eventuales
+        FechasEventuales = new List<DateTime>();
+        // Si ya hay algo programado en la tarea (string con comas y saltos de línea) intentar parsearlo
+        if (!string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+        {
+            try
+            {
+                var partes = tarea.RegistradoProgramado.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                foreach (var linea in partes)
+                {
+                    foreach (var p in linea.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        if (DateTime.TryParseExact(p, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+                        {
+                            FechasEventuales.Add(dt);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // ignorar parse errors
+            }
+        }
+
+        // si no se recuperó nada -> agregar la fecha por defecto
+        if (!FechasEventuales.Any()) FechasEventuales.Add(DateTime.Today);
+    }
+    else
+    {
+        // Diario → marcar directo
+        tarea.RegistradoProgramado = "Registrado";
+    }
+}
+
+//Metodo para modificar las fechas de las taras eventuales
+private void EditarEventual(Tarea tarea)
+{
+    CurrentTask = tarea;
+
+    BackupRealizado = tarea.Realizado;
+    BackupRegistradoProgramado = tarea.RegistradoProgramado;
+
+    BackupFechasEventuales = new List<DateTime>();
+    FechasEventuales = new List<DateTime>();
+
+    if (!string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+    {
+        var partes = tarea.RegistradoProgramado.Split('\n', StringSplitOptions.TrimEntries);
+        foreach (var linea in partes)
+        {
+            foreach (var p in linea.Split(',', StringSplitOptions.TrimEntries))
+            {
+                if (DateTime.TryParseExact(p, "dd/MM/yyyy",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var dt))
+                {
+                    FechasEventuales.Add(dt);
+                }
+            }
+        }
+    }
+
+    if (!FechasEventuales.Any())
+        FechasEventuales.Add(DateTime.Today);
+
+    IsWeekly = false; IsMonthly = false; IsAnnual = false; IsEventual = true;
+    ModalTitle = tarea.Nombre;
+    ShowModal = true;
+}
+
+
+
+
 
     private void SaveModal()
     {
@@ -354,11 +530,33 @@
                 CurrentTask.Realizado = true;
                 CurrentTask.RegistradoProgramado = SelectedDate.ToString("MMMM yyyy");
             }
-            else if (IsEventual) // NUEVO 🔥
-            {
-                CurrentTask.Realizado = true;
-                CurrentTask.RegistradoProgramado = SelectedDate.ToString("dd/MM/yyyy");
-            }
+          else if (IsEventual)
+{
+    // VALIDACIÓN → No permitir fechas duplicadas
+    var duplicados = FechasEventuales
+        .GroupBy(f => f.Date)
+        .Where(g => g.Count() > 1)
+        .ToList();
+
+    if (duplicados.Any())
+    {
+        ShowAlert("Fechas duplicadas", 
+            "No puede seleccionar la misma fecha más de una vez para la misma tarea.");
+        return;
+    }
+
+    // Ordenar fechas
+    FechasEventuales = FechasEventuales
+        .OrderBy(f => f)
+        .ToList();
+
+    CurrentTask.Realizado = true;
+
+    // Guardar TODAS las fechas formateadas en líneas de 3
+    CurrentTask.RegistradoProgramado = FormatearFechasEnLineas(FechasEventuales);
+
+}
+
         }
         // 🔥 REINICIAR FLAGS
         IsWeekly = false;
@@ -374,14 +572,77 @@
 
     private void CloseModal()
     {
+        // Restaurar valores previos si canceló
+        if (CurrentTask != null)
+        {
+            CurrentTask.Realizado = BackupRealizado;
+            CurrentTask.RegistradoProgramado = BackupRegistradoProgramado;
+            FechasEventuales = BackupFechasEventuales.ToList();
+        }
+
         // Resetear estados visuales para evitar duplicados
         IsWeekly = false;
         IsMonthly = false;
         IsAnnual = false;
         IsEventual = false;
         ShowModal = false;
+
+        // limpiar current task
+        CurrentTask = null;
+        SelectedWeekIndex = -1;
     }
 
+    // ---------- MÉTODOS PARA MANEJO DE FECHAS EVENTUALES ----------
+    private void AddNuevaFechaEventual()
+    {
+        FechasEventuales.Add(DateTime.Today);
+    }
+
+    private void RemoveFechaEventual(int index)
+    {
+        if (index >= 0 && index < FechasEventuales.Count)
+        {
+            FechasEventuales.RemoveAt(index);
+        }
+    }
+
+    private void OnFechaEventualChange(int index, string? value)
+{
+    // Seguridad: evita out of range por re-render
+    if (index < 0 || index >= FechasEventuales.Count)
+        return;
+
+    if (DateTime.TryParse(value, out var fecha))
+        FechasEventuales[index] = fecha;
+}
+
+//Ayuda a que se muestren las tareas de 3 en 3
+private string FormatearFechasEnLineas(List<DateTime> fechas)
+{
+    if (fechas == null || fechas.Count == 0)
+        return "";
+
+    // Ordenar
+    fechas = fechas.OrderBy(f => f).ToList();
+
+    List<string> lineas = new();
+
+    for (int i = 0; i < fechas.Count; i += 3)
+    {
+        var chunk = fechas
+            .Skip(i)
+            .Take(3)
+            .Select(f => f.ToString("dd/MM/yyyy"));
+
+        // NO poner coma al final de cada línea
+        lineas.Add(string.Join(", ", chunk));
+    }
+
+    // Unir con salto de línea real
+    return string.Join("\n", lineas);
+}
+
+    // ---------- RESTO DEL CÓDIGO EXISTENTE ----------
     private string GetTextDecoration(Tarea tarea)
         => (tarea.Realizado && !string.IsNullOrEmpty(tarea.RegistradoProgramado)) ? "subrayado" : "";
     private void ConfirmarGuardar()
@@ -430,6 +691,7 @@
 
 
 }
+
 
 
 <style>
@@ -518,9 +780,6 @@
         .btn-cancel:hover {
             background: #ddd;
         }
-
-
-
 
     .evaluation-container {
         display: flex;
@@ -720,5 +979,42 @@
         justify-content: flex-end;
         gap: 0.8rem;
     }
+
+
+    /* Scroll para muchas fechas en el modal */
+.eventual-scroll {
+    max-height: 36vh; /* ~ 7 líneas en la mayoría de pantallas */
+    overflow-y: auto;
+    padding-right: 10px;
+    scrollbar-gutter: stable;
+}
+
+
+
+/*Muestra las fechas en formato de 3 */
+.fechas-multiline {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(1.4em * 3); /* 3 líneas de cualquier tamaño automáticamente */
+    padding-right: 4vh;
+}
+
+.fecha-linea {
+    white-space: nowrap;
+    line-height: 1.4em; /* Altura relativa, totalmente responsiva */
+}
+
+.fechas-multiline::-webkit-scrollbar {
+    width: 8px;
+}
+
+.fechas-multiline::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 4px;
+}
+
+
 
 </style>
