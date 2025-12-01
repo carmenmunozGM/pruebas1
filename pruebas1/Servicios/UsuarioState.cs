@@ -1,14 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace pruebas1.Servicios
+﻿namespace pruebas1.Servicios
 {
     public class UsuarioState
     {
-        public int IdUsuario { get; set; }
-        public int IdAgenda { get; set; }
+        public int IdUsuario { get; private set; }
+        public int IdAgenda { get; private set; }
+
+        public void SetUsuario(int idUsuario, int idAgenda)
+        {
+            IdUsuario = idUsuario;
+            IdAgenda = idAgenda;
+        }
+
+        public void Reset()
+        {
+            IdUsuario = 0;
+            IdAgenda = 0;
+        }
     }
+
 }

@@ -13,6 +13,7 @@ namespace pruebas1.Servicios
         private readonly HttpClient httpClient;
         private const string KeyUsuario = "usuario";
         private const string KeyToken = "token";
+        private const string KeyAgenda = "agenda"; // Nueva clave para guardar agenda
 
         public LoginService(HttpClient httpClient)
         {
@@ -25,37 +26,40 @@ namespace pruebas1.Servicios
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", tokenGuardado);
             }
+
+            // Cargar agenda si existe
+            if (Preferences.ContainsKey(KeyAgenda))
+            {
+                AgendaActual = Preferences.Get(KeyAgenda, 0);
+            }
         }
 
-        // Obtener usuario logueado
-        /* public UsuarioLoginDTO obtenerUsuarioLogueado()
-         {
-             var usuarioJson = Preferences.Get(KeyUsuario, "");
-             if (string.IsNullOrEmpty(usuarioJson))
-                 return new UsuarioLoginDTO();
+        // Agenda actual del usuario
+        public int? AgendaActual { get; private set; } = null;
 
-             var usuario = JsonConvert.DeserializeObject<UsuarioLoginDTO>(usuarioJson);
-             return usuario ?? new UsuarioLoginDTO();
-         }*/
+        // Guardar agenda actual
+        public void SetAgendaActual(int idAgenda)
+        {
+            AgendaActual = idAgenda;
+            Preferences.Set(KeyAgenda, idAgenda);
+        }
+
         // Obtener usuario logueado
         public UsuarioLoginDTO obtenerUsuarioLogueado()
         {
             var usuarioJson = Preferences.Get(KeyUsuario, "");
             if (string.IsNullOrEmpty(usuarioJson))
                 return new UsuarioLoginDTO();
-     
-         
 
             var usuario = JsonConvert.DeserializeObject<UsuarioLoginDTO>(usuarioJson);
             return usuario ?? new UsuarioLoginDTO();
         }
 
-        // 👉 Método alternativo que te corregirá el error CS1061
+        // Método alternativo
         public UsuarioLoginDTO GetUsuarioActual()
         {
             return obtenerUsuarioLogueado();
         }
-
 
         // Saber si hay usuario logueado
         public bool EstaLogueado()
@@ -64,12 +68,19 @@ namespace pruebas1.Servicios
         }
 
         // Cerrar sesión
-        public void cerrarSesion()
+        public void cerrarSesion(UsuarioState usuarioState)
         {
             Preferences.Remove(KeyUsuario);
             Preferences.Remove(KeyToken);
+            Preferences.Remove(KeyAgenda);
+            AgendaActual = null;
             httpClient.DefaultRequestHeaders.Authorization = null;
+
+            // Limpiar estado global
+            usuarioState?.Reset();
         }
+
+
 
         // Guardar usuario y actualizar HttpClient con token
         public void guardarUsuario(UsuarioLoginDTO usuarioLoginDTO)
@@ -86,6 +97,10 @@ namespace pruebas1.Servicios
             // 🔹 Actualizar HttpClient con el token
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", usuarioLoginDTO.Token);
+
+            // 🔹 Asignar agenda actual automáticamente si existe
+            if (usuarioLoginDTO.IdAgendasAsignadas?.Count > 0)
+                SetAgendaActual(usuarioLoginDTO.IdAgendasAsignadas[0]);
         }
 
         // Login
@@ -117,6 +132,10 @@ namespace pruebas1.Servicios
                 // Asegurar listas vacías
                 if (loginResponse.Usuario.IdAgendasAsignadas == null)
                     loginResponse.Usuario.IdAgendasAsignadas = new List<int>();
+
+                // 🔹 Asignar agenda actual automáticamente si existe
+                if (loginResponse.Usuario.IdAgendasAsignadas.Count > 0)
+                    SetAgendaActual(loginResponse.Usuario.IdAgendasAsignadas[0]);
 
                 return loginResponse.Usuario;
             }

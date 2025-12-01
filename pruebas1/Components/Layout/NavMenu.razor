@@ -1,6 +1,8 @@
 ﻿@using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 
+@inject UsuarioState UsuarioState
+
 @inject NavigationManager navigate
 @inject LoginService loginService
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -212,15 +214,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        UsuarioLoginDTO obj = loginService.obtenerUsuarioLogueado();
+        var obj = loginService.obtenerUsuarioLogueado();
         nombreusuario = obj.NombreUsuario;
+
+        // 🔹 Asegurar que AgendaActual tenga un valor correcto al iniciar
+        if (loginService.AgendaActual == null && obj.IdAgendasAsignadas?.Count > 0)
+        {
+            loginService.SetAgendaActual(obj.IdAgendasAsignadas[0]);
+        }
     }
 
     public async Task cerrarsesion()
     {
-        loginService.cerrarSesion(); // ahora limpia usuario + token + agenda
-        navigate.NavigateTo("/", forceLoad: true); // fuerza recarga completa para eliminar estado viejo
+        // Limpiar LoginService + UsuarioState
+        loginService.cerrarSesion(UsuarioState);
+        UsuarioState.Reset();          // ⚡ Resetea el estado
+
+        // Navegar a login
+        navigate.NavigateTo("/", forceLoad: true); // fuerza recarga completa
     }
+
 
     /*modaal de agregar*/
     public bool ShowModal { get; set; } = false;

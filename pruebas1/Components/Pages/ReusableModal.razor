@@ -9,6 +9,7 @@
 
 @inject UsuarioState UsuarioState
 
+@using System.Diagnostics
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
@@ -284,6 +285,36 @@
         }
 
         // Crear modelo interno
+        // 🔹 Verificaciones antes de crear el modelo
+        if (UsuarioState.IdUsuario == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Usuario no válido",
+                text = "IDUsuario: " + UsuarioState.IdUsuario + "IDAgenda: " + UsuarioState.IdAgenda
+            });
+            return;
+        }
+
+        if (UsuarioState.IdAgenda == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Agenda no asignada",
+                text = "No se puede crear la actividad: no hay agenda asignada." + UsuarioState.IdAgenda
+            });
+            return;
+        }
+
+        // 🔹 Imprimir en consola para depuración
+        Console.WriteLine($"[Modal] Creando actividad - Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
+        await JSRuntime.InvokeVoidAsync("console.log", $"[Debug] Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
+        Debug.WriteLine($"[Debug] Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
+        Debug.WriteLine($"[Debug] Título: {titulo}, Tipo: {FormType}");
+
+        // Crear modelo interno
         var nuevaTarea = new TareaCreada
         {
             Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
@@ -301,6 +332,8 @@
             IdCreador = UsuarioState.IdUsuario,
             IdResponsable = UsuarioState.IdUsuario
         };
+
+
 
 
         bool ok = false;

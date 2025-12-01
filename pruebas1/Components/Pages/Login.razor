@@ -7,6 +7,7 @@
 @inject NavigationManager navigate
 @inject UsuarioService UsuarioService   
 @inject AgendaService AgendaService
+@inject UsuarioState UsuarioState
 
 
 
@@ -171,7 +172,7 @@
         Loading = true;
         mensajeError = string.Empty;
 
-        // Llamamos al servicio de login
+        // Llamada al servicio de login
         var usuario = await loginService.login(loginDTO);
 
         if (usuario.IdUsuario == 0)
@@ -184,14 +185,27 @@
         // 1️⃣ Obtener agendas asignadas del usuario
         usuario.IdAgendasAsignadas = await AgendaService.ObtenerAgendaAsignadasAsync();
 
-        // 2️⃣ Guardar usuario COMPLETO (con token y agendas) en LoginService
+        // 2️⃣ Guardar usuario COMPLETO en LoginService
         loginService.guardarUsuario(usuario);
 
-        Loading = false;
+        // 3️⃣ ⚡ Actualizar UsuarioState correctamente
+        int agendaActual = usuario.IdAgendasAsignadas?.FirstOrDefault() ?? 0;
+        UsuarioState.SetUsuario(usuario.IdUsuario, agendaActual);
 
-        // 3️⃣ Redirigir a la página principal después de login
+        // 🔹 Depuración opcional
+        Console.WriteLine($"[Login] IdUsuario: {usuario.IdUsuario}, IdAgenda: {agendaActual}");
+        await AgendaService.ObtenerTareasApi(agendaActual);
+        await AgendaService.ObtenerEventosApi(agendaActual);
+
+        Loading = false;
         navigate.NavigateTo("/dia2");
     }
+
+
+
+
+
+
 
 
 

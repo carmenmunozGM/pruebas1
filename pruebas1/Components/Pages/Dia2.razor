@@ -578,7 +578,7 @@
     //public List<Entidades.EventoApi> Eventos { get; set; } = new();
 
     private List<CategoryModel> Categories { get; set; } = new();
-    private int currentAgendaId =1; // <- usa el idAgenda que necesites (puede ser variable)
+    private int currentAgendaId; // <- usa el idAgenda que necesites (puede ser variable)
     //-- NOSE PARA QUE SIRVE A1
     // ---- DATOS / INICIALIZACIÓN ----
     private List<CategoryModel> MasterCategories = new();
@@ -861,12 +861,31 @@
     // ======== AQUI: CARGA DINÁMICA SOLO DEL BLOQUE TAREAS ========
     private async Task InitializeMasterCategoriesAsync()
     {
+        // 🔹 Inicializar currentAgendaId desde LoginService
+        if (LoginService.AgendaActual != null)
+        {
+            currentAgendaId = LoginService.AgendaActual.Value;
+        }
+        else
+        {
+            var usuario = LoginService.obtenerUsuarioLogueado();
+            if (usuario.IdAgendasAsignadas?.Count > 0)
+            {
+                currentAgendaId = usuario.IdAgendasAsignadas[0];
+                LoginService.SetAgendaActual(currentAgendaId);
+            }
+            else
+            {
+                // No hay agenda: manejar error según tu lógica
+                currentAgendaId = 0;
+            }
+        }
+
         MasterCategories = new();
 
-        // Trae tareas desde tu endpoint. AgendaService.ObtenerTareasApi debe llamar a:
-        // GET https://redgm.site:9096/tareas?idAgenda=3
+        // Trae tareas desde el endpoint usando la agenda actual
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-        //var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
+        // var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
 
         var tareasCategory = new CategoryModel
         {
@@ -881,46 +900,45 @@
                 Tipo = "Tarea",
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
-                // guardamos el id del objeto API en Autor para usar luego si queremos actualizar
                 Autor = t.id.ToString(),
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
                     IsDone = st.completada,
                     Tipo = "SubTarea",
-                    // guardamos ids para persistir si se requiere
-                    Autor = t.id.ToString(),    // id tarea padre
-                    Cliente = st.id.ToString()  // id subtarea
+                    Autor = t.id.ToString(),
+                    Cliente = st.id.ToString()
                 }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
         };
-        // 🔥🔥🔥 AÑADIR EVENTOS AL MISMO BLOQUE DE “Tareas”
-        /*tareasCategory.Subtasks.AddRange(
+
+        // 🔥 Aquí puedes añadir eventos si quieres
+        /*
+        tareasCategory.Subtasks.AddRange(
             eventosApi.Select(ev => new SubtaskModel
             {
                 Title = ev.titulo,
                 Descripcion = ev.descripcion ?? string.Empty,
                 IsDone = ev.completada,
-                Tipo = "Evento",   // MUY IMPORTANTE
+                Tipo = "Evento",
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
                 Autor = ev.id.ToString(),
-                Subtasks = new List<SubtaskModel>() // los eventos no tienen subtareas
+                Subtasks = new List<SubtaskModel>()
             })
-        );*/
+        );
+        */
 
-        // Añadimos el bloque dinámico y mantenemos los demás bloques estáticos como tenías
         MasterCategories.Add(tareasCategory);
 
         MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new List<SubtaskModel>() });
 
-        // Asignar iconos si hace falta
         foreach (var category in MasterCategories)
             category.Icon = GetIcon(category.Name);
 
-        // Después de poblar MasterCategories, actualizamos Categories (las que usa el UI)
+        // Actualizar UI
         CargarTareasPorFecha();
     }
 
