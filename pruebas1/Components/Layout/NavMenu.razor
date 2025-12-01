@@ -39,7 +39,7 @@
                     <i class="bi bi-person-circle icon-user"></i>@nombreusuario
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="/">Configuración</a></li>
+                    <li><a class="dropdown-item" href="">Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" style="cursor:pointer" @onclick="cerrarsesion">Cerrar sesión</a></li>
                 </ul>
@@ -218,9 +218,10 @@
 
     public async Task cerrarsesion()
     {
-        loginService.cerrarSesion();
-        navigate.NavigateTo("/");
+        loginService.cerrarSesion(); // ahora limpia usuario + token + agenda
+        navigate.NavigateTo("/", forceLoad: true); // fuerza recarga completa para eliminar estado viejo
     }
+
     /*modaal de agregar*/
     public bool ShowModal { get; set; } = false;
     public enum FormTypes { Evento, Tarea, Administrativa }

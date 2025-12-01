@@ -28,15 +28,34 @@ namespace pruebas1.Servicios
         }
 
         // Obtener usuario logueado
+        /* public UsuarioLoginDTO obtenerUsuarioLogueado()
+         {
+             var usuarioJson = Preferences.Get(KeyUsuario, "");
+             if (string.IsNullOrEmpty(usuarioJson))
+                 return new UsuarioLoginDTO();
+
+             var usuario = JsonConvert.DeserializeObject<UsuarioLoginDTO>(usuarioJson);
+             return usuario ?? new UsuarioLoginDTO();
+         }*/
+        // Obtener usuario logueado
         public UsuarioLoginDTO obtenerUsuarioLogueado()
         {
             var usuarioJson = Preferences.Get(KeyUsuario, "");
             if (string.IsNullOrEmpty(usuarioJson))
                 return new UsuarioLoginDTO();
+     
+         
 
             var usuario = JsonConvert.DeserializeObject<UsuarioLoginDTO>(usuarioJson);
             return usuario ?? new UsuarioLoginDTO();
         }
+
+        // 👉 Método alternativo que te corregirá el error CS1061
+        public UsuarioLoginDTO GetUsuarioActual()
+        {
+            return obtenerUsuarioLogueado();
+        }
+
 
         // Saber si hay usuario logueado
         public bool EstaLogueado()

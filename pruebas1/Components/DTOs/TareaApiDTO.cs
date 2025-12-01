@@ -22,6 +22,8 @@ namespace pruebas1.Components.DTOs
         public int idPrioridad { get; set; }
         public string? prioridadTitulo { get; set; }
         public int idBloque { get; set; }
+        public bool esEvento { get; set; }
+
         public List<SubTareaApiDto> subTareas { get; set; } = new();
     }
 

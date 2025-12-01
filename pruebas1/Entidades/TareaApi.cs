@@ -22,6 +22,7 @@ namespace pruebas1.Entidades
         public int idPrioridad { get; set; }
         public string prioridadTitulo { get; set; }
         public int idBloque { get; set; }
+        public bool esEvento { get; set; }
 
         public List<SubTareaApi> subTareas { get; set; }
     }

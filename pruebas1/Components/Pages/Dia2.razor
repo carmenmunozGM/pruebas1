@@ -7,11 +7,9 @@
 @using pruebas1.Entidades
 @using pruebas1.Components
 @using pruebas1.Servicios
-@using static pruebas1.Servicios.AgendaService
+@inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
-@inject HttpClient Http
-@inject UsuarioService UsuarioService
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -21,7 +19,6 @@
             <button class="calendar-btn" @onclick="DiaAnterior"><i class="bi bi-arrow-left-circle"></i></button>
             <span class="fecha-texto">@FechaFormateada</span>
             <button class="calendar-btn" @onclick="DiaSiguiente"><i class="bi bi-arrow-right-circle"></i></button>
-
 
             <div class="calendar-wrapper">
                 <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
@@ -300,9 +297,16 @@
                                     <div class="subtask-label @(st.IsDone && cat.Name != "Autoevaluación" ? "done" : "")">
                                         @if (cat.Name.Trim() == "Autoevaluación")
                                         {
-
-                                            <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(cat, st)" />
-                                        }
+                                            <select @bind="st.Estado" class="auto-select">
+                                                <option value="">--</option>
+                                                <option value="No realicé">No realicé</option>
+                                                <option value="Sí realicé">Sí realicé</option>
+                                                <option value="Día inhábil">Día inhábil</option>
+                                                <option value="Permiso">Permiso</option>
+                                                <option value="Falta">Falta</option>
+                                                <option value="Vacaciones">Vacaciones</option>
+                                                <option value="Incapacidad">Incapacidad</option>
+                                            </select>
                                         }
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
@@ -574,8 +578,8 @@
     //public List<Entidades.EventoApi> Eventos { get; set; } = new();
 
     private List<CategoryModel> Categories { get; set; } = new();
-    private int currentAgendaId = 3; // <- usa el idAgenda que necesites (puede ser variable)
-    //-- NOSE PARA QUE SIRVE AU
+    private int currentAgendaId =1; // <- usa el idAgenda que necesites (puede ser variable)
+    //-- NOSE PARA QUE SIRVE A1
     // ---- DATOS / INICIALIZACIÓN ----
     private List<CategoryModel> MasterCategories = new();
     // Lista de órdenes (separada y limpia)
@@ -626,12 +630,11 @@
 
     async Task CargarTareas()
     {
-        TareasDelDia = await AgendaService.ObtenerTareasApi(UsuarioService.IdAgendaUsuario);
-        //TareasDelDia = await AgendaService.ObtenerTareasApi(3);
-//Eventos = await AgendaService.ObtenerEventosApi(3);
+        TareasDelDia = await AgendaService.ObtenerTareasApi(3);
+        //Eventos = await AgendaService.ObtenerEventosApi(3);
 
-    StateHasChanged();
-}
+        StateHasChanged();
+    }
 
     async Task ToggleSubTareaApi(TareaApi tarea, SubTareaApi s)
     {
@@ -811,7 +814,6 @@
         "Servicio a Cliente" => "🏢",
         _ => "📋"
     };
-    
 
     /*private void InitializeMasterCategoriesAsync()
     {
@@ -861,9 +863,11 @@
     {
         MasterCategories = new();
 
-        
-        var tareasApi = await AgendaService.ObtenerTareasApi(UsuarioService.IdAgendaUsuario);
-   
+        // Trae tareas desde tu endpoint. AgendaService.ObtenerTareasApi debe llamar a:
+        // GET https://redgm.site:9096/tareas?idAgenda=3
+        var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
+        //var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
+
         var tareasCategory = new CategoryModel
         {
             Name = "Tareas",
@@ -890,12 +894,24 @@
                 }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
         };
-  
-      
+        // 🔥🔥🔥 AÑADIR EVENTOS AL MISMO BLOQUE DE “Tareas”
+        /*tareasCategory.Subtasks.AddRange(
+            eventosApi.Select(ev => new SubtaskModel
+            {
+                Title = ev.titulo,
+                Descripcion = ev.descripcion ?? string.Empty,
+                IsDone = ev.completada,
+                Tipo = "Evento",   // MUY IMPORTANTE
+                FechaInicio = ev.fechaInicio,
+                FechaFin = ev.fechaFin,
+                Autor = ev.id.ToString(),
+                Subtasks = new List<SubtaskModel>() // los eventos no tienen subtareas
+            })
+        );*/
 
         // Añadimos el bloque dinámico y mantenemos los demás bloques estáticos como tenías
         MasterCategories.Add(tareasCategory);
-       
+
         MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new List<SubtaskModel>() });
         MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new List<SubtaskModel>() });
@@ -908,10 +924,6 @@
         CargarTareasPorFecha();
     }
 
-    private async Task Recargar()
-    {
-        await InitializeMasterCategoriesAsync();
-    }
 
     private void CargarTareasPorFecha()
     {
