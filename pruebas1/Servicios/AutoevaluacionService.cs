@@ -21,7 +21,7 @@ namespace pruebas1.Servicios
         public async Task<List<AutoevaluacionDTO>> ObtenerAutoevaluacion()
         {
             // ← tu URL real
-            string url = "https://redgm.site:9096/vistaAutoevaluacion/vista-autoevaluacion/MiAutoevaluación";
+            string url = "https://redgm.site:9096/vistaAutoevaluacion/vista-autoevaluacion/MiAutoevaluacion";
 
             var result = await _http.GetFromJsonAsync<List<AutoevaluacionDTO>>(url);
 
