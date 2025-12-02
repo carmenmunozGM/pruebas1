@@ -3,7 +3,6 @@ using pruebas1.Components.DTOs;
 using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using Microsoft.Maui.Storage;
 
 namespace pruebas1.Servicios
@@ -11,15 +10,16 @@ namespace pruebas1.Servicios
     public class LoginService
     {
         private readonly HttpClient httpClient;
+
         private const string KeyUsuario = "usuario";
         private const string KeyToken = "token";
-        private const string KeyAgenda = "agenda"; // Nueva clave para guardar agenda
+        private const string KeyAgenda = "agenda";
 
         public LoginService(HttpClient httpClient)
         {
             this.httpClient = httpClient;
 
-            // 🔹 Al inicializar, cargar token guardado en HttpClient si existe
+            // 🔹 Cargar token si existe
             var tokenGuardado = Preferences.Get(KeyToken, "");
             if (!string.IsNullOrWhiteSpace(tokenGuardado))
             {
@@ -27,83 +27,61 @@ namespace pruebas1.Servicios
                     new AuthenticationHeaderValue("Bearer", tokenGuardado);
             }
 
-            // Cargar agenda si existe
-            if (Preferences.ContainsKey(KeyAgenda))
-            {
-                AgendaActual = Preferences.Get(KeyAgenda, 0);
-            }
+            // ❗ NO CARGAR AGENDA AUTOMÁTICAMENTE AQUÍ
+            // Se asigna SOLO cuando el usuario hace login
         }
 
-        // Agenda actual del usuario
+        // Agenda actual
         public int? AgendaActual { get; private set; } = null;
 
-        // Guardar agenda actual
         public void SetAgendaActual(int idAgenda)
         {
             AgendaActual = idAgenda;
             Preferences.Set(KeyAgenda, idAgenda);
         }
 
-        // Obtener usuario logueado
         public UsuarioLoginDTO obtenerUsuarioLogueado()
         {
-            var usuarioJson = Preferences.Get(KeyUsuario, "");
-            if (string.IsNullOrEmpty(usuarioJson))
+            var json = Preferences.Get(KeyUsuario, "");
+            if (string.IsNullOrEmpty(json))
                 return new UsuarioLoginDTO();
 
-            var usuario = JsonConvert.DeserializeObject<UsuarioLoginDTO>(usuarioJson);
-            return usuario ?? new UsuarioLoginDTO();
+            return JsonConvert.DeserializeObject<UsuarioLoginDTO>(json) ?? new UsuarioLoginDTO();
         }
 
-        // Método alternativo
-        public UsuarioLoginDTO GetUsuarioActual()
-        {
-            return obtenerUsuarioLogueado();
-        }
-
-        // Saber si hay usuario logueado
         public bool EstaLogueado()
         {
             return Preferences.ContainsKey(KeyUsuario);
         }
 
-        // Cerrar sesión
+        // 🔥 LOGOUT CORRECTO
         public void cerrarSesion(UsuarioState usuarioState)
         {
             Preferences.Remove(KeyUsuario);
             Preferences.Remove(KeyToken);
-            Preferences.Remove(KeyAgenda);
+            Preferences.Remove(KeyAgenda); // 🔥 BORRAR AGENDA SIEMPRE
+
             AgendaActual = null;
             httpClient.DefaultRequestHeaders.Authorization = null;
 
-            // Limpiar estado global
             usuarioState?.Reset();
         }
 
-
-
-        // Guardar usuario y actualizar HttpClient con token
+        // Guardar usuario SIN tocar agenda
         public void guardarUsuario(UsuarioLoginDTO usuarioLoginDTO)
         {
             if (usuarioLoginDTO == null) return;
 
-            // Serializar usuario completo
-            var data = JsonConvert.SerializeObject(usuarioLoginDTO);
-            Preferences.Set(KeyUsuario, data);
+            var json = JsonConvert.SerializeObject(usuarioLoginDTO);
+            Preferences.Set(KeyUsuario, json);
 
-            // Guardar token
             Preferences.Set(KeyToken, usuarioLoginDTO.Token);
 
-            // 🔹 Actualizar HttpClient con el token
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", usuarioLoginDTO.Token);
-
-            // 🔹 Asignar agenda actual automáticamente si existe
-            if (usuarioLoginDTO.IdAgendasAsignadas?.Count > 0)
-                SetAgendaActual(usuarioLoginDTO.IdAgendasAsignadas[0]);
         }
 
-        // Login
+        // LOGIN PRINCIPAL
         public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
         {
             try
@@ -113,29 +91,27 @@ namespace pruebas1.Servicios
                 if (!respuesta.IsSuccessStatusCode)
                     return new UsuarioLoginDTO();
 
-                string json = await respuesta.Content.ReadAsStringAsync();
-                if (string.IsNullOrWhiteSpace(json))
-                    return new UsuarioLoginDTO();
-
-                // Deserializamos la respuesta completa
+                var json = await respuesta.Content.ReadAsStringAsync();
                 var loginResponse = JsonConvert.DeserializeObject<LoginResponseDTO>(json);
+
                 if (loginResponse == null || loginResponse.Usuario == null)
                     return new UsuarioLoginDTO();
 
-                // Guardar token en el objeto usuario
+                // Asignar token al objeto usuario
                 loginResponse.Usuario.Token = loginResponse.Token;
 
-                // 🔹 Actualizar HttpClient inmediatamente después de login
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", loginResponse.Token);
+                // Guardar usuario SIN tocar agenda
+                guardarUsuario(loginResponse.Usuario);
 
-                // Asegurar listas vacías
-                if (loginResponse.Usuario.IdAgendasAsignadas == null)
-                    loginResponse.Usuario.IdAgendasAsignadas = new List<int>();
+                // 🔥 AHORA SÍ asignar agenda desde la respuesta del backend
+                if (loginResponse.Usuario.IdAgendasAsignadas?.Count > 0)
+                {
+                    var agenda = loginResponse.Usuario.IdAgendasAsignadas[0];
+                    SetAgendaActual(agenda);
 
-                // 🔹 Asignar agenda actual automáticamente si existe
-                if (loginResponse.Usuario.IdAgendasAsignadas.Count > 0)
-                    SetAgendaActual(loginResponse.Usuario.IdAgendasAsignadas[0]);
+                    // Debug
+                    Console.WriteLine($"✔ Agenda asignada tras login: {agenda}");
+                }
 
                 return loginResponse.Usuario;
             }

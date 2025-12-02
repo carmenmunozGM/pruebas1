@@ -7,6 +7,8 @@
 @using pruebas1.Entidades
 @using pruebas1.Components
 @using pruebas1.Servicios
+@using System.Diagnostics;
+
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
@@ -859,9 +861,14 @@
     }*/
     // ---------------------------
     // ======== AQUI: CARGA DINÁMICA SOLO DEL BLOQUE TAREAS ========
+    // ======== CARGA DINÁMICA DE BLOQUES: TAREAS Y EVENTOS (con debug) ========
     private async Task InitializeMasterCategoriesAsync()
     {
-        // 🔹 Inicializar currentAgendaId desde LoginService
+        // === DEBUG INICIO ===
+        Debug.WriteLine("====== Inicializando Categorías ======");
+        // === DEBUG INICIO ===
+
+        // Obtener agenda actual
         if (LoginService.AgendaActual != null)
         {
             currentAgendaId = LoginService.AgendaActual.Value;
@@ -876,17 +883,23 @@
             }
             else
             {
-                // No hay agenda: manejar error según tu lógica
                 currentAgendaId = 0;
             }
         }
 
+        Debug.WriteLine($"Agenda actual: {currentAgendaId}");
+
         MasterCategories = new();
 
-        // Trae tareas desde el endpoint usando la agenda actual
+        // Traer tareas
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-        // var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
+        Debug.WriteLine($"Tareas recibidas desde API: {tareasApi.Count}");
 
+        // Traer eventos
+        var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
+        Debug.WriteLine($"Eventos recibidos desde API: {eventosApi.Count}");
+
+        // ====== Categoría TAREAS ======
         var tareasCategory = new CategoryModel
         {
             Name = "Tareas",
@@ -895,7 +908,7 @@
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
                 Title = t.titulo,
-                Descripcion = t.descripcion ?? string.Empty,
+                Descripcion = t.descripcion ?? "",
                 IsDone = t.completada,
                 Tipo = "Tarea",
                 FechaInicio = t.fechaInicio,
@@ -912,36 +925,28 @@
             }).ToList()
         };
 
-        // 🔥 Aquí puedes añadir eventos si quieres
-        /*
-        tareasCategory.Subtasks.AddRange(
-            eventosApi.Select(ev => new SubtaskModel
-            {
-                Title = ev.titulo,
-                Descripcion = ev.descripcion ?? string.Empty,
-                IsDone = ev.completada,
-                Tipo = "Evento",
-                FechaInicio = ev.fechaInicio,
-                FechaFin = ev.fechaFin,
-                Autor = ev.id.ToString(),
-                Subtasks = new List<SubtaskModel>()
-            })
-        );
-        */
+        Debug.WriteLine($"Subtasks en categoría Tareas: {tareasCategory.Subtasks.Count}");
 
         MasterCategories.Add(tareasCategory);
 
-        MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new List<SubtaskModel>() });
-        MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new List<SubtaskModel>() });
-        MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new List<SubtaskModel>() });
+        // ====== Categoría EVENTOS ======
+      
 
-        foreach (var category in MasterCategories)
-            category.Icon = GetIcon(category.Name);
+        Debug.WriteLine("====== Fin carga de Eventos ======");
 
-        // Actualizar UI
+   
+
+        // Otras categorías
+        MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new() });
+        MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new() });
+        MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new() });
+
+        // Asignar íconos
+        foreach (var c in MasterCategories)
+            c.Icon = GetIcon(c.Name);
+
         CargarTareasPorFecha();
     }
-
 
     private void CargarTareasPorFecha()
     {
