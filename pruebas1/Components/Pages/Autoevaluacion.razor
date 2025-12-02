@@ -107,27 +107,30 @@
                 @if (IsMonthly)
                 {
                     <p>Seleccione la fecha del mes:</p>
-                    <input class="input-date" type="date" @bind="SelectedDate" />
+
+                    <DatePicker Value="SelectedDate"
+                                ValueChanged="@(v => SelectedDate = v ?? DateTime.Today)"
+                                CssClass="form-control" />
                 }
 
+
            @* EVENTUAL (AHORA SOPORTA VARIAS FECHAS - CORREGIDO) *@
-@if (IsEventual)
-{
-    <div class="modal-section">
+                @if (IsEventual)
+                {
+                    <div class="modal-section">
 
-        <label>Seleccione una o varias fechas del evento:</label>
+                        <label>Seleccione una o varias fechas del evento:</label>
 
-        <div class="eventual-scroll">
-            @for (int i = 0; i < FechasEventuales.Count; i++)
-            {
-                var localIndex = i;
+                        <div class="eventual-scroll">
+                            @for (int i = 0; i < FechasEventuales.Count; i++)
+                            {
+                                var localIndex = i;
 
                 <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
                     <input type="date"
                            class="input-date"
                            value="@FechasEventuales[localIndex].ToString("yyyy-MM-dd")"
                            @onchange="(e) => OnFechaEventualChange(localIndex, e.Value?.ToString())" />
-                                   
 
                     @if (FechasEventuales.Count > 1)
                     {
@@ -140,15 +143,13 @@
             }
         </div>
 
-        <button class="btn-confirm" style="margin-top:10px;" @onclick="AddNuevaFechaEventual">
-            ➕ Añadir nueva fecha
-        </button>
+                        <button class="btn-confirm" style="margin-top:10px;"
+                                @onclick="AddNuevaFechaEventual">
+                            ➕ Añadir nueva fecha
+                        </button>
 
-    </div>
-}
-
-
-                @* ANUAL *@
+                    </div>
+                }
                 @if (IsAnnual)
                 {
                     <p>Seleccione mes y año:</p>
@@ -243,6 +244,17 @@
 
     // ---------- NUEVO: lista de fechas para Eventual ----------
     public List<DateTime> FechasEventuales { get; set; } = new();
+
+
+    // ---------- CODIGO PARA CONVERTIR LAS FECHAS
+    private void OnFechaEventualChange(int index, DateTime? value)
+    {
+        if (index < 0 || index >= FechasEventuales.Count)
+            return;
+
+        if (value.HasValue)
+            FechasEventuales[index] = value.Value;
+    }
 
 
     // ===== BACKUP PARA CANCELACIÓN =====
