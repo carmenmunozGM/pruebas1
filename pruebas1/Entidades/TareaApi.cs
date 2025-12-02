@@ -23,6 +23,8 @@ namespace pruebas1.Entidades
         public string prioridadTitulo { get; set; }
         public int idBloque { get; set; }
         public bool esEvento { get; set; }
+        public int prioridad { get; set; }
+        public string? horaInicio { get; set; }
 
         public List<SubTareaApi> subTareas { get; set; }
     }

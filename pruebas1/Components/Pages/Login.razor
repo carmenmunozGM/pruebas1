@@ -195,7 +195,7 @@
         // 🔹 Depuración opcional
         Console.WriteLine($"[Login] IdUsuario: {usuario.IdUsuario}, IdAgenda: {agendaActual}");
         await AgendaService.ObtenerTareasApi(agendaActual);
-        await AgendaService.ObtenerEventosApi(agendaActual);
+        await AgendaService.ObtenerEventos(agendaActual);
 
         Loading = false;
         navigate.NavigateTo("/dia2");

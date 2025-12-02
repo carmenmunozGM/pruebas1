@@ -101,25 +101,75 @@
                 {
                     <div class="card-body block-body block-scroll @(tareasCat.IsCollapsed ? "collapsed" : "")">
                         <ul class="subtask-list">
+
+
                             @foreach (var st in tareasCat.Subtasks)
                             {
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
+
+                                        <!-- Checkbox -->
                                         <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(tareasCat, st)" />
-                                        @if (st.Tipo == "Evento")
+
+                                        <!-- Icono y tipo -->
+                                        <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
+                                        <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");">
+                                            [ES @st.Tipo.ToUpper()]
+                                        </span>
+
+                                        <!-- Título -->
+                                        <span class="subtask-text">@st.Title</span>
+
+                                        <!-- Descripción -->
+                                        @if (!string.IsNullOrEmpty(st.Descripcion))
                                         {
-                                            <span class="tag-evento">📅 </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="tag-tarea">📝 </span>
+                                            <span class="subtask-desc"> - @st.Descripcion</span>
                                         }
 
-                                        <span class="subtask-text">@st.Title</span>
+                                        <!-- Fechas y hora (solo para eventos) -->
+                                        @if (st.Tipo == "Evento")
+                                        {
+                                            <span class="evento-fecha">
+                                                @if (st.FechaInicio.HasValue)
+                                                {
+                                                    @($"{st.FechaInicio.Value:dd/MM/yyyy}")
+                                                }
+                                                @if (st.HoraInicio.HasValue)
+                                                {
+                                                    @($" {st.HoraInicio.Value:hh\\:mm}")
+                                                }
+                                                @if (!string.IsNullOrEmpty(st.Ubicacion))
+                                                {
+                                                    @($" | {st.Ubicacion}")
+                                                }
+                                                @if (!string.IsNullOrEmpty(st.Participantes))
+                                                {
+                                                    @($" | Participantes: {st.Participantes}")
+                                                }
+                                            </span>
+                                        }
+
+                                        <!-- Prioridad (solo para tareas) -->
+                                        @if (st.Tipo == "Tarea" && st.Prioridad > 0)
+                                        {
+                                            <span class="tarea-prioridad">
+                                                @(st.Prioridad switch
+                                                {
+                                                    1 => "🔥 Alta",
+                                                    2 => "⚠️ Media",
+                                                    3 => "🟢 Baja",
+                                                    _ => ""
+                                                })
+                        </span>
+                                                }
+
+                                        <!-- Estado hecho -->
                                         @if (st.IsDone)
                                         {
                                             <small class="done-text">Hecho</small>
                                         }
+
+                                        <!-- Botones acciones solo si categoría es Tareas -->
                                         @if (tareasCat.Name.Trim() == "Tareas")
                                         {
                                             <div class="subtask-actions">
@@ -134,9 +184,7 @@
                                                 </button>
                                             </div>
                                         }
-
                                     </div>
-
                                     @if (st.Subtasks.Any())
                                     {
                                         <div class="table-wrapper block-scroll">
@@ -864,9 +912,7 @@
     // ======== CARGA DINÁMICA DE BLOQUES: TAREAS Y EVENTOS (con debug) ========
     private async Task InitializeMasterCategoriesAsync()
     {
-        // === DEBUG INICIO ===
         Debug.WriteLine("====== Inicializando Categorías ======");
-        // === DEBUG INICIO ===
 
         // Obtener agenda actual
         if (LoginService.AgendaActual != null)
@@ -896,10 +942,9 @@
         Debug.WriteLine($"Tareas recibidas desde API: {tareasApi.Count}");
 
         // Traer eventos
-        var eventosApi = await AgendaService.ObtenerEventosApi(currentAgendaId);
+        var eventosApi = await AgendaService.ObtenerEventos(currentAgendaId);
         Debug.WriteLine($"Eventos recibidos desde API: {eventosApi.Count}");
 
-        // ====== Categoría TAREAS ======
         var tareasCategory = new CategoryModel
         {
             Name = "Tareas",
@@ -911,9 +956,17 @@
                 Descripcion = t.descripcion ?? "",
                 IsDone = t.completada,
                 Tipo = "Tarea",
+
+                Prioridad = t.prioridad,
+
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
+
+                // Conversión segura string → TimeOnly para tareas
+                HoraInicio = string.IsNullOrWhiteSpace(t.horaInicio) ? null : TimeOnly.Parse(t.horaInicio),
+
                 Autor = t.id.ToString(),
+
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
@@ -925,16 +978,35 @@
             }).ToList()
         };
 
-        Debug.WriteLine($"Subtasks en categoría Tareas: {tareasCategory.Subtasks.Count}");
+        // Agregar eventos
+        foreach (var ev in eventosApi)
+        {
+            tareasCategory.Subtasks.Add(new SubtaskModel
+            {
+                Title = ev.titulo,
+                Descripcion = ev.descripcion ?? "",
+                IsDone = false,
+                Tipo = "Evento",
+
+                Icon = "📅",
+
+                FechaInicio = ev.fechaInicio,
+                FechaFin = ev.fechaFin,
+
+                // ⚡ Opción 1: extraer hora de fechaInicio y fechaFin
+                HoraInicio = TimeOnly.FromDateTime(ev.fechaInicio),
+                HoraFin = TimeOnly.FromDateTime(ev.fechaFin),
+
+                Autor = ev.idAgenda.ToString(),
+                Subtasks = new()
+            });
+        }
+
+        Debug.WriteLine($"Subtasks totales con eventos incluidos: {tareasCategory.Subtasks.Count}");
 
         MasterCategories.Add(tareasCategory);
 
-        // ====== Categoría EVENTOS ======
-      
-
-        Debug.WriteLine("====== Fin carga de Eventos ======");
-
-   
+        Debug.WriteLine("====== Fin carga de Tareas + Eventos ======");
 
         // Otras categorías
         MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new() });

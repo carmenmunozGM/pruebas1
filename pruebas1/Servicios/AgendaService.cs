@@ -1,10 +1,12 @@
 ﻿using pruebas1.Components;
 using pruebas1.Components.DTOs;
 using pruebas1.Entidades;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using static System.Net.WebRequestMethods;
-using System.Diagnostics;
+using System.Text.Json;
 
 namespace pruebas1.Servicios
 {
@@ -12,11 +14,13 @@ namespace pruebas1.Servicios
     {
         private readonly HttpClient httpClient;
         private readonly LoginService loginService;
+        private int? selectedPrioridadId;
 
         public AgendaService(HttpClient httpClient, LoginService loginService)
         {
             this.httpClient = httpClient;
             this.loginService = loginService;
+            this.httpClient = httpClient;
         }
 
         // CREAR TAREA
@@ -54,25 +58,95 @@ namespace pruebas1.Servicios
         }
 
         // CREAR EVENTO
-        public async Task<bool> CrearEventoApi(TareaCreada t)
-        {
-            var dto = new
-            {
-                idAgenda = t.IdAgenda,
-                titulo = t.Titulo,
-                descripcion = t.Descripcion,
-                fechaInicio = t.FechaInicio ?? DateTime.Now,
-                fechaFin = t.FechaFin ?? DateTime.Now,
-                todoElDia = true,
-                idPrioridad = 1,
-                idSala = 0,
-                ubicacion = t.Ubicacion ?? "",
-                participantes = new List<object>()
-            };
+        /*  public async Task<bool> CrearEventoApi(TareaCreada t)
+          {
+              // Obtener usuario actual
+              var usuario = loginService.obtenerUsuarioLogueado();
+              if (usuario == null)
+                  return false;
 
-            var response = await httpClient.PostAsJsonAsync("eventos/crear", dto);
-            return response.IsSuccessStatusCode;
+              // Asegurar agenda
+              int idAgenda = t.IdAgenda > 0 ? t.IdAgenda : usuario.IdAgendasAsignadas.FirstOrDefault();
+
+              var dto = new
+              {
+                  idAgenda = idAgenda,
+                  titulo = t.Titulo,
+                  descripcion = t.Descripcion,
+                  fechaInicio = t.FechaInicio ?? DateTime.Now,
+                  fechaFin = t.FechaFin ?? DateTime.Now,
+                  todoElDia = true,
+                  idPrioridad = 1,
+                  idSala = 0,
+                  ubicacion = t.Ubicacion ?? "",
+                  participantes = new List<object>()
+              };
+
+              Debug.WriteLine($"[CREAR EVENTO] POST /eventos  → Agenda: {idAgenda}, Título: {t.Titulo}");
+
+              var response = await httpClient.PostAsJsonAsync("eventos", dto);
+
+              Debug.WriteLine($"Respuesta crear evento: {response.StatusCode}");
+
+              return response.IsSuccessStatusCode;
+          }*/
+        public async Task<bool> CrearEventoApi(TareaCreada evento)
+        {
+            try
+            {
+                var usuario = loginService.obtenerUsuarioLogueado();
+                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                    return false;
+
+                // Asegurar header Authorization
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                int idAgenda = evento.IdAgenda > 0 ? evento.IdAgenda : usuario.IdAgendasAsignadas.FirstOrDefault();
+
+                // Si ParticipantesSeleccionados está vacío, tomamos ids desde ParticipantesLista
+                var idsParticipantes = evento.ParticipantesSeleccionados != null && evento.ParticipantesSeleccionados.Any()
+                    ? evento.ParticipantesSeleccionados
+                    : (evento.ParticipantesLista?.Select(p => p.Id).ToList() ?? new List<int>());
+
+                var dto = new EventoApiDTO
+                {
+                    idAgenda = idAgenda,
+                    titulo = evento.Titulo,
+                    descripcion = evento.Descripcion,
+                    fechaInicio = evento.FechaInicio ?? DateTime.Now,
+                    fechaFin = evento.FechaFin ?? DateTime.Now,
+                    esRecurrente = evento.EsRecurrente,
+                  
+                    reglaRecurrencia = evento.ReglaRecurrencia ?? "",
+                    idPrioridad = (selectedPrioridadId ?? 1), // si quieres mapear prioridad desde modal
+                    idSala = evento.IdSala,
+                    ubicacion = string.IsNullOrWhiteSpace(evento.Ubicacion) ? "" : evento.Ubicacion,
+                    idsParticipantes = idsParticipantes
+                };
+
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                Debug.WriteLine("[CREAR EVENTO] POST → https://redgm.site/eventos");
+                Debug.WriteLine(json);
+
+                // Llamar al endpoint correcto (sin puerto si tu base es redgm.site)
+                var response = await httpClient.PostAsync("https://redgm.site:9096/eventos", content);
+
+                Debug.WriteLine($"[CREAR EVENTO] Status: {response.StatusCode}");
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Excepción CrearEventoApi: {ex.Message}");
+                return false;
+            }
         }
+
+
+
 
         // OBTENER AGENDA ASIGNADAS
         public async Task<List<int>> ObtenerAgendaAsignadasAsync()
@@ -120,7 +194,7 @@ namespace pruebas1.Servicios
         }
 
         // OBTENER EVENTOS
-        public async Task<List<EventoApiDTO>> ObtenerEventosApi(int idAgenda)
+        /*public async Task<List<EventoApiDTO>> ObtenerEventosApi(int idAgenda)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
             if (usuario == null || string.IsNullOrEmpty(usuario.Token))
@@ -131,8 +205,13 @@ namespace pruebas1.Servicios
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
-                var url = $"eventos/?idAgenda={idAgenda}";
+                var url = $"eventos?idAgenda={idAgenda}";
+                Debug.WriteLine($"[GET EVENTOS] URL = {url}");
+
                 var data = await httpClient.GetFromJsonAsync<List<EventoApiDTO>>(url);
+
+                Debug.WriteLine($"[GET EVENTOS] Eventos recibidos: {data?.Count}");
+
                 return data ?? new List<EventoApiDTO>();
             }
             catch (HttpRequestException ex)
@@ -140,7 +219,46 @@ namespace pruebas1.Servicios
                 Debug.WriteLine($"Error al obtener eventos: {ex.Message}");
                 return new List<EventoApiDTO>();
             }
+        }*/
+        public async Task<List<EventoApiDTO>> ObtenerEventos(int idAgenda)
+        {
+            var lista = new List<EventoApiDTO>();
+
+            try
+            {
+                var usuario = loginService.obtenerUsuarioLogueado();
+                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                    return lista;
+
+                // Header auth
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                string url = $"https://redgm.site:9096/eventos/{idAgenda}";
+                Debug.WriteLine($"[GET EVENTOS] URL = {url}");
+
+                var result = await httpClient.GetAsync(url);
+
+                if (!result.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"❌ Error al obtener eventos → {result.StatusCode}");
+                    return lista;
+                }
+
+                string json = await result.Content.ReadAsStringAsync();
+                lista = JsonSerializer.Deserialize<List<EventoApiDTO>>(json) ?? new List<EventoApiDTO>();
+
+                Debug.WriteLine($"Eventos recibidos desde API: {lista.Count}");
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Excepción GET eventos: {ex.Message}");
+                return lista;
+            }
         }
+
+
     }
 }
 

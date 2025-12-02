@@ -4,12 +4,14 @@
 @using Microsoft.JSInterop
 @inject AgendaService AgendaService
 @inject SalasEmService SalasEmService
-@inject ReglasRecurrenciaServices RecurreciaServices
-@inject IJSRuntime JSRuntime
+@inject ReglasRecurrenciaServices reglasRecurrenciaServices
 
+@inject IJSRuntime JSRuntime
 @inject UsuarioState UsuarioState
 
 @using System.Diagnostics
+@using Newtonsoft.Json
+@using pruebas1.Components.DTOs
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
@@ -125,17 +127,16 @@
                         <label>Ubicación</label>
 
                         <select class="form-input"
-                                @onchange="HandleLocationChange"
-                                disabled="@(FormType != FormTypes.Evento)">
-                            <option value="">Seleccione una opción</option>
+        @bind="selectedSalaId"
+        disabled="@(FormType != FormTypes.Evento)">
+    <option value="0">Seleccione una opción</option>
+    @foreach (var sala in listaSalas)
+    {
+        <option value="@sala.Id">@sala.Salas</option>   <!-- value ahora es sala.Id -->
+    }
+    <option value="-1">Otra...</option>
+</select>
 
-                            @foreach (var sala in listaSalas)
-                            {
-                                <option value="@sala.Salas">@sala.Salas</option>
-                            }
-
-                            <option value="otra">Otra...</option>
-                        </select>
 
                         @if (showOtherLocationInput && FormType == FormTypes.Evento)
                         {
@@ -149,11 +150,44 @@
                     <!-- Participantes -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>Participantes</label>
-                        <input type="text" class="form-input"
-                               placeholder="Nombre o correo de asistentes..."
-                               @bind="participantes"
-                               disabled="@(FormType != FormTypes.Evento)" />
+
+                        <div class="autocomplete-container">
+
+                            <!-- Chips -->
+                            <div class="chips-container">
+                                @foreach (var p in participantesSeleccionados)
+                                {
+                                    <div class="chip">
+                                        @p.Nombre (@p.ClavePersonal)
+                                        <span class="chip-remove" @onclick="() => QuitarParticipante(p)">×</span>
+                                    </div>
+                                }
+
+                                <!-- Input -->
+                                <input type="text"
+                                       class="chip-input"
+                                       placeholder="Agregar participante..."
+                                       value="@searchText"
+                                       @oninput="FiltrarEmpleados"
+                                       disabled="@(FormType != FormTypes.Evento)" />
+                            </div>
+
+                            <!-- Lista Autocomplete -->
+                            @if (mostrarLista && empleadosFiltrados?.Count > 0)
+                            {
+                                <ul class="autocomplete-list">
+                                    @foreach (var emp in empleadosFiltrados)
+                                    {
+                                        <li @onclick="() => AgregarParticipante(emp)">
+                                            <strong>@emp.Nombre</strong> — @emp.ClavePersonal<br />
+                                            <small>@emp.Puesto — @emp.Area</small>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
                     </div>
+
 
                     <!-- Descripción -->
                     <div class="form-control-group col-span-2">
@@ -203,7 +237,7 @@
         </div>
     </div>
 
-@code {
+    @code {
 
     // --- PARAMETROS ---
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
@@ -219,25 +253,37 @@
     // --- CAMPOS ---
     private string titulo = string.Empty;
     private string descripcion = string.Empty;
-    private string participantes = string.Empty;
+
 
     private List<string> subtasks = new();
     private string newSubtask = string.Empty;
 
     private List<SalasEm> listaSalas = new();
+    private int selectedSalaId = 0;
+
     private string? ubicacionSeleccionada;
     private bool showOtherLocationInput = false;
 
     private List<FrecuenciaRecurrencia> frecuencias = new();
     private List<Prioridad> prioridadesDisponibles = new();
     private int? selectedPrioridadId;
-    private int? selectedFrecuenciaId;
+    private int? selectedFrecuenciaId { get; set; }
+
+
 
     private bool ShowModal = false;
-
+    //Para poder filtrar en participantes
+    private string participantes = "";
+    private bool mostrarLista = false;
+    private string searchText = "";
+    //
     public enum FormTypes { Evento, Tareas }
     public FormTypes FormType { get; set; } = FormTypes.Tareas;
-
+    /// Para participantes
+    List<EmpleadoDTO> empleados = new();
+    List<EmpleadoDTO> empleadosFiltrados = new();
+    // Lista final de chips
+    private List<EmpleadoDTO> participantesSeleccionados = new();
     // ---------------------------
     protected override async Task OnInitializedAsync()
     {
@@ -246,10 +292,66 @@
         CultureInfo.CurrentUICulture = cultura;
 
         listaSalas = await SalasEmService.GetSalas();
-        prioridadesDisponibles = await RecurreciaServices.GetPrioridad();
-        frecuencias = await RecurreciaServices.GetFrecuencia();
+        frecuencias = await reglasRecurrenciaServices.GetFrecuencia();
+        prioridadesDisponibles = await reglasRecurrenciaServices.GetPrioridad();
+
+
+        try
+        {
+            using var client = new HttpClient();
+            var json = await client.GetStringAsync("https://redgm.site:9096/empleado");
+
+            empleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando empleados: " + ex.Message);
+        }
+    }
+    //Para filtrar en particpantes
+    private void FiltrarEmpleados(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            mostrarLista = false;
+            return;
+        }
+
+        mostrarLista = true;
+
+        var texto = searchText.Trim().ToLower();
+
+        empleadosFiltrados = empleados
+            .Where(emp =>
+                emp.Nombre.ToLower().Contains(texto) ||
+                emp.ClavePersonal.ToString().Contains(texto))
+            .Take(10)
+            .ToList();
     }
 
+    private void AgregarParticipante(EmpleadoDTO emp)
+    {
+        // Evitar repetidos
+        if (!participantesSeleccionados.Any(x => x.Id == emp.Id))
+        {
+            participantesSeleccionados.Add(emp);
+        }
+
+        searchText = "";
+        mostrarLista = false;
+    }
+    private void QuitarParticipante(EmpleadoDTO emp)
+    {
+        participantesSeleccionados.Remove(emp);
+    }
+
+    private void SeleccionarEmpleado(EmpleadoDTO emp)
+    {
+        participantes = $"{emp.Nombre} ({emp.ClavePersonal})";
+        mostrarLista = false;
+    }
     private void OpenModal()
     {
         LimpiarCampos();
@@ -265,79 +367,113 @@
     // ---------------------------
     private void HandleLocationChange(ChangeEventArgs e)
     {
-        ubicacionSeleccionada = e.Value?.ToString();
+        //ubicacionSeleccionada = e.Value?.ToString();
         showOtherLocationInput = ubicacionSeleccionada == "otra";
     }
 
     // --------------crear iicio-------------
     private async Task Guardar()
     {
-        // Validación básica
+        // Validaciones (mantén las tuyas)
         if (string.IsNullOrWhiteSpace(titulo))
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Falta el título",
-                text = "Debes escribir un título."
-            });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Falta el título", text = "Debes escribir un título." });
             return;
         }
 
-        // Crear modelo interno
-        // 🔹 Verificaciones antes de crear el modelo
-        if (UsuarioState.IdUsuario == 0)
+        var idUsuario = UsuarioState.IdUsuario;
+        var idAgenda = UsuarioState.IdAgenda;
+        if (idUsuario == 0 || idAgenda == 0)
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Usuario no válido",
-                text = "IDUsuario: " + UsuarioState.IdUsuario + "IDAgenda: " + UsuarioState.IdAgenda
-            });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Usuario/Agenda inválidos", text = $"Usuario:{idUsuario} Agenda:{idAgenda}" });
             return;
         }
 
-        if (UsuarioState.IdAgenda == 0)
+        // --- Combinar fecha + hora para fechaInicio/fechaFin ---
+        DateTime? fechaInicioFinal = null;
+        DateTime? fechaFinFinal = null;
+
+        if (FechaInicio != null)
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Agenda no asignada",
-                text = "No se puede crear la actividad: no hay agenda asignada." + UsuarioState.IdAgenda
-            });
-            return;
+            var d = FechaInicio.Value.Date;
+            if (HoraInicio != null)
+                fechaInicioFinal = d.AddHours(HoraInicio.Value.Hour).AddMinutes(HoraInicio.Value.Minute);
+            else
+                fechaInicioFinal = d;
         }
 
-        // 🔹 Imprimir en consola para depuración
-        Console.WriteLine($"[Modal] Creando actividad - Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
-        await JSRuntime.InvokeVoidAsync("console.log", $"[Debug] Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
-        Debug.WriteLine($"[Debug] Usuario: {UsuarioState.IdUsuario}, Agenda: {UsuarioState.IdAgenda}");
-        Debug.WriteLine($"[Debug] Título: {titulo}, Tipo: {FormType}");
+        if (FechaFin != null)
+        {
+            var d2 = FechaFin.Value.Date;
+            if (HoraFin != null)
+                fechaFinFinal = d2.AddHours(HoraFin.Value.Hour).AddMinutes(HoraFin.Value.Minute);
+            else
+                fechaFinFinal = d2;
+        }
 
-        // Crear modelo interno
+        // --- Determinar IdSala y Ubicacion según selección ---
+        // Recomendación: guarda el id de la sala cuando rellenes listaSalas (usa sala.Id)
+        int idSalaSeleccionada = 0;
+        string ubicacionParaEnviar = "";
+
+        // Si el usuario escogió "otra", ubicacionSeleccionada contiene el texto
+        if (!string.IsNullOrWhiteSpace(ubicacionSeleccionada) && ubicacionSeleccionada != "otra")
+        {
+            // ubicacionSeleccionada hoy contiene el nombre de la sala, pero necesitamos el id.
+            // Si en tu <select> estás guardando el nombre, cámbialo para guardar el id.
+            // Aquí intento resolver con búsqueda en listaSalas por nombre:
+            var salaEncontrada = listaSalas.FirstOrDefault(s => s.Salas == ubicacionSeleccionada);
+            if (salaEncontrada != null)
+                idSalaSeleccionada = salaEncontrada.Id; // Asegúrate SalasEm tiene Id
+            else
+                idSalaSeleccionada = 0; // fallback
+        }
+        else if (showOtherLocationInput && !string.IsNullOrWhiteSpace(ubicacionSeleccionada))
+        {
+            // Usuario escribió una ubicación libre (otra)
+            idSalaSeleccionada = 0;
+            ubicacionParaEnviar = ubicacionSeleccionada;
+        }
+        else
+        {
+            // Si el <select> guarda el id en vez del nombre, conviértelo:
+            // suponiendo que tienes un campo int selectedSalaId, úsalo aquí:
+            // idSalaSeleccionada = selectedSalaId;
+            // y si selectedSalaId > 0 -> ubicacionParaEnviar = "";
+        }
+
+        // --- Preparar lista de ids de participantes ---
+        var participantesIds = participantesSeleccionados?.Select(p => p.Id).ToList() ?? new List<int>();
+
+        // Construir objeto TareaCreada correctamente
         var nuevaTarea = new TareaCreada
         {
             Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
-            Titulo = titulo,
-            Descripcion = descripcion,
-            FechaInicio = FechaInicio,
-            FechaFin = FechaFin,
-            Ubicacion = ubicacionSeleccionada,
-            Participantes = participantes,
+            Titulo = titulo?.Trim(),
+            Descripcion = descripcion?.Trim(),
+            FechaInicio = fechaInicioFinal,
+            FechaFin = fechaFinFinal,
+            Ubicacion = ubicacionParaEnviar,            // string libre si "otra"
+            ParticipantesLista = participantesSeleccionados.ToList(), // lista de EmpleadoDTO
+            ParticipantesSeleccionados = participantesIds,            // lista de ints
             Subtareas = subtasks.ToList(),
             IsEvento = FormType == FormTypes.Evento,
 
-            // 🔥 Datos correctos del usuario
-            IdAgenda = UsuarioState.IdAgenda,
-            IdCreador = UsuarioState.IdUsuario,
-            IdResponsable = UsuarioState.IdUsuario
+            IdAgenda = idAgenda,
+            IdCreador = idUsuario,
+            IdResponsable = idUsuario,
+
+            // opcionales
+            IdSala = idSalaSeleccionada,
+            EsRecurrente = (selectedFrecuenciaId != null && selectedFrecuenciaId > 0),
+            ReglaRecurrencia = (selectedFrecuenciaId != null ? selectedFrecuenciaId.ToString() : "")
         };
 
-
-
+        // Debug: ver payload antes de enviar
+        Debug.WriteLine("[MODAL] Payload nueva actividad:");
+        Debug.WriteLine(JsonConvert.SerializeObject(nuevaTarea));
 
         bool ok = false;
-
         if (FormType == FormTypes.Evento)
             ok = await AgendaService.CrearEventoApi(nuevaTarea);
         else
@@ -345,28 +481,16 @@
 
         if (!ok)
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Error al guardar",
-                text = "La API rechazó la actividad."
-            });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Error al guardar", text = "La API rechazó la actividad." });
             return;
         }
 
         await OnSave.InvokeAsync(nuevaTarea);
-
-        await JSRuntime.InvokeVoidAsync("Swal.fire", new
-        {
-            icon = "success",
-            title = "Guardado con éxito 🎉",
-            showConfirmButton = false,
-            timer = 1500
-        });
-
+        await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "success", title = "Guardado con éxito 🎉", showConfirmButton = false, timer = 1500 });
         LimpiarCampos();
         ShowModal = false;
     }
+
     // -----------termino----------------
 
     // ---------------------------
@@ -595,6 +719,74 @@
 
     .btn btn-secondary-action {
     }
+
+    .autocomplete-container {
+        position: relative;
+        width: 100%;
+    }
+
+    /* Chips */
+    .chips-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 6px 8px;
+        min-height: 45px;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .chip {
+        background: #e7f0ff;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+    }
+
+    .chip-remove {
+        margin-left: 8px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    /* Input dentro de los chips */
+    .chip-input {
+        border: none;
+        outline: none;
+        flex-grow: 1;
+        min-width: 120px;
+        font-size: 14px;
+    }
+
+    /* Lista autocomplete */
+    .autocomplete-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 8px;
+        padding: 4px 0;
+        border: 1px solid #e5e5e5;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        z-index: 9999;
+    }
+
+        .autocomplete-list li {
+            padding: 12px 14px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+            .autocomplete-list li:hover {
+                background: #f0f4ff;
+            }
+
     /* Responsive Grid */
     @@media (max-width: 1024px) {
         .main-form-grid, .date-time-group {
@@ -760,4 +952,6 @@
         .btn-add:hover {
             background-color: #005f99;
         }
+
+
 </style>
