@@ -542,36 +542,31 @@
             <div class="modal-body-wrapper">
                 <div class="form-section-wrapper">
                     <div class="form-section">
+                        <!-- Campos de la orden -->
                         <div>
                             <label class="section-label">Número de orden</label>
                             <div>@SelectedOrden.Numero</div>
                         </div>
-
                         <div>
                             <label class="section-label">Fecha de solicitud</label>
                             <div>@(SelectedOrden.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "-")</div>
                         </div>
-
                         <div>
                             <label class="section-label">Autor</label>
                             <div>@(SelectedOrden.Autor ?? "-")</div>
                         </div>
-
                         <div>
                             <label class="section-label">Nombre / Razón social</label>
                             <div>@(SelectedOrden.Cliente ?? "-")</div>
                         </div>
-
                         <div class="form-group-span-2">
                             <label class="section-label">Objetivo</label>
                             <div>@(SelectedOrden.Objetivo ?? "-")</div>
                         </div>
-
                         <div class="form-group-span-2">
                             <label class="section-label">Objetivos de otros</label>
                             <div>@(SelectedOrden.ObjetivosOtros ?? "-")</div>
                         </div>
-
                         <div>
                             <label class="section-label">Fecha programada de conclusión</label>
                             <div>@(SelectedOrden.FechaConclusion.ToString("dd/MM/yyyy"))</div>
@@ -581,29 +576,68 @@
                     <div style="margin-top:18px;" class="form-group-span-2">
                         <label class="section-label">Tareas</label>
 
-                        <!-- Tabla minimalista estilo A (sin líneas) -->
-                        <div class="tasks-table-minimal">
-                            <div class="tasks-row tasks-header">
-                                <div class="col-name">Nombre de la tarea</div>
-                                <div class="col-desc">Descripción</div>
-                                <div class="col-adv">Avance</div>
-                            </div>
-
-                            @foreach (var t in SelectedOrden?.Subtasks ?? Enumerable.Empty<TareaOrdenModel>())
-                            {
-                                <div class="tasks-row">
-                                    <div class="col-name">@t.Title</div>
-                                    <div class="col-desc">@(!string.IsNullOrEmpty(t.Description) ? t.Description : "-")</div>
-                                    <div class="col-adv">@($"{t.ProgressPercent}%")</div>
-                                </div>
-                            }
-                        </div>
+                        <table class="tasks-table" style="width:100%; border-collapse:collapse;">
+                            <thead style="background:#f0f0f0; text-align:left;">
+                                <tr>
+                                    <th style="padding:8px; width:30%;">Nombre de la tarea</th>
+                                    <th style="padding:8px; width:45%;">Descripción</th>
+                                    <th style="padding:8px; width:15%;">Avance</th>
+                                    <th style="padding:8px; width:10%;">Ver</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in SelectedOrden?.Subtasks ?? Enumerable.Empty<TareaOrdenModel>())
+                                {
+                                    <tr style="border-bottom:1px solid #ddd;">
+                                        <td style="padding:8px;">@t.Title</td>
+                                        <td style="padding:8px;">@(!string.IsNullOrEmpty(t.Description) ? t.Description : "-")</td>
+                                        <td style="padding:8px;">@($"{t.ProgressPercent}%")</td>
+                                        <td style="padding:8px; text-align:center;">
+                                            <button class="btn-eye" @onclick="() => ShowTaskModal(t)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
+
                 </div>
             </div>
 
             <div class="modal-footer">
                 <button class="btn small" @onclick="CloseOrderModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de detalles de tarea -->
+@if (ShowTaskDetailsModal && SelectedTask != null)
+{
+    <div class="modal-container visible" @onclick="CloseTaskModal">
+        <div class="modal-content" @onclick:stopPropagation="true" style="max-width:500px; width:80%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+            <div class="modal-header" style="background:#3a3a4a; color:#fff; border-top-left-radius:10px; border-top-right-radius:10px;">
+                <h3 class="modal-title">Detalle de tarea - @SelectedTask.Title</h3>
+                <span class="close-button" @onclick="CloseTaskModal">&times;</span>
+            </div>
+            <div class="modal-body-wrapper" style="padding:15px;">
+                <div>
+                    <label class="section-label">Nombre de la tarea</label>
+                    <div>@SelectedTask.Title</div>
+                </div>
+                <div>
+                    <label class="section-label">Descripción</label>
+                    <div>@(!string.IsNullOrEmpty(SelectedTask.Description) ? SelectedTask.Description : "-")</div>
+                </div>
+                <div>
+                    <label class="section-label">Observación</label>
+                    <div>@(!string.IsNullOrEmpty(SelectedTask.Description) ? SelectedTask.Description : "-")</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn small" @onclick="CloseTaskModal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -640,6 +674,20 @@
         public string Title { get; set; }
         public string Description { get; set; }
         public int ProgressPercent { get; set; } = 0;
+    }
+    private bool ShowTaskDetailsModal = false;
+    private TareaOrdenModel? SelectedTask;
+
+    private void ShowTaskModal(TareaOrdenModel task)
+    {
+        SelectedTask = task;
+        ShowTaskDetailsModal = true;
+    }
+
+    private void CloseTaskModal()
+    {
+        ShowTaskDetailsModal = false;
+        SelectedTask = null;
     }
 
     public class OrdenTrabajoModel

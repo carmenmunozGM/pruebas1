@@ -98,43 +98,47 @@ namespace pruebas1.Servicios
                 if (usuario == null || string.IsNullOrEmpty(usuario.Token))
                     return false;
 
-                // Asegurar header Authorization
+                // Header Authorization
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
                 int idAgenda = evento.IdAgenda > 0 ? evento.IdAgenda : usuario.IdAgendasAsignadas.FirstOrDefault();
 
-                // Si ParticipantesSeleccionados está vacío, tomamos ids desde ParticipantesLista
+                // Obtener IDs de participantes
                 var idsParticipantes = evento.ParticipantesSeleccionados != null && evento.ParticipantesSeleccionados.Any()
                     ? evento.ParticipantesSeleccionados
                     : (evento.ParticipantesLista?.Select(p => p.Id).ToList() ?? new List<int>());
 
-                var dto = new EventoApiDTO
+                var dto = new
                 {
                     idAgenda = idAgenda,
                     titulo = evento.Titulo,
-                    descripcion = evento.Descripcion,
-                    fechaInicio = evento.FechaInicio ?? DateTime.Now,
-                    fechaFin = evento.FechaFin ?? DateTime.Now,
+                    descripcion = evento.Descripcion ?? "",
+                    fechaInicio = (evento.FechaInicio ?? DateTime.Now).ToString("yyyy-MM-ddTHH:mm:ss"),
+                    fechaFin = (evento.FechaFin ?? DateTime.Now).ToString("yyyy-MM-ddTHH:mm:ss"),
                     esRecurrente = evento.EsRecurrente,
-                  
-                    reglaRecurrencia = evento.ReglaRecurrencia ?? "",
-                    idPrioridad = (selectedPrioridadId ?? 1), // si quieres mapear prioridad desde modal
-                    idSala = evento.IdSala,
-                    ubicacion = string.IsNullOrWhiteSpace(evento.Ubicacion) ? "" : evento.Ubicacion,
-                    idsParticipantes = idsParticipantes
+                    reglaRecurrencia = string.IsNullOrEmpty(evento.ReglaRecurrencia) ? null : evento.ReglaRecurrencia,
+                    // Ahora usamos la prioridad del usuario
+                    idPrioridad = evento.Prioridad > 0 ? evento.Prioridad : 1,
+                    idSala = evento.IdSala > 0 ? evento.IdSala : null as int?,
+                    ubicacion = evento.Ubicacion ?? "",
+                    idsParticipantes = idsParticipantes // API espera este campo
                 };
 
                 var json = JsonSerializer.Serialize(dto);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                Debug.WriteLine("[CREAR EVENTO] POST → https://redgm.site/eventos");
+                Debug.WriteLine("[CREAR EVENTO] POST → https://redgm.site:9096/eventos");
                 Debug.WriteLine(json);
 
-                // Llamar al endpoint correcto (sin puerto si tu base es redgm.site)
                 var response = await httpClient.PostAsync("https://redgm.site:9096/eventos", content);
 
                 Debug.WriteLine($"[CREAR EVENTO] Status: {response.StatusCode}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var respText = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine($"[CREAR EVENTO] Error details: {respText}");
+                }
 
                 return response.IsSuccessStatusCode;
             }
@@ -144,8 +148,6 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
-
-
 
 
         // OBTENER AGENDA ASIGNADAS

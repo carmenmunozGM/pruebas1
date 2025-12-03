@@ -225,7 +225,22 @@
                     </div>
 
                 </div>
-
+                <script>
+    function alertaGuardado() {
+        Swal.fire({
+            icon: 'success',
+            title: 'Guardado con éxito 🎉',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            Swal.fire({
+                icon: 'info',
+                title: 'No se te olvide registrarlo en RED GM',
+                text: 'Verifica en Red GM este evento',
+                confirmButtonText: 'Entendido'
+            });
+        });
+    }
+</script>
                 <!-- Footer -->
                 <div class="task-modal-footer">
                     <button class="btn btn-secondary-action" @onclick="CheckClose">Cancelar</button>
@@ -487,6 +502,7 @@
 
         await OnSave.InvokeAsync(nuevaTarea);
         await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "success", title = "Guardado con éxito 🎉", showConfirmButton = false, timer = 1500 });
+        await JSRuntime.InvokeVoidAsync("alertaGuardado");
         LimpiarCampos();
         ShowModal = false;
     }
@@ -542,6 +558,7 @@
         subtasks.Remove(taskToRemove);
     }
 }
+
 
 
                             }

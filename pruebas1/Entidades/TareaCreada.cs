@@ -38,6 +38,7 @@ namespace pruebas1.Entidades
         public int IdAgenda { get; set; }
         public int IdCreador { get; set; }
         public int IdResponsable { get; set; }
+        public int Prioridad { get; set; } = 1; // 1=Alta, 2=Media, 3=Baja
     }
     public class Participante
     {
