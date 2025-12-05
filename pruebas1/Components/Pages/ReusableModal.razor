@@ -121,29 +121,32 @@
                     </div>
 
                     <!-- Ubicación -->
-                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>Ubicación</label>
+                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
+    <label>Ubicación</label>
 
-                        <select class="form-input"
-        @bind="selectedSalaId"
-        disabled="@(FormType != FormTypes.Evento)">
-    <option value="0">Seleccione una opción</option>
-    @foreach (var sala in listaSalas)
+    <select class="form-input"
+            @bind="selectedSalaId"
+            @onchange="OnSalaChanged"
+            disabled="@(FormType != FormTypes.Evento)">
+        <option value="0">Seleccione una opción</option>
+
+        @foreach (var sala in listaSalas)
+        {
+            <option value="@sala.Id">@sala.Salas</option>
+        }
+
+        <option value="-1">Otra...</option>
+    </select>
+
+    @if (showOtherLocationInput && FormType == FormTypes.Evento)
     {
-        <option value="@sala.Id">@sala.Salas</option>   <!-- value ahora es sala.Id -->
+        <input type="text"
+               class="form-input mt-2"
+               placeholder="Ingrese otra ubicación específica"
+               @bind="ubicacionSeleccionada" />
     }
-    <option value="-1">Otra...</option>
-</select>
+</div>
 
-
-                        @if (showOtherLocationInput && FormType == FormTypes.Evento)
-                        {
-                            <input type="text"
-                                   class="form-input mt-2"
-                                   placeholder="Ingrese otra ubicación específica"
-                                   @bind="ubicacionSeleccionada" />
-                        }
-                    </div>
 
                     <!-- Participantes -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
@@ -352,6 +355,11 @@ window.alertaGuardadoSimple = function() {
                 emp.ClavePersonal.ToString().Contains(texto))
             .Take(10)
             .ToList();
+    }
+    private void OnSalaChanged(ChangeEventArgs e)
+    {
+        selectedSalaId = int.Parse(e.Value.ToString());
+        showOtherLocationInput = (selectedSalaId == -1);
     }
 
     private void AgregarParticipante(EmpleadoDTO emp)

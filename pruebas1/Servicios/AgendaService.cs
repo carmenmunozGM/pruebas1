@@ -39,10 +39,10 @@ namespace pruebas1.Servicios
                 descripcion = tarea.Descripcion,
                 fechaInicio = tarea.FechaInicio,
                 fechaFin = tarea.FechaFin,
-                esRecurrente = false,
+                esRecurrente = tarea.EsRecurrente   ,
                 reglaRecurrencia = "",
                 todoElDia = true,
-                idPrioridad = 1,
+                idPrioridad = tarea.Prioridad,
                 idCreador = idCreador,
                 subTareas = tarea.Subtareas.Select((s, i) => new
                 {

@@ -138,19 +138,13 @@
                                                 {
                                                     @($" {st.HoraInicio.Value:hh\\:mm}")
                                                 }
-                                                @if (!string.IsNullOrEmpty(st.Ubicacion))
-                                                {
-                                                    @($" | {st.Ubicacion}")
-                                                }
-                                                @if (!string.IsNullOrEmpty(st.Participantes))
-                                                {
-                                                    @($" | Participantes: {st.Participantes}")
-                                                }
                                             </span>
                                         }
 
+
+
                                         <!-- Prioridad (solo para tareas) -->
-                                        @if (st.Tipo == "Tarea" && st.Prioridad > 0)
+                                        @if (st.Tipo == "Tarea")
                                         {
                                             <span class="tarea-prioridad">
                                                 @(st.Prioridad switch
@@ -162,6 +156,7 @@
                                                 })
                         </span>
                                                 }
+
 
                                         <!-- Estado hecho -->
                                         @if (st.IsDone)
@@ -1024,11 +1019,11 @@
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
                 Title = t.titulo,
-                Descripcion = t.descripcion ?? "",
+            
                 IsDone = t.completada,
                 Tipo = "Tarea",
 
-                Prioridad = t.prioridad,
+                Prioridad = t.idPrioridad,
 
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
@@ -1055,7 +1050,7 @@
             tareasCategory.Subtasks.Add(new SubtaskModel
             {
                 Title = ev.titulo,
-                Descripcion = ev.descripcion ?? "",
+              
                 IsDone = false,
                 Tipo = "Evento",
 
@@ -1098,23 +1093,55 @@
             Name = c.Name,
             ColorClass = c.ColorClass,
             Icon = c.Icon,
+
             Subtasks = c.Subtasks.Select(st => new SubtaskModel
             {
                 Id = Guid.NewGuid().ToString(),
+
+                // Básicos
                 Title = st.Title,
+                Descripcion = st.Descripcion,
                 IsDone = st.IsDone,
-                Subtasks = st.Subtasks?.Select(s => new SubtaskModel { Title = s.Title, Descripcion = s.Descripcion, ProgressPercent = s.ProgressPercent }).ToList() ?? new List<SubtaskModel>(),
+
+                // 🔥 CAMPOS CRÍTICOS QUE SE PERDIERON
+                Tipo = st.Tipo,        // <--- NECESARIO PARA MOSTRAR ICONO CORRECTO
+                Icon = st.Icon,        // <--- NECESARIO PARA EVENTOS
+
+                // Fechas y Horas
+                FechaInicio = st.FechaInicio,
+                FechaFin = st.FechaFin,
                 FechaConclusion = st.FechaConclusion,
                 FechaSolicitud = st.FechaSolicitud,
+
+                HoraInicio = st.HoraInicio,
+                HoraFin = st.HoraFin,
+
+                // Datos extra
                 Autor = st.Autor,
                 Cliente = st.Cliente,
                 Objetivo = st.Objetivo,
-                ObjetivosOtros = st.ObjetivosOtros
+                ObjetivosOtros = st.ObjetivosOtros,
+                Prioridad = st.Prioridad,
+                Ubicacion = st.Ubicacion,
+                Participantes = st.Participantes,
+
+                // Subtareas internas
+                Subtasks = st.Subtasks?.Select(s => new SubtaskModel
+                {
+                    Title = s.Title,
+                    Descripcion = s.Descripcion,
+                    ProgressPercent = s.ProgressPercent,
+                    Tipo = s.Tipo,
+                    Icon = s.Icon,
+                    IsDone = s.IsDone
+                }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
+
         }).ToList();
 
         await PrepararOrdenesVisuales();
     }
+
 
     private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status)
     {
