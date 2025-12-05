@@ -29,6 +29,7 @@ namespace pruebas1
             builder.Services.AddSingleton<UsuarioState>();
             builder.Services.AddScoped<UsuarioService>();
             builder.Services.AddScoped<AutoevaluacionService>();
+            builder.Services.AddScoped<OrdenTrabajoService>();
 
             builder.Services.AddMauiBlazorWebView();
 

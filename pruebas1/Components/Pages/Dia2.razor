@@ -8,7 +8,7 @@
 @using pruebas1.Components
 @using pruebas1.Servicios
 @using System.Diagnostics;
-
+@inject OrdenTrabajoService OrdenTrabajoService
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
@@ -114,7 +114,7 @@
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");">
-                                            [ES @st.Tipo.ToUpper()]
+                                           
                                         </span>
 
                                         <!-- Título -->
@@ -229,7 +229,7 @@
                         </button>
                     </div>
                 </div>
-
+             
                 @if (!otCat.IsCollapsed)
                 {
                     <div class="card-body block-body block-scroll">
@@ -237,21 +237,23 @@
                             @if (OrdenesParaMostrar != null && OrdenesParaMostrar.Any())
                             {
                                 <div class="columns-container block-scroll">
+                                    
+
 
                                     <!-- 🔴 Columna 1: Vencidas -->
                                     <div class="column column-expired block-scroll">
-                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencida).OrderBy(o => o.FechaConclusion))
+                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencido).OrderBy(o => o.FechaProgramada))
                                         {
                                             <div class="ot-card ot-expired">
                                                 <div class="ot-left">
-                                                    <div class="ot-number">@ot.Numero</div>
-                                                    <div class="ot-date">@ot.FechaConclusion.ToString("dd/MM/yyyy")</div>
+                                                    <div class="ot-number">@ot.NumeroOrden</div>
+                                                    <div class="ot-date">@ot.FechaProgramada.ToString("dd/MM/yyyy")</div>
                                                 </div>
                                                 <div class="ot-middle">
                                                     <span class="badge badge-expired">Vencida</span>
                                                 </div>
                                                 <div class="ot-right">
-                                                    <button class="icon-eye" title="Ver orden" @onclick="() => OpenOrderModal(ot)">
+                                                    <button class="icon-eye" title="Ver orden" @onclick="() => VerOrden(ot)">
                                                         <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
@@ -261,39 +263,41 @@
 
                                     <!-- 🟡 Columna 2: Próximas -->
                                     <div class="column column-soon block-scroll">
-                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Proxima).OrderBy(o => o.FechaConclusion))
+                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Proximo).OrderBy(o => o.FechaProgramada))
                                         {
                                             <div class="ot-card ot-soon">
                                                 <div class="ot-left">
-                                                    <div class="ot-number">@ot.Numero</div>
-                                                    <div class="ot-date">@ot.FechaConclusion.ToString("dd/MM/yyyy")</div>
+                                                    <div class="ot-number">@ot.NumeroOrden</div>
+                                                    <div class="ot-date">@ot.FechaProgramada.ToString("dd/MM/yyyy")</div>
                                                 </div>
                                                 <div class="ot-middle">
                                                     <span class="badge badge-soon">Próx.</span>
                                                 </div>
                                                 <div class="ot-right">
-                                                    <button class="icon-eye" title="Ver orden" @onclick="() => OpenOrderModal(ot)">
+                                                    <button class="icon-eye" title="Ver orden" @onclick="() => VerOrden(ot)">
+                                                        <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
-                                                <i class="bi bi-eye-fill"></i>
+                                                
                                             </div>
                                         }
                                     </div>
 
                                     <!-- 🟢 Columna 3: Normales -->
                                     <div class="column column-normal block-scroll">
-                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Normal).OrderBy(o => o.FechaConclusion))
+                                        @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Hoy).OrderBy(o => o.FechaProgramada))
                                         {
                                             <div class="ot-card ot-normal">
                                                 <div class="ot-left">
-                                                    <div class="ot-number">@ot.Numero</div>
-                                                    <div class="ot-date">@ot.FechaConclusion.ToString("dd/MM/yyyy")</div>
+                                                    <div class="ot-number">@ot.NumeroOrden</div>
+                                                    <div class="ot-date">@ot.FechaProgramada.ToString("dd/MM/yyyy")</div>
                                                 </div>
                                                 <div class="ot-middle">
                                                     <span class="badge badge-normal">Hoy</span>
                                                 </div>
                                                 <div class="ot-right">
-                                                    <button class="icon-eye" title="Ver orden" @onclick="() => OpenOrderModal(ot)">
+                                                    <button class="icon-eye" title="Ver orden" @onclick="() => VerOrden(ot)">
+                                                        
                                                         <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
@@ -535,44 +539,53 @@
     <div class="modal-container visible" @onclick="CloseOrderModal">
         <div class="modal-content" @onclick:stopPropagation="true" style="max-width:1200px; width:95%; height:92vh;">
             <div class="modal-header" style="background:#2b2b3a; color:#fff;">
-                <h2 class="modal-title">Orden - @SelectedOrden.Numero</h2>
+                <h2 class="modal-title">Orden - @SelectedOrden.NumeroOrden</h2>
                 <span class="close-button" @onclick="CloseOrderModal">&times;</span>
             </div>
 
             <div class="modal-body-wrapper">
                 <div class="form-section-wrapper">
                     <div class="form-section">
+
                         <!-- Campos de la orden -->
                         <div>
                             <label class="section-label">Número de orden</label>
-                            <div>@SelectedOrden.Numero</div>
+                            <div>@SelectedOrden.NumeroOrden</div>
                         </div>
+
                         <div>
                             <label class="section-label">Fecha de solicitud</label>
                             <div>@(SelectedOrden.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "-")</div>
                         </div>
+
                         <div>
                             <label class="section-label">Autor</label>
                             <div>@(SelectedOrden.Autor ?? "-")</div>
                         </div>
+
                         <div>
                             <label class="section-label">Nombre / Razón social</label>
                             <div>@(SelectedOrden.Cliente ?? "-")</div>
                         </div>
+
                         <div class="form-group-span-2">
                             <label class="section-label">Objetivo</label>
                             <div>@(SelectedOrden.Objetivo ?? "-")</div>
                         </div>
+
                         <div class="form-group-span-2">
-                            <label class="section-label">Objetivos de otros</label>
-                            <div>@(SelectedOrden.ObjetivosOtros ?? "-")</div>
+                            <label class="section-label">Objetivo de otros</label>
+                            <div>@(SelectedOrden.ObjetivoOtro ?? "-")</div>
                         </div>
+
                         <div>
                             <label class="section-label">Fecha programada de conclusión</label>
-                            <div>@(SelectedOrden.FechaConclusion.ToString("dd/MM/yyyy"))</div>
+                            <div>@SelectedOrden.FechaProgramada.ToString("dd/MM/yyyy")</div>
                         </div>
+
                     </div>
 
+                    <!-- TABLA DE TAREAS -->
                     <div style="margin-top:18px;" class="form-group-span-2">
                         <label class="section-label">Tareas</label>
 
@@ -586,12 +599,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var t in SelectedOrden?.Subtasks ?? Enumerable.Empty<TareaOrdenModel>())
+                                @foreach (var t in SelectedOrden.Tareas)
                                 {
                                     <tr style="border-bottom:1px solid #ddd;">
-                                        <td style="padding:8px;">@t.Title</td>
-                                        <td style="padding:8px;">@(!string.IsNullOrEmpty(t.Description) ? t.Description : "-")</td>
-                                        <td style="padding:8px;">@($"{t.ProgressPercent}%")</td>
+                                        <td style="padding:8px;">@t.Nombre</td>
+
+                                        <td style="padding:8px;">
+                                            @{
+                                                var desc = t.DescripcionAutor
+                                                ?? t.DescripcionReceptor
+                                                ?? "-";
+                                            }
+                                            @desc
+                                        </td>
+
+                                        <td style="padding:8px;">@($"{t.Avance}%")</td>
+
                                         <td style="padding:8px; text-align:center;">
                                             <button class="btn-eye" @onclick="() => ShowTaskModal(t)">
                                                 <i class="fa fa-eye"></i>
@@ -613,36 +636,48 @@
     </div>
 }
 
-<!-- Modal de detalles de tarea -->
+<!-- MODAL DE DETALLE DE TAREA -->
 @if (ShowTaskDetailsModal && SelectedTask != null)
 {
     <div class="modal-container visible" @onclick="CloseTaskModal">
         <div class="modal-content" @onclick:stopPropagation="true" style="max-width:500px; width:80%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
             <div class="modal-header" style="background:#3a3a4a; color:#fff; border-top-left-radius:10px; border-top-right-radius:10px;">
-                <h3 class="modal-title">Detalle de tarea - @SelectedTask.Title</h3>
+                <h3 class="modal-title">Detalle de tarea - @SelectedTask.Nombre</h3>
                 <span class="close-button" @onclick="CloseTaskModal">&times;</span>
             </div>
+
             <div class="modal-body-wrapper" style="padding:15px;">
+
                 <div>
                     <label class="section-label">Nombre de la tarea</label>
-                    <div>@SelectedTask.Title</div>
+                    <div>@SelectedTask.Nombre</div>
                 </div>
+
                 <div>
                     <label class="section-label">Descripción</label>
-                    <div>@(!string.IsNullOrEmpty(SelectedTask.Description) ? SelectedTask.Description : "-")</div>
+                    <div>
+                        @{
+                            var desc = SelectedTask.DescripcionAutor
+                            ?? SelectedTask.DescripcionReceptor
+                            ?? "-";
+                        }
+                        @desc
+                    </div>
                 </div>
+
                 <div>
                     <label class="section-label">Observación</label>
-                    <div>@(!string.IsNullOrEmpty(SelectedTask.Description) ? SelectedTask.Description : "-")</div>
+                    <div>@(SelectedTask.Observacion ?? "-")</div>
                 </div>
+
             </div>
+
             <div class="modal-footer">
                 <button class="btn small" @onclick="CloseTaskModal">Cerrar</button>
             </div>
         </div>
     </div>
 }
-
 
 
 @code {
@@ -655,6 +690,7 @@
     private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
     private string FechaFormateada => FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"));
     //---- PARA AGENDA
+    
 
     // Si ya tienes Categories / MasterCategories, usa el que corresponda.
     // Lista de tareas cargadas desde la API
@@ -669,12 +705,7 @@
     // Lista de órdenes (separada y limpia)
     private List<OrdenTrabajoModel> OrdenesParaMostrar = new();
     // ---- MODELOS PARA EL BLOQUE DE ÓRDENES (D1) ----
-    public class TareaOrdenModel
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public int ProgressPercent { get; set; } = 0;
-    }
+   
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
 
@@ -690,19 +721,6 @@
         SelectedTask = null;
     }
 
-    public class OrdenTrabajoModel
-    {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public string Numero { get; set; }
-        public DateTime FechaConclusion { get; set; } = DateTime.Today;
-        public DateTime? FechaSolicitud { get; set; }
-        public string Autor { get; set; }
-        public string Cliente { get; set; }
-        public string Objetivo { get; set; }
-        public string ObjetivosOtros { get; set; }
-        public List<TareaOrdenModel> Subtasks { get; set; } = new();
-        public OrdenStatus Status { get; set; } = OrdenStatus.Normal;
-    }
 
     async Task ToggleTareaApi(TareaApi t)
     {
@@ -901,7 +919,10 @@
     }
     protected override async Task OnInitializedAsync()
     {
+
+        await PrepararOrdenesVisuales();
         await InitializeMasterCategoriesAsync();
+        StateHasChanged();
     }
 
     string GetIcon(string title) => title switch
@@ -912,7 +933,8 @@
         "Servicio a Cliente" => "🏢",
         _ => "📋"
     };
-
+  
+   
     /*private void InitializeMasterCategoriesAsync()
     {
 
@@ -960,6 +982,7 @@
     // ======== CARGA DINÁMICA DE BLOQUES: TAREAS Y EVENTOS (con debug) ========
     private async Task InitializeMasterCategoriesAsync()
     {
+        
         Debug.WriteLine("====== Inicializando Categorías ======");
 
         // Obtener agenda actual
@@ -1068,7 +1091,7 @@
         CargarTareasPorFecha();
     }
 
-    private void CargarTareasPorFecha()
+    private async Task CargarTareasPorFecha()
     {
         Categories = MasterCategories.Select(c => new CategoryModel
         {
@@ -1080,7 +1103,7 @@
                 Id = Guid.NewGuid().ToString(),
                 Title = st.Title,
                 IsDone = st.IsDone,
-                Subtasks = st.Subtasks?.Select(s => new SubtaskModel { Title = s.Title, Description = s.Description, ProgressPercent = s.ProgressPercent }).ToList() ?? new List<SubtaskModel>(),
+                Subtasks = st.Subtasks?.Select(s => new SubtaskModel { Title = s.Title, Descripcion = s.Descripcion, ProgressPercent = s.ProgressPercent }).ToList() ?? new List<SubtaskModel>(),
                 FechaConclusion = st.FechaConclusion,
                 FechaSolicitud = st.FechaSolicitud,
                 Autor = st.Autor,
@@ -1090,90 +1113,131 @@
             }).ToList()
         }).ToList();
 
-        // Recalcula la lista de órdenes (si las traes desde backend deberías poblarla aquí)
-        PrepararOrdenesVisuales();
+        await PrepararOrdenesVisuales();
     }
 
-    private void PrepararOrdenesVisuales()
+    private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status)
     {
-        // Si tienes backend sustituye este bloque por la carga real.
-        // Aquí creamos ejemplos para que lo veas en funcionamiento
-        OrdenesParaMostrar = new List<OrdenTrabajoModel>
+        return new OrdenTrabajoModel
         {
-            new OrdenTrabajoModel {
-                Numero = "ORD-13537",
-                FechaSolicitud = new DateTime(2025,8,27),
-                Autor = "Nadia Vainey Ramirez Carmona",
-                Cliente = "Grupo Mendez Asesores de Negocios SC",
-                Objetivo = "799 trabajos especiales de tecnologías de la información",
-                ObjetivosOtros = "equis",
-                FechaConclusion = new DateTime(2025,9,17),
-                Subtasks = new List<TareaOrdenModel> {
-                    new TareaOrdenModel { Title = "Entrega del formato de control de inducciones", Description = "Al recibir esta inducción estuvo bien", ProgressPercent = 100 }
-                }
-            },
-            new OrdenTrabajoModel {
-                Numero = "ORD-13683",
-                FechaSolicitud = new DateTime(2025,10,1),
-                Autor = "Laura Gómez",
-                Cliente = "Empresa Demo",
-                Objetivo = "Instalación de red",
-                FechaConclusion = DateTime.Today.AddDays(20),
-                Subtasks = new List<TareaOrdenModel> {
-                    new TareaOrdenModel { Title = "Instalación de switches", Description = "Programado", ProgressPercent = 20 }
-                }
-            },
-            new OrdenTrabajoModel {
-                Numero = "ORD-13296",
-                FechaSolicitud = DateTime.Today.AddDays(2),
-                Autor = "Miguel Ruiz",
-                Cliente = "Comercial Central",
-                Objetivo = "Actualización de software",
-                FechaConclusion = DateTime.Today.AddDays(4),
-                Subtasks = new List<TareaOrdenModel> {
-                    new TareaOrdenModel { Title = "Pruebas en ambiente", Description = "En progreso", ProgressPercent = 50 }
-                }
-            },
-            new OrdenTrabajoModel {
-                Numero = "ORD-13503",
-                FechaSolicitud = new DateTime(2025,9,5),
-                Autor = "Carlos Pérez",
-                Cliente = "Cliente Ejemplo SA",
-                Objetivo = "Mantenimiento de servidores",
-                FechaConclusion = DateTime.Today.AddDays(-3),
-                Subtasks = new List<TareaOrdenModel> {
-                    new TareaOrdenModel { Title = "Revisión de backup", Description = "Backup incompleto", ProgressPercent = 70 }
-                }
-            },
-            // extras para mostrar llenado
-            new OrdenTrabajoModel {
-                Numero = "ORD-14020",
-                FechaConclusion = DateTime.Today.AddDays(40),
-                FechaSolicitud = DateTime.Today.AddDays(-10),
-                Autor = "Sofia Martínez",
-                Cliente = "Empresa Alfa",
-                Objetivo = "Nueva instalación",
-                Subtasks = new List<TareaOrdenModel>{ new TareaOrdenModel{ Title="Preparar infraestructura", Description="Pendiente", ProgressPercent=0 } }
-            },
-            new OrdenTrabajoModel {
-                Numero = "ORD-12100",
-                FechaConclusion = DateTime.Today.AddDays(-10),
-                FechaSolicitud = DateTime.Today.AddDays(-30),
-                Autor = "Luis Torres",
-                Cliente = "Cliente Beta",
-                Objetivo = "Soporte técnico",
-                Subtasks = new List<TareaOrdenModel>{ new TareaOrdenModel{ Title="Atender incidencia", Description="Retrasado", ProgressPercent=40 } }
-            }
+            Id = api.id,
+            NumeroOrden = api.strClave,
+            FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
+            FechaProgramada = api.fechaFinal,
+            Autor = api.nombreCompleto ?? string.Empty,
+            Cliente = api.strValor ?? string.Empty,
+            Objetivo = api.strValor ?? string.Empty,
+            ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
+            Status = status,
+            Tareas = new List<TareaOrdenModel>() // vacío en la lista
         };
+    }
 
-        // Calcula estados
-        var hoy = DateTime.Today;
-        foreach (var o in OrdenesParaMostrar)
+    // Mapea la orden detalle (endpoint /orden/{id}) -> con tareas
+    private OrdenTrabajoModel ConvertirOrdenDetalle(OrdenTrabajoDTO api)
+    {
+        return new OrdenTrabajoModel
         {
-            if (o.FechaConclusion.Date < hoy) o.Status = OrdenStatus.Vencida;
-            else if ((o.FechaConclusion.Date - hoy).TotalDays <= 5) o.Status = OrdenStatus.Proxima;
-            else o.Status = OrdenStatus.Normal;
+            Id = api.id,
+            NumeroOrden = api.strClave,
+            FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
+            FechaProgramada = api.fechaFinal,
+            Autor = api.nombreCompleto ?? string.Empty,
+            Cliente = api.strValor ?? string.Empty,
+            Objetivo = api.strValor ?? string.Empty,
+            ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
+            Status = OrdenStatus.Hoy, // el estado real lo calculas en la lista; aquí no importa
+            Tareas = api.tareas?.Select(t => new TareaOrdenModel
+            {
+                Nombre = t.strNombreTarea,
+                DescripcionAutor = t.strDescripcionAutor,
+                DescripcionReceptor = t.strDescripcionReceptor,
+                Valor = t.strValor,
+                Observacion = t.strObservacion,
+                Avance = 0
+            }).ToList() ?? new List<TareaOrdenModel>()
+        };
+    }
+
+    private OrdenStatus ConvertirEstadoDesdeString(string estado)
+    {
+        return estado switch
+        {
+            "Vencido" => OrdenStatus.Vencido,
+            "Proximo" => OrdenStatus.Proximo,
+            "Hoy" => OrdenStatus.Hoy,
+            _ => OrdenStatus.Hoy
+        };
+    }
+
+    // ------------------------------
+    // Preparar listas (vencidas / proximas / hoy)
+    // ------------------------------
+    private async Task PrepararOrdenesVisuales()
+    {
+        OrdenesParaMostrar = new List<OrdenTrabajoModel>();
+
+        try
+        {
+            var vencidas = await OrdenTrabajoService.GetOrdenesVencidas();
+            var proximas = await OrdenTrabajoService.GetOrdenesProximas();
+            var hoy = await OrdenTrabajoService.GetOrdenesHoy();
+
+            // Mapea cada lista con la versión SIMPLE (sin tareas) y asigna el estado correcto
+            if (vencidas != null)
+                OrdenesParaMostrar.AddRange(vencidas.Select(v => ConvertirOrdenSimple(v, OrdenStatus.Vencido)));
+
+            if (proximas != null)
+                OrdenesParaMostrar.AddRange(proximas.Select(p => ConvertirOrdenSimple(p, OrdenStatus.Proximo)));
+
+            if (hoy != null)
+                OrdenesParaMostrar.AddRange(hoy.Select(h => ConvertirOrdenSimple(h, OrdenStatus.Hoy)));
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR PrepararOrdenesVisuales: " + ex.Message);
+        }
+
+        // opcional: abrir la sección Órdenes por defecto
+        var otCat = Categories.FirstOrDefault(c => c.Name?.Trim() == "Órdenes de Trabajo");
+        if (otCat != null) otCat.IsCollapsed = false;
+
+        StateHasChanged();
+    }
+
+    // ------------------------------
+    // Abrir modal: DOS OPCIONES
+    //  - Si llamas con el id (int) -> consulta detalle
+    //  - Si llamas con el modelo (OrdenTrabajoModel) -> consulta detalle por Id
+    // ------------------------------
+    private async Task VerOrden(int idOrden)
+    {
+        try
+        {
+            var url = $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}";
+            var apiOrden = await Http.GetFromJsonAsync<OrdenTrabajoDTO>(url);
+            if (apiOrden != null)
+            {
+                SelectedOrden = ConvertirOrdenDetalle(apiOrden);
+                ShowOrderModal = true;
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine($"Orden {idOrden} no encontrada en API.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR VerOrden(id): " + ex.Message);
+        }
+    }
+
+    // Sobrecarga para que tu botón @onclick="() => VerOrden(ot)" funcione
+    private async Task VerOrden(OrdenTrabajoModel orden)
+    {
+        if (orden == null) return;
+        await VerOrden(orden.Id);
     }
 
     // ---- Modal orden ----
@@ -1187,13 +1251,7 @@
         StateHasChanged();
     }
 
-    public enum OrdenStatus
-    {
-        Normal,
-        Proxima,
-        Vencida
-    }
-
+    
     private void CloseOrderModal()
     {
         SelectedOrden = null;

@@ -127,29 +127,37 @@ namespace pruebas1.Entidades
 
     public class OrdenTrabajoModel
     {
+        public int Id { get; set; }
         public string NumeroOrden { get; set; }
-        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaSolicitud { get; set; }
         public DateTime FechaProgramada { get; set; }
         public string Autor { get; set; }
         public string Cliente { get; set; }
         public string Objetivo { get; set; }
-        public string OtrosObjetivos { get; set; }
-        public OrdenStatus Status { get; set; } = OrdenStatus.Normal;
+        public string ObjetivoOtro { get; set; }
+        public OrdenStatus Status { get; set; }
         public List<TareaOrdenModel> Tareas { get; set; } = new();
     }
 
     public class TareaOrdenModel
     {
         public string Nombre { get; set; }
-        public string Descripcion { get; set; }
-        public int Avance { get; set; } // %
+        public string DescripcionAutor { get; set; }
+        public string DescripcionReceptor { get; set; }
+        public string Valor { get; set; }
+        public string Observacion { get; set; }
+
+        // Calculado para tabla de avance (si no existe en API)
+        public int Avance { get; set; } = 0;
     }
 
     public enum OrdenStatus
     {
-        Normal,
-        ProximaVencer,
-        Vencida
+        Hoy,
+        Proximo,
+        Vencido
     }
+
+
 
 }

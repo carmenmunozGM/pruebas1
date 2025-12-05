@@ -5,20 +5,18 @@
 @inject AgendaService AgendaService
 @inject SalasEmService SalasEmService
 @inject ReglasRecurrenciaServices reglasRecurrenciaServices
-
 @inject IJSRuntime JSRuntime
 @inject UsuarioState UsuarioState
-
 @using System.Diagnostics
 @using Newtonsoft.Json
 @using pruebas1.Components.DTOs
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
+<script src="js/alertas-modal.js"></script>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <div class="action-button-wrapper">
     <button class="action-button-floating" @onclick="@OpenModal">➕ Crear Nueva Actividad</button>
 </div>
@@ -226,21 +224,31 @@
 
                 </div>
                 <script>
-    function alertaGuardado() {
+window.alertaGuardadoEvento = function() {
+    Swal.fire({
+        icon: 'success',
+        title: 'Guardado con éxito 🎉',
+        confirmButtonText: 'OK'
+    }).then(() => {
         Swal.fire({
-            icon: 'success',
-            title: 'Guardado con éxito 🎉',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            Swal.fire({
-                icon: 'info',
-                title: 'No se te olvide registrarlo en RED GM',
-                text: 'Verifica en Red GM este evento',
-                confirmButtonText: 'Entendido'
-            });
+            icon: 'info',
+            title: 'No se te olvide registrarlo en RED GM',
+            text: 'Verifica en Red GM este evento',
+            confirmButtonText: 'Entendido'
         });
-    }
+    });
+}
+
+window.alertaGuardadoSimple = function() {
+    Swal.fire({
+        icon: 'success',
+        title: 'Guardado con éxito 🎉',
+        confirmButtonText: 'OK'
+    });
+}
 </script>
+
+
                 <!-- Footer -->
                 <div class="task-modal-footer">
                     <button class="btn btn-secondary-action" @onclick="CheckClose">Cancelar</button>
@@ -501,8 +509,18 @@
         }
 
         await OnSave.InvokeAsync(nuevaTarea);
-        await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "success", title = "Guardado con éxito 🎉", showConfirmButton = false, timer = 1500 });
-        await JSRuntime.InvokeVoidAsync("alertaGuardado");
+        
+        // ALERTAS SEGÚN EL TIPO
+// ALERTAS SEGÚN EL TIPO
+if (FormType == FormTypes.Evento)
+{
+    await JSRuntime.InvokeVoidAsync("alertaGuardadoEvento");
+}
+else
+{
+    await JSRuntime.InvokeVoidAsync("alertaGuardadoSimple");
+}
+
         LimpiarCampos();
         ShowModal = false;
     }
@@ -562,7 +580,10 @@
 
 
                             }
-<style>
+
+
+
+                            <style>
     /* === Paleta de Colores Nueva (Azul y Amarillo/Naranja) === */
     :root {
         --color-secondary: #C6E9F0; /* Amarillo/Dorado (Para Acentos y Activo) */
