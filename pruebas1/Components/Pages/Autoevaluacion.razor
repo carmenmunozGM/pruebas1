@@ -126,22 +126,22 @@
                             {
                                 var localIndex = i;
 
-                <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
-                    <input type="date"
-                           class="input-date"
-                           value="@FechasEventuales[localIndex].ToString("yyyy-MM-dd")"
-                           @onchange="(e) => OnFechaEventualChange(localIndex, e.Value?.ToString())" />
+                                <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 
-                    @if (FechasEventuales.Count > 1)
-                    {
-                        <button class="btn-cancel" style="padding:6px 10px; height:38px;"
-                                @onclick="() => RemoveFechaEventual(localIndex)">
-                            ❌
-                        </button>
-                    }
-                </div>
-            }
-        </div>
+                                    <DatePicker Value="FechasEventuales[localIndex]"
+                                                ValueChanged="@(v => OnFechaEventualChange(localIndex, v))"
+                                                CssClass="form-control" />
+
+                                    @if (FechasEventuales.Count > 1)
+                                    {
+                                        <button class="btn-cancel" style="padding:6px 10px; height:38px;"
+                                                @onclick="() => RemoveFechaEventual(localIndex)">
+                                            ❌
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
 
                         <button class="btn-confirm" style="margin-top:10px;"
                                 @onclick="AddNuevaFechaEventual">
@@ -150,6 +150,7 @@
 
                     </div>
                 }
+
                 @if (IsAnnual)
                 {
                     <p>Seleccione mes y año:</p>
@@ -620,14 +621,14 @@ private void EditarEventual(Tarea tarea)
     }
 
     private void OnFechaEventualChange(int index, string? value)
-{
-    // Seguridad: evita out of range por re-render
-    if (index < 0 || index >= FechasEventuales.Count)
-        return;
+    {
+        if (index < 0 || index >= FechasEventuales.Count)
+            return;
 
-    if (DateTime.TryParse(value, out var fecha))
-        FechasEventuales[index] = fecha;
-}
+        if (DateTime.TryParse(value, out var fecha))
+            FechasEventuales[index] = fecha;
+    }
+
 
 //Ayuda a que se muestren las tareas de 3 en 3
 private string FormatearFechasEnLineas(List<DateTime> fechas)
