@@ -608,7 +608,7 @@
                                             @desc
                                         </td>
 
-                                        <td style="padding:8px;">@($"{t.Avance}%")</td>
+                                        <td style="padding:8px;">@($"{t.Valor}")</td>
 
                                         <td style="padding:8px; text-align:center;">
                                             <button class="btn-eye" @onclick="() => ShowTaskModal(t)">
@@ -1152,7 +1152,7 @@
             FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
             FechaProgramada = api.fechaFinal,
             Autor = api.nombreCompleto ?? string.Empty,
-            Cliente = api.strValor ?? string.Empty,
+            Cliente = api.nombreCliente ?? string.Empty,
             Objetivo = api.strValor ?? string.Empty,
             ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
             Status = status,
@@ -1170,7 +1170,7 @@
             FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
             FechaProgramada = api.fechaFinal,
             Autor = api.nombreCompleto ?? string.Empty,
-            Cliente = api.strValor ?? string.Empty,
+            Cliente = api.nombreCliente ?? string.Empty,
             Objetivo = api.strValor ?? string.Empty,
             ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
             Status = OrdenStatus.Hoy, // el estado real lo calculas en la lista; aquí no importa
@@ -1179,9 +1179,9 @@
                 Nombre = t.strNombreTarea,
                 DescripcionAutor = t.strDescripcionAutor,
                 DescripcionReceptor = t.strDescripcionReceptor,
-                Valor = t.strValor,
+                Valor = t.avance,
                 Observacion = t.strObservacion,
-                Avance = 0
+               
             }).ToList() ?? new List<TareaOrdenModel>()
         };
     }

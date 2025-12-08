@@ -38,7 +38,7 @@ namespace pruebas1.Entidades
         public int IdAgenda { get; set; }
         public int IdCreador { get; set; }
         public int IdResponsable { get; set; }
-        public int Prioridad { get; set; } = 1;
+        public int Prioridad { get; set; } 
 
     }
     public class Participante
@@ -147,9 +147,6 @@ namespace pruebas1.Entidades
         public string DescripcionReceptor { get; set; }
         public string Valor { get; set; }
         public string Observacion { get; set; }
-
-        // Calculado para tabla de avance (si no existe en API)
-        public int Avance { get; set; } = 0;
     }
 
     public enum OrdenStatus

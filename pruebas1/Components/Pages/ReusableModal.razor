@@ -124,10 +124,9 @@
                      <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
     <label>Ubicación</label>
 
-    <select class="form-input"
-            @bind="selectedSalaId"
-            @onchange="OnSalaChanged"
-            disabled="@(FormType != FormTypes.Evento)">
+<select @bind="selectedSalaId"
+        @bind:event="onchange"
+        disabled="@(FormType != FormTypes.Evento)">
         <option value="0">Seleccione una opción</option>
 
         @foreach (var sala in listaSalas)

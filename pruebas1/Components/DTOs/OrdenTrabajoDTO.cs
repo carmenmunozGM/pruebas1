@@ -14,6 +14,8 @@ namespace pruebas1.Components.DTOs
         public string nombreCompleto { get; set; }
         public string strValor { get; set; }
         public string strObjetivoOtro { get; set; }
+
+        public string nombreCliente { get; set; }
         public DateTime fechaFinal { get; set; }
         public string estado { get; set; }
         public List<TareaDTO> tareas { get; set; } = new();
@@ -23,7 +25,7 @@ namespace pruebas1.Components.DTOs
     {
         public string strNombreTarea { get; set; }
         public string strDescripcionAutor { get; set; }
-        public string strValor { get; set; }
+        public string avance { get; set; }
         public string strObservacion { get; set; }
         public string strDescripcionReceptor { get; set; }
     }
