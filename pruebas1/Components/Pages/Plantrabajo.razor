@@ -780,47 +780,38 @@
 
     /* Para pantallas pequeñas, mejorar padding y tamaño */
     @@media (max-width: 600px) {
-        .modal.large
+        .modal.large {
+            width: 95%;
+            max-width: 95%;
+            padding: 1.5rem 1.8rem;
+            font-size: 0.9rem;
+            max-height: 85vh;
+        }
 
-    {
-        width: 95%;
-        max-width: 95%;
-        padding: 1.5rem 1.8rem;
-        font-size: 0.9rem;
-        max-height: 85vh;
-    }
-
-    .modal-title {
-        font-size: 1.3rem;
-        margin-bottom: 0.8rem;
-    }
-
+        .modal-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
     }
 
     /* Para pantallas muy pequeñas en altura */
     @@media (max-height: 500px) {
-        .overlay
-
-    {
-        align-items: flex-start;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-
+        .overlay {
+            align-items: flex-start;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
     }
 
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
