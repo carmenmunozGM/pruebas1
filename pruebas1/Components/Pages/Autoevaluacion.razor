@@ -1,5 +1,6 @@
 ﻿@page "/autoevaluacion"
 @using pruebas1.Servicios
+@using pruebas1.Components.DTOs
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @inject IJSRuntime JS
 @inject AutoevaluacionService AutoService
@@ -108,9 +109,10 @@
                 {
                     <p>Seleccione la fecha del mes:</p>
 
-                    <DatePicker Value="SelectedDate"
-                                ValueChanged="@(v => SelectedDate = v ?? DateTime.Today)"
+                    <DatePicker Value="CurrentTask.FechaMensualSeleccionada"
+                                ValueChanged="@(v => CurrentTask.FechaMensualSeleccionada = v)"
                                 CssClass="form-control" />
+
                 }
 
 
@@ -176,7 +178,21 @@
             <p class="confirm-message">¿Seguro que desea guardar la autoevaluación? Solo podrá editar hasta fin de mes.</p>
 
             <div class="confirm-footer">
-                <button class="btn-confirm" @onclick="GuardarAutoevaluacionFinal">Sí, guardar</button>
+                <button class="btn-confirm"
+                        disabled="@IsSaving"
+                        @onclick="GuardarAutoevaluacionFinal">
+
+                    @if (IsSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm"></span>
+                        <span style="margin-left:6px;">Guardando...</span>
+                    }
+                    else
+                    {
+                        <span>Sí, guardar</span>
+                    }
+                </button>
+
                 <button class="btn-cancel" @onclick="() => ShowConfirm = false">Cancelar</button>
             </div>
         </div>
@@ -199,6 +215,41 @@
 
 
 @code {
+    private bool IsSaving = false;   // CORRECTO
+
+    // Extrae IdTareaAU desde tu objeto de tarea del frontend
+    // Si tu Tarea de frontend ya tiene IdTareaAU (recomendado), retornarlo directamente.
+    // Si no, implementa la forma en que lo guardaste (por ejemplo: tarea.IdTareaAU)
+    private int GetIdFromTareaObject(Tarea tarea)
+    {
+        return (tarea as dynamic)?.IdTareaAU ?? 0;
+    }
+
+    // Parsear las líneas (varias líneas con saltos y comas) a DateTime list
+    private List<DateTime> ParseFechasFromRegistradoProgramado(string registrado)
+    {
+        var list = new List<DateTime>();
+        if (string.IsNullOrWhiteSpace(registrado)) return list;
+
+        // El formato aquí es: líneas separadas por '\n', y dentro de cada línea fechas separadas por ','
+        var partesLineas = registrado.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var linea in partesLineas)
+        {
+            var fechas = linea.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var f in fechas)
+            {
+                // f viene como "dd/MM/yyyy" — parsear con exacto
+                if (DateTime.TryParseExact(f.Trim(), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
+                {
+                    list.Add(dt);
+                }
+            }
+        }
+
+        // ordenar y devolver único
+        return list.Distinct().OrderBy(x => x).ToList();
+    }
+
     bool ShowAlertModal = false;
     string AlertTitle = "Mensaje";
     string AlertMessage = "";
@@ -211,10 +262,13 @@
 
     public class Tarea
     {
+        public int IdTareaAU { get; set; }  // ← 🔥 NECESARIO
         public string Nombre { get; set; } = "";
         public string Periodicidad { get; set; } = "";
         public bool Realizado { get; set; } = false;
         public string RegistradoProgramado { get; set; } = "";
+        public DateTime? FechaMensualSeleccionada { get; set; }
+
     }
 
     public class Bloque
@@ -324,22 +378,237 @@
     {
         var data = await AutoService.ObtenerAutoevaluacion();
 
+        int mesActual = DateTime.Today.Month;
+        int añoActual = DateTime.Today.Year;
+
+        // ---------------------------------------------
+        // 🔒 1) Determinar si se debe bloquear
+        //     Solo se bloquea si existe AL MENOS UN registro
+        //     del mes y año actual
+        // ---------------------------------------------
+        IsLocked =
+            data.SelectMany(b => b.Tareas)
+                .Any(t =>
+                    t.Registros != null &&
+                    t.Registros.Any(r =>
+                        r.Fecha.Month == mesActual &&
+                        r.Fecha.Year == añoActual
+                    )
+                );
+
+        Bloques.Clear();
+
+        // ---------------------------------------------
+        // 2) Construir los bloques con la lógica correcta
+        // ---------------------------------------------
         foreach (var bloqueApi in data)
         {
             var nuevoBloque = new Bloque
             {
                 Nombre = bloqueApi.Bloque,
-                Tareas = bloqueApi.Tareas.Select(t => new Tarea
+                Tareas = new List<Tarea>()
+            };
+
+            foreach (var t in bloqueApi.Tareas)
+            {
+                // ✔ Validar si esta tarea tiene registros válidos del mes actual
+                bool tieneRegistroValido =
+                    t.Registros != null &&
+                    t.Registros.Any(r =>
+                        r.Fecha.Month == mesActual &&
+                        r.Fecha.Year == añoActual);
+
+                // ✔ Obtener la primera fecha válida (si existe)
+                DateTime? fechaReal = null;
+                if (tieneRegistroValido)
                 {
+                    var reg = t.Registros
+                        .First(r => r.Fecha.Month == mesActual && r.Fecha.Year == añoActual);
+
+                    fechaReal = reg.Fecha.ToDateTime(TimeOnly.MinValue);
+                }
+
+                // ✔ Si la fecha NO es válida → limpiar todo
+                string programadoFinal = tieneRegistroValido ? t.Programado : "";
+                bool realizadoFinal = tieneRegistroValido;
+
+                nuevoBloque.Tareas.Add(new Tarea
+                {
+                    IdTareaAU = t.IdTareaAU,
                     Nombre = t.Tarea,
                     Periodicidad = t.Periodicidad,
-                    Realizado = false,
-                    RegistradoProgramado = ""
-                }).ToList()
-            };
+
+                    RegistradoProgramado = programadoFinal,
+                    Realizado = realizadoFinal,
+
+                    FechaMensualSeleccionada = fechaReal
+                });
+            }
 
             Bloques.Add(nuevoBloque);
         }
+    }
+
+
+
+
+    // Helper: intenta extraer una fecha usable para "Mensual" desde el texto Programado.
+    // Acepta formatos:
+    //  - "dd/MM/yyyy"   -> devuelve esa fecha
+    //  - "15 de cada mes" -> devuelve la fecha correspondiente al día 15 del mes actual
+    // Si no puede parsear devuelve null.
+    private DateTime? ParseFechaMensual(string programado)
+    {
+        if (string.IsNullOrWhiteSpace(programado))
+            return null;
+
+        // 1) si viene como fecha exacta dd/MM/yyyy
+        if (DateTime.TryParseExact(programado.Trim(),
+                                   "dd/MM/yyyy",
+                                   System.Globalization.CultureInfo.InvariantCulture,
+                                   System.Globalization.DateTimeStyles.None,
+                                   out var exactDate))
+        {
+            return exactDate;
+        }
+
+        // 2) si viene como "15 de cada mes" (tomamos el primer token como día)
+        var tokens = programado.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length > 0 && int.TryParse(tokens[0], out var dia))
+        {
+            var hoy = DateTime.Today;
+            // Asegurarnos que el día existe en el mes actual
+            var diaValido = Math.Clamp(dia, 1, DateTime.DaysInMonth(hoy.Year, hoy.Month));
+            return new DateTime(hoy.Year, hoy.Month, diaValido);
+        }
+
+        return null;
+    }
+
+    private async Task GuardarAutoevaluacionFinal()
+    {
+        // 🔒 Si ya está guardando, no permitir otro clic
+        if (IsSaving)
+            return;
+
+        IsSaving = true;   // 🔥 Activa spinner y bloquea botón
+
+        var dto = new GuardarAutoevaluacionEmpleadoDTO
+        {
+            Tareas = new List<RegistroTareaDTO>()
+        };
+
+        foreach (var bloque in Bloques)
+        {
+            foreach (var tarea in bloque.Tareas)
+            {
+                var idTareaProp = GetIdFromTareaObject(tarea);
+                if (idTareaProp == 0)
+                    continue;
+
+                var registro = new RegistroTareaDTO
+                {
+                    IdTareaAU = idTareaProp,
+                    Fechas = new List<DateOnly>(),
+                    DiaSemana = null,
+                    DiaMes = null
+                };
+
+                // ============================
+                // EVENTUAL
+                // ============================
+                if (tarea.Periodicidad == "Eventual" &&
+                    !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+                {
+                    var fechas = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
+
+                    registro.Fechas = fechas
+                        .Select(f => DateOnly.FromDateTime(f))
+                        .ToList();
+                }
+
+                // ============================
+                // SEMANAL
+                // ============================
+                if (tarea.Periodicidad == "Semanal")
+                {
+                    registro.DiaSemana = ConvertirDiaSemana(tarea.RegistradoProgramado);
+                }
+
+                // ============================
+                // MENSUAL
+                // ============================
+                if (tarea.Periodicidad == "Mensual")
+                {
+                    if (tarea.FechaMensualSeleccionada == null)
+                        throw new Exception("Debe seleccionar una fecha del mes.");
+
+                    registro.DiaMes = tarea.FechaMensualSeleccionada.Value.Day;
+                    registro.Fechas.Add(DateOnly.FromDateTime(tarea.FechaMensualSeleccionada.Value));
+                }
+
+                dto.Tareas.Add(registro);
+            }
+        }
+
+        // ============================================
+        //   🔥 Enviar al backend con manejo de errores
+        // ============================================
+        try
+        {
+            var ok = await AutoService.GuardarAutoevaluacion(dto);
+
+            if (ok)
+            {
+                IsLocked = true;
+                ShowConfirm = false;
+
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "Guardado",
+                    timer = 1200,
+                    showConfirmButton = false
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error al guardar",
+                text = ex.Message
+            });
+
+            IsLocked = false;
+        }
+        finally
+        {
+            // 🔓 SIEMPRE se reinicia, incluso si hubo error
+            IsSaving = false;
+        }
+    }
+
+
+
+    private int ConvertirDiaSemana(string diaTexto)
+    {
+        if (string.IsNullOrWhiteSpace(diaTexto))
+            throw new Exception("No se envió el día de la semana.");
+
+        return diaTexto.Trim().ToLower() switch
+        {
+            "lunes" => 0,
+            "martes" => 1,
+            "miércoles" => 2,
+            "jueves" => 3,
+            "viernes" => 4,
+            "sábado" => 5,
+            "sabado" => 5,
+            "domingo" => 6,
+            _ => throw new Exception("Día de semana inválido: " + diaTexto)
+        };
     }
 
    private void OnCheckChanged(Tarea tarea, bool value)
@@ -514,10 +783,6 @@ private void EditarEventual(Tarea tarea)
     ShowModal = true;
 }
 
-
-
-
-
     private void SaveModal()
     {
         if (CurrentTask != null)
@@ -536,9 +801,19 @@ private void EditarEventual(Tarea tarea)
             }
             else if (IsMonthly)
             {
+                if (CurrentTask.FechaMensualSeleccionada == null)
+                {
+                    ShowAlert("Error", "Debes seleccionar una fecha del mes.");
+                    return;
+                }
+
                 CurrentTask.Realizado = true;
-                CurrentTask.RegistradoProgramado = SelectedDate.Day + " de cada mes";
+
+                // Guardar el texto que se muestra en pantalla
+                var dia = CurrentTask.FechaMensualSeleccionada.Value.Day;
+                CurrentTask.RegistradoProgramado = $"{dia} de cada mes";
             }
+
             else if (IsAnnual)
             {
                 CurrentTask.Realizado = true;
@@ -692,17 +967,71 @@ private string FormatearFechasEnLineas(List<DateTime> fechas)
         ShowConfirm = true;
     }
 
-    private void GuardarAutoevaluacionFinal()
+
+    //Metodo para guardar la autoevaluacion
+    private object? ConstruirDTO(Tarea tarea)
     {
-        // 🔒 BLOQUEA TODO
-        IsLocked = true;
-        ShowConfirm = false;
+        // El backend necesita saber cuál tarea es
+        if (!int.TryParse(tarea.Nombre.Split('-')[0], out int idTarea))
+            return null; // Si el nombre no tiene ID, se descarta
 
-        // Alerta final
-        ShowAlert("Guardado exitoso",
-            "Autoevaluación guardada correctamente. Ya no podrá editar hasta fin de mes.");
+        // SEMANAL
+        if (tarea.Periodicidad == "Semanal")
+        {
+            return new
+            {
+                IdTareaAU = idTarea,
+                DiaSemana = Array.IndexOf(WeekDays, tarea.RegistradoProgramado),
+                DiaMes = (int?)null,
+                Fechas = new List<string>()
+            };
+        }
+
+        // MENSUAL
+        if (tarea.Periodicidad == "Mensual")
+        {
+            // texto ejemplo: "15 de cada mes"
+            int dia = int.Parse(tarea.RegistradoProgramado.Split(' ')[0]);
+
+            return new
+            {
+                IdTareaAU = idTarea,
+                DiaSemana = (int?)null,
+                DiaMes = dia,
+                Fechas = new List<string>()
+            };
+        }
+
+        // EVENTUAL
+        if (tarea.Periodicidad == "Eventual")
+        {
+            var fechas = FechasEventuales
+                .Select(f => DateOnly.FromDateTime(f).ToString("yyyy-MM-dd"))
+                .ToList();
+
+            return new
+            {
+                IdTareaAU = idTarea,
+                DiaSemana = (int?)null,
+                DiaMes = (int?)null,
+                Fechas = fechas
+            };
+        }
+
+        // DIARIO → no manda nada
+        if (tarea.Periodicidad == "Diario")
+        {
+            return new
+            {
+                IdTareaAU = idTarea,
+                DiaSemana = (int?)null,
+                DiaMes = (int?)null,
+                Fechas = new List<string>()
+            };
+        }
+
+        return null;
     }
-
 
 }
 
