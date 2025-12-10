@@ -6,6 +6,8 @@
 @inject OrdenTrabajoService OrdenService
 @inject IJSRuntime JSRuntime
 
+
+
 <div class="agenda-container">
 
     <header class="agenda-header">
@@ -39,7 +41,8 @@
                                 <span>@block.Title</span>
 
                                 <span class="badge-pendientes">
-                                    @(PendingCount(block) == 0 ? "Completado" : PendingCount(block))
+                                    @PendingCount(block)
+
                                 </span>
 
                                 <span class="chev">@((block.IsExpanded ? "▼" : "►"))</span>
@@ -233,8 +236,8 @@
         <h3>¿Eliminar tarea?</h3>
         <p>¿Estás seguro que quieres eliminar "<strong>@TaskToDelete?.Name</strong>"?</p>
         <div class="confirm-actions">
-            <button class="action-btn cancel" @onclick="() => { ShowConfirmDelete = false; TaskToDelete = null; }">Cancelar</button>
-            <button class="action-btn save" @onclick="() => DeleteConfirmedAsync()">Eliminar</button>
+            <button class="action-btn save" @onclick="() => { ShowConfirmDelete = false; TaskToDelete = null; }">Cancelar</button>
+            <button class="action-btn cancel" @onclick="() => DeleteConfirmedAsync()">Eliminar</button>
         </div>
     </div>
 }
@@ -848,11 +851,13 @@
         font-weight: 700;
         margin-bottom: 8px;
         user-select: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         cursor: pointer;
+        display: grid;
+        grid-template-columns: 1fr auto auto; /* Título | Badge | Flecha */
+        align-items: center; /* Alinea TODO verticalmente al centro */
+        gap: 8px;
     }
+
 
     .chev {
         font-size: 12px;
