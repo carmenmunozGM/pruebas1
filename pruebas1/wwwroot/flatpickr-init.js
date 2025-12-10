@@ -1,4 +1,5 @@
-﻿window.flatpickrInit = (element, value, dotNetHelper) => {
+﻿
+window.flatpickrInit = (element, value, dotNetHelper) => {
 
     let fecha = null;
 

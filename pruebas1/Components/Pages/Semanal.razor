@@ -1,9 +1,10 @@
 ﻿@page "/semanal"
-@using System
-@using System.Collections.Generic
 @using System.Globalization
+@using pruebas1.Servicios
+@using pruebas1.Components.DTOs
+@inject AgendaService AgendaService
+@inject OrdenTrabajoService OrdenService
 @inject IJSRuntime JSRuntime
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="agenda-container">
 
@@ -13,8 +14,7 @@
         </button>
 
         <div class="header-center">
-            <h1>Semana @WeekNumber -@MonthName @CurrentDate.Year</h1>
-            
+            <h1>Semana @WeekNumber - @MonthName @CurrentDate.Year</h1>
         </div>
 
         <button class="btn primary" @onclick="NextWeek">
@@ -42,84 +42,77 @@
                                     @(PendingCount(block) == 0 ? "Completado" : PendingCount(block))
                                 </span>
 
-
                                 <span class="chev">@((block.IsExpanded ? "▼" : "►"))</span>
                             </div>
-
 
                             @if (block.IsExpanded)
                             {
                                 <ul class="subtasks">
-                                    @foreach (var task in block.SubTasks)
-
+                                    @foreach (var taskObj in block.SubTasks)
                                     {
-                                        @if (task is ClientServiceTask cs)
-                                        {
-                                            <li class="task-item">
-
-                                                <input type="checkbox"
-                                                       checked="@cs.IsCompleted"
-                                                       @onchange="(e) => ToggleCompleteClient(cs, e)"
-                                                       @onclick:stopPropagation />
-
-                                                <span class="task-name @(cs.IsCompleted ? "completed" : "")"
-                                                      @onclick="() => OpenClientModal(cs)">
-                                                    @cs.CompanyName
-                                                </span>
-
-                                                <!-- SIN EDITAR / SIN BORRAR -->
-                                            </li>
-                                        }
-
                                         <li class="task-item">
-                                            @if (task is BaseTask bt)
+                                            @switch (taskObj)
                                             {
-                                                @if (block.Title != "Órdenes de Trabajo")
-                                                {
+                                                case ClientServiceTask cs:
                                                     <input type="checkbox"
-                                                           @onchange="(e) => ToggleComplete(bt, e)"
-                                                           checked="@bt.IsCompleted"
+                                                           checked="@cs.IsCompleted"
+                                                           @onchange="(e) => ToggleCompleteClient(cs, e)"
                                                            @onclick:stopPropagation />
-                                                    <span class="task-name @(bt.IsCompleted ? "completed" : "")"
-                                                          @onclick="() => OpenTaskModal(bt, false)">
-                                                        @bt.Name
+                                                    <span class="task-name @(cs.IsCompleted ? "completed" : "")"
+                                                          @onclick="() => OpenClientModal(cs)">
+                                                        @cs.CompanyName
                                                     </span>
-                                                    <div class="task-actions">
-                                                        <button class="edit-btn"
-                                                                title="Editar"
-                                                                @onclick="(MouseEventArgs e) => OpenTaskModal(bt, true)"
-                                                                @onclick:stopPropagation="true">
-                                                            ✏️
-                                                        </button>
+                                                    break;
 
-                                                        <button class="delete-btn"
-                                                                title="Eliminar"
-                                                                @onclick="(MouseEventArgs e) => ConfirmDelete(bt)"
-                                                                @onclick:stopPropagation="true">
-                                                            🗑️
-                                                        </button>
-                                                    </div>
+                                                case SelfAssessment sa:
+                                                    <input type="checkbox"
+                                                           @onchange="(e) => ToggleCompleteSelf(sa, e)"
+                                                           checked="@sa.IsCompleted"
+                                                           @onclick:stopPropagation />
+                                                    <span class="task-name @(sa.IsCompleted ? "completed" : "")"
+                                                          @onclick="() => OpenTaskModal(sa, false)">
+                                                        @sa.ActivityName
+                                                    </span>
+                                                    break;
 
-                                                }
-                                                else
-                                                {
-                                                    <!-- Órdenes de Trabajo: solo mostrar nombre -->
-                                                    <span class="workorder">@bt.Name</span>
-                                                }
+                                                case BaseTask bt:
+                                                    if (block.Title != "Órdenes de Trabajo")
+                                                    {
+                                                        <input type="checkbox"
+                                                               @onchange="(e) => ToggleComplete(bt, e)"
+                                                               checked="@bt.IsCompleted"
+                                                               @onclick:stopPropagation />
+                                                        <span class="task-name @(bt.IsCompleted ? "completed" : "")"
+                                                              @onclick="() => OpenTaskModal(bt, false)">
+                                                            @bt.Name
+                                                        </span>
+                                                        <div class="task-actions">
+                                                            <button class="edit-btn"
+                                                                    title="Editar"
+                                                                    @onclick="(MouseEventArgs e) => OpenTaskModal(bt, true)"
+                                                                    @onclick:stopPropagation="true">
+                                                                ✏️
+                                                            </button>
+
+                                                            <button class="delete-btn"
+                                                                    title="Eliminar"
+                                                                    @onclick="(MouseEventArgs e) => ConfirmDelete(bt)"
+                                                                    @onclick:stopPropagation="true">
+                                                                🗑️
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="workorder">@bt.Name</span>
+                                                    }
+                                                    break;
+
+                                                default:
+                                                    <span>Desconocido</span>
+                                                    ;
+                                                    break;
                                             }
-                                            else if (task is SelfAssessment sa)
-                                            {
-                                               
-                                                <input type="checkbox"
-                                                       @onchange="(e) => ToggleCompleteSelf(sa, e)"
-                                                       checked="@sa.IsCompleted"
-                                                       @onclick:stopPropagation />
-                                                <span class="task-name @(sa.IsCompleted ? "completed" : "")"
-                                                      @onclick="() => OpenTaskModal(sa, false)">
-                                                    @sa.ActivityName
-                                                </span>
-                                            }
-
                                         </li>
                                     }
                                 </ul>
@@ -253,25 +246,27 @@
 }
 
 @code {
+    // ---------- Tipos internos para la vista ----------
     enum BlockType { AdminTask, WorkOrder, GeneralTask, SelfAssessment }
-    ClientServiceTask SelectedClientTask { get; set; }
-    bool IsClientModalOpen { get; set; } = false;
 
-    void OpenClientModal(ClientServiceTask cs)
+    class DayColumn
     {
-        SelectedClientTask = cs;
-        IsClientModalOpen = true;
+        public DateTime Date { get; set; }
+        public List<Block> Blocks { get; set; } = new();
     }
 
-    void CloseClientModal()
+    class Block
     {
-        SelectedClientTask = null;
-        IsClientModalOpen = false;
+        public string Title { get; set; } = "";
+        public List<object> SubTasks { get; set; } = new();
+        public string Color { get; set; } = "#fff";
+        public bool IsExpanded { get; set; } = false;
     }
 
     class BaseTask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
+        public int ApiId { get; set; } = 0;
         public BlockType Type { get; set; }
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
@@ -284,10 +279,6 @@
         public Block ParentBlock { get; set; }
     }
 
-    class AdminTask : BaseTask { }
-    class GeneralTask : BaseTask { }
-    class WorkOrder : BaseTask { }
-
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -296,31 +287,19 @@
         public Block ParentBlock { get; set; }
     }
 
-    class Block
+    class ClientServiceTask
     {
-        public string Title { get; set; } = "";
-        public List<object> SubTasks { get; set; } = new();
-        public string Color { get; set; } = "#fff";
-        public bool IsExpanded { get; set; } = false;
-    }
-    async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
-    {
-        if (e.Value is bool b)
-            cs.IsCompleted = b;
-
-        await ShowTemporaryToastAsync(
-            cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada"
-        );
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string CompanyName { get; set; } = "";
+        public string ActivityDetail { get; set; } = "";
+        public bool IsCompleted { get; set; } = false;
+        public Block ParentBlock { get; set; }
     }
 
-    class DayColumn
-    {
-        public DateTime Date { get; set; }
-        public List<Block> Blocks { get; set; } = new();
-    }
-
+    // ---------- Estado del componente ----------
     List<DayColumn> Days = new();
     DateTime CurrentDate = DateTime.Today;
+
     object SelectedTaskObject { get; set; }
     bool IsModalOpen { get; set; } = false;
     bool IsEditMode { get; set; } = false;
@@ -336,97 +315,293 @@
     int WeekNumber => CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(CurrentDate, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
     string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
 
-    protected override void OnInitialized() => BuildWeek();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWeek(CurrentDate);
+    }
 
-    void BuildWeek()
+    async Task PrevWeek()
+    {
+        CurrentDate = CurrentDate.AddDays(-7);
+        await LoadWeek(CurrentDate);
+    }
+
+    async Task NextWeek()
+    {
+        CurrentDate = CurrentDate.AddDays(7);
+        await LoadWeek(CurrentDate);
+    }
+
+    // ---------- Carga principal ----------
+    async Task LoadWeek(DateTime reference)
     {
         Days.Clear();
-        var diff = (7 + (CurrentDate.DayOfWeek - DayOfWeek.Monday)) % 7;
-        var monday = CurrentDate.AddDays(-1 * diff).Date;
+        var monday = StartOfWeek(reference, DayOfWeek.Monday);
 
+        // Crear días y bloques (autoeval y servicio al cliente estáticos)
         for (int i = 0; i < 7; i++)
-            Days.Add(CreateDay(monday.AddDays(i)));
-    }
-
-    DayColumn CreateDay(DateTime date)
-    {
-        var day = new DayColumn { Date = date };
-        if (date.DayOfWeek == DayOfWeek.Sunday) return day;
-
-        // Tareas Administrativas
-        var adminBlock = new Block { Title = "Tareas", Color = "#FFD1DC" };
-        var t1 = new AdminTask { Name = "Área de TI limpia", Description = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional", ParentBlock = adminBlock, Type = BlockType.AdminTask };
-        t1.SubTasks.Add(new BaseTask { Name = "Subtarea 1" });
-        t1.SubTasks.Add(new BaseTask { Name = "Subtarea 2" });
-        var t2 = new AdminTask { Name = "Control de suscripciones", Description = "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI.", ParentBlock = adminBlock, Type = BlockType.AdminTask };
-        var t3 = new AdminTask { Name = "Recepción de facturas", Description = "Di seguimiento a la recepción de facturas de acuerdo con las solicitudes de pago y las entregue a Administración.", ParentBlock = adminBlock, Type = BlockType.AdminTask };
-        adminBlock.SubTasks.Add(t1); adminBlock.SubTasks.Add(t2); adminBlock.SubTasks.Add(t3);
-        day.Blocks.Add(adminBlock);
-
-  
-
-        // Órdenes de Trabajo
-        var woBlock = new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1" };
-        woBlock.SubTasks.Add(new WorkOrder { Name = "ORD-13683" });
-        woBlock.SubTasks.Add(new WorkOrder { Name = "ORD-13503" });
-        woBlock.SubTasks.Add(new WorkOrder { Name = "ORD-13296" });
-        day.Blocks.Add(woBlock);
-
-        // Autoevaluación
-        var autoBlock = new Block { Title = "Autoevaluación", Color = "#E2F0CB" };
-        autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional.", ParentBlock = autoBlock });
-        autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Validé que los vales de papelería relacionados con los insumos de TI se encuentren llenados correctamente; realicé el escaneo de los mismos y entregué a servicios de oficina.", ParentBlock = autoBlock });
-        autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Confirmé con el personal de TI, al menos 2 veces al día, las actividades programadas de acuerdo con su programa de trabajo.", ParentBlock = autoBlock });
-        day.Blocks.Add(autoBlock);
-
-        // Servicio al cliente
-        var sertoBlock = new Block { Title = "Servicio al Clinte", Color = "#D7D1DD" };
-        sertoBlock.SubTasks.Add(new ClientServiceTask
         {
-            CompanyName = "1658 Casas y Desarrollos VITA SAPI de CV",
-            ActivityDetail = "Revisión semanal de incidencias y seguimiento de pendientes",
-            ParentBlock = sertoBlock
-        });
-        sertoBlock.SubTasks.Add(new ClientServiceTask
+            var date = monday.AddDays(i).Date;
+            var day = new DayColumn { Date = date };
+
+            // Bloque 1 - Tareas / Eventos (dinámico)
+            day.Blocks.Add(new Block { Title = "Tareas", Color = "#FFD1DC", IsExpanded = true });
+
+            // Bloque 2 - Órdenes de Trabajo (dinámico)
+            day.Blocks.Add(new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1", IsExpanded = false });
+
+            // Bloque 3 - Autoevaluación (ESTÁTICO)
+            var autoBlock = new Block { Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false };
+            autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Autoevaluación ejemplo 1", ParentBlock = autoBlock });
+            autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Autoevaluación ejemplo 2", ParentBlock = autoBlock });
+            day.Blocks.Add(autoBlock);
+
+            // Bloque 4 - Servicio al Cliente (ESTÁTICO)
+            var clienteBlock = new Block { Title = "Servicio al Clinte", Color = "#D7D1DD", IsExpanded = false };
+            clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo A", ActivityDetail = "Seguimiento semanal", ParentBlock = clienteBlock });
+            clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo B", ActivityDetail = "Revisión de pendientes", ParentBlock = clienteBlock });
+            day.Blocks.Add(clienteBlock);
+
+            Days.Add(day);
+        }
+
+        // Rango de la semana (por fechaFin)
+        var startOfWeek = monday.Date;
+        var endOfWeek = monday.AddDays(6).Date;
+
+        // Obtener id de agenda (usa tu servicio)
+        var agendas = await AgendaService.ObtenerAgendaAsignadasAsync();
+        var idAgenda = agendas.FirstOrDefault();
+
+        // 1) Obtener tareas (api) y eventos (api)
+        List<object> tareasApi = new();
+        try
         {
-            CompanyName = "235 Construcciones y Desarrollo Nelsan SA de CV",
-            ActivityDetail = "Verificación de avances y comunicación con responsable de sitio",
-            ParentBlock = sertoBlock
-        });
-        sertoBlock.SubTasks.Add(new ClientServiceTask
-        {
-            CompanyName = "GRUPO MENDI",
-            ActivityDetail = "Revisión general y retroalimentación de actividades",
-            ParentBlock = sertoBlock
-        });
-
-        day.Blocks.Add(sertoBlock);
-
-
-        return day;
-    }
-
-    class ClientServiceTask
-    {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string CompanyName { get; set; }
-        public string ActivityDetail { get; set; }
-        public bool IsCompleted { get; set; }
-        public Block ParentBlock { get; set; }
-    }
-
-    string GetModalTitle()
-    {
-        if (SelectedTaskObject is BaseTask bt)
-            return bt.Type switch
+            if (idAgenda > 0)
             {
-                BlockType.AdminTask => "Tarea Administrativa",
-                BlockType.GeneralTask => "Tarea Operativa",
-                _ => "Detalles de la tarea"
+                // el método puede devolver TareaApi o TareaApiDto según tu proyecto; usamos object y mapeamos
+                var tareas = await AgendaService.ObtenerTareasApi(idAgenda);
+                if (tareas != null)
+                    tareasApi.AddRange(tareas);
+            }
+        }
+        catch { /* ignore */ }
+
+        try
+        {
+            if (idAgenda > 0)
+            {
+                var eventos = await AgendaService.ObtenerEventos(idAgenda);
+                if (eventos != null)
+                    tareasApi.AddRange(eventos);
+            }
+        }
+        catch { /* ignore */ }
+
+        // Mapear y filtrar por fechaFin (acepta propiedades fechaFin o fechaFinal o fechaFinal en ordenes)
+        foreach (var obj in tareasApi)
+        {
+            DateTime? fechaFin = TryGetDateTime(obj, "fechaFin") ?? TryGetDateTime(obj, "fechaFinal") ?? TryGetDateTime(obj, "fechaConclusion");
+            if (fechaFin == null) continue;
+            if (fechaFin.Value.Date < startOfWeek || fechaFin.Value.Date > endOfWeek) continue;
+
+            var day = Days.FirstOrDefault(d => d.Date.Date == fechaFin.Value.Date);
+            if (day == null) continue;
+
+            // Obtener titulo/nombre
+            var titulo = TryGetString(obj, "titulo") ?? TryGetString(obj, "strClave") ?? TryGetString(obj, "tituloEvento") ?? TryGetString(obj, "Name") ?? "Sin título";
+
+            var descripcion = TryGetString(obj, "descripcion") ?? TryGetString(obj, "strObjetivoOtro") ?? "";
+
+            var apiId = TryGetInt(obj, "idAgenda") ?? TryGetInt(obj, "id") ?? 0;
+            var esEvento = TryGetBool(obj, "esEvento") ?? TryGetBool(obj, "esRecurrente") == false ? false : TryGetBool(obj, "esEvento") ?? false;
+
+            var mapped = new BaseTask
+            {
+                ApiId = apiId,
+                Name = esEvento ? "[Evento] " + titulo : titulo,
+                Description = descripcion,
+                StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
+                DueDate = fechaFin.Value,
+                IsCompleted = TryGetBool(obj, "completada") ?? false,
+                Priority = TryGetString(obj, "prioridadTitulo") ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
+                Type = BlockType.GeneralTask
             };
-        else if (SelectedTaskObject is SelfAssessment)
-            return "Registro de Autoevaluación";
-        return "Detalles";
+
+            mapped.ParentBlock = day.Blocks[0];
+            day.Blocks[0].SubTasks.Add(mapped);
+        }
+
+        // 2) Obtener órdenes de trabajo y mapear
+        List<OrdenTrabajoDTO> ordenes = new();
+        try
+        {
+            var ordProx = await OrdenService.GetOrdenesProximas();
+            if (ordProx != null) ordenes.AddRange(ordProx);
+            var ordHoy = await OrdenService.GetOrdenesHoy();
+            if (ordHoy != null) ordenes.AddRange(ordHoy);
+            var ordVenc = await OrdenService.GetOrdenesVencidas();
+            if (ordVenc != null) ordenes.AddRange(ordVenc);
+        }
+        catch { /* ignore */ }
+
+        foreach (var o in ordenes)
+        {
+            DateTime fecha = o.fechaFinal.Date;
+            if (fecha < startOfWeek || fecha > endOfWeek) continue;
+            var day = Days.FirstOrDefault(d => d.Date.Date == fecha);
+            if (day == null) continue;
+
+            var wt = new BaseTask
+            {
+                ApiId = o.id,
+                Name = $"{o.strClave} - {o.nombreCliente}",
+                Description = o.strObjetivoOtro ?? o.strValor,
+                StartDate = o.dteFechaSolicitud,
+                DueDate = o.fechaFinal,
+                IsCompleted = string.Equals(o.estado, "Completado", StringComparison.OrdinalIgnoreCase),
+                Type = BlockType.WorkOrder,
+                ParentBlock = day.Blocks[1]
+            };
+
+            day.Blocks[1].SubTasks.Add(wt);
+        }
+
+        StateHasChanged();
+    }
+
+    // ---------- Helpers para leer propiedades de objetos retornados por el servicio ----------
+    DateTime? TryGetDateTime(object obj, string propName)
+    {
+        try
+        {
+            var t = obj.GetType();
+            var p = t.GetProperty(propName);
+            if (p == null) return null;
+            var val = p.GetValue(obj);
+            if (val == null) return null;
+
+            if (val is DateTime dt) return dt;
+            if (val is string s)
+            {
+                if (DateTime.TryParse(s, out var parsed)) return parsed;
+                // intentar formatos comunes
+                if (DateTime.TryParseExact(s, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)) return parsed;
+                if (DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)) return parsed;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    string TryGetString(object obj, string propName)
+    {
+        try
+        {
+            var p = obj.GetType().GetProperty(propName);
+            if (p == null) return null;
+            var v = p.GetValue(obj);
+            return v?.ToString();
+        }
+        catch { return null; }
+    }
+
+    int? TryGetInt(object obj, string propName)
+    {
+        try
+        {
+            var p = obj.GetType().GetProperty(propName);
+            if (p == null) return null;
+            var v = p.GetValue(obj);
+            if (v == null) return null;
+            if (v is int i) return i;
+            if (int.TryParse(v.ToString(), out var parsed)) return parsed;
+        }
+        catch { }
+        return null;
+    }
+
+    bool? TryGetBool(object obj, string propName)
+    {
+        try
+        {
+            var p = obj.GetType().GetProperty(propName);
+            if (p == null) return null;
+            var v = p.GetValue(obj);
+            if (v == null) return null;
+            if (v is bool b) return b;
+            if (bool.TryParse(v.ToString(), out var parsed)) return parsed;
+        }
+        catch { }
+        return null;
+    }
+
+    DateTime StartOfWeek(DateTime dt, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
+        return dt.AddDays(-1 * diff).Date;
+    }
+
+    // ---------- UI helpers y acciones ----------
+    void ToggleBlock(Block block) => block.IsExpanded = !block.IsExpanded;
+
+    int PendingCount(Block block)
+    {
+        int count = 0;
+        foreach (var t in block.SubTasks)
+        {
+            switch (t)
+            {
+                case BaseTask bt:
+                    if (!bt.IsCompleted) count++;
+                    break;
+                case SelfAssessment sa:
+                    if (!sa.IsCompleted) count++;
+                    break;
+                case ClientServiceTask cs:
+                    if (!cs.IsCompleted) count++;
+                    break;
+            }
+        }
+        return count;
+    }
+
+    async Task ToggleComplete(BaseTask bt, ChangeEventArgs e)
+    {
+        if (e?.Value is bool b) bt.IsCompleted = b;
+        else
+        {
+            bool parsed = false;
+            if (e?.Value is string s) parsed = s == "true" || s == "on";
+            bt.IsCompleted = parsed;
+        }
+
+        await ShowTemporaryToastAsync(bt.IsCompleted ? $"Marcaste '{bt.Name}' como completada" : $"Desmarcaste '{bt.Name}'");
+        // TODO: Llamar a AgendaService para persistir cambio si lo deseas
+    }
+
+    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
+    {
+        if (e?.Value is bool b) sa.IsCompleted = b;
+        else
+        {
+            bool parsed = false;
+            if (e?.Value is string s) parsed = s == "true" || s == "on";
+            sa.IsCompleted = parsed;
+        }
+        await ShowTemporaryToastAsync(sa.IsCompleted ? "Autoevaluación marcada" : "Autoevaluación desmarcada");
+    }
+
+    async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
+    {
+        if (e?.Value is bool b) cs.IsCompleted = b;
+        else
+        {
+            bool parsed = false;
+            if (e?.Value is string s) parsed = s == "true" || s == "on";
+            cs.IsCompleted = parsed;
+        }
+        await ShowTemporaryToastAsync(cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada");
     }
 
     void OpenTaskModal(object task, bool editMode)
@@ -442,8 +617,57 @@
         IsModalOpen = false;
         IsEditMode = false;
     }
+
+    void OpenClientModal(ClientServiceTask cs)
+    {
+        SelectedClientTask = cs;
+        IsClientModalOpen = true;
+    }
+
+    void CloseClientModal()
+    {
+        SelectedClientTask = null;
+        IsClientModalOpen = false;
+    }
+    private ClientServiceTask? SelectedClientTask { get; set; }
+    private bool IsClientModalOpen { get; set; } = false;
+
+    
+
+    string GetModalTitle()
+    {
+        if (SelectedTaskObject is BaseTask bt)
+            return bt.Type switch
+            {
+                BlockType.AdminTask => "Tarea Administrativa",
+                BlockType.GeneralTask => "Tarea Operativa",
+                _ => "Detalles de la tarea"
+            };
+        else if (SelectedTaskObject is SelfAssessment)
+            return "Registro de Autoevaluación";
+        return "Detalles";
+    }
+
+    void ConfirmDelete(BaseTask bt)
+    {
+        TaskToDelete = bt;
+        ShowConfirmDelete = true;
+    }
+
+    async Task DeleteConfirmedAsync()
+    {
+        if (TaskToDelete != null)
+        {
+            TaskToDelete.ParentBlock?.SubTasks.Remove(TaskToDelete);
+            await ShowTemporaryToastAsync("Tarea eliminada");
+        }
+        TaskToDelete = null;
+        ShowConfirmDelete = false;
+    }
+
     async Task SaveTask()
     {
+        // Aquí puedes mapear y mandar a AgendaService para actualizar
         IsEditMode = false;
         IsModalOpen = false;
 
@@ -452,7 +676,12 @@
             await ShowSuccessAlert($"✅ La tarea '{bt.Name}' se guardó correctamente");
         }
     }
-    // Método para mostrar alerta bonita tipo SweetAlert2
+
+    void CancelEdit()
+    {
+        IsEditMode = false;
+    }
+
     async Task ShowSuccessAlert(string message)
     {
         await JSRuntime.InvokeVoidAsync("Swal.fire", new
@@ -465,79 +694,6 @@
         });
     }
 
-
-
-    void CancelEdit()
-    {
-        // No guardamos cambios; se podría recargar datos originales si se mantiene snapshot (no implementado aquí).
-        IsEditMode = false;
-    }
-
-    // Abrir confirmación para borrar
-    void ConfirmDelete(BaseTask bt)
-    {
-        TaskToDelete = bt;
-        ShowConfirmDelete = true;
-    }
-
-    // Borrar confirmado (async para UX)
-    async Task DeleteConfirmedAsync()
-    {
-        if (TaskToDelete != null)
-        {
-            TaskToDelete.ParentBlock?.SubTasks.Remove(TaskToDelete);
-            await ShowTemporaryToastAsync("Tarea eliminada");
-        }
-        TaskToDelete = null;
-        ShowConfirmDelete = false;
-    }
-
-    // Manejo checkbox para BaseTask
-    async Task ToggleComplete(BaseTask bt, ChangeEventArgs e)
-    {
-        if (e?.Value is bool b)
-            bt.IsCompleted = b;
-        else
-        {
-            // algunos navegadores mandan "on"/"off", intentar parse
-            bool parsed = false;
-            if (e?.Value is string s)
-                parsed = string.Equals(s, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "on", StringComparison.OrdinalIgnoreCase);
-            bt.IsCompleted = parsed;
-        }
-
-        // Opcional: persistir, notificar
-        if (bt.IsCompleted)
-            await ShowTemporaryToastAsync($"Marcaste '{bt.Name}' como completada");
-        else
-            await ShowTemporaryToastAsync($"Desmarcaste '{bt.Name}'");
-    }
-
-    // Manejo checkbox para SelfAssessment
-    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
-    {
-        if (e?.Value is bool b) sa.IsCompleted = b;
-        else
-        {
-            bool parsed = false;
-            if (e?.Value is string s) parsed = string.Equals(s, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(s, "on", StringComparison.OrdinalIgnoreCase);
-            sa.IsCompleted = parsed;
-        }
-
-        if (sa.IsCompleted)
-            await ShowTemporaryToastAsync($"Autoevaluación marcada");
-        else
-            await ShowTemporaryToastAsync($"Autoevaluación desmarcada");
-    }
-
-    void ToggleBlock(Block block)
-    {
-        block.IsExpanded = !block.IsExpanded;
-    }
-
-    void PrevWeek() { CurrentDate = CurrentDate.AddDays(-7); BuildWeek(); }
-    void NextWeek() { CurrentDate = CurrentDate.AddDays(7); BuildWeek(); }
-
     async Task ShowTemporaryToastAsync(string message, int milliseconds = 1600)
     {
         ToastMessage = message;
@@ -547,36 +703,7 @@
         ShowToast = false;
         StateHasChanged();
     }
-    int PendingCount(Block block)
-    {
-        int count = 0;
-
-        foreach (var t in block.SubTasks)
-        {
-            switch (t)
-            {
-                case BaseTask bt:
-                    if (!bt.IsCompleted) count++;
-                    break;
-
-                case SelfAssessment sa:
-                    if (!sa.IsCompleted) count++;
-                    break;
-
-                case ClientServiceTask cs:
-                    if (!cs.IsCompleted) count++;
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        return count;
-    }
-
 }
-
 <style>
     /* Contenedor principal */
     .agenda-container {
@@ -946,7 +1073,7 @@
         font-weight: 700;
     }
 
-    
+
 
     .btn {
         min-width: auto;

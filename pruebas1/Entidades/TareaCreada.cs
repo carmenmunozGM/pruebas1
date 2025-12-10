@@ -34,6 +34,7 @@ namespace pruebas1.Entidades
         public int IdSala { get; set; } = 0;
         public bool EsRecurrente { get; set; } = false;
         public string ReglaRecurrencia { get; set; } = "";
+        public int? IdFrecuencia { get; set; }  // FK al catálogo
         // 🔥 CAMPOS REQUERIDOS POR LA API
         public int IdAgenda { get; set; }
         public int IdCreador { get; set; }
@@ -87,7 +88,7 @@ namespace pruebas1.Entidades
     {
         // Identificador (opcional)
         public string Id { get; set; } = Guid.NewGuid().ToString();
-
+        public int ApiId { get; set; }  // <--- ESTE ES EL ID REAL DEL API
         // Icono para mostrar en UI (ej. "📅" o "📝")
         public string Icon { get; set; } = string.Empty;
 
@@ -95,7 +96,8 @@ namespace pruebas1.Entidades
         public string Title { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
         public bool IsDone { get; set; } = false;
-        public string Estado { get; set; } = string.Empty;   // autoevaluación
+        //public string Estado { get; set; } = string.Empty;   // autoevaluación
+        public string Estado { get; set; } = "Pendiente"; // <-- aquí
         public string Tipo { get; set; } = string.Empty;     // "Evento" o "Tarea"
         public List<SubtaskModel> Subtasks { get; set; } = new();
 

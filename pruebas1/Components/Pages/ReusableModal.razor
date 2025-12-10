@@ -13,13 +13,15 @@
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
-<script src="js/alertas-modal.js"></script>
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
 <div class="action-button-wrapper">
     <button class="action-button-floating" @onclick="@OpenModal">➕ Crear Nueva Actividad</button>
 </div>
+
 
 @if (ShowModal)
 {
@@ -50,42 +52,30 @@
 
                     <!-- Título -->
                     <div class="form-control-group col-span-2">
-                        <label>Título / Nombre *</label>
+                        <label>🏷️Título / Nombre *</label>
                         <InputText class="form-control" @bind-Value="titulo" />
                     </div>
 
                     <!-- Prioridad -->
                     <div class="form-control-group">
-                        <label>Prioridad</label>
+                        <label>⚡Prioridad</label>
                         <select class="form-input" @bind="selectedPrioridadId">
-                            @if (prioridadesDisponibles == null || !prioridadesDisponibles.Any())
+                            <option value="">Seleccione...</option>
+                            @foreach (var p in prioridadesDisponibles)
                             {
-                                <option disabled>Cargando...</option>
-                            }
-                            else
-                            {
-                                @foreach (var p in prioridadesDisponibles)
-                                {
-                                    <option value="@p.Id">@p.Titulo</option>
-                                }
+                                <option value="@p.Id">@p.Titulo</option>
                             }
                         </select>
                     </div>
 
                     <!-- Recurrencia -->
                     <div class="form-control-group">
-                        <label>Recurrencia</label>
-                        <select class="form-input" @bind="selectedFrecuenciaId">
-                            @if (frecuencias == null || !frecuencias.Any())
+                        <label>🔁 Recurrencia</label>
+                        <select class="form-input" @bind="nuevaTarea.IdFrecuencia">
+                            <option value="">Seleccione...</option>
+                            @foreach (var f in frecuencias)
                             {
-                                <option disabled>Cargando...</option>
-                            }
-                            else
-                            {
-                                @foreach (var f in frecuencias)
-                                {
-                                    <option value="@f.Id">@f.Descripcion</option>
-                                }
+                                <option value="@f.Id">@f.Descripcion</option>
                             }
                         </select>
                     </div>
@@ -99,8 +89,8 @@
                     </div>
 
                     <!-- Hora inicio -->
-                    <div class="form-control-group">
-                        <label>Hora Inicio</label>
+                    <div class="form-control-group @(FormType !=FormTypes.Evento ? "disabled-field-if-tarea" : "" )">
+                        <label>🕒Hora Inicio</label>
                         <input type="time" class="form-input time-control"
                                @bind="HoraInicio" @bind:event="oninput" />
                     </div>
@@ -108,48 +98,46 @@
                     <!-- Fecha fin -->
                     <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>Fecha Término</label>
+                            <label>🗓️ Fecha Término</label>
                             <DatePicker @bind-Value="FechaFin" CssClass="form-control" />
                         </div>
                     </div>
 
                     <!-- Hora fin -->
-                    <div class="form-control-group">
-                        <label>Hora Término</label>
+                    <div class="form-control-group @(FormType !=FormTypes.Evento ? "disabled-field-if-tarea" : "" )">
+                        <label>🕒Hora Término</label>
                         <input type="time" class="form-input time-control"
                                @bind="HoraFin" @bind:event="oninput" />
                     </div>
 
                     <!-- Ubicación -->
-                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-    <label>Ubicación</label>
+                    <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
+                        <label>📍 Ubicación</label>
+                    <select class="form-control"
+                            @bind="selectedSalaId"
+                            @bind:after="OnSalaChanged">
 
-<select @bind="selectedSalaId"
-        @bind:event="onchange"
-        disabled="@(FormType != FormTypes.Evento)">
-        <option value="0">Seleccione una opción</option>
+                        <option value="0">Selecciona una sala</option>
 
-        @foreach (var sala in listaSalas)
-        {
-            <option value="@sala.Id">@sala.Salas</option>
-        }
+                        @foreach (var sala in listaSalas)
+                        {
+                            <option value="@sala.Id">@sala.Salas</option>
+                        }
 
-        <option value="-1">Otra...</option>
-    </select>
+                        <option value="-1">Otro...</option>
+                    </select>
 
-    @if (showOtherLocationInput && FormType == FormTypes.Evento)
-    {
-        <input type="text"
-               class="form-input mt-2"
-               placeholder="Ingrese otra ubicación específica"
-               @bind="ubicacionSeleccionada" />
-    }
+                    @if (mostrarOtraUbicacion)
+                    {
+                        <input class="form-control mt-2"
+                               placeholder="Escribe la ubicación"
+                               @bind="ubicacionOtra" />
+                    }
 </div>
-
 
                     <!-- Participantes -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>Participantes</label>
+                        <label>👥Participantes</label>
 
                         <div class="autocomplete-container">
 
@@ -188,16 +176,15 @@
                         </div>
                     </div>
 
-
                     <!-- Descripción -->
                     <div class="form-control-group col-span-2">
-                        <label>Descripción / Detalles</label>
+                        <label>📝Descripción / Detalles</label>
                         <InputTextArea class="form-control" @bind-Value="descripcion" />
                     </div>
 
                     <!-- Subtareas -->
                     <div class="form-control-group col-span-2 @(FormType == FormTypes.Evento ? "disabled-field" : "")">
-                        <label>Checklist / Sub Tareas</label>
+                        <label>✅Checklist / Sub Tareas</label>
 
                         <div class="input-with-button-group">
                             <input @bind="newSubtask" @onkeydown="AddSubtaskOnEnter"
@@ -225,31 +212,31 @@
                     </div>
 
                 </div>
+
                 <script>
-window.alertaGuardadoEvento = function() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Guardado con éxito 🎉',
-        confirmButtonText: 'OK'
-    }).then(() => {
-        Swal.fire({
-            icon: 'info',
-            title: 'No se te olvide registrarlo en RED GM',
-            text: 'Verifica en Red GM este evento',
-            confirmButtonText: 'Entendido'
-        });
-    });
-}
+                    window.alertaGuardadoEvento = function () {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Guardado con éxito 🎉',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'No se te olvide registrarlo en RED GM',
+                                text: 'Verifica en Red GM este evento',
+                                confirmButtonText: 'Entendido'
+                            });
+                        });
+                    }
 
-window.alertaGuardadoSimple = function() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Guardado con éxito 🎉',
-        confirmButtonText: 'OK'
-    });
-}
-</script>
-
+                    window.alertaGuardadoSimple = function () {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Guardado con éxito 🎉',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                </script>
 
                 <!-- Footer -->
                 <div class="task-modal-footer">
@@ -262,23 +249,22 @@ window.alertaGuardadoSimple = function() {
         </div>
     </div>
 
-    @code {
 
-    // --- PARAMETROS ---
+@code {
+
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
 
     // --- FECHAS ---
     private DateTime? FechaInicio { get; set; }
     private DateTime? FechaFin { get; set; }
 
-    // --- HORAS (TimeOnly) ---
+    // --- HORAS ---
     private TimeOnly? HoraInicio { get; set; }
     private TimeOnly? HoraFin { get; set; }
 
-    // --- CAMPOS ---
+    // --- VARIABLES ---
     private string titulo = string.Empty;
     private string descripcion = string.Empty;
-
 
     private List<string> subtasks = new();
     private string newSubtask = string.Empty;
@@ -286,30 +272,30 @@ window.alertaGuardadoSimple = function() {
     private List<SalasEm> listaSalas = new();
     private int selectedSalaId = 0;
 
-    private string? ubicacionSeleccionada;
-    private bool showOtherLocationInput = false;
-
+    //private string? ubicacionSeleccionada;
+    //private bool showOtherLocationInput = false;
+    bool mostrarOtraUbicacion = false;
+    string ubicacionOtra = "";
     private List<FrecuenciaRecurrencia> frecuencias = new();
     private List<Prioridad> prioridadesDisponibles = new();
     private int? selectedPrioridadId;
-    private int? selectedFrecuenciaId { get; set; }
-
-
+    private int? selectedFrecuenciaId;
 
     private bool ShowModal = false;
-    //Para poder filtrar en participantes
-    private string participantes = "";
-    private bool mostrarLista = false;
+
     private string searchText = "";
-    //
+    private bool mostrarLista = false;
+
     public enum FormTypes { Evento, Tareas }
     public FormTypes FormType { get; set; } = FormTypes.Tareas;
-    /// Para participantes
+
     List<EmpleadoDTO> empleados = new();
     List<EmpleadoDTO> empleadosFiltrados = new();
-    // Lista final de chips
     private List<EmpleadoDTO> participantesSeleccionados = new();
-    // ---------------------------
+    private TareaCreada TareaCreada { get; set; } = new();
+    private TareaCreada nuevaTarea = new TareaCreada();
+
+   
     protected override async Task OnInitializedAsync()
     {
         var cultura = new CultureInfo("es-MX");
@@ -317,34 +303,36 @@ window.alertaGuardadoSimple = function() {
         CultureInfo.CurrentUICulture = cultura;
 
         listaSalas = await SalasEmService.GetSalas();
+        Debug.WriteLine($"Salas cargadas: {listaSalas.Count}");
+        foreach (var s in listaSalas) Debug.WriteLine($"Id={s.Id} - Nombre={s.Salas}");
         frecuencias = await reglasRecurrenciaServices.GetFrecuencia();
         prioridadesDisponibles = await reglasRecurrenciaServices.GetPrioridad();
-
 
         try
         {
             using var client = new HttpClient();
             var json = await client.GetStringAsync("https://redgm.site:9096/empleado");
-
             empleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json);
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error cargando empleados: " + ex.Message);
-        }
+        catch { }
     }
-    //Para filtrar en particpantes
+    private string ObtenerNombreFrecuencia(int? idFrecuencia)
+    {
+        if (idFrecuencia == null)
+            return "";
+
+        var freq = frecuencias.FirstOrDefault(f => f.Id == idFrecuencia.Value);
+
+        return freq?.Nombre ?? "";
+    }
+
     private void FiltrarEmpleados(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? "";
+        mostrarLista = !string.IsNullOrWhiteSpace(searchText);
 
-        if (string.IsNullOrWhiteSpace(searchText))
-        {
-            mostrarLista = false;
+        if (!mostrarLista)
             return;
-        }
-
-        mostrarLista = true;
 
         var texto = searchText.Trim().ToLower();
 
@@ -355,33 +343,21 @@ window.alertaGuardadoSimple = function() {
             .Take(10)
             .ToList();
     }
-    private void OnSalaChanged(ChangeEventArgs e)
-    {
-        selectedSalaId = int.Parse(e.Value.ToString());
-        showOtherLocationInput = (selectedSalaId == -1);
-    }
 
     private void AgregarParticipante(EmpleadoDTO emp)
     {
-        // Evitar repetidos
         if (!participantesSeleccionados.Any(x => x.Id == emp.Id))
-        {
             participantesSeleccionados.Add(emp);
-        }
 
         searchText = "";
         mostrarLista = false;
     }
+
     private void QuitarParticipante(EmpleadoDTO emp)
     {
         participantesSeleccionados.Remove(emp);
     }
 
-    private void SeleccionarEmpleado(EmpleadoDTO emp)
-    {
-        participantes = $"{emp.Nombre} ({emp.ClavePersonal})";
-        mostrarLista = false;
-    }
     private void OpenModal()
     {
         LimpiarCampos();
@@ -393,99 +369,85 @@ window.alertaGuardadoSimple = function() {
         LimpiarCampos();
         ShowModal = false;
     }
-
-    // ---------------------------
-    private void HandleLocationChange(ChangeEventArgs e)
+    void OnSalaChanged()
     {
-        //ubicacionSeleccionada = e.Value?.ToString();
-        showOtherLocationInput = ubicacionSeleccionada == "otra";
+        // Si selecciona "Otro"
+        if (selectedSalaId == -1)
+        {
+            mostrarOtraUbicacion = true;
+        }
+        else
+        {
+            mostrarOtraUbicacion = false;
+            ubicacionOtra = "";
+        }
     }
-
-    // --------------crear iicio-------------
+    // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
-        // Validaciones (mantén las tuyas)
+        // Validaciones básicas
         if (string.IsNullOrWhiteSpace(titulo))
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Falta el título", text = "Debes escribir un título." });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Falta el título",
+                text = "Debes escribir un título."
+            });
             return;
         }
 
         var idUsuario = UsuarioState.IdUsuario;
         var idAgenda = UsuarioState.IdAgenda;
+
         if (idUsuario == 0 || idAgenda == 0)
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Usuario/Agenda inválidos", text = $"Usuario:{idUsuario} Agenda:{idAgenda}" });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Usuario/Agenda inválidos"
+            });
             return;
         }
 
-        // --- Combinar fecha + hora para fechaInicio/fechaFin ---
-        DateTime? fechaInicioFinal = null;
-        DateTime? fechaFinFinal = null;
+        // Combinar fechas con horas
+        DateTime? fechaInicioFinal = FechaInicio?.Date.Add(HoraInicio?.ToTimeSpan() ?? TimeSpan.Zero);
+        DateTime? fechaFinFinal = FechaFin?.Date.Add(HoraFin?.ToTimeSpan() ?? TimeSpan.Zero);
 
-        if (FechaInicio != null)
+        // Sala / Ubicación
+        string ubicacionFinal = "";
+        int idSalaFinal = 0;
+
+        if (selectedSalaId == -1)
         {
-            var d = FechaInicio.Value.Date;
-            if (HoraInicio != null)
-                fechaInicioFinal = d.AddHours(HoraInicio.Value.Hour).AddMinutes(HoraInicio.Value.Minute);
-            else
-                fechaInicioFinal = d;
+            idSalaFinal = 0;
+            ubicacionFinal = (ubicacionOtra ?? "").Trim();
+        }
+        else if (selectedSalaId > 0)
+        {
+            idSalaFinal = selectedSalaId;
+            ubicacionFinal = "";
         }
 
-        if (FechaFin != null)
-        {
-            var d2 = FechaFin.Value.Date;
-            if (HoraFin != null)
-                fechaFinFinal = d2.AddHours(HoraFin.Value.Hour).AddMinutes(HoraFin.Value.Minute);
-            else
-                fechaFinFinal = d2;
-        }
+        // Participantes IDs
+        var participantesIds = participantesSeleccionados.Select(p => p.Id).ToList();
 
-        // --- Determinar IdSala y Ubicacion según selección ---
-        // Recomendación: guarda el id de la sala cuando rellenes listaSalas (usa sala.Id)
-        int idSalaSeleccionada = 0;
-        string ubicacionParaEnviar = "";
-
-        // Si el usuario escogió "otra", ubicacionSeleccionada contiene el texto
-        if (!string.IsNullOrWhiteSpace(ubicacionSeleccionada) && ubicacionSeleccionada != "otra")
-        {
-            // ubicacionSeleccionada hoy contiene el nombre de la sala, pero necesitamos el id.
-            // Si en tu <select> estás guardando el nombre, cámbialo para guardar el id.
-            // Aquí intento resolver con búsqueda en listaSalas por nombre:
-            var salaEncontrada = listaSalas.FirstOrDefault(s => s.Salas == ubicacionSeleccionada);
-            if (salaEncontrada != null)
-                idSalaSeleccionada = salaEncontrada.Id; // Asegúrate SalasEm tiene Id
-            else
-                idSalaSeleccionada = 0; // fallback
-        }
-        else if (showOtherLocationInput && !string.IsNullOrWhiteSpace(ubicacionSeleccionada))
-        {
-            // Usuario escribió una ubicación libre (otra)
-            idSalaSeleccionada = 0;
-            ubicacionParaEnviar = ubicacionSeleccionada;
-        }
-        else
-        {
-            // Si el <select> guarda el id en vez del nombre, conviértelo:
-            // suponiendo que tienes un campo int selectedSalaId, úsalo aquí:
-            // idSalaSeleccionada = selectedSalaId;
-            // y si selectedSalaId > 0 -> ubicacionParaEnviar = "";
-        }
-
-        // --- Preparar lista de ids de participantes ---
-        var participantesIds = participantesSeleccionados?.Select(p => p.Id).ToList() ?? new List<int>();
-
-        // Construir objeto TareaCreada correctamente
-        var nuevaTarea = new TareaCreada
+        // Crear objeto final de la tarea
+        nuevaTarea = new TareaCreada
         {
             Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
             Titulo = titulo?.Trim(),
             Descripcion = descripcion?.Trim(),
+
             FechaInicio = fechaInicioFinal,
             FechaFin = fechaFinFinal,
-            Ubicacion = ubicacionParaEnviar,            // string libre si "otra"
-            ParticipantesLista = participantesSeleccionados.ToList(), // lista de EmpleadoDTO
-            ParticipantesSeleccionados = participantesIds,            // lista de ints
+
+            HoraInicio = HoraInicio,
+            HoraFin = HoraFin,
+
+            Ubicacion = ubicacionFinal,
+            IdSala = idSalaFinal,
+
             Subtareas = subtasks.ToList(),
             IsEvento = FormType == FormTypes.Evento,
 
@@ -493,53 +455,48 @@ window.alertaGuardadoSimple = function() {
             IdCreador = idUsuario,
             IdResponsable = idUsuario,
 
-            // opcionales
-            IdSala = idSalaSeleccionada,
-            EsRecurrente = (selectedFrecuenciaId != null && selectedFrecuenciaId > 0),
-            ReglaRecurrencia = (selectedFrecuenciaId != null ? selectedFrecuenciaId.ToString() : "")
+            Prioridad = selectedPrioridadId ?? 0,
+
+            // ⭐ Recurrencia
+            IdFrecuencia = selectedFrecuenciaId,
+            EsRecurrente = selectedFrecuenciaId.HasValue && selectedFrecuenciaId > 0,
+            ReglaRecurrencia = ObtenerNombreFrecuencia(selectedFrecuenciaId),
+
+            ParticipantesLista = participantesSeleccionados,
+            ParticipantesSeleccionados = participantesIds
         };
 
-        // Debug: ver payload antes de enviar
-        Debug.WriteLine("[MODAL] Payload nueva actividad:");
-        Debug.WriteLine(JsonConvert.SerializeObject(nuevaTarea));
-
-        bool ok = false;
-        if (FormType == FormTypes.Evento)
-            ok = await AgendaService.CrearEventoApi(nuevaTarea);
-        else
-            ok = await AgendaService.CrearTareaApi(nuevaTarea);
+        // Guardar vía servicio
+        bool ok = FormType == FormTypes.Evento
+            ? await AgendaService.CrearEventoApi(nuevaTarea)
+            : await AgendaService.CrearTareaApi(nuevaTarea);
 
         if (!ok)
         {
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new { icon = "error", title = "Error al guardar", text = "La API rechazó la actividad." });
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error al guardar"
+            });
             return;
         }
 
         await OnSave.InvokeAsync(nuevaTarea);
-        
-        // ALERTAS SEGÚN EL TIPO
-// ALERTAS SEGÚN EL TIPO
-if (FormType == FormTypes.Evento)
-{
-    await JSRuntime.InvokeVoidAsync("alertaGuardadoEvento");
-}
-else
-{
-    await JSRuntime.InvokeVoidAsync("alertaGuardadoSimple");
-}
+
+        // Alerta
+        if (FormType == FormTypes.Evento)
+            await JSRuntime.InvokeVoidAsync("alertaGuardadoEvento");
+        else
+            await JSRuntime.InvokeVoidAsync("alertaGuardadoSimple");
 
         LimpiarCampos();
         ShowModal = false;
     }
-
-    // -----------termino----------------
-
-    // ---------------------------
+    // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
     {
         titulo = "";
         descripcion = "";
-        participantes = "";
         subtasks.Clear();
         newSubtask = "";
 
@@ -548,11 +505,14 @@ else
         HoraInicio = null;
         HoraFin = null;
 
-        ubicacionSeleccionada = null;
-        showOtherLocationInput = false;
+        ubicacionOtra = "";
+        mostrarOtraUbicacion = false;
 
+        selectedSalaId = 0;
         selectedPrioridadId = null;
         selectedFrecuenciaId = null;
+
+        participantesSeleccionados.Clear();
 
         FormType = FormTypes.Tareas;
     }
@@ -569,7 +529,7 @@ else
         if (!string.IsNullOrWhiteSpace(newSubtask))
         {
             subtasks.Add(newSubtask.Trim());
-            newSubtask = string.Empty;
+            newSubtask = "";
         }
     }
 
@@ -584,9 +544,7 @@ else
     }
 }
 
-
-
-                            }
+                   }
 
 
 

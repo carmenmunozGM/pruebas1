@@ -16,7 +16,7 @@ namespace pruebas1.Servicios
         private readonly HttpClient httpClient;
         private readonly LoginService loginService;
         private int? selectedPrioridadId;
-
+        
         public AgendaService(HttpClient httpClient, LoginService loginService)
         {
             this.httpClient = httpClient;
@@ -40,7 +40,7 @@ namespace pruebas1.Servicios
                 fechaInicio = tarea.FechaInicio,
                 fechaFin = tarea.FechaFin,
                 esRecurrente = tarea.EsRecurrente   ,
-                reglaRecurrencia = "",
+                reglaRecurrencia = tarea.ReglaRecurrencia,  // ya viene calculada desde el componente
                 todoElDia = true,
                 idPrioridad = tarea.Prioridad,
                 idCreador = idCreador,
@@ -56,6 +56,13 @@ namespace pruebas1.Servicios
 
             var response = await httpClient.PostAsJsonAsync("tareas/crear", dto);
             return response.IsSuccessStatusCode;
+        }
+
+        private string ObtenerNombreFrecuencia(int? idFrecuencia, List<FrecuenciaRecurrencia> frecuencias)
+        {
+            if (idFrecuencia == null) return "";
+            var freq = frecuencias.FirstOrDefault(f => f.Id == idFrecuencia.Value);
+            return freq?.Nombre ?? "";
         }
 
         // CREAR EVENTO

@@ -8,7 +8,7 @@ namespace pruebas1.Components.DTOs
 {
     public class TareaApiDto
     {
-        public int id { get; set; }
+     
         public int idAgenda { get; set; }
         public string titulo { get; set; } = string.Empty;
         public string descripcion { get; set; } = string.Empty;

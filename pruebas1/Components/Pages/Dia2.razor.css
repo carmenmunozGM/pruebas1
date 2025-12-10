@@ -591,9 +591,9 @@
 }
 
 .section-label {
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: #7a7a7a;
+    color: #000;
     text-transform: uppercase;
     letter-spacing: .4px;
     margin-bottom: 2px;

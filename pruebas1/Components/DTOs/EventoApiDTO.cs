@@ -8,6 +8,7 @@ namespace pruebas1.Components
 {
     public class EventoApiDTO
     {
+        public int id { get; set; }
         public int idAgenda { get; set; }
         public string titulo { get; set; }
         public string descripcion { get; set; }

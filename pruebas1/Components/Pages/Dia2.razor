@@ -8,12 +8,16 @@
 @using pruebas1.Components
 @using pruebas1.Servicios
 @using System.Diagnostics;
+@inject IJSRuntime JSRuntime
+@using System.Text.Json
+
 @inject OrdenTrabajoService OrdenTrabajoService
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 
 <div class="agenda-container">
     <div class="top-bar-container">
@@ -174,9 +178,11 @@
                                                 <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(tareasCat, st)">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteSubtask(tareasCat, st)">
+                                                @* Para eliminar la tarea/evento principal *@
+                                                <button class="icon-btn delete" title="Eliminar" >
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
+
                                             </div>
                                         }
                                     </div>
@@ -191,7 +197,8 @@
                                                             <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
-                                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteInnerSubtask(tareasCat, st, s2)">
+                                                                @* Eliminar la subtarea interna (pasa s2) *@
+                                                                <button class="icon-btn delete" title="Eliminar subtarea" >
                                                                     <i class="bi bi-trash3"></i>
                                                                 </button>
                                                             </div>
@@ -209,7 +216,7 @@
             </div>
             <br />
         }
-
+    
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Órdenes de Trabajo") is CategoryModel otCat)
         {
             <div class="card block-card naranja-melocoton">
@@ -346,16 +353,7 @@
                                     <div class="subtask-label @(st.IsDone && cat.Name != "Autoevaluación" ? "done" : "")">
                                         @if (cat.Name.Trim() == "Autoevaluación")
                                         {
-                                            <select @bind="st.Estado" class="auto-select">
-                                                <option value="">--</option>
-                                                <option value="No realicé">No realicé</option>
-                                                <option value="Sí realicé">Sí realicé</option>
-                                                <option value="Día inhábil">Día inhábil</option>
-                                                <option value="Permiso">Permiso</option>
-                                                <option value="Falta">Falta</option>
-                                                <option value="Vacaciones">Vacaciones</option>
-                                                <option value="Incapacidad">Incapacidad</option>
-                                            </select>
+                                          //AQUIVA EL CHECK DE AUTOEVALUCION
                                         }
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
@@ -378,9 +376,8 @@
                                                 <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(cat, st)">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteSubtask(cat, st)">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
+                                                <button >🗑️</button>
+
                                             </div>
                                         }
                                     </div>
@@ -426,9 +423,8 @@
                                                                     <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditInnerModal(cat, st, s2)">
                                                                         <i class="bi bi-pencil"></i>
                                                                     </button>
-                                                                    <button class="icon-btn delete" title="Eliminar" @onclick="() => DeleteInnerSubtask(cat, st, s2)">
-                                                                        <i class="bi bi-trash3"></i>
-                                                                    </button>
+                                                                    <button >🗑️</button>
+
                                                                 </div>
                                                             </div>
                                                         </li>
@@ -684,23 +680,18 @@
     private string[] DiasSemana = { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
     private IEnumerable<DateTime> DiasDelCalendario { get; set; } = Enumerable.Empty<DateTime>();
     private string FechaFormateada => FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"));
-    //---- PARA AGENDA
-    
+    // Variables del modalde eliminar (aseguradas como nullable)
+    private bool MostrarDialogoEliminar = false;
+    private SubtaskModel? SubtaskAEliminar = null;
+    private CategoryModel? CategoriaDeSubtask = null;
 
-    // Si ya tienes Categories / MasterCategories, usa el que corresponda.
-    // Lista de tareas cargadas desde la API
+    // ---- PARA AGENDA ----
     private List<TareaApi> TareasDelDia = new();
-    //public List<Entidades.EventoApi> Eventos { get; set; } = new();
-
     private List<CategoryModel> Categories { get; set; } = new();
-    private int currentAgendaId; // <- usa el idAgenda que necesites (puede ser variable)
-    //-- NOSE PARA QUE SIRVE A1
-    // ---- DATOS / INICIALIZACIÓN ----
+    private int currentAgendaId;
     private List<CategoryModel> MasterCategories = new();
-    // Lista de órdenes (separada y limpia)
     private List<OrdenTrabajoModel> OrdenesParaMostrar = new();
-    // ---- MODELOS PARA EL BLOQUE DE ÓRDENES (D1) ----
-   
+
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
 
@@ -716,22 +707,14 @@
         SelectedTask = null;
     }
 
-
     async Task ToggleTareaApi(TareaApi t)
     {
         t.completada = !t.completada;
         await Http.PutAsJsonAsync($"tareas/editar/{t.id}", t);
     }
 
-    void OpenModificarDesdeApi(TareaApi t)
-    {
-        // Abre modal con datos reales
-    }
-
-    void OpenEditDesdeApi(TareaApi t)
-    {
-        // Abre edición
-    }
+    void OpenModificarDesdeApi(TareaApi t) { }
+    void OpenEditDesdeApi(TareaApi t) { }
 
     async Task DeleteTareaApi(TareaApi t)
     {
@@ -742,8 +725,6 @@
     async Task CargarTareas()
     {
         TareasDelDia = await AgendaService.ObtenerTareasApi(3);
-        //Eventos = await AgendaService.ObtenerEventosApi(3);
-
         StateHasChanged();
     }
 
@@ -759,31 +740,23 @@
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
 
-
-    //inicia DEL MODAL fechasmotivo
-
+    // ---- MODAL FECHA / MOTIVO ----
     private bool ShowModificarFechaModal = false;
     private DateTime FechaActual { get; set; } = DateTime.Now;
     private DateTime? NuevaFecha { get; set; } = DateTime.Now;
     private string Motivo { get; set; } = string.Empty;
-
     private List<HistorialFechaCambio> HistorialCambios { get; set; } = new();
     private List<TareaCreada> tareasAdministrativas = new();
-    // alertas
     private bool MostrarAlerta = false;
     private string MensajeAlerta = string.Empty;
-    private string TipoAlerta = "exito"; // "exito" o "error"
+    private string TipoAlerta = "exito";
 
     private void OpenModificarModal(CategoryModel cat, SubtaskModel st)
     {
         FechaActual = st?.FechaConclusion != default ? st.FechaConclusion : DateTime.Now;
         NuevaFecha = FechaActual;
         Motivo = string.Empty;
-
-        // si la subtarea tiene historial
-        var hist = GetPropertyValue(st, "HistorialFechas") as List<HistorialFechaCambio>;
-        HistorialCambios = hist ?? new List<HistorialFechaCambio>();
-
+        HistorialCambios = GetPropertyValue(st, "HistorialFechas") as List<HistorialFechaCambio> ?? new List<HistorialFechaCambio>();
         MostrarAlerta = false;
         ShowModificarFechaModal = true;
     }
@@ -806,20 +779,14 @@
             FechaModificacion = DateTime.Now
         });
 
-        FechaActual = NuevaFecha ?? DateTime.Now; ;
-
+        FechaActual = NuevaFecha ?? DateTime.Now;
         MostrarAlerta = true;
         TipoAlerta = "exito";
         MensajeAlerta = "¡Fecha modificada correctamente!";
-
-
         StateHasChanged();
     }
 
-    private void CerrarModificarModal()
-    {
-        ShowModificarFechaModal = false;
-    }
+    private void CerrarModificarModal() => ShowModificarFechaModal = false;
 
     private object? GetPropertyValue(object? obj, string propName)
     {
@@ -841,36 +808,7 @@
         public DateTime FechaModificacion { get; set; } = DateTime.Now;
     }
 
-    //TERMINA EL MODADAL DE MODIFCAR FECHA
-
-    void ToggleCollapse(CategoryModel cat)
-    {
-        cat.IsCollapsed = !cat.IsCollapsed;
-    }
-
-    // ---- MODELOS QUE YA TENÍAS (mantengo para compatibilidad) ----
-    /* class SubtaskModel
-     {
-         public string Id { get; set; } = Guid.NewGuid().ToString();
-     public string Title { get; set; }
-     public string Descripcion { get; set; }
-
-     public bool IsDone { get; set; }
-     public string Estado { get; set; } = "";   // <-- NUEVA PROPIEDAD
-     public string Tipo { get; set; }  // 👈 "Evento" o "Tarea"
-     public List<SubtaskModel> Subtasks { get; set; } = new();
-
-
-     // Campos opcionales (si se usaran)
-     public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
-     public DateTime? FechaSolicitud { get; set; } = null;
-     public string Autor { get; set; } = null;
-     public string Cliente { get; set; } = null;
-     public string Objetivo { get; set; } = null;
-     public string ObjetivosOtros { get; set; } = null;
-     public string Description { get; set; } = null;
-     public int ProgressPercent { get; set; } = 0;
-     }*/
+    void ToggleCollapse(CategoryModel cat) => cat.IsCollapsed = !cat.IsCollapsed;
 
     class CategoryModel
     {
@@ -881,40 +819,40 @@
         public string Icon { get; set; }
     }
 
-    /*private void AgregarTarea(ReusableModal.TareaCreada nueva)
+    class SubtaskModel
     {
-        var categoria = Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas");
-
-        if (categoria != null)
-        {
-            var nuevaSubtask = new SubtaskModel
-            {
-                Title = nueva.Titulo,
-                IsDone = false,
-                // 👇 Guardamos si es evento o tarea
-                Tipo = nueva.IsEvento ? "Evento" : "Tarea",
-                Subtasks = nueva.Subtareas
-                    .Select(s => new SubtaskModel { Title = s, IsDone = false })
-                    .ToList()
-            };
-
-            categoria.Subtasks.Add(nuevaSubtask);
-        }
-
-        StateHasChanged();
-    }*/
-
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Title { get; set; }
+        public string Descripcion { get; set; }
+        public bool IsDone { get; set; }
+        public string Tipo { get; set; }
+        public string Icon { get; set; }
+        public DateTime? FechaInicio { get; set; }
+        public DateTime? FechaFin { get; set; }
+        public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
+        public DateTime? FechaSolicitud { get; set; }
+        public TimeOnly? HoraInicio { get; set; }
+        public TimeOnly? HoraFin { get; set; }
+        public string Autor { get; set; }
+        public string Cliente { get; set; }
+        public string Objetivo { get; set; }
+        public string ObjetivosOtros { get; set; }
+        public int Prioridad { get; set; }
+        public string Ubicacion { get; set; }
+        public List<string> Participantes { get; set; } = new();
+        public int ProgressPercent { get; set; }
+        public List<SubtaskModel> Subtasks { get; set; } = new();
+    }
 
     protected override void OnInitialized()
     {
-        /*InitializeMasterCategories();*/
         CargarTareasPorFecha();
         GenerarDiasCalendario();
         PrepararOrdenesVisuales();
     }
+
     protected override async Task OnInitializedAsync()
     {
-
         await PrepararOrdenesVisuales();
         await InitializeMasterCategoriesAsync();
         StateHasChanged();
@@ -928,63 +866,11 @@
         "Servicio a Cliente" => "🏢",
         _ => "📋"
     };
-  
-   
-    /*private void InitializeMasterCategoriesAsync()
-    {
 
-        // Trae las tareas desde la API por agenda
-        var tareas = await AgendaService.ObtenerTareasApi(3); // agenda actual
-        MasterCategories = new();
-
-        MasterCategories = new List<CategoryModel>
-        {
-            new CategoryModel { Name = "Tareas",ColorClass= "rosa-administrativa", Subtasks = new List<SubtaskModel>
-                {
-                    new SubtaskModel{ Title = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional.", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Detalle 1"}, new SubtaskModel{ Title="Detalle 2" } } },
-                    new SubtaskModel{ Title = "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI." },
-                    new SubtaskModel{ Title = "Di seguimiento a la recepción de facturas de acuerdo con las solicitudes de pago y las entregue a Administración." },
-                    new SubtaskModel{ Title = "Programé las citas inteligentemente y comunique al área y/o responsable del trabajo. " },
-                }
-            },
-            new CategoryModel {
-                Name = "Órdenes de Trabajo",
-                ColorClass= "naranja-melocoton",
-                Subtasks = new List<SubtaskModel>() // no la usamos como fuente principal
-            },
-            new CategoryModel { Name = "Autoevaluación",ColorClass= "azul-lavanda", Subtasks = new List<SubtaskModel>
-                {
-                    new SubtaskModel{ Title = "Me aseguré de que el área y la estación de insumos de TI esté limpia, ordenada y funcional." },
-                    new SubtaskModel{ Title = "Di seguimiento en tiempo y forma al control de suscripciones de las que es responsable TI." },
-                    new SubtaskModel{ Title = "Elaboré y compartí al área de Administración las solicitudes de pago del activo fijo de las que es responsable TI." }
-                }
-            },
-              new CategoryModel { Name = "Servicio a Cliente", ColorClass= "azul-morado", Subtasks = new List<SubtaskModel>
-                {
-                   new SubtaskModel{ Title = "1658 Casas y desarrollos VITA SAPI de CV", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Acordar con Lic.Gerardo cuando dara el informe"}, new SubtaskModel{ Title="Solicitar a TI descargar de CFDIS" } } },
-                   new SubtaskModel{ Title = "1235 Construcciones y desarrollo nelsan SA de CV", Subtasks = new List<SubtaskModel>{ new SubtaskModel{ Title="Asegurar la recepción de documentos enviados por el Lic.Gerardo"}, new SubtaskModel{ Title="Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" } } }
-                }
-            },
-        };
-
-        foreach (var category in MasterCategories)
-        {
-            category.Icon = GetIcon(category.Name);
-        }
-    }*/
-    // ---------------------------
-    // ======== AQUI: CARGA DINÁMICA SOLO DEL BLOQUE TAREAS ========
-    // ======== CARGA DINÁMICA DE BLOQUES: TAREAS Y EVENTOS (con debug) ========
     private async Task InitializeMasterCategoriesAsync()
     {
-        
-        Debug.WriteLine("====== Inicializando Categorías ======");
-
-        // Obtener agenda actual
         if (LoginService.AgendaActual != null)
-        {
             currentAgendaId = LoginService.AgendaActual.Value;
-        }
         else
         {
             var usuario = LoginService.obtenerUsuarioLogueado();
@@ -994,22 +880,12 @@
                 LoginService.SetAgendaActual(currentAgendaId);
             }
             else
-            {
                 currentAgendaId = 0;
-            }
         }
 
-        Debug.WriteLine($"Agenda actual: {currentAgendaId}");
-
         MasterCategories = new();
-
-        // Traer tareas
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-        Debug.WriteLine($"Tareas recibidas desde API: {tareasApi.Count}");
-
-        // Traer eventos
         var eventosApi = await AgendaService.ObtenerEventos(currentAgendaId);
-        Debug.WriteLine($"Eventos recibidos desde API: {eventosApi.Count}");
 
         var tareasCategory = new CategoryModel
         {
@@ -1018,21 +894,15 @@
             Icon = "📝",
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
+              
                 Title = t.titulo,
-            
                 IsDone = t.completada,
                 Tipo = "Tarea",
-
                 Prioridad = t.idPrioridad,
-
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
-
-                // Conversión segura string → TimeOnly para tareas
                 HoraInicio = string.IsNullOrWhiteSpace(t.horaInicio) ? null : TimeOnly.Parse(t.horaInicio),
-
                 Autor = t.id.ToString(),
-
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
@@ -1044,42 +914,29 @@
             }).ToList()
         };
 
-        // Agregar eventos
         foreach (var ev in eventosApi)
         {
             tareasCategory.Subtasks.Add(new SubtaskModel
             {
+                
                 Title = ev.titulo,
-              
                 IsDone = false,
                 Tipo = "Evento",
-
                 Icon = "📅",
-
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
-
-                // ⚡ Opción 1: extraer hora de fechaInicio y fechaFin
                 HoraInicio = TimeOnly.FromDateTime(ev.fechaInicio),
                 HoraFin = TimeOnly.FromDateTime(ev.fechaFin),
-
                 Autor = ev.idAgenda.ToString(),
                 Subtasks = new()
             });
         }
 
-        Debug.WriteLine($"Subtasks totales con eventos incluidos: {tareasCategory.Subtasks.Count}");
-
         MasterCategories.Add(tareasCategory);
-
-        Debug.WriteLine("====== Fin carga de Tareas + Eventos ======");
-
-        // Otras categorías
         MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new() });
         MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new() });
         MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new() });
 
-        // Asignar íconos
         foreach (var c in MasterCategories)
             c.Icon = GetIcon(c.Name);
 
@@ -1088,155 +945,120 @@
 
     private async Task CargarTareasPorFecha()
     {
-        Categories = MasterCategories.Select(c => new CategoryModel
+        Categories = MasterCategories.Select(c =>
         {
-            Name = c.Name,
-            ColorClass = c.ColorClass,
-            Icon = c.Icon,
+            bool esOrdenes = c.Name?.Trim() == "Órdenes de Trabajo";
 
-            Subtasks = c.Subtasks.Select(st => new SubtaskModel
+            var subtasksFiltradas = c.Subtasks
+                .Where(st => esOrdenes || (st.FechaFin ?? st.FechaConclusion).Date == FechaSeleccionada.Date)
+                .Select(st => CloneSubtask(st))
+                .ToList();
+
+            return new CategoryModel
             {
-                Id = Guid.NewGuid().ToString(),
-
-                // Básicos
-                Title = st.Title,
-                Descripcion = st.Descripcion,
-                IsDone = st.IsDone,
-
-                // 🔥 CAMPOS CRÍTICOS QUE SE PERDIERON
-                Tipo = st.Tipo,        // <--- NECESARIO PARA MOSTRAR ICONO CORRECTO
-                Icon = st.Icon,        // <--- NECESARIO PARA EVENTOS
-
-                // Fechas y Horas
-                FechaInicio = st.FechaInicio,
-                FechaFin = st.FechaFin,
-                FechaConclusion = st.FechaConclusion,
-                FechaSolicitud = st.FechaSolicitud,
-
-                HoraInicio = st.HoraInicio,
-                HoraFin = st.HoraFin,
-
-                // Datos extra
-                Autor = st.Autor,
-                Cliente = st.Cliente,
-                Objetivo = st.Objetivo,
-                ObjetivosOtros = st.ObjetivosOtros,
-                Prioridad = st.Prioridad,
-                Ubicacion = st.Ubicacion,
-                Participantes = st.Participantes,
-
-                // Subtareas internas
-                Subtasks = st.Subtasks?.Select(s => new SubtaskModel
-                {
-                    Title = s.Title,
-                    Descripcion = s.Descripcion,
-                    ProgressPercent = s.ProgressPercent,
-                    Tipo = s.Tipo,
-                    Icon = s.Icon,
-                    IsDone = s.IsDone
-                }).ToList() ?? new List<SubtaskModel>()
-            }).ToList()
-
+                Name = c.Name,
+                ColorClass = c.ColorClass,
+                Icon = c.Icon,
+                Subtasks = subtasksFiltradas
+            };
         }).ToList();
 
         await PrepararOrdenesVisuales();
     }
 
-
-    private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status)
+    private SubtaskModel CloneSubtask(SubtaskModel st)
     {
-        return new OrdenTrabajoModel
+        return new SubtaskModel
         {
-            Id = api.id,
-            NumeroOrden = api.strClave,
-            FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
-            FechaProgramada = api.fechaFinal,
-            Autor = api.nombreCompleto ?? string.Empty,
-            Cliente = api.nombreCliente ?? string.Empty,
-            Objetivo = api.strValor ?? string.Empty,
-            ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
-            Status = status,
-            Tareas = new List<TareaOrdenModel>() // vacío en la lista
+            Id = st.Id,
+            Title = st.Title,
+            Descripcion = st.Descripcion,
+            IsDone = st.IsDone,
+            Tipo = st.Tipo,
+            Icon = st.Icon,
+            FechaInicio = st.FechaInicio,
+            FechaFin = st.FechaFin,
+            FechaConclusion = st.FechaConclusion,
+            FechaSolicitud = st.FechaSolicitud,
+            HoraInicio = st.HoraInicio,
+            HoraFin = st.HoraFin,
+            Autor = st.Autor,
+            Cliente = st.Cliente,
+            Objetivo = st.Objetivo,
+            ObjetivosOtros = st.ObjetivosOtros,
+            Prioridad = st.Prioridad,
+            Ubicacion = st.Ubicacion,
+            Participantes = st.Participantes,
+
+            Subtasks = st.Subtasks?.Select(s => CloneSubtask(s)).ToList() ?? new List<SubtaskModel>()
         };
     }
 
-    // Mapea la orden detalle (endpoint /orden/{id}) -> con tareas
-    private OrdenTrabajoModel ConvertirOrdenDetalle(OrdenTrabajoDTO api)
+    // ---- ORDENES ----
+    private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status) => new()
     {
-        return new OrdenTrabajoModel
-        {
-            Id = api.id,
-            NumeroOrden = api.strClave,
-            FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? (DateTime?)null : api.dteFechaSolicitud,
-            FechaProgramada = api.fechaFinal,
-            Autor = api.nombreCompleto ?? string.Empty,
-            Cliente = api.nombreCliente ?? string.Empty,
-            Objetivo = api.strValor ?? string.Empty,
-            ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
-            Status = OrdenStatus.Hoy, // el estado real lo calculas en la lista; aquí no importa
-            Tareas = api.tareas?.Select(t => new TareaOrdenModel
-            {
-                Nombre = t.strNombreTarea,
-                DescripcionAutor = t.strDescripcionAutor,
-                DescripcionReceptor = t.strDescripcionReceptor,
-                Valor = t.avance,
-                Observacion = t.strObservacion,
-               
-            }).ToList() ?? new List<TareaOrdenModel>()
-        };
-    }
+        Id = api.id,
+        NumeroOrden = api.strClave,
+        FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? null : api.dteFechaSolicitud,
+        FechaProgramada = api.fechaFinal,
+        Autor = api.nombreCompleto ?? string.Empty,
+        Cliente = api.nombreCliente ?? string.Empty,
+        Objetivo = api.strValor ?? string.Empty,
+        ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
+        Status = status,
+        Tareas = new List<TareaOrdenModel>()
+    };
 
-    private OrdenStatus ConvertirEstadoDesdeString(string estado)
+    private OrdenTrabajoModel ConvertirOrdenDetalle(OrdenTrabajoDTO api) => new()
     {
-        return estado switch
+        Id = api.id,
+        NumeroOrden = api.strClave,
+        FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? null : api.dteFechaSolicitud,
+        FechaProgramada = api.fechaFinal,
+        Autor = api.nombreCompleto ?? string.Empty,
+        Cliente = api.nombreCliente ?? string.Empty,
+        Objetivo = api.strValor ?? string.Empty,
+        ObjetivoOtro = api.strObjetivoOtro ?? string.Empty,
+        Status = OrdenStatus.Hoy,
+        Tareas = api.tareas?.Select(t => new TareaOrdenModel
         {
-            "Vencido" => OrdenStatus.Vencido,
-            "Proximo" => OrdenStatus.Proximo,
-            "Hoy" => OrdenStatus.Hoy,
-            _ => OrdenStatus.Hoy
-        };
-    }
+            Nombre = t.strNombreTarea,
+            DescripcionAutor = t.strDescripcionAutor,
+            DescripcionReceptor = t.strDescripcionReceptor,
+            Valor = t.avance,
+            Observacion = t.strObservacion,
+        }).ToList() ?? new List<TareaOrdenModel>()
+    };
 
-    // ------------------------------
-    // Preparar listas (vencidas / proximas / hoy)
-    // ------------------------------
+    private OrdenStatus ConvertirEstadoDesdeString(string estado) => estado switch
+    {
+        "Vencido" => OrdenStatus.Vencido,
+        "Proximo" => OrdenStatus.Proximo,
+        "Hoy" => OrdenStatus.Hoy,
+        _ => OrdenStatus.Hoy
+    };
+
     private async Task PrepararOrdenesVisuales()
     {
         OrdenesParaMostrar = new List<OrdenTrabajoModel>();
-
         try
         {
             var vencidas = await OrdenTrabajoService.GetOrdenesVencidas();
             var proximas = await OrdenTrabajoService.GetOrdenesProximas();
             var hoy = await OrdenTrabajoService.GetOrdenesHoy();
 
-            // Mapea cada lista con la versión SIMPLE (sin tareas) y asigna el estado correcto
-            if (vencidas != null)
-                OrdenesParaMostrar.AddRange(vencidas.Select(v => ConvertirOrdenSimple(v, OrdenStatus.Vencido)));
-
-            if (proximas != null)
-                OrdenesParaMostrar.AddRange(proximas.Select(p => ConvertirOrdenSimple(p, OrdenStatus.Proximo)));
-
-            if (hoy != null)
-                OrdenesParaMostrar.AddRange(hoy.Select(h => ConvertirOrdenSimple(h, OrdenStatus.Hoy)));
+            if (vencidas != null) OrdenesParaMostrar.AddRange(vencidas.Select(v => ConvertirOrdenSimple(v, OrdenStatus.Vencido)));
+            if (proximas != null) OrdenesParaMostrar.AddRange(proximas.Select(p => ConvertirOrdenSimple(p, OrdenStatus.Proximo)));
+            if (hoy != null) OrdenesParaMostrar.AddRange(hoy.Select(h => ConvertirOrdenSimple(h, OrdenStatus.Hoy)));
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("ERROR PrepararOrdenesVisuales: " + ex.Message);
-        }
+        catch (Exception ex) { Console.WriteLine("ERROR PrepararOrdenesVisuales: " + ex.Message); }
 
-        // opcional: abrir la sección Órdenes por defecto
         var otCat = Categories.FirstOrDefault(c => c.Name?.Trim() == "Órdenes de Trabajo");
         if (otCat != null) otCat.IsCollapsed = false;
 
         StateHasChanged();
     }
 
-    // ------------------------------
-    // Abrir modal: DOS OPCIONES
-    //  - Si llamas con el id (int) -> consulta detalle
-    //  - Si llamas con el modelo (OrdenTrabajoModel) -> consulta detalle por Id
-    // ------------------------------
     private async Task VerOrden(int idOrden)
     {
         try
@@ -1249,43 +1071,23 @@
                 ShowOrderModal = true;
                 StateHasChanged();
             }
-            else
-            {
-                Console.WriteLine($"Orden {idOrden} no encontrada en API.");
-            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("ERROR VerOrden(id): " + ex.Message);
-        }
+        catch (Exception ex) { Console.WriteLine("ERROR VerOrden(id): " + ex.Message); }
     }
 
-    // Sobrecarga para que tu botón @onclick="() => VerOrden(ot)" funcione
     private async Task VerOrden(OrdenTrabajoModel orden)
     {
         if (orden == null) return;
         await VerOrden(orden.Id);
     }
 
-    // ---- Modal orden ----
     private bool ShowOrderModal { get; set; } = false;
     private OrdenTrabajoModel? SelectedOrden { get; set; }
 
-    private void OpenOrderModal(OrdenTrabajoModel orden)
-    {
-        SelectedOrden = orden;
-        ShowOrderModal = true;
-        StateHasChanged();
-    }
+    private void OpenOrderModal(OrdenTrabajoModel orden) { SelectedOrden = orden; ShowOrderModal = true; StateHasChanged(); }
+    private void CloseOrderModal() { SelectedOrden = null; ShowOrderModal = false; }
 
-    
-    private void CloseOrderModal()
-    {
-        SelectedOrden = null;
-        ShowOrderModal = false;
-    }
-
-    // ---- Calendario helpers ----
+    // ---- CALENDARIO ----
     private void DiaAnterior() { FechaSeleccionada = FechaSeleccionada.AddDays(-1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
     private void DiaSiguiente() { FechaSeleccionada = FechaSeleccionada.AddDays(1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
     private void AbrirCalendario() => MostrarModal = true;
@@ -1293,6 +1095,7 @@
     private void MesAnterior() { MesActual = MesActual.AddMonths(-1); GenerarDiasCalendario(); }
     private void MesSiguiente() { MesActual = MesActual.AddMonths(1); GenerarDiasCalendario(); }
     private void SeleccionarFecha(DateTime nuevaFecha) { FechaSeleccionada = nuevaFecha; CerrarCalendario(); CargarTareasPorFecha(); }
+
     private void GenerarDiasCalendario()
     {
         var primerDiaDelMes = new DateTime(MesActual.Year, MesActual.Month, 1);
@@ -1300,7 +1103,7 @@
         DiasDelCalendario = Enumerable.Range(0, 42).Select(i => primerDiaDelMes.AddDays(i - offset));
     }
 
-    // ---- TAREAS (mantenidas) ----
+    // ---- TAREAS ----
     void ToggleSubtask(CategoryModel cat, SubtaskModel st)
     {
         st.IsDone = !st.IsDone;
@@ -1313,12 +1116,8 @@
         inner.IsDone = !inner.IsDone;
         parent.IsDone = parent.Subtasks.All(x => x.IsDone);
     }
-
-    bool AllCompleted(CategoryModel cat)
-    {
-        return cat.Subtasks != null && cat.Subtasks.Any()
-            && cat.Subtasks.All(st => st.IsDone && (st.Subtasks == null || st.Subtasks.All(s2 => s2.IsDone)));
-    }
+    
+    bool AllCompleted(CategoryModel cat) => cat.Subtasks != null && cat.Subtasks.Any() && cat.Subtasks.All(st => st.IsDone && (st.Subtasks == null || st.Subtasks.All(s2 => s2.IsDone)));
 
     int RemainingCount(CategoryModel cat)
     {
@@ -1331,6 +1130,7 @@
         }
         return count;
     }
+
     void MarkAll(CategoryModel cat, bool done)
     {
         foreach (var st in cat.Subtasks)
@@ -1339,42 +1139,25 @@
             if (st.Subtasks != null) st.Subtasks.ForEach(s2 => s2.IsDone = done);
         }
     }
-    // ---- Edit / Delete (mantengo tus handlers) ----
-    void EditSubtask(CategoryModel cat, SubtaskModel st)
-    {
-        Console.WriteLine($"Editar actividad: {st.Title} en {cat.Name}");
-    }
 
-    void DeleteSubtask(CategoryModel cat, SubtaskModel st)
-    {
-        cat.Subtasks.Remove(st);
-        CargarTareasPorFecha();
-    }
+    void EditSubtask(CategoryModel cat, SubtaskModel st) { Console.WriteLine($"Editar actividad: {st.Title} en {cat.Name}"); }
 
-    void EditInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
-    {
-        Console.WriteLine($"Editar subtarea: {inner.Title} en {parent.Title}");
-    }
+ 
 
-    void DeleteInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
-    {
-        parent.Subtasks.Remove(inner);
-    }
+ 
 
-    void OpenEditModal(CategoryModel cat, SubtaskModel st)
-    {
-        // abrir modal de edición si se requiere
-    }
 
-    void OpenEditInnerModal(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
-    {
-        // abrir modal de edición si se requiere
-    }
+    
 
-    void CheckSave()
-    {
-        // guardar cambios (si implementas edición)
-    }
+
+
+
+    void EditInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner) { Console.WriteLine($"Editar subtarea: {inner.Title} en {parent.Title}"); }
+
+    void OpenEditModal(CategoryModel cat, SubtaskModel st) { }
+    void OpenEditInnerModal(CategoryModel cat, SubtaskModel parent, SubtaskModel inner) { }
+    void CheckSave() { }
+
     private async Task RefrescarTareas(TareaCreada t)
     {
         await InitializeMasterCategoriesAsync();
