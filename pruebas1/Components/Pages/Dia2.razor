@@ -172,9 +172,10 @@
                                         @if (tareasCat.Name.Trim() == "Tareas")
                                         {
                                             <div class="subtask-actions">
-                                                <button class="icon-btn edit" title="Modificar fecha" @onclick="() => OpenModificarModal(tareasCat, st)">
-                                                    <i class="bi bi-calendar"></i>
+                                                <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
+                                                    <i class="bi bi-eye"></i>
                                                 </button>
+
                                                 <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(tareasCat, st)">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
@@ -216,7 +217,8 @@
             </div>
             <br />
         }
-    
+
+
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Órdenes de Trabajo") is CategoryModel otCat)
         {
             <div class="card block-card naranja-melocoton">
@@ -525,6 +527,7 @@
 }
 
 <!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
+<!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
 @if (ShowOrderModal && SelectedOrden != null)
 {
     <div class="modal-container visible" @onclick="CloseOrderModal">
@@ -669,7 +672,119 @@
         </div>
     </div>
 }
+<!-- MODAL DE DETALLE DE TAREA -->
+@if (ShowViewModal && SelectedViewItem != null)
+{
+    <div class="view-overlay" @onclick="CloseViewModal">
+        <div class="view-modal" @onclick:stopPropagation="true">
 
+            <div class="view-header">
+                <h3>@(SelectedViewItem.Tipo == "Tarea" ? "Detalles de la Tarea" : "Detalles del Evento")</h3>
+                <button class="view-close" @onclick="CloseViewModal">×</button>
+            </div>
+
+            <div class="view-body">
+
+                <div class="view-field">
+                    <label>📝 Título</label>
+                    <p>@SelectedViewItem.Title</p>
+                </div>
+
+                <div class="view-field">
+                    <label>📄 Descripción</label>
+                    <p>@SelectedViewItem.Descripcion</p>
+                </div>
+
+                <div class="view-field">
+                    <label>🏷️ Tipo</label>
+                    <p>@SelectedViewItem.Tipo</p>
+                </div>
+
+                @if (SelectedViewItem.FechaInicio != null)
+                {
+                    <div class="view-field">
+                        <label>📅 Fecha Inicio</label>
+                        <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
+                    </div>
+                }
+
+                @if (SelectedViewItem.FechaFin != null)
+                {
+                    <div class="view-field">
+                        <label>📅 Fecha Fin</label>
+                        <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
+                    </div>
+                }
+
+                @if (SelectedViewItem.HoraInicio != null)
+                {
+                    <div class="view-field">
+                        <label>⏰ Hora Inicio</label>
+                        <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
+                    </div>
+                }
+
+                @if (SelectedViewItem.HoraFin != null)
+                {
+                    <div class="view-field">
+                        <label>⏰ Hora Fin</label>
+                        <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
+                    </div>
+                }
+
+                @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Prioridad > 0)
+                {
+                    <div class="view-field">
+                        <label>⭐ Prioridad</label>
+                        <p>
+                            @(SelectedViewItem.Prioridad switch
+                            {
+                                1 => "🔥 Alta",
+                                2 => "⚠️ Media",
+                                3 => "🟢 Baja",
+                                _ => "Sin prioridad"
+                            })
+                </p>
+            </div>
+                        }
+
+                @if (SelectedViewItem.Participantes?.Any() == true)
+                {
+                    <div class="view-field">
+                        <label>👥 Participantes</label>
+                        <ul class="view-list">
+                            @foreach (var p in SelectedViewItem.Participantes)
+                            {
+                                <li>👤 @p</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+
+
+                @if (SelectedViewItem.Subtasks?.Any() == true)
+                {
+                    <div class="view-field">
+                        <label>✔️ Subtareas</label>
+                        <ul class="view-list">
+                            @foreach (var s in SelectedViewItem.Subtasks)
+                            {
+                                <li>✔️ @s.Title</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+            </div>
+
+            <div class="view-footer">
+                <button class="view-btn" @onclick="CloseViewModal">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+}
 
 @code {
 
@@ -739,6 +854,22 @@
         tarea.subTareas.Remove(s);
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
+    //MODAL DE VER TAREAS O EVENTOS
+    private bool ShowViewModal = false;
+private SubtaskModel? SelectedViewItem;
+
+private void OpenViewModal(SubtaskModel item)
+{
+    SelectedViewItem = item;
+    ShowViewModal = true;
+}
+
+
+private void CloseViewModal()
+{
+    SelectedViewItem = null;
+    ShowViewModal = false;
+}
 
     // ---- MODAL FECHA / MOTIVO ----
     private bool ShowModificarFechaModal = false;
@@ -898,6 +1029,7 @@
                 Title = t.titulo,
                 IsDone = t.completada,
                 Tipo = "Tarea",
+                
                 Prioridad = t.idPrioridad,
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
@@ -925,6 +1057,11 @@
                 Icon = "📅",
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
+               
+                Participantes = ev.idsParticipantes?
+                .Select(id => id.ToString())
+                .ToList()
+                ?? new List<string>(),
                 HoraInicio = TimeOnly.FromDateTime(ev.fechaInicio),
                 HoraFin = TimeOnly.FromDateTime(ev.fechaFin),
                 Autor = ev.idAgenda.ToString(),

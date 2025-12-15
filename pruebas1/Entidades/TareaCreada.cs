@@ -48,42 +48,7 @@ namespace pruebas1.Entidades
         public int IdEmpleado { get; set; }
         public string NombreEmpleado { get; set; } = "";
     }
-    /*public class SubtaskModel
-    {
-        // Identificador (opcional)
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
-        // Campos que usa tu UI (español)
-        public string Icon { get; set; } = string.Empty;
-
-        public string Title { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public bool IsDone { get; set; } = false;
-        public string Estado { get; set; } = string.Empty;   // autoevaluación
-        public string Tipo { get; set; } = string.Empty;     // "Evento" o "Tarea"
-        public List<SubtaskModel> Subtasks { get; set; } = new();
-        public DateTime? FechaInicio { get; set; }
-        public DateTime? FechaFin { get; set; }
-        public TimeOnly? HoraInicio { get; set; }
-        public TimeOnly? HoraFin { get; set; }
-        // Campos de fechas y metadatos (opcionales)
-        public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
-        public DateTime? FechaSolicitud { get; set; } = null;
-        public string Ubicacion { get; set; } = string.Empty;
-        //public string Participantes { get; set; } = string.Empty;
-        public string Participantes { get; set; }
-
-        public int Prioridad { get; set; } = 0;  // 1=Alta, 2=Media, 3=Baja
-
-        public string Autor { get; set; } = string.Empty;
-        public string Cliente { get; set; } = string.Empty;
-        public string Objetivo { get; set; } = string.Empty;
-        public string ObjetivosOtros { get; set; } = string.Empty;
-
-        // Campos en inglés que también usabas en otros lugares (compatibilidad)
-        public string Description { get => Descripcion; set => Descripcion = value; }
-        public int ProgressPercent { get; set; } = 0;
-    }*/
+    
     public class SubtaskModel
     {
         // Identificador (opcional)
@@ -114,7 +79,7 @@ namespace pruebas1.Entidades
         // Otros
         public string Ubicacion { get; set; } = string.Empty;
         public string Participantes { get; set; } = string.Empty;
-
+      
         // Prioridad (1=Alta, 2=Media, 3=Baja)
         public int Prioridad { get; set; } = 0;
 
