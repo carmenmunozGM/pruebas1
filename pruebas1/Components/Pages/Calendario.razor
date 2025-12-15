@@ -1,7 +1,11 @@
 ﻿@page "/calendario"
 @using System.Globalization
 @using System
+@using pruebas1.Servicios
+@using pruebas1.Components.DTOs
 @using System.Collections.Generic
+@inject AutoevaluacionService AutoevaluacionService 
+
 
 <div class="agenda-container">
     <!-- Encabezado -->
@@ -533,7 +537,12 @@
 
     string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
 
-    protected override void OnInitialized() => BuildMonth();
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAutoevaluaciones();
+        BuildMonth();
+    }
+
 
     void BuildMonth()
     {
@@ -598,17 +607,21 @@
             }
         });
 
-        day.Blocks.Add(new Block
-        {
-            Title = "Autoevaluación",
-            Color = "#E2F0CB",
-            SubTasks = new List<TaskItem>
-            {
-                new TaskItem { Nombre = "Revisar limpieza de área" },
-                new TaskItem { Nombre = "Validar vales de papelería" },
-                new TaskItem { Nombre = "Confirmar actividades programadas" }
-            }
-        });
+        var autoevaluacionesDelDia = Autoevaluaciones
+                .Where(a => a.Fecha.Date == date.Date)
+                .Select(a => new TaskItem
+                {
+                    Nombre = a.Nombre
+                })
+                .ToList();
+
+                    day.Blocks.Add(new Block
+                    {
+                        Title = "Autoevaluación",
+                        Color = "#E2F0CB",
+                        SubTasks = autoevaluacionesDelDia
+                    });
+
 
         day.Blocks.Add(new Block
         {
@@ -636,6 +649,38 @@
     void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
     void OpenBlockModal(Block block) => SelectedBlock = block;
     void CloseBlockModal() => SelectedBlock = null;
+
+
+    class AutoevaluacionCalendarioItem
+    {
+        public string Nombre { get; set; }
+        public DateTime Fecha { get; set; }
+        public bool Realizado { get; set; }
+    }
+    List<AutoevaluacionCalendarioItem> Autoevaluaciones = new();
+    async Task CargarAutoevaluaciones()
+    {
+        Autoevaluaciones.Clear();
+
+        var data = await AutoevaluacionService.ObtenerAutoevaluacion();
+
+        foreach (var bloque in data)
+        {
+            foreach (var tarea in bloque.Tareas)
+            {
+                foreach (var registro in tarea.Registros)
+                {
+                    Autoevaluaciones.Add(new AutoevaluacionCalendarioItem
+                    {
+                        Nombre = tarea.Tarea,
+                        Fecha = registro.Fecha.ToDateTime(TimeOnly.MinValue),
+                        Realizado = registro.Realizado
+                    });
+                }
+            }
+        }
+    }
+
 
     string GetIcon(string title) => title switch
     {
