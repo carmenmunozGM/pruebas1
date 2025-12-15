@@ -5,6 +5,7 @@
 @inject AgendaService AgendaService
 @inject OrdenTrabajoService OrdenService
 @inject IJSRuntime JSRuntime
+@inject AutoevaluacionService AutoevaluacionService
 
 
 
@@ -85,10 +86,16 @@
                                                                @onchange="(e) => ToggleComplete(bt, e)"
                                                                checked="@bt.IsCompleted"
                                                                @onclick:stopPropagation />
+
                                                         <span class="task-name @(bt.IsCompleted ? "completed" : "")"
                                                               @onclick="() => OpenTaskModal(bt, false)">
+                                                            @if (!string.IsNullOrEmpty(bt.Icon))
+                                                            {
+                                                                <span class="task-icon">@bt.Icon</span>
+                                                            }
                                                             @bt.Name
                                                         </span>
+
                                                         <div class="task-actions">
                                                             <button class="edit-btn"
                                                                     title="Editar"
@@ -280,6 +287,8 @@
         public DateTime DueDate { get; set; } = DateTime.Today;
         public List<object> SubTasks { get; set; } = new();
         public Block ParentBlock { get; set; }
+        public string Tipo { get; set; } = "Tarea"; // Tarea o Evento
+        public string Icon { get; set; } = "📝";    // 📝 por defecto
     }
 
     class SelfAssessment
@@ -354,10 +363,7 @@
             day.Blocks.Add(new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1", IsExpanded = false });
 
             // Bloque 3 - Autoevaluación (ESTÁTICO)
-            var autoBlock = new Block { Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false };
-            autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Autoevaluación ejemplo 1", ParentBlock = autoBlock });
-            autoBlock.SubTasks.Add(new SelfAssessment { ActivityName = "Autoevaluación ejemplo 2", ParentBlock = autoBlock });
-            day.Blocks.Add(autoBlock);
+            day.Blocks.Add(new Block{ Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false});
 
             // Bloque 4 - Servicio al Cliente (ESTÁTICO)
             var clienteBlock = new Block { Title = "Servicio al Clinte", Color = "#D7D1DD", IsExpanded = false };
@@ -417,19 +423,26 @@
             var descripcion = TryGetString(obj, "descripcion") ?? TryGetString(obj, "strObjetivoOtro") ?? "";
 
             var apiId = TryGetInt(obj, "idAgenda") ?? TryGetInt(obj, "id") ?? 0;
-            var esEvento = TryGetBool(obj, "esEvento") ?? TryGetBool(obj, "esRecurrente") == false ? false : TryGetBool(obj, "esEvento") ?? false;
+           // bool esEvento = TryGetString(obj, "tituloEvento") != null;
+            var tipoBD = TryGetString(obj, "Tipo") ?? "Tarea"; // por si viene null
 
             var mapped = new BaseTask
             {
                 ApiId = apiId,
-                Name = esEvento ? "[Evento] " + titulo : titulo,
+                Name = titulo,
                 Description = descripcion,
                 StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
                 DueDate = fechaFin.Value,
                 IsCompleted = TryGetBool(obj, "completada") ?? false,
                 Priority = TryGetString(obj, "prioridadTitulo") ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
+
+                // ⬅️ Aquí usamos tu valor de la base de datos
+                Tipo = tipoBD,
+                Icon = tipoBD == "Evento" ? "📅" : "📝",
+
                 Type = BlockType.GeneralTask
             };
+
 
             mapped.ParentBlock = day.Blocks[0];
             day.Blocks[0].SubTasks.Add(mapped);
@@ -469,6 +482,47 @@
 
             day.Blocks[1].SubTasks.Add(wt);
         }
+
+        // 3) Obtener autoevaluacion y mapear
+        List<AutoevaluacionDTO> autoevaluaciones = new();
+
+        try
+        {
+            autoevaluaciones = await AutoevaluacionService.ObtenerAutoevaluacion();
+        }
+        catch { }
+
+
+        foreach (var bloque in autoevaluaciones)
+        {
+            foreach (var tarea in bloque.Tareas)
+            {
+                foreach (var registro in tarea.Registros)
+                {
+                    // 🔥 DateOnly → DateTime (CRÍTICO)
+                    var fecha = registro.Fecha.ToDateTime(TimeOnly.MinValue).Date;
+
+                    if (fecha < startOfWeek || fecha > endOfWeek)
+                        continue;
+
+                    var day = Days.FirstOrDefault(d => d.Date.Date == fecha);
+                    if (day == null)
+                        continue;
+
+                    var autoBlock = day.Blocks.First(b => b.Title == "Autoevaluación");
+
+                    autoBlock.SubTasks.Add(new SelfAssessment
+                    {
+                        ActivityName = tarea.Tarea,
+                        IsCompleted = registro.Realizado,
+                        ParentBlock = autoBlock
+                    });
+                }
+            }
+        }
+
+
+
 
         StateHasChanged();
     }
@@ -1085,5 +1139,9 @@
         padding: 8px 10px;
     }
 
+    .task-icon {
+        margin-right: 6px;
+        font-size: 16px;
     }
+
 </style>
