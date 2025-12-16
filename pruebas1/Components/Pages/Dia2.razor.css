@@ -546,7 +546,7 @@
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #fff;
+    color: #000;
     flex: 1;
     min-width: 200px; /* evita cortes */
     word-break: break-word; /* si se hace muy largo */
@@ -1318,3 +1318,198 @@
     .view-btn:hover {
         background: #005fcc;
     }
+
+/* OVERLAY */
+.tramite-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* MODAL DE ORDENES DE TRAMITE */
+/* ===============================
+   OVERLAY
+================================ */
+.tramite-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* ===============================
+   MODAL
+================================ */
+.tramite-modal {
+    background: #ffffff;
+    width: 92%;
+    max-width: 1200px;
+    height: 90vh;
+    border-radius: 14px;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    animation: fadeUp .25s ease;
+}
+
+/* ===============================
+   HEADER
+================================ */
+.tramite-header {
+    background: linear-gradient(135deg,#6c5ce7,#5a4fdc);
+    color: #fff;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .tramite-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .tramite-header small {
+        display: block;
+        font-size: 13px;
+        opacity: .9;
+    }
+
+.tramite-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* ===============================
+   BODY
+================================ */
+.tramite-body {
+    padding: 20px;
+}
+
+/* ===============================
+   INFO GENERAL
+================================ */
+.tramite-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+    .tramite-info div {
+        background: #f6f7fb;
+        padding: 12px 14px;
+        border-radius: 8px;
+    }
+
+    .tramite-info span {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 2px;
+    }
+
+/* ===============================
+   CARD TRÁMITE
+================================ */
+.tramite-card {
+    border: 1px solid #e1e1e8;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 22px;
+    background: #fff;
+}
+
+/* HEADER CARD */
+.tramite-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+    .tramite-card-header strong {
+        font-size: 15px;
+    }
+
+    .tramite-card-header small {
+        font-size: 13px;
+        color: #777;
+    }
+
+/* ===============================
+   GRID INFO TRÁMITE
+================================ */
+.tramite-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+    .tramite-card-grid div {
+        background: #f8f9fc;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+
+    .tramite-card-grid b {
+        display: block;
+        font-size: 12px;
+        color: #555;
+    }
+
+    .tramite-card-grid span {
+        font-size: 13px;
+        color: #222;
+    }
+
+.span-2 {
+    grid-column: span 2;
+}
+
+/* ===============================
+   TABLE
+================================ */
+.tramite-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+    .tramite-table thead {
+        background: #f1f2f6;
+    }
+
+    .tramite-table th,
+    .tramite-table td {
+        padding: 9px;
+        border-bottom: 1px solid #e6e6e6;
+        font-size: 13px;
+        text-align: left;
+    }
+
+/* ===============================
+   ANIMATION
+================================ */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

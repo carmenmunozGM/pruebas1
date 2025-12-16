@@ -38,7 +38,9 @@
                 <a class="nav-link user-nav dropdown-toggle"
                    href="#" id="userDropdown"
                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle icon-user"></i>@nombreusuario
+                    🧑‍💻
+                    @nombreCompleto (@clavePersonal)
+
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li><a class="dropdown-item" href="">Configuración</a></li>
@@ -212,7 +214,7 @@
     }
     public string nombreusuario { get; set; } = "";
 
-    protected override async Task OnInitializedAsync()
+    /*protected override async Task OnInitializedAsync()
     {
         var obj = loginService.obtenerUsuarioLogueado();
         nombreusuario = obj.NombreUsuario;
@@ -222,7 +224,31 @@
         {
             loginService.SetAgendaActual(obj.IdAgendasAsignadas[0]);
         }
+    }*/
+    protected override async Task OnInitializedAsync()
+    {
+        var obj = loginService.obtenerUsuarioLogueado();
+
+        // 👤 Nombre completo desde Login
+        if (!string.IsNullOrWhiteSpace(obj.NombreRed))
+        {
+            nombreCompleto = obj.NombreRed;
+        }
+        else
+        {
+            nombreCompleto = obj.NombreUsuario;
+        }
+
+        // 🔑 Clave personal (idempleado)
+        clavePersonal = obj.IdEmpleado;
+
+        // 📅 Agenda
+        if (loginService.AgendaActual == null && obj.IdAgendasAsignadas?.Count > 0)
+        {
+            loginService.SetAgendaActual(obj.IdAgendasAsignadas[0]);
+        }
     }
+
 
     public async Task cerrarsesion()
     {
@@ -250,6 +276,8 @@
 
     private string newSubtask = string.Empty;
     private List<string> subtasks = new List<string>();
+    public string nombreCompleto { get; set; } = "";
+    public int clavePersonal { get; set; }
 
 
     public void OpenModal()

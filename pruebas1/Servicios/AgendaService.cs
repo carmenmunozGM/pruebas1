@@ -16,12 +16,13 @@ namespace pruebas1.Servicios
         private readonly HttpClient httpClient;
         private readonly LoginService loginService;
         private int? selectedPrioridadId;
-        
+        private readonly HttpClient _http;
         public AgendaService(HttpClient httpClient, LoginService loginService)
         {
             this.httpClient = httpClient;
             this.loginService = loginService;
             this.httpClient = httpClient;
+            _http = httpClient;
         }
 
         // CREAR TAREA
@@ -268,7 +269,87 @@ namespace pruebas1.Servicios
             }
         }
 
+        // ===================== EDITAR =====================
+
+        // -------- EVENTOS --------
+        public async Task EditarEventoAsync(int id, EditableItemModel model)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            var dto = new
+            {
+                idAgenda = model.IdAgenda,
+                titulo = model.Titulo,
+                descripcion = model.Descripcion,
+                fechaInicio = model.FechaInicio,
+                fechaFin = model.FechaFin,
+                esRecurrente = model.EsRecurrente,
+                reglaRecurrencia = model.ReglaRecurrencia,
+                idPrioridad = model.IdPrioridad,
+                idSala = 0,
+                ubicacion = model.Ubicacion,
+                idsParticipantes = model.IdsParticipantes
+            };
+
+            var json = JsonSerializer.Serialize(dto);
+            Console.WriteLine("📤 JSON EVENTO PUT:");
+            Console.WriteLine(json);
+
+            var response = await httpClient.PutAsync(
+                $"/eventos/{id}",
+                new StringContent(json, Encoding.UTF8, "application/json")
+            );
+
+            Console.WriteLine($"📡 STATUS EVENTO: {response.StatusCode}");
+        }
+
+        public async Task EliminarEventoAsync(int id)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            await httpClient.DeleteAsync($"/eventos/{id}");
+        }
+
+
+        public async Task EditarTareaAsync(int id, EditableItemModel model)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            var dto = new
+            {
+                idAgenda = model.IdAgenda,
+                titulo = model.Titulo,
+                descripcion = model.Descripcion ?? "",
+                fechaInicio = model.FechaInicio,
+                fechaFin = model.FechaFin,
+                esRecurrente = model.EsRecurrente,
+                reglaRecurrencia = model.ReglaRecurrencia,
+                idPrioridad = model.IdPrioridad,
+                subTareas = model.SubTareas.Select(t => new { titulo = t }).ToList()
+            };
+
+            await httpClient.PutAsJsonAsync($"/tareas/editar/{id}", dto);
+        }
+
+        public async Task EliminarTareaAsync(int id)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            await httpClient.DeleteAsync($"/tareas/eliminar/{id}");
+        }
+
 
     }
+
+
 }
+
 

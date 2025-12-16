@@ -82,7 +82,7 @@ namespace pruebas1.Servicios
         }
 
         // LOGIN PRINCIPAL
-        public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
+        /*public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
         {
             try
             {
@@ -118,7 +118,36 @@ namespace pruebas1.Servicios
             catch
             {
                 return new UsuarioLoginDTO();
+            }*/
+        public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
+        {
+            var respuesta = await httpClient.PostAsJsonAsync("login", loginDTO);
+
+            if (!respuesta.IsSuccessStatusCode)
+                return new UsuarioLoginDTO();
+
+            var loginResponse =
+                await respuesta.Content.ReadFromJsonAsync<LoginResponseDTO>();
+
+            if (loginResponse?.Usuario == null)
+                return new UsuarioLoginDTO();
+
+            // ✅ Token
+            loginResponse.Usuario.Token = loginResponse.Token;
+
+            // 💾 Guardar usuario
+            guardarUsuario(loginResponse.Usuario);
+
+            // 📅 Agenda
+            if (loginResponse.Usuario.IdAgendasAsignadas?.Any() == true)
+            {
+                SetAgendaActual(loginResponse.Usuario.IdAgendasAsignadas[0]);
             }
+
+            return loginResponse.Usuario;
         }
+
+
     }
 }
+

@@ -360,7 +360,7 @@
             day.Blocks.Add(autoBlock);
 
             // Bloque 4 - Servicio al Cliente (ESTÁTICO)
-            var clienteBlock = new Block { Title = "Servicio al Clinte", Color = "#D7D1DD", IsExpanded = false };
+            var clienteBlock = new Block { Title = "Servicio al Cliente", Color = "#D7D1DD", IsExpanded = false };
             clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo A", ActivityDetail = "Seguimiento semanal", ParentBlock = clienteBlock });
             clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo B", ActivityDetail = "Revisión de pendientes", ParentBlock = clienteBlock });
             day.Blocks.Add(clienteBlock);

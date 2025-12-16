@@ -10,8 +10,9 @@
 @using System.Diagnostics;
 @inject IJSRuntime JSRuntime
 @using System.Text.Json
-
 @inject OrdenTrabajoService OrdenTrabajoService
+@inject OrdenTramiteService OrdenTramiteService
+
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
@@ -175,16 +176,14 @@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
+                                                <EditDeleteItem EditModel="ConvertToEditable(st)"
+                                                                Tipo="@(st.Tipo == "Evento" ? Models.ItemTipo.Evento : Models.ItemTipo.Tarea)"
+                                                                OnUpdated="RecargarVista"
+                                                                OnDeleted="RecargarVista" />
 
-                                                <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(tareasCat, st)">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                @* Para eliminar la tarea/evento principal *@
-                                                <button class="icon-btn delete" title="Eliminar" >
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
 
                                             </div>
+
                                         }
                                     </div>
                                     @if (st.Subtasks.Any())
@@ -198,10 +197,12 @@
                                                             <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
-                                                                @* Eliminar la subtarea interna (pasa s2) *@
-                                                                <button class="icon-btn delete" title="Eliminar subtarea" >
-                                                                    <i class="bi bi-trash3"></i>
-                                                                </button>
+                                                                <EditDeleteItem Model="ConvertToEditable(st)"
+                                                                                Tipo="@(st.Tipo == "Evento" ? Models.ItemTipo.Evento : Models.ItemTipo.Tarea)"
+                                                                                OnUpdated="RecargarVista"
+                                                                                OnDeleted="RecargarVista" />
+
+
                                                             </div>
                                                         </div>
                                                     </li>
@@ -242,12 +243,17 @@
                             {
                                 <div class="columns-container block-scroll">
                                     
-
-
+                                    
+ 
                                     <!-- 🔴 Columna 1: Vencidas -->
                                     <div class="column column-expired block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencido).OrderBy(o => o.FechaProgramada))
                                         {
+                                            @if (ot.Tipo == TipoOrden.Tramite)
+                                            {
+                                                <span class="badge badge-tramite">Trámite</span>
+                                            }
+
                                             <div class="ot-card ot-expired">
                                                 <div class="ot-left">
                                                     <div class="ot-number">@ot.NumeroOrden</div>
@@ -269,6 +275,11 @@
                                     <div class="column column-soon block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Proximo).OrderBy(o => o.FechaProgramada))
                                         {
+
+                                            <div style="font-size:10px;color:red">
+                                                Tipo:@ot.Tipo | IdDetalle:@ot.IdOrdenTramite
+                                            </div>
+
                                             <div class="ot-card ot-soon">
                                                 <div class="ot-left">
                                                     <div class="ot-number">@ot.NumeroOrden</div>
@@ -446,7 +457,7 @@
     }
 </div>
 
-<!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
+<!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS-->
 @if (ShowModificarFechaModal)
 {
     <div class="modal-overlay" @onclick="CerrarModificarModal">
@@ -527,12 +538,11 @@
 }
 
 <!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
-<!-- MODAL DE VISUALIZACIÓN DE ORDEN (EXTRA GRANDE) -->
 @if (ShowOrderModal && SelectedOrden != null)
 {
     <div class="modal-container visible" @onclick="CloseOrderModal">
         <div class="modal-content" @onclick:stopPropagation="true" style="max-width:1200px; width:95%; height:92vh;">
-            <div class="modal-header" style="background:#2b2b3a; color:#fff;">
+            <div class="modal-header" style="background:#FFDAC1; color:#000;">
                 <h2 class="modal-title">Orden - @SelectedOrden.NumeroOrden</h2>
                 <span class="close-button" @onclick="CloseOrderModal">&times;</span>
             </div>
@@ -630,12 +640,12 @@
     </div>
 }
 
-<!-- MODAL DE DETALLE DE TAREA -->
+<!-- MODAL DE DETALLE DE TAREA ORDENES TRABAJO -->
 @if (ShowTaskDetailsModal && SelectedTask != null)
 {
     <div class="modal-container visible" @onclick="CloseTaskModal">
         <div class="modal-content" @onclick:stopPropagation="true" style="max-width:500px; width:80%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
-            <div class="modal-header" style="background:#3a3a4a; color:#fff; border-top-left-radius:10px; border-top-right-radius:10px;">
+            <div class="modal-header" style="background:#FFDAC1; color:#fff; border-top-left-radius:10px; border-top-right-radius:10px;">
                 <h3 class="modal-title">Detalle de tarea - @SelectedTask.Nombre</h3>
                 <span class="close-button" @onclick="CloseTaskModal">&times;</span>
             </div>
@@ -672,7 +682,8 @@
         </div>
     </div>
 }
-<!-- MODAL DE DETALLE DE TAREA -->
+
+<!-- MODAL DE DETALLE DE TAREA BLOQUE TAREAS-->
 @if (ShowViewModal && SelectedViewItem != null)
 {
     <div class="view-overlay" @onclick="CloseViewModal">
@@ -786,6 +797,91 @@
     </div>
 }
 
+<!--MODAL DE ORDENES DE TRAMITE-->
+@if (ShowTramiteModal && SelectedOrdenTramite != null)
+{
+    <div class="tramite-overlay" @onclick="CloseTramiteModal">
+        <div class="tramite-modal" @onclick:stopPropagation="true">
+
+            <!-- HEADER -->
+            <div class="tramite-header">
+                <div>
+                    <h2>Orden de Trámite</h2>
+                    <small>@SelectedOrdenTramite.numeroOrden</small>
+                </div>
+                <button class="tramite-close" @onclick="CloseTramiteModal">×</button>
+            </div>
+
+            <div class="tramite-body">
+
+                <!-- INFO GENERAL -->
+                <div class="tramite-info">
+                    <div><span>N° Orden</span>@SelectedOrdenTramite.numeroOrden</div>
+                    <div><span>Fecha solicitud</span>@SelectedOrdenTramite.fechaSolicitud</div>
+                    <div><span>Solicitante</span>@SelectedOrdenTramite.solicitanteInterno</div>
+
+                    <div><span>Cliente</span>@SelectedOrdenTramite.cliente</div>
+                    <div class="span-2">
+                        <span>Nombre global</span>@SelectedOrdenTramite.nombreGlobal
+                    </div>
+
+                    <div><span>Conclusión</span>@SelectedOrdenTramite.fechaConclusionTramite</div>
+                </div>
+
+                <!-- TRÁMITES -->
+                @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
+                {
+                    <div class="tramite-card">
+
+                        <div class="tramite-card-header">
+                            <strong>@tr.clave</strong>
+                            <small>@tr.tramiteIndividual</small>
+                        </div>
+
+                        <!-- INFO DEL TRÁMITE -->
+                        <div class="tramite-card-grid">
+                            <div><b>Dependencia</b><span>@(tr.dependencia ?? "-")</span></div>
+                            <div><b>Encargado</b><span>@(tr.personalEncargado ?? "-")</span></div>
+                            <div><b>Estado</b><span>@(tr.estadoTramite ?? "-")</span></div>
+                            <div><b>Avance</b><span>@(tr.avance ?? "-")</span></div>
+                            <div class="span-2"><b>Observación</b><span>@(tr.observacion ?? "Sin observaciones")</span></div>
+                        </div>
+
+                        <!-- TAREAS -->
+                        <table class="tramite-table">
+                            <thead>
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Tarea</th>
+                                    <th>Encargado</th>
+                                    <th>Fecha fin</th>
+                                    <th>Avance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in tr.tareas)
+                                {
+                                    <tr>
+                                        <td>@t.claveTarea</td>
+                                        <td>@t.tarea</td>
+                                        <td>@t.encargadoTarea</td>
+                                        <td>@t.fechaConclusion</td>
+                                        <td>@t.avance</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+
+
+
 @code {
 
     // ---- FECHAS Y CALENDARIO ----
@@ -799,6 +895,11 @@
     private bool MostrarDialogoEliminar = false;
     private SubtaskModel? SubtaskAEliminar = null;
     private CategoryModel? CategoriaDeSubtask = null;
+    private List<AutoevaluacionDTO> AutoevaluacionDelDia { get; set; } = new();
+    private bool AutoevalCollapsed { get; set; } = false;
+    //VARIABLES DE ORDES DE TRAMITE
+    private bool ShowTramiteModal { get; set; }
+    private OrdenTramiteDTO? SelectedOrdenTramite { get; set; }
 
     // ---- PARA AGENDA ----
     private List<TareaApi> TareasDelDia = new();
@@ -820,6 +921,27 @@
     {
         ShowTaskDetailsModal = false;
         SelectedTask = null;
+    }
+    EditableItemModel ConvertToEditable(SubtaskModel st)
+    {
+        return new EditableItemModel
+        {
+            Id = st.ApiId,
+            IdAgenda = st.IdAgenda,
+            Titulo = st.Title,
+            Descripcion = st.Descripcion,
+            FechaInicio = st.FechaInicio ?? DateTime.Now,
+            FechaFin = st.FechaFin ?? DateTime.Now,
+            EsRecurrente = false,
+            ReglaRecurrencia = null,
+            IdPrioridad = st.Prioridad,
+            Ubicacion = st.Ubicacion,
+            IdsParticipantes = st.Participantes
+                .Select(p => int.TryParse(p, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToList(),
+            SubTareas = st.Subtasks?.Select(s => s.Title).ToList() ?? new()
+        };
     }
 
     async Task ToggleTareaApi(TareaApi t)
@@ -953,6 +1075,9 @@ private void CloseViewModal()
     class SubtaskModel
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public int ApiId { get; set; }      // id real de evento o tarea
+        public int IdAgenda { get; set; }
+
         public string Title { get; set; }
         public string Descripcion { get; set; }
         public bool IsDone { get; set; }
@@ -988,6 +1113,12 @@ private void CloseViewModal()
         await InitializeMasterCategoriesAsync();
         StateHasChanged();
     }
+    async Task RecargarVista()
+    {
+        await InitializeMasterCategoriesAsync();
+        StateHasChanged();
+    }
+
 
     string GetIcon(string title) => title switch
     {
@@ -1026,10 +1157,11 @@ private void CloseViewModal()
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
               
+                ApiId = t.id,              // 👈 ID REAL
+                IdAgenda = t.idAgenda,
                 Title = t.titulo,
                 IsDone = t.completada,
                 Tipo = "Tarea",
-                
                 Prioridad = t.idPrioridad,
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
@@ -1050,14 +1182,14 @@ private void CloseViewModal()
         {
             tareasCategory.Subtasks.Add(new SubtaskModel
             {
-                
+                ApiId = ev.id,              // 👈 ID REAL
+                IdAgenda = ev.idAgenda,
                 Title = ev.titulo,
                 IsDone = false,
                 Tipo = "Evento",
                 Icon = "📅",
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
-               
                 Participantes = ev.idsParticipantes?
                 .Select(id => id.ToString())
                 .ToList()
@@ -1102,6 +1234,7 @@ private void CloseViewModal()
 
         await PrepararOrdenesVisuales();
     }
+    
 
     private SubtaskModel CloneSubtask(SubtaskModel st)
     {
@@ -1135,6 +1268,7 @@ private void CloseViewModal()
     private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status) => new()
     {
         Id = api.id,
+                // 🔥 NUEVO
         NumeroOrden = api.strClave,
         FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? null : api.dteFechaSolicitud,
         FechaProgramada = api.fechaFinal,
@@ -1145,6 +1279,24 @@ private void CloseViewModal()
         Status = status,
         Tareas = new List<TareaOrdenModel>()
     };
+
+
+    //--- 
+    private OrdenTrabajoModel ConvertirTramiteSimple(
+     OrdenTramiteDTO t,
+     OrdenStatus status)
+    {
+        return new OrdenTrabajoModel
+        {
+            IdOrdenTramite = t.idOrden,   // 🔥 ESTE ES EL ID REAL
+            NumeroOrden = t.numeroOrden,
+            FechaProgramada = DateTime.TryParse(t.fechaSolicitud, out var f) ? f : DateTime.Now,
+            Status = status,
+            Tipo = TipoOrden.Tramite
+        };
+    }
+
+
 
     private OrdenTrabajoModel ConvertirOrdenDetalle(OrdenTrabajoDTO api) => new()
     {
@@ -1175,7 +1327,7 @@ private void CloseViewModal()
         _ => OrdenStatus.Hoy
     };
 
-    private async Task PrepararOrdenesVisuales()
+    /*private async Task PrepararOrdenesVisuales()
     {
         OrdenesParaMostrar = new List<OrdenTrabajoModel>();
         try
@@ -1194,14 +1346,113 @@ private void CloseViewModal()
         if (otCat != null) otCat.IsCollapsed = false;
 
         StateHasChanged();
-    }
+    }*/
 
-    private async Task VerOrden(int idOrden)
+    private async Task PrepararOrdenesVisuales()
+    {
+        OrdenesParaMostrar = new();
+
+        try
+        {
+            // 🔵 ORDENES DE TRABAJO
+            var vencidasOT = await OrdenTrabajoService.GetOrdenesVencidas();
+            var proximasOT = await OrdenTrabajoService.GetOrdenesProximas();
+            var hoyOT = await OrdenTrabajoService.GetOrdenesHoy();
+
+            if (vencidasOT != null)
+            {
+                OrdenesParaMostrar.AddRange(
+                    vencidasOT.Select(o =>
+                    {
+                        var orden = ConvertirOrdenSimple(o, OrdenStatus.Vencido);
+                        orden.Tipo = TipoOrden.Trabajo;
+                        return orden;
+                    })
+                );
+            }
+
+            if (proximasOT != null)
+            {
+                OrdenesParaMostrar.AddRange(
+                    proximasOT.Select(o =>
+                    {
+                        var orden = ConvertirOrdenSimple(o, OrdenStatus.Proximo);
+                        orden.Tipo = TipoOrden.Trabajo;
+                        return orden;
+                    })
+                );
+            }
+
+            if (hoyOT != null)
+            {
+                OrdenesParaMostrar.AddRange(
+                    hoyOT.Select(o =>
+                    {
+                        var orden = ConvertirOrdenSimple(o, OrdenStatus.Hoy);
+                        orden.Tipo = TipoOrden.Trabajo;
+                        return orden;
+                    })
+                );
+            }
+
+
+            // 🟣 ORDENES DE TRÁMITE
+            var vencidasTR = await OrdenTramiteService.GetVencidas();
+            var proximasTR = await OrdenTramiteService.GetProximas();
+            var hoyTR = await OrdenTramiteService.GetHoy();
+
+            if (vencidasTR != null)
+                OrdenesParaMostrar.AddRange(
+                    vencidasTR.Select(t => ConvertirTramiteSimple(t, OrdenStatus.Vencido))
+                );
+
+            if (proximasTR != null)
+                OrdenesParaMostrar.AddRange(
+                    proximasTR.Select(t => ConvertirTramiteSimple(t, OrdenStatus.Proximo))
+                );
+
+            if (hoyTR != null)
+                OrdenesParaMostrar.AddRange(
+                    hoyTR.Select(t => ConvertirTramiteSimple(t, OrdenStatus.Hoy))
+                );
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR PrepararOrdenesVisuales: " + ex.Message);
+        }
+
+        var cat = Categories.FirstOrDefault(c => c.Name.Trim() == "Órdenes de Trabajo");
+        if (cat != null) cat.IsCollapsed = false;
+
+        StateHasChanged();
+    }
+    /*private async Task VerOrden(int idOrden)
+    {
+        try
+        {
+            var url = $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}";
+            var apiOrden =
+                await Http.GetFromJsonAsync<OrdenTrabajoDTO>(url);
+
+            if (apiOrden != null)
+            {
+                SelectedOrden = ConvertirOrdenDetalle(apiOrden);
+                ShowOrderModal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR VerOrden(id): " + ex.Message);
+        }
+    }*/
+    private async Task VerOrdenTrabajo(int idOrden)
     {
         try
         {
             var url = $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}";
             var apiOrden = await Http.GetFromJsonAsync<OrdenTrabajoDTO>(url);
+
             if (apiOrden != null)
             {
                 SelectedOrden = ConvertirOrdenDetalle(apiOrden);
@@ -1209,18 +1460,94 @@ private void CloseViewModal()
                 StateHasChanged();
             }
         }
-        catch (Exception ex) { Console.WriteLine("ERROR VerOrden(id): " + ex.Message); }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR VerOrdenTrabajo: " + ex.Message);
+        }
+    }
+        
+    private async Task VerOrden(OrdenTrabajoModel ot)
+    {
+        if (ot == null) return;
+
+        Console.WriteLine($"👁️ Click -> Tipo:{ot.Tipo} | OT:{ot.Id} | TR:{ot.IdOrdenTramite}");
+
+        if (ot.Tipo == TipoOrden.Tramite)
+        {
+            await VerOrdenTramiteSeguro(ot);
+        }
+        else
+        {
+            await VerOrdenTrabajo(ot.Id);
+        }
     }
 
-    private async Task VerOrden(OrdenTrabajoModel orden)
-    {
-        if (orden == null) return;
-        await VerOrden(orden.Id);
-    }
+
+
+
+
 
     private bool ShowOrderModal { get; set; } = false;
     private OrdenTrabajoModel? SelectedOrden { get; set; }
+    //MODALO PARA ORDENES DE TRAMITE 
+    /*private async Task VerOrdenTramite(int idOrden)
+    {
+        try
+        {
+            var url = $"https://redgm.site/ordenTramite/orden/{idOrden}";
+            SelectedOrdenTramite =
+                await Http.GetFromJsonAsync<OrdenTramiteDTO>(url);
 
+            if (SelectedOrdenTramite != null)
+            {
+                ShowTramiteModal = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR VerOrdenTramite: " + ex.Message);
+        }
+    }*/
+    private async Task VerOrdenTramiteSeguro(OrdenTrabajoModel ot)
+    {
+        // 🔥 ABRIR MODAL SIEMPRE
+        SelectedOrdenTramite = new OrdenTramiteDTO
+        {
+            numeroOrden = ot.NumeroOrden,
+            tramitesIndividuales = new()
+        };
+
+        ShowTramiteModal = true;
+        StateHasChanged();
+
+        // 🚀 INTENTAR TRAER DETALLE REAL
+        if (!ot.IdOrdenTramite.HasValue)
+            return;
+
+        try
+        {
+            var orden = await OrdenTramiteService.GetDetalle(ot.IdOrdenTramite.Value);
+
+            if (orden != null)
+            {
+                SelectedOrdenTramite = orden;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ ERROR API Trámite: " + ex.Message);
+        }
+    }
+
+
+
+    private void CloseTramiteModal()
+    {
+        SelectedOrdenTramite = null;
+        ShowTramiteModal = false;
+    }
     private void OpenOrderModal(OrdenTrabajoModel orden) { SelectedOrden = orden; ShowOrderModal = true; StateHasChanged(); }
     private void CloseOrderModal() { SelectedOrden = null; ShowOrderModal = false; }
 
@@ -1278,17 +1605,6 @@ private void CloseViewModal()
     }
 
     void EditSubtask(CategoryModel cat, SubtaskModel st) { Console.WriteLine($"Editar actividad: {st.Title} en {cat.Name}"); }
-
- 
-
- 
-
-
-    
-
-
-
-
     void EditInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner) { Console.WriteLine($"Editar subtarea: {inner.Title} en {parent.Title}"); }
 
     void OpenEditModal(CategoryModel cat, SubtaskModel st) { }

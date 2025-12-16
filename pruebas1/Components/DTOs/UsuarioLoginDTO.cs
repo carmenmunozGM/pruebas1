@@ -17,9 +17,13 @@ namespace pruebas1.Components.DTOs
     public class UsuarioLoginDTO
     {
         public int IdUsuario { get; set; }
-        public string NombreUsuario { get; set; } = string.Empty;
-        public List<int> IdAgendasAsignadas { get; set; } = new();
+        public string NombreUsuario { get; set; }
+        public string NombreRed { get; set; }   // 👈 AQUÍ VIENE EL NOMBRE
+        public int IdEmpleado { get; set; }
+        public List<int> IdAgendasAsignadas { get; set; }
         public string Token { get; set; }
     }
+
+
 
 }
