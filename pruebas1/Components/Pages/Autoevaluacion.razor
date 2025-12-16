@@ -83,7 +83,7 @@
 @if (ShowModal)
 {
     <div class="confirm-overlay">
-        <div class="confirm-modal" style="max-width: 400px;">
+        <div class="confirm-modal" style="max-width: 500px;">
 
             <h3 class="confirm-title">@ModalTitle</h3>
 
@@ -116,7 +116,7 @@
                 }
 
 
-           @* EVENTUAL (AHORA SOPORTA VARIAS FECHAS - CORREGIDO) *@
+                @* EVENTUAL (AHORA SOPORTA VARIAS FECHAS + OPCIÓN SIN FECHAS) *@
                 @if (IsEventual)
                 {
                     <div class="modal-section">
@@ -145,13 +145,29 @@
                             }
                         </div>
 
-                        <button class="btn-confirm" style="margin-top:10px;"
-                                @onclick="AddNuevaFechaEventual">
-                            ➕ Añadir nueva fecha
-                        </button>
+                        <div style="display:flex;
+                    justify-content:space-between;
+                    gap:12px;
+                    margin-top:12px;">
+
+                            <!-- IZQUIERDA -->
+                            <button class="btn-confirm" style="white-space:nowrap"
+                                    @onclick="AddNuevaFechaEventual">
+                                ➕ Añadir nueva fecha
+                            </button>
+
+                            <!-- DERECHA -->
+                            <button class="btn-cancel" style="white-space:nowrap"
+                                    @onclick="NoSeleccionarFechasEventual">
+                                ❌ No seleccionar fechas
+                            </button>
+
+                        </div>
+
 
                     </div>
                 }
+
 
                 @if (IsAnnual)
                 {
@@ -299,6 +315,24 @@
 
     // ---------- NUEVO: lista de fechas para Eventual ----------
     public List<DateTime> FechasEventuales { get; set; } = new();
+
+    //BOTON PARA DEJAR EN BLANCO LAS FECHAS EVENTUALES
+    private void NoSeleccionarFechasEventual()
+{
+    if (CurrentTask == null)
+        return;
+
+    // 👉 Marcar como realizada SIN fechas
+    CurrentTask.Realizado = true;
+    CurrentTask.RegistradoProgramado = "";
+
+    // Limpiar fechas eventuales
+    FechasEventuales.Clear();
+
+    // Cerrar modal
+    IsEventual = false;
+    ShowModal = false;
+}
 
 
     // ---------- CODIGO PARA CONVERTIR LAS FECHAS
@@ -517,15 +551,22 @@
                 // ============================
                 // EVENTUAL
                 // ============================
-                if (tarea.Periodicidad == "Eventual" &&
-                    !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
-                {
-                    var fechas = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
+                if (tarea.Periodicidad == "Eventual")
+                    {
+                        // 👉 Si NO hay fechas, simplemente NO se envía esta tarea
+                        if (string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
+                            continue;
 
-                    registro.Fechas = fechas
-                        .Select(f => DateOnly.FromDateTime(f))
-                        .ToList();
-                }
+                        var fechas = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
+
+                        if (!fechas.Any())
+                            continue;
+
+                        registro.Fechas = fechas
+                            .Select(f => DateOnly.FromDateTime(f))
+                            .ToList();
+                    }
+
 
                 // ============================
                 // SEMANAL
@@ -940,8 +981,12 @@ private string FormatearFechasEnLineas(List<DateTime> fechas)
         var incompletas = Bloques
             .SelectMany(b => b.Tareas)
             .Where(t =>
-                t.Realizado && string.IsNullOrWhiteSpace(t.RegistradoProgramado))
+                t.Realizado &&
+                string.IsNullOrWhiteSpace(t.RegistradoProgramado) &&
+                t.Periodicidad != "Eventual"   // 🔥 EVENTUAL PUEDE IR VACÍO
+            )
             .ToList();
+
 
         if (incompletas.Any())
         {
