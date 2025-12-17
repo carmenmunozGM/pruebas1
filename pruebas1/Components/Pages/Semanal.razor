@@ -70,9 +70,11 @@
 
                                                 case SelfAssessment sa:
                                                     <input type="checkbox"
-                                                           @onchange="(e) => ToggleCompleteSelf(sa, e)"
                                                            checked="@sa.IsCompleted"
+                                                           disabled="@(!IsToday(sa))"
+                                                           @onchange="(e) => ToggleCompleteSelf(sa, e)"
                                                            @onclick:stopPropagation />
+
                                                     <span class="task-name @(sa.IsCompleted ? "completed" : "")"
                                                           @onclick="() => OpenTaskModal(sa, false)">
                                                         @sa.ActivityName
@@ -292,11 +294,21 @@
     }
 
     class SelfAssessment
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public int IdRegistro { get; set; }
+    public string ActivityName { get; set; } = "";
+    public bool IsCompleted { get; set; } = false;
+
+    public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
+
+    public Block ParentBlock { get; set; }
+}
+
+
+    bool IsToday(SelfAssessment sa)
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string ActivityName { get; set; } = "";
-        public bool IsCompleted { get; set; } = false;
-        public Block ParentBlock { get; set; }
+        return sa.TaskDate.Date == DateTime.Today;
     }
 
     class ClientServiceTask
@@ -511,12 +523,15 @@
 
                     var autoBlock = day.Blocks.First(b => b.Title == "Autoevaluación");
 
-                    autoBlock.SubTasks.Add(new SelfAssessment
+                   autoBlock.SubTasks.Add(new SelfAssessment
                     {
+                        IdRegistro = registro.IdRegistro,   // ⬅️ AQUI
                         ActivityName = tarea.Tarea,
                         IsCompleted = registro.Realizado,
+                        TaskDate = fecha,
                         ParentBlock = autoBlock
                     });
+
                 }
             }
         }
@@ -637,17 +652,44 @@
         // TODO: Llamar a AgendaService para persistir cambio si lo deseas
     }
 
-    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
+   async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
+{
+    bool nuevoValor;
+
+    if (e?.Value is bool b)
+        nuevoValor = b;
+    else if (e?.Value is string s)
+        nuevoValor = s == "true" || s == "on";
+    else
+        return;
+
+    // Optimistic UI
+    sa.IsCompleted = nuevoValor;
+
+    try
     {
-        if (e?.Value is bool b) sa.IsCompleted = b;
-        else
-        {
-            bool parsed = false;
-            if (e?.Value is string s) parsed = s == "true" || s == "on";
-            sa.IsCompleted = parsed;
-        }
-        await ShowTemporaryToastAsync(sa.IsCompleted ? "Autoevaluación marcada" : "Autoevaluación desmarcada");
+        await AutoevaluacionService.MarcarRegistroRealizadoAsync(
+            sa.IdRegistro,
+            nuevoValor
+        );
+
+        await ShowTemporaryToastAsync(
+            nuevoValor
+                ? "Autoevaluación marcada como realizada"
+                : "Autoevaluación desmarcada"
+        );
     }
+    catch
+    {
+        // 🔥 rollback si falla
+        sa.IsCompleted = !nuevoValor;
+
+        await ShowTemporaryToastAsync(
+            "Error al guardar la autoevaluación"
+        );
+    }
+}
+
 
     async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
     {
