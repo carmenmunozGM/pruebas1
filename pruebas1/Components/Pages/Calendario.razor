@@ -6,7 +6,6 @@
 @using System.Collections.Generic
 @inject AutoevaluacionService AutoevaluacionService 
 
-
 <div class="agenda-container">
     <!-- Encabezado -->
     <header class="agenda-header">
@@ -49,10 +48,16 @@
                                 <div class="list-item" style="background-color:@block.Color" @onclick="() => OpenBlockModal(block)">
                                     <div class="list-title">
                                         @block.Title
-                                        <span class="task-count">@block.SubTasks.Count</span>
-                                    </div>
+                                        <span class="task-count">
+                                            @(
+                                                                        block.Title == "Autoevaluación"
+                                                                        ? block.SubTasks.OfType<AutoevaluacionItem>().Count(a => !a.Realizado)
+                                                                        : block.SubTasks.Count
+                                                                        )
+                                    </span>
                                 </div>
-                            }
+                            </div>
+                                }
                         </div>
                     }
                 </div>
@@ -76,10 +81,21 @@
             </div>
 
             <div class="modal-body">
-                @if (SelectedBlock.Title == "Órdenes de Trabajo" || SelectedBlock.Title == "Autoevaluación")
+                @if (SelectedBlock.Title == "Autoevaluación")
                 {
                     <ul class="collapsible-list">
-                        @foreach (var task in SelectedBlock.SubTasks)
+                        @foreach (var task in SelectedBlock.SubTasks.OfType<AutoevaluacionItem>())
+                        {
+                            <li class="task-item @(task.Realizado ? "realizado" : "")">
+                                @task.Nombre
+                            </li>
+                        }
+                    </ul>
+                }
+                else if (SelectedBlock.Title == "Órdenes de Trabajo")
+                {
+                    <ul class="collapsible-list">
+                        @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
                         {
                             <li class="task-item">@task.Nombre</li>
                         }
@@ -87,7 +103,7 @@
                 }
                 else if (SelectedBlock.Title == "Servicio a Cliente")
                 {
-                    @foreach (var task in SelectedBlock.SubTasks)
+                    @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
                     {
                         <h4>@task.Nombre</h4>
                         @if (task.Subtareas?.Any() == true)
@@ -96,7 +112,6 @@
                                 <thead>
                                     <tr>
                                         <th>Actividad</th>
-                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -104,7 +119,6 @@
                                     {
                                         <tr>
                                             <td>@st</td>
-                                            
                                         </tr>
                                     }
                                 </tbody>
@@ -115,7 +129,7 @@
                 else if (SelectedBlock.Title == "Tareas" || SelectedBlock.Title == "Tareas Operativas")
                 {
                     <ul class="collapsible-list">
-                        @foreach (var task in SelectedBlock.SubTasks)
+                        @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
                         {
                             <li>
                                 <div class="collapsible-header" @onclick="() => ToggleTask(task)">
@@ -154,6 +168,210 @@
         </div>
     </div>
 }
+
+@code {
+    class TaskItem
+    {
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string Prioridad { get; set; }
+        public List<string> Subtareas { get; set; } = new();
+    }
+
+    class AutoevaluacionItem
+    {
+        public string Nombre { get; set; }
+        public bool Realizado { get; set; }
+    }
+
+    HashSet<TaskItem> ExpandedTasks = new();
+
+    void ToggleTask(TaskItem task)
+    {
+        if (ExpandedTasks.Contains(task))
+            ExpandedTasks.Remove(task);
+        else
+            ExpandedTasks.Add(task);
+    }
+
+    class Block
+    {
+        public string Title { get; set; }
+        public List<object> SubTasks { get; set; } = new();
+        public string Color { get; set; }
+    }
+
+    class DayColumn
+    {
+        public DateTime Date { get; set; }
+        public List<Block> Blocks { get; set; } = new();
+    }
+
+    List<DayColumn> Days = new();
+    DateTime CurrentDate = DateTime.Today;
+    Block SelectedBlock = null;
+
+    string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAutoevaluaciones();
+        BuildMonth();
+    }
+
+    void BuildMonth()
+    {
+        Days.Clear();
+        var firstDayOfMonth = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
+        int firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+        int padding = firstDayOfWeek == 0 ? 6 : firstDayOfWeek - 1;
+
+        for (int i = 0; i < padding; i++)
+            Days.Add(null);
+
+        int daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
+        for (int i = 1; i <= daysInMonth; i++)
+        {
+            var date = new DateTime(CurrentDate.Year, CurrentDate.Month, i);
+            Days.Add(CreateDay(date));
+        }
+    }
+
+    DayColumn CreateDay(DateTime date)
+    {
+        var day = new DayColumn { Date = date };
+        if (date.DayOfWeek == DayOfWeek.Sunday) return day;
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Tareas",
+            Color = "#FFD1DC",
+            SubTasks = new List<object>
+            {
+                new TaskItem
+                {
+                    Nombre = "Área de TI limpia",
+                    Descripcion = "Área y estación de insumos de TI limpia y ordenada.",
+                    FechaInicio = date,
+                    FechaFin = date,
+                    Prioridad = "Alta",
+                    Subtareas = new List<string> { "Limpieza general", "Ordenar insumos" }
+                },
+                new TaskItem
+                {
+                    Nombre = "Control de suscripciones",
+                    Descripcion = "Seguimiento de suscripciones responsables de TI.",
+                    FechaInicio = date,
+                    FechaFin = date,
+                    Prioridad = "Media"
+                }
+            }
+        });
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Órdenes de Trabajo",
+            Color = "#FFDAC1",
+            SubTasks = new List<object>
+            {
+                new TaskItem { Nombre = "ORD-13683" },
+                new TaskItem { Nombre = "ORD-13503" },
+                new TaskItem { Nombre = "ORD-13296" }
+            }
+        });
+
+        var autoevaluacionesDelDia = Autoevaluaciones
+            .Where(a => a.Fecha.Date == date.Date)
+            .Select(a => new AutoevaluacionItem
+            {
+                Nombre = a.Nombre,
+                Realizado = a.Realizado
+            })
+            .Cast<object>()
+            .ToList();
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Autoevaluación",
+            Color = "#E2F0CB",
+            SubTasks = autoevaluacionesDelDia
+        });
+
+        day.Blocks.Add(new Block
+        {
+            Title = "Servicio a Cliente",
+            Color = "#D7D1DD",
+            SubTasks = new List<object>
+            {
+                new TaskItem
+                {
+                    Nombre = "1658 CASAS Y DESARROLLOS VITA SAPI DE CV",
+                    Subtareas = new List<string>
+                    {
+                        "Acordar con Lic.Gerardo cuando mandara el informe",
+                        "Solicitar a TI descarga de CFDIS",
+                        "Asegurar la recepción de documentos enviados por el Lic.Gerardo"
+                    }
+                },
+                new TaskItem
+                {
+                    Nombre = "2389 RODAROSA,SA DE CV",
+                    Subtareas = new List<string> { "Actualizar base de datos", "Enviar cotización" }
+                }
+            }
+        });
+
+        return day;
+    }
+
+    void PrevMonth() { CurrentDate = CurrentDate.AddMonths(-1); BuildMonth(); }
+    void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
+    void OpenBlockModal(Block block) => SelectedBlock = block;
+    void CloseBlockModal() => SelectedBlock = null;
+
+    class AutoevaluacionCalendarioItem
+    {
+        public string Nombre { get; set; }
+        public DateTime Fecha { get; set; }
+        public bool Realizado { get; set; }
+    }
+
+    List<AutoevaluacionCalendarioItem> Autoevaluaciones = new();
+
+    async Task CargarAutoevaluaciones()
+    {
+        Autoevaluaciones.Clear();
+        var data = await AutoevaluacionService.ObtenerAutoevaluacion();
+
+        foreach (var bloque in data)
+        {
+            foreach (var tarea in bloque.Tareas)
+            {
+                foreach (var registro in tarea.Registros)
+                {
+                    Autoevaluaciones.Add(new AutoevaluacionCalendarioItem
+                    {
+                        Nombre = tarea.Tarea,
+                        Fecha = registro.Fecha.ToDateTime(TimeOnly.MinValue),
+                        Realizado = registro.Realizado
+                    });
+                }
+            }
+        }
+    }
+
+    string GetIcon(string title) => title switch
+    {
+        "Órdenes de Trabajo" => "🧾",
+        "Tareas" => "🗂️",
+        "Autoevaluación" => "⭐",
+        "Servicio a Cliente" => "🏢",
+        _ => "📋"
+    };
+}
+
 
 
 <style>
@@ -303,12 +521,18 @@
         border-radius: 6px;
         padding: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        cursor: default;
+        cursor: pointer;
         overflow: hidden;
         color: #333;
         font-size: 14px;
         line-height: 1.3;
     }
+
+        .list-item:hover {
+            filter: brightness(0.97);
+            transform: translateY(-1px);
+            transition: all 0.15s ease-in-out;
+        }
 
     .list-title {
         font-weight: 600;
@@ -352,7 +576,7 @@
 
     .modal-content {
         background: #fff;
-        padding: 20px;
+        padding: 0px;
         border-radius: 25px;
         max-width: 500px;
         width: 90%;
@@ -368,6 +592,7 @@
         max-width: 500px;
         width: 90%;
         animation: fadeIn 0.3s ease-in-out;
+        overflow: hidden;
     }
 
     .modal-header {
@@ -376,10 +601,12 @@
         justify-content: center;
         background: linear-gradient(90deg, #1e7a3a, #0b3c4a);
         color: white;
-        border-radius: 15px 15px 0 0;
-        padding: 15px;
+        border-radius: 20px 20px 0 0; 
+        padding: 18px;
         margin: -25px -25px 20px -25px;
+        width: calc(100% + 50px); 
     }
+
 
     .modal-icon {
         font-size: 1.8rem;
@@ -462,11 +689,6 @@
             background: #f0f0f0;
         }
 
-    /* Animación fadeIn */
-   
-
-    }
-
     .collapsible-list {
         list-style: none;
         padding: 0;
@@ -494,200 +716,11 @@
         color: #555;
     }
 
+    .task-item.realizado {
+    text-decoration: line-through; /* o underline */
+    opacity: 0.6;
+}
+
+
 </style>
 
-
-@code {
-    class TaskItem
-    {
-        public string Nombre { get; set; }
-        public string Descripcion { get; set; }
-        public DateTime FechaInicio { get; set; }
-        public DateTime FechaFin { get; set; }
-        public string Prioridad { get; set; }
-        public List<string> Subtareas { get; set; } = new();
-    }
-
-    HashSet<TaskItem> ExpandedTasks = new();
-
-    void ToggleTask(TaskItem task)
-    {
-        if (ExpandedTasks.Contains(task))
-            ExpandedTasks.Remove(task);
-        else
-            ExpandedTasks.Add(task);
-    }
-
-    class Block
-    {
-        public string Title { get; set; }
-        public List<TaskItem> SubTasks { get; set; } = new();
-        public string Color { get; set; }
-    }
-
-    class DayColumn
-    {
-        public DateTime Date { get; set; }
-        public List<Block> Blocks { get; set; } = new();
-    }
-
-    List<DayColumn> Days = new();
-    DateTime CurrentDate = DateTime.Today;
-    Block SelectedBlock = null;
-
-    string MonthName => CultureInfo.GetCultureInfo("es-ES").DateTimeFormat.GetMonthName(CurrentDate.Month);
-
-    protected override async Task OnInitializedAsync()
-    {
-        await CargarAutoevaluaciones();
-        BuildMonth();
-    }
-
-
-    void BuildMonth()
-    {
-        Days.Clear();
-        var firstDayOfMonth = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
-        int firstDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
-        int padding = firstDayOfWeek == 0 ? 6 : firstDayOfWeek - 1;
-
-        for (int i = 0; i < padding; i++)
-            Days.Add(null);
-
-        int daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
-        for (int i = 1; i <= daysInMonth; i++)
-        {
-            var date = new DateTime(CurrentDate.Year, CurrentDate.Month, i);
-            Days.Add(CreateDay(date));
-        }
-    }
-
-    DayColumn CreateDay(DateTime date)
-    {
-        var day = new DayColumn { Date = date };
-        if (date.DayOfWeek == DayOfWeek.Sunday) return day;
-
-        // Bloques
-        day.Blocks.Add(new Block
-        {
-            Title = "Tareas",
-            Color = "#FFD1DC",
-            SubTasks = new List<TaskItem>
-            {
-                new TaskItem
-                {
-                    Nombre = "Área de TI limpia",
-                    Descripcion = "Área y estación de insumos de TI limpia y ordenada.",
-                    FechaInicio = date,
-                    FechaFin = date,
-                    Prioridad = "Alta",
-                    Subtareas = new List<string> { "Limpieza general", "Ordenar insumos" }
-                },
-                new TaskItem
-                {
-                    Nombre = "Control de suscripciones",
-                    Descripcion = "Seguimiento de suscripciones responsables de TI.",
-                    FechaInicio = date,
-                    FechaFin = date,
-                    Prioridad = "Media"
-                }
-            }
-        });
-
-    
-        day.Blocks.Add(new Block
-        {
-            Title = "Órdenes de Trabajo",
-            Color = "#FFDAC1",
-            SubTasks = new List<TaskItem>
-            {
-                new TaskItem { Nombre = "ORD-13683" },
-                new TaskItem { Nombre = "ORD-13503" },
-                new TaskItem { Nombre = "ORD-13296" }
-            }
-        });
-
-        var autoevaluacionesDelDia = Autoevaluaciones
-                .Where(a => a.Fecha.Date == date.Date)
-                .Select(a => new TaskItem
-                {
-                    Nombre = a.Nombre
-                })
-                .ToList();
-
-                    day.Blocks.Add(new Block
-                    {
-                        Title = "Autoevaluación",
-                        Color = "#E2F0CB",
-                        SubTasks = autoevaluacionesDelDia
-                    });
-
-
-        day.Blocks.Add(new Block
-        {
-            Title = "Servicio a Cliente",
-            Color = "#D7D1DD",
-            SubTasks = new List<TaskItem>
-            {
-                new TaskItem
-                {
-                    Nombre = "1658 CASAS Y DESARROLLOS VITA SAPI DE CV",
-                    Subtareas = new List<string> { "Acordar con Lic.Gerardo cuando mandara el informe", "Solicitar a TI descarga de CFDIS", "Asegurar la recepción de documentos enviados por el Lic.Gerardo" }
-                },
-                new TaskItem
-                {
-                    Nombre = "2389 RODAROSA,SA DE CV",
-                    Subtareas = new List<string> { "Actualizar base de datos", "Enviar cotización" }
-                }
-            }
-        });
-
-        return day;
-    }
-
-    void PrevMonth() { CurrentDate = CurrentDate.AddMonths(-1); BuildMonth(); }
-    void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
-    void OpenBlockModal(Block block) => SelectedBlock = block;
-    void CloseBlockModal() => SelectedBlock = null;
-
-
-    class AutoevaluacionCalendarioItem
-    {
-        public string Nombre { get; set; }
-        public DateTime Fecha { get; set; }
-        public bool Realizado { get; set; }
-    }
-    List<AutoevaluacionCalendarioItem> Autoevaluaciones = new();
-    async Task CargarAutoevaluaciones()
-    {
-        Autoevaluaciones.Clear();
-
-        var data = await AutoevaluacionService.ObtenerAutoevaluacion();
-
-        foreach (var bloque in data)
-        {
-            foreach (var tarea in bloque.Tareas)
-            {
-                foreach (var registro in tarea.Registros)
-                {
-                    Autoevaluaciones.Add(new AutoevaluacionCalendarioItem
-                    {
-                        Nombre = tarea.Tarea,
-                        Fecha = registro.Fecha.ToDateTime(TimeOnly.MinValue),
-                        Realizado = registro.Realizado
-                    });
-                }
-            }
-        }
-    }
-
-
-    string GetIcon(string title) => title switch
-    {
-        "Órdenes de Trabajo" => "🧾",
-        "Tareas" => "🗂️",
-        "Autoevaluación" => "⭐",
-        "Servicio a Cliente" => "🏢",
-        _ => "📋"
-    };
-}   

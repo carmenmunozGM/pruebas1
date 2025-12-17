@@ -60,5 +60,22 @@ namespace pruebas1.Servicios
             return true;
         }
 
+
+        public async Task MarcarRegistroRealizadoAsync(int idRegistro, bool realizado)
+        {
+            var url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/dia/realizado";
+
+            var payload = new
+            {
+                idRegistro = idRegistro,
+                realizado = realizado
+            };
+
+            var response = await _http.PutAsJsonAsync(url, payload);
+
+            response.EnsureSuccessStatusCode();
+        }
+
+
     }
 }
