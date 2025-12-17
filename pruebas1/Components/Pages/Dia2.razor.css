@@ -436,45 +436,32 @@
 }
 
 .icon-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    
     cursor: pointer;
-    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
     transition: all 0.25s ease;
-    background-color: #f8f9fa;
-    color: #444;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-    .icon-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    .icon-btn.view {
+        background: #fff;
+        color: #6E0374;
+        border: 1px solid #6E0374; /* 👈 borde negro */
     }
 
-    /* Botón Editar */
-    .icon-btn.edit {
-        color: #4a7c59; /* verde elegante */
-    }
-
-        .icon-btn.edit:hover {
-            background-color: #e9f7ef;
-            border-color: #4a7c59;
+        .icon-btn.view:hover {
+            background: #fff;
+            transform: scale(1.08);
         }
 
-    /* Botón Eliminar */
-    .icon-btn.delete {
-        color: #c0392b; /* rojo apagado */
-    }
 
-        .icon-btn.delete:hover {
-            background-color: #fdecea;
-            border-color: #c0392b;
-        }
+    
 
 /* ------------------------------------------------ */
 /* ------------------------------------------------ */
@@ -1232,7 +1219,7 @@
 /* ======== HEADER ======== */
 .view-header {
     padding: 18px 28px;
-    background: #FFD1DC;
+    background: #FFDAC1;
     color: black;
     border-radius: 22px 22px 0 0;
     display: flex;
@@ -1331,185 +1318,182 @@
 }
 
 /* MODAL DE ORDENES DE TRAMITE */
-/* ===============================
-   OVERLAY
-================================ */
-.tramite-overlay {
+/* =========================
+   CONTENEDOR MODAL
+========================= */
+.modal-container {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.55);
+    background: rgba(0, 0, 0, 0.45);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     z-index: 9999;
 }
 
-/* ===============================
-   MODAL
-================================ */
-.tramite-modal {
+.modal-content {
     background: #ffffff;
-    width: 92%;
-    max-width: 1200px;
-    height: 90vh;
     border-radius: 14px;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,.35);
-    animation: fadeUp .25s ease;
-}
-
-/* ===============================
-   HEADER
-================================ */
-.tramite-header {
-    background: linear-gradient(135deg,#6c5ce7,#5a4fdc);
-    color: #fff;
-    padding: 18px 22px;
+    width: 100%;
+    max-height: 90vh;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    animation: modalFade 0.25s ease;
+    overflow: hidden;
 }
 
-    .tramite-header h2 {
+/* =========================
+   HEADER
+========================= */
+.modal-header {
+    padding: 16px 20px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+    .modal-header h3 {
         margin: 0;
-        font-size: 20px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #333;
     }
 
-    .tramite-header small {
-        display: block;
-        font-size: 13px;
-        opacity: .9;
+.close-button {
+    cursor: pointer;
+    font-size: 22px;
+    color: #777;
+}
+
+    .close-button:hover {
+        color: #000;
     }
 
-.tramite-close {
-    background: none;
+/* =========================
+   BODY
+========================= */
+.modal-body-wrapper {
+    padding: 18px 22px;
+    overflow-y: auto;
+    font-size: 0.92rem;
+    color: #444;
+}
+
+/* GRID DATOS GENERALES */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 30px;
+    margin-bottom: 10px;
+}
+
+    .grid-2 div {
+        line-height: 1.4;
+    }
+
+    .grid-2 b {
+        color: #222;
+        font-weight: 600;
+    }
+
+/* =========================
+   TABLAS
+========================= */
+.activities-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 0.9rem;
+}
+
+    .activities-table thead {
+        background: #f2f2f2;
+    }
+
+    .activities-table th {
+        text-align: left;
+        padding: 10px 12px;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .activities-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+        color: #444;
+        vertical-align: middle;
+    }
+
+    .activities-table tr:hover {
+        background: #fafafa;
+    }
+
+/* =========================
+   BOTONES
+========================= */
+.btn {
+    background: #444;
+    color: #fff;
     border: none;
-    color: white;
-    font-size: 28px;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
     cursor: pointer;
 }
 
-/* ===============================
-   BODY
-================================ */
-.tramite-body {
-    padding: 20px;
-}
-
-/* ===============================
-   INFO GENERAL
-================================ */
-.tramite-info {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 26px;
-}
-
-    .tramite-info div {
-        background: #f6f7fb;
-        padding: 12px 14px;
-        border-radius: 8px;
+    .btn:hover {
+        background: #222;
     }
 
-    .tramite-info span {
-        display: block;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 2px;
-    }
-
-/* ===============================
-   CARD TRÁMITE
-================================ */
-.tramite-card {
-    border: 1px solid #e1e1e8;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 22px;
-    background: #fff;
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #555;
 }
 
-/* HEADER CARD */
-.tramite-card-header {
+    .icon-btn:hover {
+        color: #000;
+    }
+
+/* =========================
+   FOOTER
+========================= */
+.modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #e5e5e5;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
+    justify-content: flex-end;
 }
 
-    .tramite-card-header strong {
-        font-size: 15px;
-    }
-
-    .tramite-card-header small {
-        font-size: 13px;
-        color: #777;
-    }
-
-/* ===============================
-   GRID INFO TRÁMITE
-================================ */
-.tramite-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4,1fr);
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-    .tramite-card-grid div {
-        background: #f8f9fc;
-        padding: 10px 12px;
-        border-radius: 8px;
-    }
-
-    .tramite-card-grid b {
-        display: block;
-        font-size: 12px;
-        color: #555;
-    }
-
-    .tramite-card-grid span {
-        font-size: 13px;
-        color: #222;
-    }
-
-.span-2 {
-    grid-column: span 2;
-}
-
-/* ===============================
-   TABLE
-================================ */
-.tramite-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-    .tramite-table thead {
-        background: #f1f2f6;
-    }
-
-    .tramite-table th,
-    .tramite-table td {
-        padding: 9px;
-        border-bottom: 1px solid #e6e6e6;
-        font-size: 13px;
-        text-align: left;
-    }
-
-/* ===============================
-   ANIMATION
-================================ */
-@keyframes fadeUp {
+/* =========================
+   ANIMACIÓN
+========================= */
+@keyframes modalFade {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(10px) scale(0.98);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
     }
 }

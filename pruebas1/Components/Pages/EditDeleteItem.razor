@@ -1,11 +1,19 @@
-﻿@using pruebas1.Components.Models
+﻿﻿@using pruebas1.Components.Models
 @using pruebas1.Servicios
 @inject AgendaService AgendaService
 
-<div class="ed-actions">
-    <button type="button" class="ed-btn edit" @onclick="AbrirEditar">✏️</button>
-    <button type="button" class="ed-btn delete" @onclick="Eliminar">🗑️</button>
-</div>
+<!-- BOTONES EDITAR / ELIMINAR -->
+
+    <button class="icon-btn edit" title="Editar">
+        <i class="bi bi-pencil"></i>
+    </button>
+
+    <button class="icon-btn delete" title="Eliminar">
+        <i class="bi bi-trash3"></i>
+    </button>
+
+
+
 
 @if (MostrarModal)
 {
@@ -75,3 +83,41 @@
         await OnDeleted.InvokeAsync();
     }
 }
+
+            <style>
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.25s ease;
+    }
+
+        .icon-btn.edit {
+            background: #fff;
+            color: #135330;
+            border: 1px solid #135330; /* 👈 borde negro */
+        }
+
+            .icon-btn.edit:hover {
+                background: #fff;
+                transform: scale(1.08);
+            }
+
+        .icon-btn.delete {
+            background: #fff;
+            color: #A82518;
+            border: 1px solid #A82518; /* 👈 borde negro */
+        }
+
+            .icon-btn.delete:hover {
+                background: #fff;
+                transform: scale(1.08);
+            }
+
+            </style>

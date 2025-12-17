@@ -543,7 +543,7 @@
     <div class="modal-container visible" @onclick="CloseOrderModal">
         <div class="modal-content" @onclick:stopPropagation="true" style="max-width:1200px; width:95%; height:92vh;">
             <div class="modal-header" style="background:#FFDAC1; color:#000;">
-                <h2 class="modal-title">Orden - @SelectedOrden.NumeroOrden</h2>
+                <h2 class="modal-title">ORDEN-@SelectedOrden.NumeroOrden</h2>
                 <span class="close-button" @onclick="CloseOrderModal">&times;</span>
             </div>
 
@@ -800,87 +800,135 @@
 <!--MODAL DE ORDENES DE TRAMITE-->
 @if (ShowTramiteModal && SelectedOrdenTramite != null)
 {
-    <div class="tramite-overlay" @onclick="CloseTramiteModal">
-        <div class="tramite-modal" @onclick:stopPropagation="true">
+    <div class="modal-container visible" @onclick="CloseTramiteModal">
+        <div class="modal-content" @onclick:stopPropagation
+             style="max-width:1000px;width:95%;border-radius:12px;">
 
-            <!-- HEADER -->
-            <div class="tramite-header">
-                <div>
-                    <h2>Orden de Trámite</h2>
-                    <small>@SelectedOrdenTramite.numeroOrden</small>
-                </div>
-                <button class="tramite-close" @onclick="CloseTramiteModal">×</button>
+            <div class="modal-header" style="background:#FFB703;color:#000">
+                <h3>Orden de Trámite – @SelectedOrdenTramite.numeroOrden</h3>
+                <span class="close-button" @onclick="CloseTramiteModal">&times;</span>
             </div>
 
-            <div class="tramite-body">
+            <div class="modal-body-wrapper">
 
-                <!-- INFO GENERAL -->
-                <div class="tramite-info">
-                    <div><span>N° Orden</span>@SelectedOrdenTramite.numeroOrden</div>
-                    <div><span>Fecha solicitud</span>@SelectedOrdenTramite.fechaSolicitud</div>
-                    <div><span>Solicitante</span>@SelectedOrdenTramite.solicitanteInterno</div>
-
-                    <div><span>Cliente</span>@SelectedOrdenTramite.cliente</div>
-                    <div class="span-2">
-                        <span>Nombre global</span>@SelectedOrdenTramite.nombreGlobal
-                    </div>
-
-                    <div><span>Conclusión</span>@SelectedOrdenTramite.fechaConclusionTramite</div>
+                <!-- DATOS GENERALES -->
+                <div class="grid-2">
+                    <div><b>Fecha solicitud:</b> @SelectedOrdenTramite.fechaSolicitud</div>
+                    <div><b>Solicitante:</b> @SelectedOrdenTramite.solicitanteInterno</div>
+                    <div><b>Cliente:</b> @SelectedOrdenTramite.cliente</div>
+                    <div><b>Nombre global:</b> @SelectedOrdenTramite.nombreGlobal</div>
+                    <div><b>Fecha conclusión:</b> @SelectedOrdenTramite.fechaConclusionTramite</div>
                 </div>
 
-                <!-- TRÁMITES -->
-                @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
-                {
-                    <div class="tramite-card">
+                <hr />
 
-                        <div class="tramite-card-header">
-                            <strong>@tr.clave</strong>
-                            <small>@tr.tramiteIndividual</small>
-                        </div>
+                <!-- TABLA TRÁMITES -->
+                <table class="activities-table">
+                    <thead>
+                        <tr>
+                            <th>Clave</th>
+                            <th>Trámite Individual</th>
+                            <th>Encargado</th>
+                            <th>Tareas</th>
+                            <th>Ver</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
+                        {
+                            <tr>
+                                <td>@tr.clave</td>
+                                <td>@tr.tramiteIndividual</td>
+                                <td>@tr.personalEncargado</td>
+                                <td>
+                                    <button class="icon-btn"
+                                            @onclick="() => AbrirModalTareas(tr.idTramite)">
+                                        👁️
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="icon-btn"
+                                            @onclick="() => AbrirModalDetalle(tr.idTramite)">
+                                        👁️
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
 
-                        <!-- INFO DEL TRÁMITE -->
-                        <div class="tramite-card-grid">
-                            <div><b>Dependencia</b><span>@(tr.dependencia ?? "-")</span></div>
-                            <div><b>Encargado</b><span>@(tr.personalEncargado ?? "-")</span></div>
-                            <div><b>Estado</b><span>@(tr.estadoTramite ?? "-")</span></div>
-                            <div><b>Avance</b><span>@(tr.avance ?? "-")</span></div>
-                            <div class="span-2"><b>Observación</b><span>@(tr.observacion ?? "Sin observaciones")</span></div>
-                        </div>
+            </div>
 
-                        <!-- TAREAS -->
-                        <table class="tramite-table">
-                            <thead>
-                                <tr>
-                                    <th>Clave</th>
-                                    <th>Tarea</th>
-                                    <th>Encargado</th>
-                                    <th>Fecha fin</th>
-                                    <th>Avance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var t in tr.tareas)
-                                {
-                                    <tr>
-                                        <td>@t.claveTarea</td>
-                                        <td>@t.tarea</td>
-                                        <td>@t.encargadoTarea</td>
-                                        <td>@t.fechaConclusion</td>
-                                        <td>@t.avance</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-
-                    </div>
-                }
+            <div class="modal-footer">
+                <button class="btn" @onclick="CloseTramiteModal">Cerrar</button>
             </div>
         </div>
     </div>
 }
+@if (ShowTareasModal && TramiteSeleccionado != null)
+{
+    <div class="modal-container visible" @onclick="CerrarModalTareas">
+        <div class="modal-content" @onclick:stopPropagation style="max-width:800px">
 
+            <div class="modal-header">
+                <h3>Tareas – @TramiteSeleccionado.clave</h3>
+                <span class="close-button" @onclick="CerrarModalTareas">&times;</span>
+            </div>
 
+            <table class="activities-table">
+                <thead>
+                    <tr>
+                        <th>Clave</th>
+                        <th>Tarea</th>
+                        <th>Encargado</th>
+                        <th>Fecha fin</th>
+                        <th>Avance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in TramiteSeleccionado.tareas)
+                    {
+                        <tr>
+                            <td>@t.claveTarea</td>
+                            <td>@t.tarea</td>
+                            <td>@t.encargadoTarea</td>
+                            <td>@t.fechaConclusion</td>
+                            <td>@t.avance</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
 
+            <div class="modal-footer">
+                <button class="btn" @onclick="CerrarModalTareas">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+@if (ShowDetalleModal && TramiteSeleccionado != null)
+{
+    <div class="modal-container visible" @onclick="CerrarModalDetalle">
+        <div class="modal-content" @onclick:stopPropagation style="max-width:700px">
+
+            <div class="modal-header">
+                <h3>Detalle Trámite – @TramiteSeleccionado.clave</h3>
+                <span class="close-button" @onclick="CerrarModalDetalle">&times;</span>
+            </div>
+
+            <div class="modal-body-wrapper">
+                <p><b>Encargado:</b> @TramiteSeleccionado.personalEncargado</p>
+                <p><b>Dependencia:</b> @TramiteSeleccionado.dependencia</p>
+                <p><b>Estado:</b> @TramiteSeleccionado.estadoTramite</p>
+                <p><b>Avance:</b> @TramiteSeleccionado.avance</p>
+                <p><b>Observación:</b> @TramiteSeleccionado.observacion</p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" @onclick="CerrarModalDetalle">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
 
@@ -976,6 +1024,43 @@
         tarea.subTareas.Remove(s);
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
+
+    //MODAL DE ORDENES DE TRAMITE COMPLETAMENTE 
+    // ESTADOS
+    bool ShowTareasModal;
+    bool ShowDetalleModal;
+
+    TramiteIndividualDTO? TramiteSeleccionado;
+
+    // MÉTODOS
+    async Task AbrirModalTareas(int idTramite)
+    {
+        TramiteSeleccionado =
+            await OrdenTramiteService.GetTramiteDetalle(idTramite);
+
+        ShowTareasModal = true;
+    }
+
+    async Task AbrirModalDetalle(int idTramite)
+    {
+        TramiteSeleccionado =
+            await OrdenTramiteService.GetTramiteDetalle(idTramite);
+
+        ShowDetalleModal = true;
+    }
+
+    void CerrarModalTareas()
+    {
+        ShowTareasModal = false;
+        TramiteSeleccionado = null;
+    }
+
+    void CerrarModalDetalle()
+    {
+        ShowDetalleModal = false;
+        TramiteSeleccionado = null;
+    }
+
     //MODAL DE VER TAREAS O EVENTOS
     private bool ShowViewModal = false;
 private SubtaskModel? SelectedViewItem;

@@ -271,7 +271,7 @@ namespace pruebas1.Servicios
 
         // ===================== EDITAR =====================
 
-        // -------- EVENTOS --------
+      
         public async Task EditarEventoAsync(int id, EditableItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();

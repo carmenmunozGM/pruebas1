@@ -10,9 +10,19 @@ public class OrdenTramiteService
     {
         this.http = http;
     }
+
+    // 🔵 ORDEN DE TRÁMITE (DATOS GENERALES + TABLA)
     public async Task<OrdenTramiteDTO?> GetDetalle(int idOrden)
     {
-        return await http.GetFromJsonAsync<OrdenTramiteDTO>("https://redgm.site:9096/ordenTramite/{idOrden}");
+        return await http.GetFromJsonAsync<OrdenTramiteDTO>(
+            $"https://redgm.site:9096/ordenTramite/{idOrden}");
+    }
+
+    // 🟣 TRÁMITE INDIVIDUAL (DETALLE + TAREAS)
+    public async Task<TramiteIndividualDTO?> GetTramiteDetalle(int idTramite)
+    {
+        return await http.GetFromJsonAsync<TramiteIndividualDTO>(
+            $"https://redgm.site:9096/ordenTramite/tramite/{idTramite}");
     }
     public async Task<List<OrdenTramiteDTO>> GetVencidas()
         => await http.GetFromJsonAsync<List<OrdenTramiteDTO>>("https://redgm.site:9096/ordenTramite/vencidas");
