@@ -284,12 +284,13 @@ namespace pruebas1.Servicios
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
-                var content = JsonContent.Create(estado);
+                var payload = new { estado = estado };
+                var content = JsonContent.Create(payload);
 
                 var response = await httpClient.PatchAsync(
-                    $"tareas/tareas/{id}/estado",
-                    content
-                );
+      $"tareas/{id}/estado",
+      content
+                  );
 
                 return response.IsSuccessStatusCode;
             }
@@ -298,6 +299,7 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
+
 
         // ===== PATCH SUBTAREA =====
         public async Task<bool> CambiarEstadoSubtareaAsync(int id, bool estado)
@@ -311,11 +313,12 @@ namespace pruebas1.Servicios
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
-                var content = JsonContent.Create(estado);
+                var payload = new { estado = estado };
+                var content = JsonContent.Create(payload);
 
                 var response = await httpClient.PatchAsync(
-                    $"tareas/subtareas/{id}/estado",
-                    content
+    $"tareas/subtareas/{id}/estado",
+    content
                 );
 
                 return response.IsSuccessStatusCode;
@@ -326,7 +329,9 @@ namespace pruebas1.Servicios
             }
         }
 
+
         // ===== PATCH EVENTO =====
+
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)
         {
             try
@@ -338,12 +343,13 @@ namespace pruebas1.Servicios
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
-                var content = JsonContent.Create(estado);
+                var payload = new { estado = estado };
+                var content = JsonContent.Create(payload);
 
                 var response = await httpClient.PatchAsync(
-                    $"eventos/eventos/{id}/estado",
-                    content
-                );
+     $"eventos/{id}/estado",
+     content
+                 );
 
                 return response.IsSuccessStatusCode;
             }
@@ -352,6 +358,8 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
+
+
 
 
         // ===================== EDITAR =====================

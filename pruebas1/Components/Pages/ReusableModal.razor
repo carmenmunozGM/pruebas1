@@ -381,9 +381,9 @@
         }
     }
     // ----------------- GUARDAR -----------------
+    // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
-        // Validaciones básicas
         if (string.IsNullOrWhiteSpace(titulo))
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
@@ -408,11 +408,28 @@
             return;
         }
 
-        // Combinar fechas con horas
-        DateTime? fechaInicioFinal = FechaInicio?.Date.Add(HoraInicio?.ToTimeSpan() ?? TimeSpan.Zero);
-        DateTime? fechaFinFinal = FechaFin?.Date.Add(HoraFin?.ToTimeSpan() ?? TimeSpan.Zero);
+        // ✅ FECHAS CORREGIDAS (ANTI UTC BUG)
+        DateTime? fechaInicioFinal = null;
+        DateTime? fechaFinFinal = null;
 
-        // Sala / Ubicación
+        if (FechaInicio.HasValue)
+        {
+            var hora = HoraInicio?.ToTimeSpan() ?? TimeSpan.FromHours(12);
+            fechaInicioFinal = DateTime.SpecifyKind(
+                FechaInicio.Value.Date.Add(hora),
+                DateTimeKind.Local
+            );
+        }
+
+        if (FechaFin.HasValue)
+        {
+            var hora = HoraFin?.ToTimeSpan() ?? TimeSpan.FromHours(12);
+            fechaFinFinal = DateTime.SpecifyKind(
+                FechaFin.Value.Date.Add(hora),
+                DateTimeKind.Local
+            );
+        }
+
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
@@ -427,11 +444,8 @@
             ubicacionFinal = "";
         }
 
-        // Participantes IDs
         var participantesIds = participantesSeleccionados.Select(p => p.Id).ToList();
-        Console.WriteLine($"Frecuencia seleccionada = {selectedFrecuenciaId}");
 
-        // Crear objeto final de la tarea
         nuevaTarea = new TareaCreada
         {
             Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
@@ -456,17 +470,14 @@
 
             Prioridad = selectedPrioridadId ?? 0,
 
-            // ⭐ Recurrencia
             IdFrecuencia = selectedFrecuenciaId,
             EsRecurrente = selectedFrecuenciaId.HasValue && selectedFrecuenciaId > 0,
             ReglaRecurrencia = ObtenerNombreFrecuencia(selectedFrecuenciaId),
 
             ParticipantesLista = participantesSeleccionados,
             ParticipantesSeleccionados = participantesIds
-
         };
 
-        // Guardar vía servicio
         bool ok = FormType == FormTypes.Evento
             ? await AgendaService.CrearEventoApi(nuevaTarea)
             : await AgendaService.CrearTareaApi(nuevaTarea);
@@ -483,7 +494,6 @@
 
         await OnSave.InvokeAsync(nuevaTarea);
 
-        // Alerta
         if (FormType == FormTypes.Evento)
             await JSRuntime.InvokeVoidAsync("alertaGuardadoEvento");
         else
@@ -492,6 +502,7 @@
         LimpiarCampos();
         ShowModal = false;
     }
+
     // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
     {
