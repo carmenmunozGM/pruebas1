@@ -269,9 +269,94 @@ namespace pruebas1.Servicios
             }
         }
 
+
+
+        // PATCH
+        // ===== PATCH TAREA =====
+        public async Task<bool> CambiarEstadoTareaAsync(int id, bool estado)
+        {
+            try
+            {
+                var usuario = loginService.obtenerUsuarioLogueado();
+                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                    return false;
+
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                var content = JsonContent.Create(estado);
+
+                var response = await httpClient.PatchAsync(
+                    $"tareas/tareas/{id}/estado",
+                    content
+                );
+
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // ===== PATCH SUBTAREA =====
+        public async Task<bool> CambiarEstadoSubtareaAsync(int id, bool estado)
+        {
+            try
+            {
+                var usuario = loginService.obtenerUsuarioLogueado();
+                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                    return false;
+
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                var content = JsonContent.Create(estado);
+
+                var response = await httpClient.PatchAsync(
+                    $"tareas/subtareas/{id}/estado",
+                    content
+                );
+
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // ===== PATCH EVENTO =====
+        public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)
+        {
+            try
+            {
+                var usuario = loginService.obtenerUsuarioLogueado();
+                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                    return false;
+
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                var content = JsonContent.Create(estado);
+
+                var response = await httpClient.PatchAsync(
+                    $"eventos/eventos/{id}/estado",
+                    content
+                );
+
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
         // ===================== EDITAR =====================
 
-      
+
         public async Task EditarEventoAsync(int id, EditableItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();

@@ -1305,6 +1305,45 @@
     .view-btn:hover {
         background: #005fcc;
     }
+.view-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.view-field.full {
+    grid-column: span 2;
+}
+
+.view-field label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #555;
+}
+
+.view-field p {
+    margin-top: 6px;
+    font-size: 16px;
+    color: #222;
+}
+
+.view-section {
+    margin-top: 28px;
+}
+
+    .view-section h4 {
+        margin-bottom: 10px;
+        font-size: 17px;
+        color: #333;
+    }
+
+    .view-section ul {
+        padding-left: 20px;
+    }
+
+    .view-section li {
+        margin-bottom: 6px;
+    }
 
 /* OVERLAY */
 .tramite-overlay {

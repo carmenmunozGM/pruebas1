@@ -1,4 +1,5 @@
-﻿using System;
+﻿using pruebas1.Components.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,8 +20,9 @@ namespace pruebas1.Components
         public int idPrioridad { get; set; }
         public int idSala { get; set; }
         public string ubicacion { get; set; }
-      
-        public List<int> idsParticipantes { get; set; }
+
+        // ✅ Aquí cambiamos de List<int> a List<ParticipanteDTO>
+        public List<ParticipanteDTO> participantes { get; set; } = new();
     }
 
 

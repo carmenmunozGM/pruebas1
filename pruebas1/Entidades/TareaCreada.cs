@@ -48,50 +48,36 @@ namespace pruebas1.Entidades
         public int IdEmpleado { get; set; }
         public string NombreEmpleado { get; set; } = "";
     }
-    
+
     public class SubtaskModel
     {
-        // Identificador (opcional)
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public int ApiId { get; set; }  // <--- ESTE ES EL ID REAL DEL API
-        // Icono para mostrar en UI (ej. "📅" o "📝")
-        public string Icon { get; set; } = string.Empty;
-
-        // Campos que usa tu UI (español)
-        public string Title { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public bool IsDone { get; set; } = false;
-        //public string Estado { get; set; } = string.Empty;   // autoevaluación
-        public string Estado { get; set; } = "Pendiente"; // <-- aquí
-        public string Tipo { get; set; } = string.Empty;     // "Evento" o "Tarea"
-        public List<SubtaskModel> Subtasks { get; set; } = new();
-
-        // Fechas / horas
+        public int ApiId { get; set; }
+        public int IdAgenda { get; set; }
+        public bool EsRecurrente { get; set; } = false;
+        public string ReglaRecurrencia { get; set; } = "";
+        public string Title { get; set; }
+        public string Descripcion { get; set; }
+        public bool IsDone { get; set; }
+        public string Tipo { get; set; }
+        public string Icon { get; set; }
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
-        // Campos de fechas y metadatos (opcionales)
         public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
-        public DateTime? FechaSolicitud { get; set; } = null;
-        // Hora como TimeOnly? para facilitar formato en UI
+        public DateTime? FechaSolicitud { get; set; }
         public TimeOnly? HoraInicio { get; set; }
         public TimeOnly? HoraFin { get; set; }
-
-        // Otros
-        public string Ubicacion { get; set; } = string.Empty;
-        public string Participantes { get; set; } = string.Empty;
-      
-        // Prioridad (1=Alta, 2=Media, 3=Baja)
-        public int Prioridad { get; set; } = 0;
-
-        public string Autor { get; set; } = string.Empty;
-        public string Cliente { get; set; } = string.Empty;
-        public string Objetivo { get; set; } = string.Empty;
-        public string ObjetivosOtros { get; set; } = string.Empty;
-
-        // Compatibilidad ingles
-        public string Description { get => Descripcion; set => Descripcion = value; }
-        public int ProgressPercent { get; set; } = 0;
+        public string Autor { get; set; }
+        public string Cliente { get; set; }
+        public string Objetivo { get; set; }
+        public string ObjetivosOtros { get; set; }
+        public int Prioridad { get; set; }
+        public string Ubicacion { get; set; }
+        public List<string> Participantes { get; set; } = new();
+        public int ProgressPercent { get; set; }
+        public List<SubtaskModel> Subtasks { get; set; } = new();
     }
+
 
     /* public class OrdenTrabajoModel
      {

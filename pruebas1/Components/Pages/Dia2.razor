@@ -114,7 +114,10 @@
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
 
                                         <!-- Checkbox -->
-                                        <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(tareasCat, st)" />
+                                        <input type="checkbox"
+                                               checked="@st.IsDone"
+                                               @onchange="(e) => ToggleSubtaskAsync(st, e)" />
+
 
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
@@ -197,7 +200,7 @@
                                                             <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
-                                                                <EditDeleteItem Model="ConvertToEditable(st)"
+                                                                <EditDeleteItem EditModel="ConvertToEditable(st)"
                                                                                 Tipo="@(st.Tipo == "Evento" ? Models.ItemTipo.Evento : Models.ItemTipo.Tarea)"
                                                                                 OnUpdated="RecargarVista"
                                                                                 OnDeleted="RecargarVista" />
@@ -275,11 +278,6 @@
                                     <div class="column column-soon block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Proximo).OrderBy(o => o.FechaProgramada))
                                         {
-
-                                            <div style="font-size:10px;color:red">
-                                                Tipo:@ot.Tipo | IdDetalle:@ot.IdOrdenTramite
-                                            </div>
-
                                             <div class="ot-card ot-soon">
                                                 <div class="ot-left">
                                                     <div class="ot-number">@ot.NumeroOrden</div>
@@ -370,7 +368,12 @@
                                         }
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
-                                            <input type="checkbox" checked="@st.IsDone" @onchange="(e) => ToggleSubtask(cat, st)" />
+                                           
+                        
+                                            <input type="checkbox"
+                                                    checked="@st.IsDone"
+                                                    @onchange="(e) => ToggleSubtaskAsync(st, e)" />
+
                                         }
 
                                         <span class="subtask-text">@st.Title</span>
@@ -690,98 +693,118 @@
         <div class="view-modal" @onclick:stopPropagation="true">
 
             <div class="view-header">
-                <h3>@(SelectedViewItem.Tipo == "Tarea" ? "Detalles de la Tarea" : "Detalles del Evento")</h3>
-                <button class="view-close" @onclick="CloseViewModal">×</button>
-            </div>
+                <h3>
+                    @(SelectedViewItem.Tipo == "Tarea"
+                                    ? "📝 Detalles de la Tarea"
+                                    : "📅 Detalles del Evento")
+            </h3>
+            <button class="view-close" @onclick="CloseViewModal">×</button>
+        </div>
 
             <div class="view-body">
 
+                <div class="view-grid">
+
+                    <div class="view-field full">
+                        <label>Título</label>
+                        <p>@SelectedViewItem.Title</p>
+                    </div>
+
+                    <div class="view-field full">
+                        <label>Descripción</label>
+                        <p>@SelectedViewItem.Descripcion</p>
+                    </div>
+
+                    <div class="view-field">
+                        <label>Tipo</label>
+                        <p>@SelectedViewItem.Tipo</p>
+                    </div>
+
+                @if (!string.IsNullOrWhiteSpace(SelectedViewItem.Ubicacion))
+                    {
+                        <div class="view-field">
+                            <label>📍 Ubicación</label>
+                            <p>@SelectedViewItem.Ubicacion</p>
+                        </div>
+                    }
+
+                    @if (SelectedViewItem.FechaInicio != null)
+                    {
+                        <div class="view-field">
+                            <label>Fecha Inicio</label>
+                            <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    }
+
+                    @if (SelectedViewItem.FechaFin != null)
+                    {
+                        <div class="view-field">
+                            <label>Fecha Fin</label>
+                            <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    }
+
+                    @if (SelectedViewItem.HoraInicio != null)
+                    {
+                        <div class="view-field">
+                            <label>Hora Inicio</label>
+                            <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
+                        </div>
+                    }
+
+                    @if (SelectedViewItem.HoraFin != null)
+                    {
+                        <div class="view-field">
+                            <label>Hora Fin</label>
+                            <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
+                        </div>
+                    }
+
                 <div class="view-field">
-                    <label>📝 Título</label>
-                    <p>@SelectedViewItem.Title</p>
+                    <label>Prioridad</label>
+                    <p>
+                        @(SelectedViewItem.Prioridad switch
+                        {
+                            1 => "🔥 Alta",
+                            2 => "⚠️ Media",
+                            3 => "🟢 Baja",
+                            _ => "Sin prioridad"
+                        })
+                    </p>
                 </div>
 
                 <div class="view-field">
-                    <label>📄 Descripción</label>
-                    <p>@SelectedViewItem.Descripcion</p>
+                    <label>Recurrencia</label>
+                    <p>
+                        @(SelectedViewItem.EsRecurrente
+                                                ? SelectedViewItem.ReglaRecurrencia
+                                                : "No recurrente")
+                    </p>
                 </div>
 
-                <div class="view-field">
-                    <label>🏷️ Tipo</label>
-                    <p>@SelectedViewItem.Tipo</p>
                 </div>
 
-                @if (SelectedViewItem.FechaInicio != null)
+            @if (SelectedViewItem.Participantes.Any())
                 {
-                    <div class="view-field">
-                        <label>📅 Fecha Inicio</label>
-                        <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
-                    </div>
-                }
-
-                @if (SelectedViewItem.FechaFin != null)
-                {
-                    <div class="view-field">
-                        <label>📅 Fecha Fin</label>
-                        <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
-                    </div>
-                }
-
-                @if (SelectedViewItem.HoraInicio != null)
-                {
-                    <div class="view-field">
-                        <label>⏰ Hora Inicio</label>
-                        <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
-                    </div>
-                }
-
-                @if (SelectedViewItem.HoraFin != null)
-                {
-                    <div class="view-field">
-                        <label>⏰ Hora Fin</label>
-                        <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
-                    </div>
-                }
-
-                @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Prioridad > 0)
-                {
-                    <div class="view-field">
-                        <label>⭐ Prioridad</label>
-                        <p>
-                            @(SelectedViewItem.Prioridad switch
-                            {
-                                1 => "🔥 Alta",
-                                2 => "⚠️ Media",
-                                3 => "🟢 Baja",
-                                _ => "Sin prioridad"
-                            })
-                </p>
-            </div>
-                        }
-
-                @if (SelectedViewItem.Participantes?.Any() == true)
-                {
-                    <div class="view-field">
-                        <label>👥 Participantes</label>
-                        <ul class="view-list">
+                    <div class="view-section">
+                        <h4>👥 Participantes</h4>
+                        <ul>
                             @foreach (var p in SelectedViewItem.Participantes)
                             {
-                                <li>👤 @p</li>
+                                <li>@p</li>
                             }
                         </ul>
                     </div>
                 }
 
-
-
-                @if (SelectedViewItem.Subtasks?.Any() == true)
+                @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Subtasks.Any())
                 {
-                    <div class="view-field">
-                        <label>✔️ Subtareas</label>
-                        <ul class="view-list">
+                    <div class="view-section">
+                        <h4>✔️ Subtareas</h4>
+                        <ul>
                             @foreach (var s in SelectedViewItem.Subtasks)
                             {
-                                <li>✔️ @s.Title</li>
+                                <li>@s.Title</li>
                             }
                         </ul>
                     </div>
@@ -801,134 +824,191 @@
 @if (ShowTramiteModal && SelectedOrdenTramite != null)
 {
     <div class="modal-container visible" @onclick="CloseTramiteModal">
-        <div class="modal-content" @onclick:stopPropagation
-             style="max-width:1000px;width:95%;border-radius:12px;">
+        <div class="modal-content"
+             @onclick:stopPropagation="true"
+             style="max-width:1200px; width:95%; height:92vh;">
 
-            <div class="modal-header" style="background:#FFB703;color:#000">
-                <h3>Orden de Trámite – @SelectedOrdenTramite.numeroOrden</h3>
+            <div class="modal-header" style="background:#FFDAC1; color:#000;">
+                <h2 class="modal-title">
+                    ORDEN DE TRÁMITE – @SelectedOrdenTramite.numeroOrden
+                </h2>
                 <span class="close-button" @onclick="CloseTramiteModal">&times;</span>
             </div>
 
             <div class="modal-body-wrapper">
+                <div class="form-section-wrapper">
+                    <div class="form-section">
 
-                <!-- DATOS GENERALES -->
-                <div class="grid-2">
-                    <div><b>Fecha solicitud:</b> @SelectedOrdenTramite.fechaSolicitud</div>
-                    <div><b>Solicitante:</b> @SelectedOrdenTramite.solicitanteInterno</div>
-                    <div><b>Cliente:</b> @SelectedOrdenTramite.cliente</div>
-                    <div><b>Nombre global:</b> @SelectedOrdenTramite.nombreGlobal</div>
-                    <div><b>Fecha conclusión:</b> @SelectedOrdenTramite.fechaConclusionTramite</div>
+                        <div>
+                            <label class="section-label">Fecha de solicitud</label>
+                            <div>@SelectedOrdenTramite.fechaSolicitud</div>
+                        </div>
+
+                        <div>
+                            <label class="section-label">Solicitante</label>
+                            <div>@SelectedOrdenTramite.solicitanteInterno</div>
+                        </div>
+
+                        <div>
+                            <label class="section-label">Cliente</label>
+                            <div>@SelectedOrdenTramite.cliente</div>
+                        </div>
+
+                        <div>
+                            <label class="section-label">Nombre global</label>
+                            <div>@SelectedOrdenTramite.nombreGlobal</div>
+                        </div>
+
+                        <div>
+                            <label class="section-label">Fecha conclusión</label>
+                            <div>@SelectedOrdenTramite.fechaConclusionTramite</div>
+                        </div>
+
+                    </div>
+
+                    <!-- TABLA DE TRÁMITES -->
+                    <div class="form-group-span-2" style="margin-top:18px;">
+                        <label class="section-label">Trámites individuales</label>
+
+                        <table class="tasks-table" style="width:100%; border-collapse:collapse;">
+                            <thead style="background:#f0f0f0;">
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Trámite</th>
+                                    <th>Encargado</th>
+                                    <th>Tareas</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
+                                {
+                                    <tr style="border-bottom:1px solid #ddd;">
+                                        <td>@tr.clave</td>
+                                        <td>@tr.tramiteIndividual</td>
+                                        <td>@tr.personalEncargado</td>
+                                        <td style="text-align:center;">
+                                            <button class="btn-eye"
+                                                    @onclick="() => AbrirModalTareas(tr.idTramite)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <button class="btn-eye"
+                                                    @onclick="() => AbrirModalDetalle(tr.idTramite)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
+            </div>
 
-                <hr />
+            <div class="modal-footer">
+                <button class="btn small" @onclick="CloseTramiteModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
 
-                <!-- TABLA TRÁMITES -->
-                <table class="activities-table">
-                    <thead>
+@if (ShowTareasModal && TramiteSeleccionado != null)
+{
+    <div class="modal-container visible" @onclick="CerrarModalTareas">
+        <div class="modal-content"
+             @onclick:stopPropagation="true"
+             style="max-width:800px; width:90%;">
+
+            <div class="modal-header" style="background:#FFDAC1; color:#000;">
+                <h3 class="modal-title">
+                    Tareas – @TramiteSeleccionado.clave
+                </h3>
+                <span class="close-button" @onclick="CerrarModalTareas">&times;</span>
+            </div>
+
+            <div class="modal-body-wrapper">
+                <table class="tasks-table" style="width:100%; border-collapse:collapse;">
+                    <thead style="background:#f0f0f0;">
                         <tr>
                             <th>Clave</th>
-                            <th>Trámite Individual</th>
+                            <th>Tarea</th>
                             <th>Encargado</th>
-                            <th>Tareas</th>
-                            <th>Ver</th>
+                            <th>Fecha fin</th>
+                            <th>Avance</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
+                        @foreach (var t in TramiteSeleccionado.tareas)
                         {
-                            <tr>
-                                <td>@tr.clave</td>
-                                <td>@tr.tramiteIndividual</td>
-                                <td>@tr.personalEncargado</td>
-                                <td>
-                                    <button class="icon-btn"
-                                            @onclick="() => AbrirModalTareas(tr.idTramite)">
-                                        👁️
-                                    </button>
-                                </td>
-                                <td>
-                                    <button class="icon-btn"
-                                            @onclick="() => AbrirModalDetalle(tr.idTramite)">
-                                        👁️
-                                    </button>
-                                </td>
+                            <tr style="border-bottom:1px solid #ddd;">
+                                <td>@t.claveTarea</td>
+                                <td>@t.tarea</td>
+                                <td>@t.encargadoTarea</td>
+                                <td>@t.fechaConclusion</td>
+                                <td>@t.avance</td>
                             </tr>
                         }
                     </tbody>
                 </table>
-
             </div>
 
             <div class="modal-footer">
-                <button class="btn" @onclick="CloseTramiteModal">Cerrar</button>
+                <button class="btn small" @onclick="CerrarModalTareas">Cerrar</button>
             </div>
         </div>
     </div>
 }
-@if (ShowTareasModal && TramiteSeleccionado != null)
-{
-    <div class="modal-container visible" @onclick="CerrarModalTareas">
-        <div class="modal-content" @onclick:stopPropagation style="max-width:800px">
 
-            <div class="modal-header">
-                <h3>Tareas – @TramiteSeleccionado.clave</h3>
-                <span class="close-button" @onclick="CerrarModalTareas">&times;</span>
-            </div>
-
-            <table class="activities-table">
-                <thead>
-                    <tr>
-                        <th>Clave</th>
-                        <th>Tarea</th>
-                        <th>Encargado</th>
-                        <th>Fecha fin</th>
-                        <th>Avance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var t in TramiteSeleccionado.tareas)
-                    {
-                        <tr>
-                            <td>@t.claveTarea</td>
-                            <td>@t.tarea</td>
-                            <td>@t.encargadoTarea</td>
-                            <td>@t.fechaConclusion</td>
-                            <td>@t.avance</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-            <div class="modal-footer">
-                <button class="btn" @onclick="CerrarModalTareas">Cerrar</button>
-            </div>
-        </div>
-    </div>
-}
 @if (ShowDetalleModal && TramiteSeleccionado != null)
 {
     <div class="modal-container visible" @onclick="CerrarModalDetalle">
-        <div class="modal-content" @onclick:stopPropagation style="max-width:700px">
+        <div class="modal-content"
+             @onclick:stopPropagation="true"
+             style="max-width:500px; width:80%; border-radius:10px;">
 
-            <div class="modal-header">
-                <h3>Detalle Trámite – @TramiteSeleccionado.clave</h3>
+            <div class="modal-header" style="background:#FFDAC1; color:#000;">
+                <h3 class="modal-title">
+                    Detalle Trámite – @TramiteSeleccionado.clave
+                </h3>
                 <span class="close-button" @onclick="CerrarModalDetalle">&times;</span>
             </div>
 
-            <div class="modal-body-wrapper">
-                <p><b>Encargado:</b> @TramiteSeleccionado.personalEncargado</p>
-                <p><b>Dependencia:</b> @TramiteSeleccionado.dependencia</p>
-                <p><b>Estado:</b> @TramiteSeleccionado.estadoTramite</p>
-                <p><b>Avance:</b> @TramiteSeleccionado.avance</p>
-                <p><b>Observación:</b> @TramiteSeleccionado.observacion</p>
+            <div class="modal-body-wrapper" style="padding:15px;">
+
+                <div>
+                    <label class="section-label">Encargado</label>
+                    <div>@TramiteSeleccionado.personalEncargado</div>
+                </div>
+
+                <div>
+                    <label class="section-label">Dependencia</label>
+                    <div>@TramiteSeleccionado.dependencia</div>
+                </div>
+
+                <div>
+                    <label class="section-label">Estado</label>
+                    <div>@TramiteSeleccionado.estadoTramite</div>
+                </div>
+
+                <div>
+                    <label class="section-label">Observación</label>
+                    <div>@TramiteSeleccionado.observacion</div>
+                </div>
+
             </div>
 
             <div class="modal-footer">
-                <button class="btn" @onclick="CerrarModalDetalle">Cerrar</button>
+                <button class="btn small" @onclick="CerrarModalDetalle">Cerrar</button>
             </div>
         </div>
     </div>
 }
+
+
+
 
 @code {
 
@@ -958,12 +1038,58 @@
 
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
+    private ViewAgendaItem? SelectedViewItem;
+   
 
     private void ShowTaskModal(TareaOrdenModel task)
     {
         SelectedTask = task;
         ShowTaskDetailsModal = true;
     }
+        void VerTarea(TareaApiDto t)
+    {
+        SelectedViewItem = new ViewAgendaItem
+        {
+            Tipo = "Tarea",
+            Title = t.titulo,
+            Descripcion = t.descripcion,
+            
+            Prioridad = t.idPrioridad,
+            EsRecurrente = t.esRecurrente,
+            ReglaRecurrencia = t.reglaRecurrencia ?? "",
+            FechaInicio = t.fechaInicio,
+            FechaFin = t.fechaFin,
+            Subtasks = t.subTareas?.Select(st => new SubtaskModel
+            {
+                Title = st.titulo,
+       
+                IsDone = st.completada,
+                Tipo = "SubTarea"
+            }).ToList() ?? new List<SubtaskModel>()
+        };
+
+        ShowViewModal = true;
+    }
+    void VerEvento(EventoApiDTO e)
+    {
+        SelectedViewItem = new ViewAgendaItem
+        {
+            Tipo = "Evento",
+            Title = e.titulo,
+            Descripcion = e.descripcion,
+            FechaInicio = e.fechaInicio,
+            FechaFin = e.fechaFin,
+            Ubicacion = e.ubicacion,
+            Prioridad = e.idPrioridad,
+            EsRecurrente = e.esRecurrente,
+            ReglaRecurrencia = e.reglaRecurrencia ?? "",
+
+            // ✅ Transformamos la lista de participantes de la API a lista de nombres
+            Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>()
+        };
+        ShowViewModal = true;
+    }
+
 
     private void CloseTaskModal()
     {
@@ -1062,15 +1188,60 @@
     }
 
     //MODAL DE VER TAREAS O EVENTOS
-    private bool ShowViewModal = false;
-private SubtaskModel? SelectedViewItem;
+    private bool ShowViewModal { get; set; } = false;
 
-private void OpenViewModal(SubtaskModel item)
-{
-    SelectedViewItem = item;
-    ShowViewModal = true;
-}
 
+    private void OpenViewModal(SubtaskModel st)
+    {
+        SelectedViewItem = new ViewAgendaItem
+        {
+            Tipo = st.Tipo,
+            Title = st.Title,
+            Descripcion = st.Descripcion,
+            FechaInicio = st.FechaInicio,
+            FechaFin = st.FechaFin,
+            HoraInicio = st.HoraInicio,
+            HoraFin = st.HoraFin,
+            Ubicacion = st.Ubicacion,
+            Prioridad = st.Prioridad,
+            EsRecurrente = st.EsRecurrente,         // si lo tienes en tu modelo
+            ReglaRecurrencia = st.ReglaRecurrencia, // si lo tienes en tu modelo
+            Participantes = st.Participantes,
+            Subtasks = st.Subtasks ?? new List<SubtaskModel>()
+        };
+
+        ShowViewModal = true;
+    }
+
+// ESTE SIRVE PARA EL CHECK DE TAREAS
+    private async Task ToggleSubtaskAsync(SubtaskModel st, ChangeEventArgs e)
+    {
+        bool nuevoEstado = (bool)e.Value;
+        bool estadoAnterior = st.IsDone;
+
+        st.IsDone = nuevoEstado;
+
+        bool ok = false;
+
+        if (st.Tipo == "Tarea")
+        {
+            ok = await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
+        }
+        else if (st.Tipo == "Evento")
+        {
+            ok = await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado);
+        }
+        else if (st.Tipo == "SubTarea")
+        {
+            ok = await AgendaService.CambiarEstadoSubtareaAsync(st.ApiId, nuevoEstado);
+        }
+
+        if (!ok)
+        {
+            // 🔴 rollback si falla API
+            st.IsDone = estadoAnterior;
+        }
+    }
 
 private void CloseViewModal()
 {
@@ -1157,34 +1328,7 @@ private void CloseViewModal()
         public string Icon { get; set; }
     }
 
-    class SubtaskModel
-    {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public int ApiId { get; set; }      // id real de evento o tarea
-        public int IdAgenda { get; set; }
-
-        public string Title { get; set; }
-        public string Descripcion { get; set; }
-        public bool IsDone { get; set; }
-        public string Tipo { get; set; }
-        public string Icon { get; set; }
-        public DateTime? FechaInicio { get; set; }
-        public DateTime? FechaFin { get; set; }
-        public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
-        public DateTime? FechaSolicitud { get; set; }
-        public TimeOnly? HoraInicio { get; set; }
-        public TimeOnly? HoraFin { get; set; }
-        public string Autor { get; set; }
-        public string Cliente { get; set; }
-        public string Objetivo { get; set; }
-        public string ObjetivosOtros { get; set; }
-        public int Prioridad { get; set; }
-        public string Ubicacion { get; set; }
-        public List<string> Participantes { get; set; } = new();
-        public int ProgressPercent { get; set; }
-        public List<SubtaskModel> Subtasks { get; set; } = new();
-    }
-
+   
     protected override void OnInitialized()
     {
         CargarTareasPorFecha();
@@ -1242,23 +1386,24 @@ private void CloseViewModal()
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
               
-                ApiId = t.id,              // 👈 ID REAL
+                ApiId = t.id,
                 IdAgenda = t.idAgenda,
                 Title = t.titulo,
+                Descripcion = t.descripcion,      // Asegúrate de traer la descripción
                 IsDone = t.completada,
                 Tipo = "Tarea",
                 Prioridad = t.idPrioridad,
+                EsRecurrente = t.esRecurrente,   // 🔹 Esto estaba faltando
+                ReglaRecurrencia = t.reglaRecurrencia ?? "", // 🔹 Esto estaba faltando
                 FechaInicio = t.fechaInicio,
                 FechaFin = t.fechaFin,
                 HoraInicio = string.IsNullOrWhiteSpace(t.horaInicio) ? null : TimeOnly.Parse(t.horaInicio),
-                Autor = t.id.ToString(),
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
+                 
                     IsDone = st.completada,
                     Tipo = "SubTarea",
-                    Autor = t.id.ToString(),
-                    Cliente = st.id.ToString()
                 }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
         };
@@ -1267,21 +1412,23 @@ private void CloseViewModal()
         {
             tareasCategory.Subtasks.Add(new SubtaskModel
             {
-                ApiId = ev.id,              // 👈 ID REAL
+                ApiId = ev.id,
                 IdAgenda = ev.idAgenda,
                 Title = ev.titulo,
+                Descripcion = ev.descripcion,
                 IsDone = false,
                 Tipo = "Evento",
                 Icon = "📅",
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
-                Participantes = ev.idsParticipantes?
-                .Select(id => id.ToString())
-                .ToList()
-                ?? new List<string>(),
                 HoraInicio = TimeOnly.FromDateTime(ev.fechaInicio),
                 HoraFin = TimeOnly.FromDateTime(ev.fechaFin),
                 Autor = ev.idAgenda.ToString(),
+                Ubicacion = ev.ubicacion,
+                Prioridad = ev.idPrioridad,
+                EsRecurrente = ev.esRecurrente,
+                ReglaRecurrencia = ev.reglaRecurrencia ?? "",
+                Participantes = ev.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>(),
                 Subtasks = new()
             });
         }
@@ -1653,12 +1800,7 @@ private void CloseViewModal()
     }
 
     // ---- TAREAS ----
-    void ToggleSubtask(CategoryModel cat, SubtaskModel st)
-    {
-        st.IsDone = !st.IsDone;
-        if (st.Subtasks != null && st.Subtasks.Any())
-            st.Subtasks.ForEach(s2 => s2.IsDone = st.IsDone);
-    }
+   
 
     void ToggleInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
     {
