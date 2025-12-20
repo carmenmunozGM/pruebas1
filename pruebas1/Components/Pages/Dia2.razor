@@ -12,7 +12,7 @@
 @using System.Text.Json
 @inject OrdenTrabajoService OrdenTrabajoService
 @inject OrdenTramiteService OrdenTramiteService
-
+@inject AutoevaluacionService AutoevaluacionService
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
@@ -116,13 +116,13 @@
                                         <!-- Checkbox -->
                                         <input type="checkbox"
                                                checked="@st.IsDone"
-                                               @onchange="(e) => ToggleSubtaskAsync(st, e)" />
+                                               @onchange="(e)   => ToggleSubtaskAsync(st, e)" />
 
 
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");">
-                                           
+
                                         </span>
 
                                         <!-- Título -->
@@ -237,7 +237,7 @@
                         </button>
                     </div>
                 </div>
-             
+
                 @if (!otCat.IsCollapsed)
                 {
                     <div class="card-body block-body block-scroll">
@@ -245,9 +245,9 @@
                             @if (OrdenesParaMostrar != null && OrdenesParaMostrar.Any())
                             {
                                 <div class="columns-container block-scroll">
-                                    
-                                    
- 
+
+
+
                                     <!-- 🔴 Columna 1: Vencidas -->
                                     <div class="column column-expired block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencido).OrderBy(o => o.FechaProgramada))
@@ -291,7 +291,7 @@
                                                         <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
-                                                
+
                                             </div>
                                         }
                                     </div>
@@ -310,7 +310,7 @@
                                                 </div>
                                                 <div class="ot-right">
                                                     <button class="icon-eye" title="Ver orden" @onclick="() => VerOrden(ot)">
-                                                        
+
                                                         <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
@@ -331,7 +331,12 @@
             <br />
         }
 
-        @foreach (var cat in Categories.Where(c => c.Name.Trim() != "Órdenes de Trabajo" && c.Name.Trim() != "Tareas"))
+        @foreach (var cat in Categories.Where(c =>
+            c.Name.Trim() != "Órdenes de Trabajo" &&
+            c.Name.Trim() != "Tareas" &&
+            c.Name.Trim() != "Autoevaluación" &&
+            c.Name.Trim() != "Servicio a Cliente"))
+
         {
             <div class="card block-card @cat.ColorClass">
                 <div class="block-header" @onclick="() => ToggleCollapse(cat)">
@@ -362,17 +367,14 @@
                             {
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone && cat.Name != "Autoevaluación" ? "done" : "")">
-                                        @if (cat.Name.Trim() == "Autoevaluación")
-                                        {
-                                          //AQUIVA EL CHECK DE AUTOEVALUCION
-                                        }
+
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
-                                           
-                        
-                                            <input type="checkbox"
-                                                    checked="@st.IsDone"
-                                                    @onchange="(e) => ToggleSubtaskAsync(st, e)" />
+
+
+                                        <input type="checkbox"
+                                               checked="@st.IsDone"
+                                               @onchange="(e) => ToggleSubtaskAsync(st, e)" />
 
                                         }
 
@@ -392,7 +394,7 @@
                                                 <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(cat, st)">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                <button >🗑️</button>
+                                                <button>🗑️</button>
 
                                             </div>
                                         }
@@ -439,7 +441,7 @@
                                                                     <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditInnerModal(cat, st, s2)">
                                                                         <i class="bi bi-pencil"></i>
                                                                     </button>
-                                                                    <button >🗑️</button>
+                                                                    <button>🗑️</button>
 
                                                                 </div>
                                                             </div>
@@ -457,9 +459,136 @@
             </div>
             <br />
         }
+
+
+        var autoevalDia = AutoevaluacionesDelDia
+        .Where(a => a.Fecha.Date == FechaSeleccionada.Date)
+        .ToList();
+
+        var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
+        var autoevalMesVacia = !AutoevaluacionesDelDia.Any();
+
+        var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
+
+        @if (true)
+        {
+            <div class="card block-card azul-lavanda">
+                <div class="block-header" @onclick="() => AutoevalCollapsed = !AutoevalCollapsed">
+                    <div class="header-left">
+                        <h3 class="categoria-titulo">⭐ Autoevaluación</h3>
+                    </div>
+                    <div class="header-right">
+                        @if (autoevalCompletadas)
+                        {
+                            <span class="badge completado">Completado ✓</span>
+                        }
+                        else
+                        {
+                            @if (autoevalCompletadas)
+                            {
+                                <span class="badge completado">Completado ✓</span>
+                            }
+                            else
+                            {
+                                <span class="badge pendiente">
+                                    @autoevalPendientes pendiente(s)
+                                </span>
+                            }
+
+                        }
+
+                        <button class="btn btn-floating">
+                            @(AutoevalCollapsed ? "▼" : "▲")
+                        </button>
+                    </div>
+                </div>
+
+                @if (!AutoevalCollapsed)
+                {
+                    <div class="card-body block-body block-scroll">
+
+                        @if (autoevalMesVacia)
+                        {
+                            <div class="empty-block-message">
+                                ¡No tienes autoevaluación registrada para este mes!
+                            </div>
+                        }
+                        else
+                        {
+                            <ul class="subtask-list">
+                                @foreach (var item in autoevalDia)
+                                {
+                                    <li class="subtask-item">
+                                        <div class="subtask-label">
+                                            <input type="checkbox"
+                                                   checked="@item.Realizado"
+                                                   disabled="@(FechaSeleccionada.Date != DateTime.Today)"
+                                                   @onchange="(e) => ToggleAutoevaluacionDia(item, e)" />
+
+                                            <span class="subtask-text">
+                                                ⭐ @item.Actividad
+                                            </span>
+
+                                            @if (item.Realizado)
+                                            {
+                                                <small class="done-text">Hecho</small>
+                                            }
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                    </div>
+
+
+                }
+            </div>
+
+            <br />
+        }
+
+        @foreach (var cat in Categories.Where(c =>
+            c.Name.Trim() == "Servicio a Cliente"))
+        {
+            <div class="card block-card @cat.ColorClass">
+                <div class="block-header" @onclick="() => ToggleCollapse(cat)">
+                    <div class="header-left">
+                        <h3 class="categoria-titulo">@cat.Icon @cat.Name</h3>
+                    </div>
+                    <div class="header-right">
+                        <span class="badge pendiente">@RemainingCount(cat) pendiente(s)</span>
+                        <button class="btn btn-floating" style="font-size:0.8rem;">
+                            @(cat.IsCollapsed ? "▼" : "▲")
+                        </button>
+                    </div>
+                </div>
+
+                @if (!cat.IsCollapsed)
+                {
+                    <div class="card-body block-body block-scroll">
+                        <ul class="subtask-list">
+                            @foreach (var st in cat.Subtasks)
+                            {
+                                <li class="subtask-item">
+                                    <div class="subtask-label @(st.IsDone ? "done" : "")">
+                                        <input type="checkbox"
+                                               checked="@st.IsDone"
+                                               @onchange="(e) => ToggleSubtaskAsync(st, e)" />
+                                        <span class="subtask-text">@st.Title</span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+            <br />
+        }
+
+
     }
 </div>
-
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS-->
 @if (ShowModificarFechaModal)
 {
@@ -1039,21 +1168,23 @@
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
     private ViewAgendaItem? SelectedViewItem;
-   
 
+
+    //AUTOEVALUACION
+    private List<AutoevaluacionDiaModel> AutoevaluacionesDelDia = new();
     private void ShowTaskModal(TareaOrdenModel task)
     {
         SelectedTask = task;
         ShowTaskDetailsModal = true;
     }
-        void VerTarea(TareaApiDto t)
+    void VerTarea(TareaApiDto t)
     {
         SelectedViewItem = new ViewAgendaItem
         {
             Tipo = "Tarea",
             Title = t.titulo,
             Descripcion = t.descripcion,
-            
+
             Prioridad = t.idPrioridad,
             EsRecurrente = t.esRecurrente,
             ReglaRecurrencia = t.reglaRecurrencia ?? "",
@@ -1062,7 +1193,7 @@
             Subtasks = t.subTareas?.Select(st => new SubtaskModel
             {
                 Title = st.titulo,
-       
+
                 IsDone = st.completada,
                 Tipo = "SubTarea"
             }).ToList() ?? new List<SubtaskModel>()
@@ -1151,7 +1282,7 @@
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
 
-    //MODAL DE ORDENES DE TRAMITE COMPLETAMENTE 
+    //MODAL DE ORDENES DE TRAMITE COMPLETAMENTE
     // ESTADOS
     bool ShowTareasModal;
     bool ShowDetalleModal;
@@ -1213,7 +1344,7 @@
         ShowViewModal = true;
     }
 
-// ESTE SIRVE PARA EL CHECK DE TAREAS
+    // ESTE SIRVE PARA EL CHECK DE TAREAS
     private async Task ToggleSubtaskAsync(SubtaskModel st, ChangeEventArgs e)
     {
         bool nuevoEstado = (bool)e.Value;
@@ -1243,11 +1374,17 @@
         }
     }
 
-private void CloseViewModal()
-{
-    SelectedViewItem = null;
-    ShowViewModal = false;
-}
+    private void CloseViewModal()
+    {
+        SelectedViewItem = null;
+        ShowViewModal = false;
+    }
+    //autoevaluacion de hoy
+    bool EsAutoevaluacionHoy(SubtaskModel st)
+    {
+        return st.Tipo == "Autoevaluacion"
+            && st.FechaConclusion.Date == FechaSeleccionada.Date;
+    }
 
     // ---- MODAL FECHA / MOTIVO ----
     private bool ShowModificarFechaModal = false;
@@ -1328,19 +1465,52 @@ private void CloseViewModal()
         public string Icon { get; set; }
     }
 
-   
-    protected override void OnInitialized()
+
+
+
+    class AutoevaluacionDiaModel
     {
-        CargarTareasPorFecha();
-        GenerarDiasCalendario();
-        PrepararOrdenesVisuales();
+        public int IdRegistro { get; set; }
+        public string Actividad { get; set; } = "";
+        public bool Realizado { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Icon { get; set; } = "⭐";
+    }
+
+    private async Task ToggleAutoevaluacionDia(
+    AutoevaluacionDiaModel item,
+    ChangeEventArgs e)
+    {
+
+        if (FechaSeleccionada.Date != DateTime.Today)
+            return;
+        bool nuevoValor =
+            e.Value is bool b ? b :
+            e.Value is string s && (s == "true" || s == "on");
+
+
+        item.Realizado = nuevoValor;
+
+        try
+        {
+            await AutoevaluacionService.MarcarRegistroRealizadoAsync(
+                item.IdRegistro,   // ✅ ID REAL
+                nuevoValor
+            );
+        }
+        catch
+        {
+
+            item.Realizado = !nuevoValor;
+        }
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarTareasPorFecha();
+        GenerarDiasCalendario();
         await PrepararOrdenesVisuales();
         await InitializeMasterCategoriesAsync();
-        StateHasChanged();
     }
     async Task RecargarVista()
     {
@@ -1377,6 +1547,7 @@ private void CloseViewModal()
         MasterCategories = new();
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
         var eventosApi = await AgendaService.ObtenerEventos(currentAgendaId);
+        var autoevaluacionesApi = await AutoevaluacionService.ObtenerAutoevaluacion();
 
         var tareasCategory = new CategoryModel
         {
@@ -1385,7 +1556,7 @@ private void CloseViewModal()
             Icon = "📝",
             Subtasks = tareasApi.Select(t => new SubtaskModel
             {
-              
+
                 ApiId = t.id,
                 IdAgenda = t.idAgenda,
                 Title = t.titulo,
@@ -1401,7 +1572,7 @@ private void CloseViewModal()
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
-                 
+
                     IsDone = st.completada,
                     Tipo = "SubTarea",
                 }).ToList() ?? new List<SubtaskModel>()
@@ -1433,10 +1604,60 @@ private void CloseViewModal()
             });
         }
 
+        // =========================
+        // CATEGORÍA: AUTOEVALUACIÓN
+        // =========================
+        var autoevaluacionCategory = new CategoryModel
+        {
+            Name = "Autoevaluación",
+            ColorClass = "azul-lavanda",
+            Icon = "⭐",
+        };
+
+
+
+        AutoevaluacionesDelDia.Clear();
+
+        foreach (var bloque in autoevaluacionesApi)
+        {
+            foreach (var tarea in bloque.Tareas)
+            {
+                foreach (var registro in tarea.Registros)
+                {
+                    AutoevaluacionesDelDia.Add(new AutoevaluacionDiaModel
+                    {
+                        IdRegistro = registro.IdRegistro,
+                        Actividad = tarea.Tarea,
+                        Realizado = registro.Realizado,
+                        Fecha = registro.Fecha.ToDateTime(TimeOnly.MinValue),
+                        Icon = "⭐"
+                    });
+                }
+            }
+        }
+
+
+
+
+        // =========================
+        // AGREGAR CATEGORÍAS
+        // =========================
         MasterCategories.Add(tareasCategory);
-        MasterCategories.Add(new CategoryModel { Name = "Órdenes de Trabajo", ColorClass = "naranja-melocoton", Icon = "🔧", Subtasks = new() });
-        MasterCategories.Add(new CategoryModel { Name = "Autoevaluación", ColorClass = "azul-lavanda", Icon = "📊", Subtasks = new() });
-        MasterCategories.Add(new CategoryModel { Name = "Servicio a Cliente", ColorClass = "azul-morado", Icon = "🤝", Subtasks = new() });
+        MasterCategories.Add(new CategoryModel
+        {
+            Name = "Órdenes de Trabajo",
+            ColorClass = "naranja-melocoton",
+            Icon = "🔧",
+            Subtasks = new()
+        });
+        MasterCategories.Add(autoevaluacionCategory);
+        MasterCategories.Add(new CategoryModel
+        {
+            Name = "Servicio a Cliente",
+            ColorClass = "azul-morado",
+            Icon = "🤝",
+            Subtasks = new()
+        });
 
         foreach (var c in MasterCategories)
             c.Icon = GetIcon(c.Name);
@@ -1466,7 +1687,7 @@ private void CloseViewModal()
 
         await PrepararOrdenesVisuales();
     }
-    
+
 
     private SubtaskModel CloneSubtask(SubtaskModel st)
     {
@@ -1500,7 +1721,7 @@ private void CloseViewModal()
     private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status) => new()
     {
         Id = api.id,
-                // 🔥 NUEVO
+        // 🔥 NUEVO
         NumeroOrden = api.strClave,
         FechaSolicitud = api.dteFechaSolicitud == DateTime.MinValue ? null : api.dteFechaSolicitud,
         FechaProgramada = api.fechaFinal,
@@ -1513,7 +1734,7 @@ private void CloseViewModal()
     };
 
 
-    //--- 
+    //---
     private OrdenTrabajoModel ConvertirTramiteSimple(
      OrdenTramiteDTO t,
      OrdenStatus status)
@@ -1697,7 +1918,7 @@ private void CloseViewModal()
             Console.WriteLine("ERROR VerOrdenTrabajo: " + ex.Message);
         }
     }
-        
+
     private async Task VerOrden(OrdenTrabajoModel ot)
     {
         if (ot == null) return;
@@ -1721,7 +1942,7 @@ private void CloseViewModal()
 
     private bool ShowOrderModal { get; set; } = false;
     private OrdenTrabajoModel? SelectedOrden { get; set; }
-    //MODALO PARA ORDENES DE TRAMITE 
+    //MODALO PARA ORDENES DE TRAMITE
     /*private async Task VerOrdenTramite(int idOrden)
     {
         try
@@ -1800,14 +2021,14 @@ private void CloseViewModal()
     }
 
     // ---- TAREAS ----
-   
+
 
     void ToggleInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
     {
         inner.IsDone = !inner.IsDone;
         parent.IsDone = parent.Subtasks.All(x => x.IsDone);
     }
-    
+
     bool AllCompleted(CategoryModel cat) => cat.Subtasks != null && cat.Subtasks.Any() && cat.Subtasks.All(st => st.IsDone && (st.Subtasks == null || st.Subtasks.All(s2 => s2.IsDone)));
 
     int RemainingCount(CategoryModel cat)

@@ -90,10 +90,7 @@
 
                                                         <span class="task-name @(bt.IsCompleted ? "completed" : "")"
                                                               @onclick="() => OpenTaskModal(bt, false)">
-                                                            @if (!string.IsNullOrEmpty(bt.Icon))
-                                                            {
-                                                                <span class="task-icon">@bt.Icon</span>
-                                                            }
+                                                            <span class="task-icon">@bt.IconoVisual</span>
                                                             @bt.Name
                                                         </span>
 
@@ -179,12 +176,44 @@
                 </div>
                 <div class="form-group inline">
                     <label>Fecha inicio</label>
-                    <input type="date" @bind="bt.StartDate" disabled="@(!IsEditMode)" />
+
+                    @if (IsEditMode)
+                    {
+                        <DatePicker Value="bt.StartDate"
+                                    ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="read-only-field"
+                               value="@bt.StartDate.ToString("dd/MM/yyyy")"
+                               readonly />
+                    }
                 </div>
                 <div class="form-group inline">
                     <label>Fecha fin</label>
-                    <input type="date" @bind="bt.DueDate" disabled="@(!IsEditMode)" />
+
+                    @if (IsEditMode)
+                    {
+                        <DatePicker Value="bt.DueDate"
+                                    ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="read-only-field"
+                               value="@bt.DueDate.ToString("dd/MM/yyyy")"
+                               readonly />
+                    }
                 </div>
+
+                @if (IsEditMode && bt.DueDate < bt.StartDate)
+                {
+                    <div class="validation-error">
+                        ⚠️ La fecha fin no puede ser menor que la fecha inicio
+                    </div>
+                }
+
             }
             else if (SelectedTaskObject is SelfAssessment sa)
             {
@@ -289,20 +318,24 @@
         public List<object> SubTasks { get; set; } = new();
         public Block ParentBlock { get; set; }
         public string Tipo { get; set; } = "Tarea"; // Tarea o Evento
-        public string Icon { get; set; } = "📝";    // 📝 por defecto
+        public string IconoVisual =>
+            Tipo?.Equals("Evento", StringComparison.OrdinalIgnoreCase) == true
+                ? "📅"
+                : "📝";
+
     }
 
     class SelfAssessment
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public int IdRegistro { get; set; }
-    public string ActivityName { get; set; } = "";
-    public bool IsCompleted { get; set; } = false;
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public int IdRegistro { get; set; }
+        public string ActivityName { get; set; } = "";
+        public bool IsCompleted { get; set; } = false;
 
-    public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
+        public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
 
-    public Block ParentBlock { get; set; }
-}
+        public Block ParentBlock { get; set; }
+    }
 
 
     bool IsToday(SelfAssessment sa)
@@ -374,7 +407,7 @@
             day.Blocks.Add(new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1", IsExpanded = false });
 
             // Bloque 3 - Autoevaluación (ESTÁTICO)
-            day.Blocks.Add(new Block{ Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false});
+            day.Blocks.Add(new Block { Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false });
 
             // Bloque 4 - Servicio al Cliente (ESTÁTICO)
             var clienteBlock = new Block { Title = "Servicio al Cliente", Color = "#D7D1DD", IsExpanded = false };
@@ -434,8 +467,10 @@
             var descripcion = TryGetString(obj, "descripcion") ?? TryGetString(obj, "strObjetivoOtro") ?? "";
 
             var apiId = TryGetInt(obj, "idAgenda") ?? TryGetInt(obj, "id") ?? 0;
-           // bool esEvento = TryGetString(obj, "tituloEvento") != null;
-            var tipoBD = TryGetString(obj, "Tipo") ?? "Tarea"; // por si viene null
+            // bool esEvento = TryGetString(obj, "tituloEvento") != null;
+            bool esEvento = TryGetString(obj, "tituloEvento") != null;
+
+            var tipoBD = esEvento ? "Evento" : "Tarea";
 
             var mapped = new BaseTask
             {
@@ -445,12 +480,9 @@
                 StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
                 DueDate = fechaFin.Value,
                 IsCompleted = TryGetBool(obj, "completada") ?? false,
-                Priority = TryGetString(obj, "prioridadTitulo") ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
-
-                // ⬅️ Aquí usamos tu valor de la base de datos
+                Priority = TryGetString(obj, "prioridadTitulo")
+                               ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
                 Tipo = tipoBD,
-                Icon = tipoBD == "Evento" ? "📅" : "📝",
-
                 Type = BlockType.GeneralTask
             };
 
@@ -522,7 +554,7 @@
 
                     var autoBlock = day.Blocks.First(b => b.Title == "Autoevaluación");
 
-                   autoBlock.SubTasks.Add(new SelfAssessment
+                    autoBlock.SubTasks.Add(new SelfAssessment
                     {
                         IdRegistro = registro.IdRegistro,   // ⬅️ AQUI
                         ActivityName = tarea.Tarea,
@@ -651,43 +683,43 @@
         // TODO: Llamar a AgendaService para persistir cambio si lo deseas
     }
 
-   async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
-{
-    bool nuevoValor;
-
-    if (e?.Value is bool b)
-        nuevoValor = b;
-    else if (e?.Value is string s)
-        nuevoValor = s == "true" || s == "on";
-    else
-        return;
-
-    // Optimistic UI
-    sa.IsCompleted = nuevoValor;
-
-    try
+    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
     {
-        await AutoevaluacionService.MarcarRegistroRealizadoAsync(
-            sa.IdRegistro,
-            nuevoValor
-        );
+        bool nuevoValor;
 
-        await ShowTemporaryToastAsync(
-            nuevoValor
-                ? "Autoevaluación marcada como realizada"
-                : "Autoevaluación desmarcada"
-        );
-    }
-    catch
-    {
-        // 🔥 rollback si falla
-        sa.IsCompleted = !nuevoValor;
+        if (e?.Value is bool b)
+            nuevoValor = b;
+        else if (e?.Value is string s)
+            nuevoValor = s == "true" || s == "on";
+        else
+            return;
 
-        await ShowTemporaryToastAsync(
-            "Error al guardar la autoevaluación"
-        );
+        // Optimistic UI
+        sa.IsCompleted = nuevoValor;
+
+        try
+        {
+            await AutoevaluacionService.MarcarRegistroRealizadoAsync(
+                sa.IdRegistro,
+                nuevoValor
+            );
+
+            await ShowTemporaryToastAsync(
+                nuevoValor
+                    ? "Autoevaluación marcada como realizada"
+                    : "Autoevaluación desmarcada"
+            );
+        }
+        catch
+        {
+            // 🔥 rollback si falla
+            sa.IsCompleted = !nuevoValor;
+
+            await ShowTemporaryToastAsync(
+                "Error al guardar la autoevaluación"
+            );
+        }
     }
-}
 
 
     async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
@@ -730,7 +762,7 @@
     private ClientServiceTask? SelectedClientTask { get; set; }
     private bool IsClientModalOpen { get; set; } = false;
 
-    
+
 
     string GetModalTitle()
     {
@@ -765,13 +797,23 @@
 
     async Task SaveTask()
     {
-        // Aquí puedes mapear y mandar a AgendaService para actualizar
+        if (SelectedTaskObject is BaseTask bt)
+        {
+            if (bt.DueDate < bt.StartDate)
+            {
+                await ShowTemporaryToastAsync(
+                    "❌ La fecha fin no puede ser menor a la fecha inicio"
+                );
+                return;
+            }
+        }
+
         IsEditMode = false;
         IsModalOpen = false;
 
-        if (SelectedTaskObject is BaseTask bt)
+        if (SelectedTaskObject is BaseTask task)
         {
-            await ShowSuccessAlert($"✅ La tarea '{bt.Name}' se guardó correctamente");
+            await ShowSuccessAlert($"✅ La tarea '{task.Name}' se guardó correctamente");
         }
     }
 

@@ -36,12 +36,22 @@ namespace pruebas1.Servicios
         // ------------------------------------------
         public async Task<List<AutoevaluacionDTO>> ObtenerAutoevaluacion()
         {
-            string url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/MiAutoevaluacion";
+            try
+            {
+                string url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/MiAutoevaluacion";
 
-            var result = await _http.GetFromJsonAsync<List<AutoevaluacionDTO>>(url);
+                var result = await _http.GetFromJsonAsync<List<AutoevaluacionDTO>>(url);
 
-            return result ?? new List<AutoevaluacionDTO>();
+                return result ?? new List<AutoevaluacionDTO>();
+            }
+            catch (Exception ex)
+            {
+                // 👇 IMPORTANTE: no romper la app si no hay datos
+                Console.WriteLine($"[AutoevaluacionService] ObtenerAutoevaluacion: {ex.Message}");
+                return new List<AutoevaluacionDTO>();
+            }
         }
+
 
         // ------------------------------------------
         // POST - Guardar autoevaluación completa
@@ -61,20 +71,36 @@ namespace pruebas1.Servicios
         }
 
 
-        public async Task MarcarRegistroRealizadoAsync(int idRegistro, bool realizado)
+        public async Task<bool> MarcarRegistroRealizadoAsync(int idRegistro, bool realizado)
         {
-            var url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/dia/realizado";
-
-            var payload = new
+            try
             {
-                idRegistro = idRegistro,
-                realizado = realizado
-            };
+                var url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/dia/realizado";
 
-            var response = await _http.PutAsJsonAsync(url, payload);
+                var payload = new
+                {
+                    idRegistro = idRegistro,
+                    realizado = realizado
+                };
 
-            response.EnsureSuccessStatusCode();
+                var response = await _http.PutAsJsonAsync(url, payload);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[AutoevaluacionService] PUT error: {error}");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AutoevaluacionService] Exception PUT: {ex.Message}");
+                return false;
+            }
         }
+
 
 
     }
