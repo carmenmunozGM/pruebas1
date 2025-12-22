@@ -58,7 +58,10 @@ namespace pruebas1.Entidades
         public string ReglaRecurrencia { get; set; } = "";
         public string Title { get; set; }
         public string Descripcion { get; set; }
-        public bool IsDone { get; set; }
+        //public bool IsDone { get; set; }
+        // 🔥 PROPIEDAD CALCULADA (NO se serializa)
+        public bool IsDone => FechaCompletada.HasValue;
+        public DateTime? FechaCompletada { get; set; }
         public string Tipo { get; set; }
         public string Icon { get; set; }
         public DateTime? FechaInicio { get; set; }
@@ -76,6 +79,9 @@ namespace pruebas1.Entidades
         public List<string> Participantes { get; set; } = new();
         public int ProgressPercent { get; set; }
         public List<SubtaskModel> Subtasks { get; set; } = new();
+
+        
+       
     }
 
 

@@ -7,7 +7,11 @@
 @inject IJSRuntime JSRuntime
 @inject AutoevaluacionService AutoevaluacionService
 @using System.Net.Http.Json;
+@inject OrdenTramiteService OrdenTramiteService
 
+<br />
+<br />
+<br />
 <div class="agenda-container">
 
     <header class="agenda-header">
@@ -90,10 +94,7 @@
 
                                                         <span class="task-name @(bt.IsCompleted ? "completed" : "")"
                                                               @onclick="() => OpenTaskModal(bt, false)">
-                                                            @if (!string.IsNullOrEmpty(bt.Icon))
-                                                            {
-                                                                <span class="task-icon">@bt.Icon</span>
-                                                            }
+                                                            <span class="task-icon">@bt.IconoVisual</span>
                                                             @bt.Name
                                                         </span>
 
@@ -115,7 +116,11 @@
                                                     }
                                                     else
                                                     {
-                                                        <span class="workorder">@bt.Name</span>
+                                                        <span class="task-name @(bt.IsCompleted ? "completed" : "")"
+                                                              @onclick="() => AbrirDetalle(bt)">
+                                                            @bt.Name
+                                                        </span>
+
                                                     }
                                                     break;
 
@@ -179,12 +184,44 @@
                 </div>
                 <div class="form-group inline">
                     <label>Fecha inicio</label>
-                    <input type="date" @bind="bt.StartDate" disabled="@(!IsEditMode)" />
+
+                    @if (IsEditMode)
+                    {
+                        <DatePicker Value="bt.StartDate"
+                                    ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="read-only-field"
+                               value="@bt.StartDate.ToString("dd/MM/yyyy")"
+                               readonly />
+                    }
                 </div>
                 <div class="form-group inline">
                     <label>Fecha fin</label>
-                    <input type="date" @bind="bt.DueDate" disabled="@(!IsEditMode)" />
+
+                    @if (IsEditMode)
+                    {
+                        <DatePicker Value="bt.DueDate"
+                                    ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="read-only-field"
+                               value="@bt.DueDate.ToString("dd/MM/yyyy")"
+                               readonly />
+                    }
                 </div>
+
+                @if (IsEditMode && bt.DueDate < bt.StartDate)
+                {
+                    <div class="validation-error">
+                        ⚠️ La fecha fin no puede ser menor que la fecha inicio
+                    </div>
+                }
+
             }
             else if (SelectedTaskObject is SelfAssessment sa)
             {
@@ -249,6 +286,149 @@
         </div>
     </div>
 }
+@if (IsOTModalOpen && OrdenTrabajoDetalle != null)
+{
+    <div class="modal-overlay" @onclick="CerrarModales">
+        <div class="modal-content modern-modal" @onclick:stopPropagation="true">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+                <span class="modal-icon">📄</span>
+                Orden de Trabajo
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body modal-scroll">
+
+                <!-- INFO -->
+                <div class="ot-card">
+                    <div class="collapsible-header">
+                        Información general
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-grid">
+                            <div><b>Número:</b> @OrdenTrabajoDetalle.strClave</div>
+                            <div><b>Autor:</b> @OrdenTrabajoDetalle.nombreCompleto</div>
+                            <div><b>Cliente:</b> @OrdenTrabajoDetalle.nombreCliente</div>
+                            <div><b>Objetivo:</b> @OrdenTrabajoDetalle.strValor</div>
+                            <div><b>Objetivo otro:</b> @OrdenTrabajoDetalle.strObjetivoOtro</div>
+                            <div><b>Fecha solicitud:</b> @OrdenTrabajoDetalle.dteFechaSolicitud.ToShortDateString()</div>
+                            <div><b>Fecha conclusión:</b> @OrdenTrabajoDetalle.fechaFinal.ToShortDateString()</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAREAS -->
+                <div class="ot-card">
+                    <div class="collapsible-header">
+                        Tareas
+                    </div>
+                    <div class="collapsible-content">
+
+                        <table class="subtasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Avance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in OrdenTrabajoDetalle.tareas)
+                                {
+                                    <tr>
+                                        <td>@t.strNombreTarea</td>
+                                        <td>@t.strDescripcionAutor</td>
+                                        <td>@t.avance </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+                <button @onclick="CerrarModales">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (IsTramiteModalOpen && OrdenTramiteDetalle != null)
+{
+    <div class="modal-overlay" @onclick="CerrarModales">
+        <div class="modal-content modern-modal" @onclick:stopPropagation="true">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+                <span class="modal-icon">📄</span>
+                Orden de Trámite
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body modal-scroll">
+
+                <!-- INFO -->
+                <div class="tramite-card">
+                    <div class="collapsible-header">
+                        Información general
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="info-grid">
+                            <div><b>Fecha solicitud:</b> @OrdenTramiteDetalle.fechaSolicitud</div>
+                            <div><b>Cliente:</b> @OrdenTramiteDetalle.nombreGlobal</div>
+                            <div><b>Solicitante:</b> @OrdenTramiteDetalle.solicitanteInterno</div>
+                            <div><b>Fecha conclusión:</b> @OrdenTramiteDetalle.fechaConclusionTramite</div>
+                            <div><b>Nombre global:</b> @OrdenTramiteDetalle.nombreGlobal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRÁMITES -->
+                <div class="tramite-card">
+                    <div class="collapsible-header">
+                        Trámites individuales
+                    </div>
+                    <div class="collapsible-content">
+
+                        <table class="subtasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Trámite</th>
+                                    <th>Encargado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in OrdenTramiteDetalle.tramitesIndividuales)
+                                {
+                                    <tr>
+                                        <td>@t.clave</td>
+                                        <td>@t.tramiteIndividual</td>
+                                        <td>@t.personalEncargado</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+                <button @onclick="CerrarModales">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+}
 
 <!-- Toast -->
 @if (ShowToast)
@@ -257,8 +437,62 @@
 }
 
 @code {
+    BaseTask? SelectedTask;
+
+    bool IsOTModalOpen = false;
+    bool IsTramiteModalOpen = false;
+
+    async Task AbrirDetalle(BaseTask task)
+    {
+        SelectedTask = task;
+
+        if (task.Type == BlockType.WorkOrder)
+        {
+            await CargarOrdenTrabajo(task.ApiId);
+            IsOTModalOpen = true;
+        }
+        else if (task.Type == BlockType.Tramite)
+        {
+            await CargarOrdenTramite(task.ApiId);
+            IsTramiteModalOpen = true;
+        }
+    }
+    OrdenTrabajoDTO? OrdenTrabajoDetalle;
+    async Task CargarOrdenTrabajo(int id)
+    {
+        OrdenTrabajoDetalle = await OrdenService.GetDetalle(id);
+    }
+    OrdenTramiteDTO? OrdenTramiteDetalle;
+    async Task CargarOrdenTramite(int id)
+    {
+        OrdenTramiteDetalle = await OrdenTramiteService.GetDetalle(id);
+    }
+    void CerrarModales()
+    {
+        IsOTModalOpen = false;
+        IsTramiteModalOpen = false;
+        SelectedTask = null;
+    }
+    public List<TramiteIndividualDTO> tramitesIndividuales { get; set; }
+
+    public List<OrdenTramiteDTO> detalleTramites { get; set; }
+    public List<OrdenTramiteDTO> ordenesTramiteDetalle { get; set; }
+    public string tramiteIndividual { get; set; }
+    public string personalEncargado { get; set; }
+    public string strNombre { get; set; }
+    public string strDescripcion { get; set; }
+    public int intAvance { get; set; }
+
+
     // ---------- Tipos internos para la vista ----------
-    enum BlockType { AdminTask, WorkOrder, GeneralTask, SelfAssessment }
+    enum BlockType
+    {
+        AdminTask,
+        WorkOrder,
+        Tramite,
+        GeneralTask,
+        SelfAssessment
+    }
 
     class DayColumn
     {
@@ -289,20 +523,24 @@
         public List<object> SubTasks { get; set; } = new();
         public Block ParentBlock { get; set; }
         public string Tipo { get; set; } = "Tarea"; // Tarea o Evento
-        public string Icon { get; set; } = "📝";    // 📝 por defecto
+        public string IconoVisual =>
+            Tipo?.Equals("Evento", StringComparison.OrdinalIgnoreCase) == true
+                ? "📅"
+                : "📝";
+
     }
 
     class SelfAssessment
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public int IdRegistro { get; set; }
-    public string ActivityName { get; set; } = "";
-    public bool IsCompleted { get; set; } = false;
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public int IdRegistro { get; set; }
+        public string ActivityName { get; set; } = "";
+        public bool IsCompleted { get; set; } = false;
 
-    public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
+        public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
 
-    public Block ParentBlock { get; set; }
-}
+        public Block ParentBlock { get; set; }
+    }
 
 
     bool IsToday(SelfAssessment sa)
@@ -374,7 +612,7 @@
             day.Blocks.Add(new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1", IsExpanded = false });
 
             // Bloque 3 - Autoevaluación (ESTÁTICO)
-            day.Blocks.Add(new Block{ Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false});
+            day.Blocks.Add(new Block { Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false });
 
             // Bloque 4 - Servicio al Cliente (ESTÁTICO)
             var clienteBlock = new Block { Title = "Servicio al Cliente", Color = "#D7D1DD", IsExpanded = false };
@@ -434,8 +672,10 @@
             var descripcion = TryGetString(obj, "descripcion") ?? TryGetString(obj, "strObjetivoOtro") ?? "";
 
             var apiId = TryGetInt(obj, "idAgenda") ?? TryGetInt(obj, "id") ?? 0;
-           // bool esEvento = TryGetString(obj, "tituloEvento") != null;
-            var tipoBD = TryGetString(obj, "Tipo") ?? "Tarea"; // por si viene null
+            // bool esEvento = TryGetString(obj, "tituloEvento") != null;
+            bool esEvento = TryGetString(obj, "tituloEvento") != null;
+
+            var tipoBD = esEvento ? "Evento" : "Tarea";
 
             var mapped = new BaseTask
             {
@@ -445,12 +685,9 @@
                 StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
                 DueDate = fechaFin.Value,
                 IsCompleted = TryGetBool(obj, "completada") ?? false,
-                Priority = TryGetString(obj, "prioridadTitulo") ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
-
-                // ⬅️ Aquí usamos tu valor de la base de datos
+                Priority = TryGetString(obj, "prioridadTitulo")
+                               ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
                 Tipo = tipoBD,
-                Icon = tipoBD == "Evento" ? "📅" : "📝",
-
                 Type = BlockType.GeneralTask
             };
 
@@ -482,7 +719,7 @@
             var wt = new BaseTask
             {
                 ApiId = o.id,
-                Name = $"{o.strClave} - {o.nombreCliente}",
+                Name = $"{o.strClave}",
                 Description = o.strObjetivoOtro ?? o.strValor,
                 StartDate = o.dteFechaSolicitud,
                 DueDate = o.fechaFinal,
@@ -493,6 +730,52 @@
 
             day.Blocks[1].SubTasks.Add(wt);
         }
+        // 2.1) Obtener ÓRDENES DE TRÁMITE y mapear al MISMO bloque
+        List<OrdenTramiteDTO> tramites = new();
+
+        try
+        {
+            var tVenc = await OrdenTramiteService.GetVencidas();
+            if (tVenc != null) tramites.AddRange(tVenc);
+
+            var tHoy = await OrdenTramiteService.GetHoy();
+            if (tHoy != null) tramites.AddRange(tHoy);
+
+            var tProx = await OrdenTramiteService.GetProximas();
+            if (tProx != null) tramites.AddRange(tProx);
+        }
+        catch { /* ignore */ }
+
+        foreach (var t in tramites)
+        {
+            // 🔥 fecha CLAVE: conclusión del trámite
+            if (!DateTime.TryParse(t.fechaConclusionTramite, out var fecha))
+                continue;
+
+            fecha = fecha.Date;
+            if (fecha < startOfWeek || fecha > endOfWeek) continue;
+
+            var day = Days.FirstOrDefault(d => d.Date.Date == fecha);
+            if (day == null) continue;
+
+            var bt = new BaseTask
+            {
+                ApiId = t.idOrden,
+                Name = $"{t.numeroOrden}",
+                Description = t.solicitanteInterno,
+                StartDate = DateTime.TryParse(t.fechaSolicitud, out var fs)
+                    ? fs
+                    : fecha,
+                DueDate = fecha,
+                IsCompleted = false, // puedes mejorar esto si hay estado
+                Type = BlockType.Tramite,
+
+                ParentBlock = day.Blocks[1]
+            };
+
+            day.Blocks[1].SubTasks.Add(bt);
+        }
+
 
         // 3) Obtener autoevaluacion y mapear
         List<AutoevaluacionDTO> autoevaluaciones = new();
@@ -522,7 +805,7 @@
 
                     var autoBlock = day.Blocks.First(b => b.Title == "Autoevaluación");
 
-                   autoBlock.SubTasks.Add(new SelfAssessment
+                    autoBlock.SubTasks.Add(new SelfAssessment
                     {
                         IdRegistro = registro.IdRegistro,   // ⬅️ AQUI
                         ActivityName = tarea.Tarea,
@@ -651,43 +934,43 @@
         // TODO: Llamar a AgendaService para persistir cambio si lo deseas
     }
 
-   async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
-{
-    bool nuevoValor;
-
-    if (e?.Value is bool b)
-        nuevoValor = b;
-    else if (e?.Value is string s)
-        nuevoValor = s == "true" || s == "on";
-    else
-        return;
-
-    // Optimistic UI
-    sa.IsCompleted = nuevoValor;
-
-    try
+    async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
     {
-        await AutoevaluacionService.MarcarRegistroRealizadoAsync(
-            sa.IdRegistro,
-            nuevoValor
-        );
+        bool nuevoValor;
 
-        await ShowTemporaryToastAsync(
-            nuevoValor
-                ? "Autoevaluación marcada como realizada"
-                : "Autoevaluación desmarcada"
-        );
-    }
-    catch
-    {
-        // 🔥 rollback si falla
-        sa.IsCompleted = !nuevoValor;
+        if (e?.Value is bool b)
+            nuevoValor = b;
+        else if (e?.Value is string s)
+            nuevoValor = s == "true" || s == "on";
+        else
+            return;
 
-        await ShowTemporaryToastAsync(
-            "Error al guardar la autoevaluación"
-        );
+        // Optimistic UI
+        sa.IsCompleted = nuevoValor;
+
+        try
+        {
+            await AutoevaluacionService.MarcarRegistroRealizadoAsync(
+                sa.IdRegistro,
+                nuevoValor
+            );
+
+            await ShowTemporaryToastAsync(
+                nuevoValor
+                    ? "Autoevaluación marcada como realizada"
+                    : "Autoevaluación desmarcada"
+            );
+        }
+        catch
+        {
+            // 🔥 rollback si falla
+            sa.IsCompleted = !nuevoValor;
+
+            await ShowTemporaryToastAsync(
+                "Error al guardar la autoevaluación"
+            );
+        }
     }
-}
 
 
     async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
@@ -730,15 +1013,15 @@
     private ClientServiceTask? SelectedClientTask { get; set; }
     private bool IsClientModalOpen { get; set; } = false;
 
-    
+
 
     string GetModalTitle()
     {
         if (SelectedTaskObject is BaseTask bt)
             return bt.Type switch
             {
-                BlockType.AdminTask => "Tarea Administrativa",
-                BlockType.GeneralTask => "Tarea Operativa",
+
+                BlockType.GeneralTask => "Tarea",
                 _ => "Detalles de la tarea"
             };
         else if (SelectedTaskObject is SelfAssessment)
@@ -765,13 +1048,23 @@
 
     async Task SaveTask()
     {
-        // Aquí puedes mapear y mandar a AgendaService para actualizar
+        if (SelectedTaskObject is BaseTask bt)
+        {
+            if (bt.DueDate < bt.StartDate)
+            {
+                await ShowTemporaryToastAsync(
+                    "❌ La fecha fin no puede ser menor a la fecha inicio"
+                );
+                return;
+            }
+        }
+
         IsEditMode = false;
         IsModalOpen = false;
 
-        if (SelectedTaskObject is BaseTask bt)
+        if (SelectedTaskObject is BaseTask task)
         {
-            await ShowSuccessAlert($"✅ La tarea '{bt.Name}' se guardó correctamente");
+            await ShowSuccessAlert($"✅ La tarea '{task.Name}' se guardó correctamente");
         }
     }
 
@@ -1184,5 +1477,173 @@
         margin-right: 6px;
         font-size: 16px;
     }
+    /* ================= MODAL OVERLAY ================= */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
 
+    /* ================= MODAL BASE ================= */
+    .modal-content.modern-modal {
+        background: #ffffff;
+        border-radius: 22px;
+        width: 95%;
+        max-width: 1100px;
+        height: 85vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+        animation: modalFade 0.25s ease-out;
+        overflow: hidden;
+    }
+
+    /* ================= HEADER ================= */
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 22px;
+        background: linear-gradient(90deg, #1e7a3a, #0b3c4a);
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .modal-icon {
+        font-size: 26px;
+    }
+
+    /* ================= BODY ================= */
+    .modal-body.modal-scroll {
+        flex: 1;
+        padding: 24px 28px;
+        overflow-y: auto;
+        background: #f8fafc;
+    }
+
+    /* Scroll elegante */
+    .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* ================= FOOTER ================= */
+    .modal-footer {
+        padding: 16px;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: center;
+    }
+
+        .modal-footer button {
+            background: #0b3c4a;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+            .modal-footer button:hover {
+                background: #145a6a;
+            }
+
+    /* ================= CARDS ================= */
+    .ot-card,
+    .tramite-card {
+        background: #ffffff;
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 18px;
+        overflow: hidden;
+    }
+
+    /* ================= COLLAPSIBLE HEADER ================= */
+    .collapsible-header {
+        background: #f1f5f9;
+        padding: 14px 18px;
+        font-weight: 600;
+        cursor: default;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .collapsible-header:hover {
+            background: #e2e8f0;
+        }
+
+    /* ================= COLLAPSIBLE CONTENT ================= */
+    .collapsible-content {
+        padding: 18px;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* ================= INFO GRID ================= */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px 22px;
+        font-size: 14px;
+    }
+
+        .info-grid div {
+            background: #f9fafb;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+    /* ================= TABLES ================= */
+    .subtasks-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+        .subtasks-table th {
+            background: #f3f4f6;
+            padding: 12px;
+            font-weight: 600;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .subtasks-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .subtasks-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+    /* ================= ANIMATION ================= */
+    @@keyframes modalFade {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 </style>

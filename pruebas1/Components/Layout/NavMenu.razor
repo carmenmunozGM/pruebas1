@@ -38,7 +38,7 @@
                 <a class="nav-link user-nav dropdown-toggle"
                    href="#" id="userDropdown"
                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    🧑‍💻
+                    👤 
                     @nombreCompleto (@clavePersonal)
 
                 </a>
@@ -66,10 +66,16 @@
     }
     /* 1. Contenedor Fijo/Sticky */
     .menu-container {
-        position: sticky;
+        /*position: sticky;
+            top: 0;
+            z-index: 2000;
+            background-color: #C6E9F0 !important; */
+        position: fixed;
         top: 0;
+        left: 0;
+        width: 100%;
         z-index: 2000;
-        background-color: #C6E9F0 !important; /* tu azul */
+        background-color: #C6E9F0 !important;
     }
     /* ---- CONTROLAR EL DESBORDAMIENTO ---- */
     .container-fluid {

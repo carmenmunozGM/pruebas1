@@ -70,6 +70,9 @@
 
     </div>
 
+
+
+
     @if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
     {
         <div class="col-12 text-center">
@@ -78,6 +81,8 @@
             </div>
         </div>
     }
+
+
     else
     {
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas") is CategoryModel tareasCat)
@@ -115,7 +120,7 @@
 
                                         <!-- Checkbox -->
                                         <input type="checkbox"
-                                               checked="@st.IsDone"
+                                               checked="@st.FechaCompletada.HasValue"
                                                @onchange="(e) => ToggleSubtaskAsync(st, e)" />
 
 
@@ -197,7 +202,10 @@
                                                 {
                                                     <li class="subtask-item">
                                                         <div class="subtask-label @(s2.IsDone ? "done" : "")">
-                                                            <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
+                                                            <input type="checkbox"
+                                                                   checked="@s2.IsDone"
+                                                                   @onchange="@(e => ToggleSubtaskAsync(s2, e))" />
+
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
                                                                 <EditDeleteItem EditModel="ConvertToEditable(st)"
@@ -1062,8 +1070,8 @@
             Subtasks = t.subTareas?.Select(st => new SubtaskModel
             {
                 Title = st.titulo,
-       
-                IsDone = st.completada,
+                FechaCompletada = st.completada ? DateTime.Now : null,
+
                 Tipo = "SubTarea"
             }).ToList() ?? new List<SubtaskModel>()
         };
@@ -1217,30 +1225,28 @@
     private async Task ToggleSubtaskAsync(SubtaskModel st, ChangeEventArgs e)
     {
         bool nuevoEstado = (bool)e.Value;
-        bool estadoAnterior = st.IsDone;
 
-        st.IsDone = nuevoEstado;
+        // 👉 actualizamos el modelo local
+        st.FechaCompletada = nuevoEstado
+            ? DateTime.Now
+            : null;
 
         bool ok = false;
 
         if (st.Tipo == "Tarea")
-        {
             ok = await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
-        }
         else if (st.Tipo == "Evento")
-        {
             ok = await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado);
-        }
         else if (st.Tipo == "SubTarea")
-        {
             ok = await AgendaService.CambiarEstadoSubtareaAsync(st.ApiId, nuevoEstado);
-        }
 
         if (!ok)
         {
-            // 🔴 rollback si falla API
-            st.IsDone = estadoAnterior;
+            // rollback visual
+            st.FechaCompletada = nuevoEstado ? null : DateTime.Now;
         }
+
+        StateHasChanged();
     }
 
 private void CloseViewModal()
@@ -1390,7 +1396,8 @@ private void CloseViewModal()
                 IdAgenda = t.idAgenda,
                 Title = t.titulo,
                 Descripcion = t.descripcion,      // Asegúrate de traer la descripción
-                IsDone = t.completada,
+                FechaCompletada = t.completada ? DateTime.Now : null,
+
                 Tipo = "Tarea",
                 Prioridad = t.idPrioridad,
                 EsRecurrente = t.esRecurrente,   // 🔹 Esto estaba faltando
@@ -1401,8 +1408,8 @@ private void CloseViewModal()
                 Subtasks = t.subTareas?.Select(st => new SubtaskModel
                 {
                     Title = st.titulo,
-                 
-                    IsDone = st.completada,
+                    FechaCompletada = st.completada ? DateTime.Now : null,
+
                     Tipo = "SubTarea",
                 }).ToList() ?? new List<SubtaskModel>()
             }).ToList()
@@ -1416,7 +1423,7 @@ private void CloseViewModal()
                 IdAgenda = ev.idAgenda,
                 Title = ev.titulo,
                 Descripcion = ev.descripcion,
-                IsDone = false,
+                FechaCompletada = null,
                 Tipo = "Evento",
                 Icon = "📅",
                 FechaInicio = ev.fechaInicio,
@@ -1475,7 +1482,7 @@ private void CloseViewModal()
             Id = st.Id,
             Title = st.Title,
             Descripcion = st.Descripcion,
-            IsDone = st.IsDone,
+            FechaCompletada = st.FechaCompletada,
             Tipo = st.Tipo,
             Icon = st.Icon,
             FechaInicio = st.FechaInicio,
@@ -1804,8 +1811,10 @@ private void CloseViewModal()
 
     void ToggleInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner)
     {
-        inner.IsDone = !inner.IsDone;
-        parent.IsDone = parent.Subtasks.All(x => x.IsDone);
+        inner.FechaCompletada = inner.IsDone ? null : DateTime.Now;
+        parent.FechaCompletada = parent.Subtasks.All(x => x.IsDone)
+            ? DateTime.Now
+            : null;
     }
     
     bool AllCompleted(CategoryModel cat) => cat.Subtasks != null && cat.Subtasks.Any() && cat.Subtasks.All(st => st.IsDone && (st.Subtasks == null || st.Subtasks.All(s2 => s2.IsDone)));
@@ -1826,10 +1835,16 @@ private void CloseViewModal()
     {
         foreach (var st in cat.Subtasks)
         {
-            st.IsDone = done;
-            if (st.Subtasks != null) st.Subtasks.ForEach(s2 => s2.IsDone = done);
+            st.FechaCompletada = done ? DateTime.Now : null;
+
+            if (st.Subtasks != null)
+            {
+                foreach (var s2 in st.Subtasks)
+                    s2.FechaCompletada = done ? DateTime.Now : null;
+            }
         }
     }
+
 
     void EditSubtask(CategoryModel cat, SubtaskModel st) { Console.WriteLine($"Editar actividad: {st.Title} en {cat.Name}"); }
     void EditInnerSubtask(CategoryModel cat, SubtaskModel parent, SubtaskModel inner) { Console.WriteLine($"Editar subtarea: {inner.Title} en {parent.Title}"); }
@@ -1843,6 +1858,7 @@ private void CloseViewModal()
         await InitializeMasterCategoriesAsync();
         StateHasChanged();
     }
+   
 
 
-}
+    } 

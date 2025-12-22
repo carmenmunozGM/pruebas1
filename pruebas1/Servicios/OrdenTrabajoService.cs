@@ -11,7 +11,11 @@ namespace pruebas1.Servicios
         {
             this.httpClient = httpClient;
         }
-
+        public async Task<OrdenTrabajoDTO?> GetDetalle(int idOrden)
+        {
+            return await httpClient.GetFromJsonAsync<OrdenTrabajoDTO>(
+                $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}");
+        }
         public async Task<List<OrdenTrabajoDTO>> GetOrdenesVencidas()
         {
             return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(

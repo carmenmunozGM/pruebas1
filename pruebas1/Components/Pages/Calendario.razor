@@ -4,8 +4,13 @@
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
 @using System.Collections.Generic
-@inject AutoevaluacionService AutoevaluacionService 
-
+@inject LoginService loginService
+@inject AgendaService AgendaService
+@inject AutoevaluacionService AutoevaluacionService
+@inject OrdenTrabajoService OrdenTrabajoService
+@inject OrdenTramiteService OrdenTramiteService
+<br />
+<br />
 <div class="agenda-container">
     <!-- Encabezado -->
     <header class="agenda-header">
@@ -45,7 +50,7 @@
                         <div class="blocks-list">
                             @foreach (var block in day.Blocks)
                             {
-                                <div class="list-item" style="background-color:@block.Color" @onclick="() => OpenBlockModal(block)">
+                                <div class="list-item" style="background-color:@block.Color" @onclick="async () => await OpenBlockModal(block)">
                                     <div class="list-title">
                                         @block.Title
                                         <span class="task-count">
@@ -74,13 +79,13 @@
 @if (SelectedBlock != null)
 {
     <div class="modal-overlay" @onclick="CloseBlockModal">
-        <div class="modal-content modern-modal" @onclick:stopPropagation="true">
+        <div class="modal-content modern-modal modal-xl" @onclick:stopPropagation="true">
             <div class="modal-header">
                 <span class="modal-icon">@GetIcon(SelectedBlock.Title)</span>
                 <h2>@SelectedBlock.Title</h2>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body modal-scrol">
                 @if (SelectedBlock.Title == "Autoevaluación")
                 {
                     <ul class="collapsible-list">
@@ -94,13 +99,109 @@
                 }
                 else if (SelectedBlock.Title == "Órdenes de Trabajo")
                 {
-                    <ul class="collapsible-list">
-                        @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
-                        {
-                            <li class="task-item">@task.Nombre</li>
-                        }
-                    </ul>
+                    <!-- ================= ORDENES DE TRABAJO ================= -->
+                    @foreach (var ot in SelectedBlock.SubTasks.OfType<OrdenTrabajoDTO>())
+                    {
+                        <div class="ot-card">
+
+                            <!-- HEADER -->
+                            <div class="collapsible-header"
+                                 @onclick="() => ToggleOrdenTrabajo(ot.id)">
+                                <span>
+                                    🧾 <b>@ot.strClave</b> — @ot.nombreCliente
+                                </span>
+                                <span class="toggle-icon">
+                                    @(OrdenesTrabajoExpandidas.Contains(ot.id) ? "▲" : "▼")
+                                </span>
+                            </div>
+
+                            @if (OrdenesTrabajoExpandidas.Contains(ot.id))
+                            {
+                                <div class="collapsible-content">
+                                    <p><b>Autor:</b> @ot.nombreCompleto</p>
+                                    <p><b>Fecha solicitud:</b> @ot.dteFechaSolicitud.ToShortDateString()</p>
+                                    <p><b>Objetivo:</b> @ot.strValor</p>
+
+                                    @if (!string.IsNullOrWhiteSpace(ot.strObjetivoOtro))
+                                    {
+                                        <p><b>Objetivo otros:</b> @ot.strObjetivoOtro</p>
+                                    }
+
+                                    <p><b>Conclusión programada:</b> @ot.fechaFinal.ToShortDateString()</p>
+
+                                    <table class="subtasks-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarea</th>
+                                                <th>Descripción</th>
+                                                <th>Avance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var t in ot.tareas)
+                                            {
+                                                <tr>
+                                                    <td>@t.strNombreTarea</td>
+                                                    <td>@t.strDescripcionAutor</td>
+                                                    <td>@t.avance</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- ================= ORDENES DE TRAMITE ================= -->
+                    @foreach (var tr in SelectedBlock.SubTasks.OfType<OrdenTramiteDTO>())
+                    {
+                        <div class="tramite-card">
+
+                            <!-- HEADER -->
+                            <div class="collapsible-header"
+                                 @onclick="() => ToggleOrdenTramite(tr.idOrden)">
+                                <span>
+                                    📁 <b>@tr.numeroOrden</b> — @tr.nombreGlobal
+                                </span>
+                                <span class="toggle-icon">
+                                    @(OrdenesTramiteExpandidas.Contains(tr.idOrden) ? "▲" : "▼")
+                                </span>
+                            </div>
+
+                            @if (OrdenesTramiteExpandidas.Contains(tr.idOrden))
+                            {
+                                <div class="collapsible-content">
+                                    <p><b>Solicitante:</b> @tr.solicitanteInterno</p>
+                                    <p><b>Cliente:</b> @tr.cliente</p>
+                                    <p><b>Fecha solicitud:</b> @tr.fechaSolicitud</p>
+                                    <p><b>Conclusión:</b> @tr.fechaConclusionTramite</p>
+
+                                    <table class="subtasks-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Clave</th>
+                                                <th>Trámite</th>
+                                                <th>Encargado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var ti in tr.tramitesIndividuales)
+                                            {
+                                                <tr>
+                                                    <td>@ti.clave</td>
+                                                    <td>@ti.tramiteIndividual</td>
+                                                    <td>@ti.personalEncargado</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    }
                 }
+
                 else if (SelectedBlock.Title == "Servicio a Cliente")
                 {
                     @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
@@ -129,35 +230,60 @@
                 else if (SelectedBlock.Title == "Tareas" || SelectedBlock.Title == "Tareas Operativas")
                 {
                     <ul class="collapsible-list">
-                        @foreach (var task in SelectedBlock.SubTasks.OfType<TaskItem>())
+                        @foreach (var item in SelectedBlock.SubTasks)
                         {
-                            <li>
-                                <div class="collapsible-header" @onclick="() => ToggleTask(task)">
-                                    @task.Nombre
-                                    <span class="toggle-icon">@((ExpandedTasks.Contains(task) ? "▲" : "▼"))</span>
-                                </div>
-
-                                @if (ExpandedTasks.Contains(task))
-                                {
-                                    <div class="task-details">
-                                        <p><strong>Descripción:</strong> @task.Descripcion</p>
-                                        <p><strong>Fecha Inicio:</strong> @task.FechaInicio.ToShortDateString()</p>
-                                        <p><strong>Fecha Fin:</strong> @task.FechaFin.ToShortDateString()</p>
-                                        <p><strong>Prioridad:</strong> @task.Prioridad</p>
-                                        @if (task.Subtareas.Any())
-                                        {
-                                            <p><strong>Subtareas:</strong></p>
-                                            <ul>
-                                                @foreach (var sub in task.Subtareas)
-                                                {
-                                                    <li>@sub</li>
-                                                }
-                                            </ul>
-                                        }
+                            if (item is TaskItem task)
+                            {
+                                <li>
+                                    <div class="collapsible-header" @onclick="() => ToggleTask(task)">
+                                        📝 @task.Nombre
+                                        <span class="toggle-icon">@((ExpandedTasks.Contains(task) ? "▲" : "▼"))</span>
                                     </div>
-                                }
-                            </li>
+
+                                    @if (ExpandedTasks.Contains(task))
+                                    {
+                                        <div class="task-details">
+                                            <p><strong>Descripción:</strong> @task.Descripcion</p>
+                                            <p><strong>Fecha Inicio:</strong> @task.FechaInicio.ToShortDateString()</p>
+                                            <p><strong>Fecha Fin:</strong> @task.FechaFin.ToShortDateString()</p>
+                                            <p><strong>Prioridad:</strong> @task.Prioridad</p>
+
+                                            @if (task.Subtareas.Any())
+                                            {
+                                                <p><strong>Subtareas:</strong></p>
+                                                <ul>
+                                                    @foreach (var sub in task.Subtareas)
+                                                    {
+                                                        <li>@sub</li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+                                    }
+                                </li>
+                            }
+                            else if (item is EventItem ev)
+                            {
+                                <li>
+                                    <div class="collapsible-header" @onclick="() => ToggleEvent(ev)">
+                                        📅 @ev.Nombre
+                                        <span class="toggle-icon">@((ExpandedEvents.Contains(ev) ? "▲" : "▼"))</span>
+                                    </div>
+
+                                    @if (ExpandedEvents.Contains(ev))
+                                    {
+                                        <div class="task-details">
+                                            <p><strong>Descripción:</strong> @ev.Descripcion</p>
+                                            <p><strong>Fecha Inicio:</strong> @ev.FechaInicio.ToShortDateString()</p>
+                                            <p><strong>Fecha Fin:</strong> @ev.FechaFin.ToShortDateString()</p>
+                                            <p><strong>Horario:</strong> @ev.HoraInicio - @ev.HoraFin</p>
+                                        </div>
+                                    }
+                                </li>
+                            }
+
                         }
+
                     </ul>
                 }
             </div>
@@ -170,6 +296,11 @@
 }
 
 @code {
+    List<pruebas1.Entidades.TareaApi> TareasApi = new();
+    List<EventoApiDTO> EventosApi = new();
+    List<OrdenTrabajoDTO> OrdenesTrabajo = new();
+    List<OrdenTramiteDTO> OrdenesTramite = new();
+
     class TaskItem
     {
         public string Nombre { get; set; }
@@ -179,6 +310,31 @@
         public string Prioridad { get; set; }
         public List<string> Subtareas { get; set; } = new();
     }
+    class EventItem
+    {
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan HoraFin { get; set; }
+    }
+
+    HashSet<int> OrdenesTrabajoExpandidas = new();
+
+    void ToggleOrdenTrabajo(int idOrden)
+    {
+        if (!OrdenesTrabajoExpandidas.Add(idOrden))
+            OrdenesTrabajoExpandidas.Remove(idOrden);
+    }
+    HashSet<int> OrdenesTramiteExpandidas = new();
+
+    void ToggleOrdenTramite(int id)
+    {
+        if (!OrdenesTramiteExpandidas.Add(id))
+            OrdenesTramiteExpandidas.Remove(id);
+    }
+
 
     class AutoevaluacionItem
     {
@@ -218,7 +374,38 @@
     protected override async Task OnInitializedAsync()
     {
         await CargarAutoevaluaciones();
+        var agendas = await AgendaService.ObtenerAgendaAsignadasAsync();
+        var idAgenda = agendas.FirstOrDefault();
+        await CargarOrdenes();
+
+        TareasApi = await AgendaService.ObtenerTareasApi(idAgenda);
+        EventosApi = await AgendaService.ObtenerEventos(idAgenda);
         BuildMonth();
+    }
+
+    async Task CargarOrdenes()
+    {
+        var otHoy = await OrdenTrabajoService.GetOrdenesHoy();
+        var otProx = await OrdenTrabajoService.GetOrdenesProximas();
+        var otVenc = await OrdenTrabajoService.GetOrdenesVencidas();
+
+        OrdenesTrabajo = otHoy
+            .Concat(otProx)
+            .Concat(otVenc)
+            .GroupBy(o => o.id)
+            .Select(g => g.First())
+            .ToList();
+
+        var trHoy = await OrdenTramiteService.GetHoy();
+        var trProx = await OrdenTramiteService.GetProximas();
+        var trVenc = await OrdenTramiteService.GetVencidas();
+
+        OrdenesTramite = trHoy
+            .Concat(trProx)
+            .Concat(trVenc)
+            .GroupBy(o => o.idOrden)
+            .Select(g => g.First())
+            .ToList();
     }
 
     void BuildMonth()
@@ -238,49 +425,87 @@
             Days.Add(CreateDay(date));
         }
     }
+    HashSet<EventItem> ExpandedEvents = new();
+    void ToggleEvent(EventItem ev)
+    {
+        if (ExpandedEvents.Contains(ev))
+            ExpandedEvents.Remove(ev);
+        else
+            ExpandedEvents.Add(ev);
+    }
 
     DayColumn CreateDay(DateTime date)
     {
         var day = new DayColumn { Date = date };
         if (date.DayOfWeek == DayOfWeek.Sunday) return day;
+        var tareasDelDia = TareasApi
+    .Where(t => t.fechaInicio.Date <= date.Date && t.fechaFin.Date >= date.Date)
+    .Select(t => new TaskItem
+    {
+        Nombre = t.titulo,
+        Descripcion = t.descripcion,
+        FechaInicio = t.fechaInicio,
+        FechaFin = t.fechaFin,
+        Prioridad = t.prioridadTitulo ?? "Sin prioridad",
+        Subtareas = t.subTareas.Select(s => s.titulo).ToList()
+    })
+    .Cast<object>();
+
+        var eventosDelDia = EventosApi
+            .Where(e => e.fechaInicio.Date <= date.Date && e.fechaFin.Date >= date.Date)
+            .Select(e => new EventItem
+            {
+                Nombre = e.titulo,
+                Descripcion = e.descripcion,
+                FechaInicio = e.fechaInicio,
+                FechaFin = e.fechaFin,
+                HoraInicio = e.fechaInicio.TimeOfDay,
+                HoraFin = e.fechaFin.TimeOfDay
+            })
+            .Cast<object>();
 
         day.Blocks.Add(new Block
         {
             Title = "Tareas",
             Color = "#FFD1DC",
-            SubTasks = new List<object>
-            {
-                new TaskItem
-                {
-                    Nombre = "Área de TI limpia",
-                    Descripcion = "Área y estación de insumos de TI limpia y ordenada.",
-                    FechaInicio = date,
-                    FechaFin = date,
-                    Prioridad = "Alta",
-                    Subtareas = new List<string> { "Limpieza general", "Ordenar insumos" }
-                },
-                new TaskItem
-                {
-                    Nombre = "Control de suscripciones",
-                    Descripcion = "Seguimiento de suscripciones responsables de TI.",
-                    FechaInicio = date,
-                    FechaFin = date,
-                    Prioridad = "Media"
-                }
-            }
+            SubTasks = tareasDelDia
+                .Concat(eventosDelDia)
+                .ToList()
         });
+
+
+        DateTime FechaOT(OrdenTrabajoDTO ot)
+        {
+            return ot.fechaFinal.Date;
+        }
+
+        DateTime FechaTramite(OrdenTramiteDTO tr)
+        {
+            return DateTime.TryParse(tr.fechaConclusionTramite, out var d)
+                ? d.Date
+                : DateTime.MinValue;
+        }
+
+
+        var ordenesTrabajoDia = OrdenesTrabajo
+       .Where(o => FechaOT(o) == date.Date)
+       .Cast<object>()
+       .ToList();
+
+        var ordenesTramiteDia = OrdenesTramite
+            .Where(t => FechaTramite(t) == date.Date)
+            .Cast<object>()
+            .ToList();
 
         day.Blocks.Add(new Block
         {
             Title = "Órdenes de Trabajo",
             Color = "#FFDAC1",
-            SubTasks = new List<object>
-            {
-                new TaskItem { Nombre = "ORD-13683" },
-                new TaskItem { Nombre = "ORD-13503" },
-                new TaskItem { Nombre = "ORD-13296" }
-            }
+            SubTasks = ordenesTrabajoDia
+         .Concat(ordenesTramiteDia)
+         .ToList()
         });
+
 
         var autoevaluacionesDelDia = Autoevaluaciones
             .Where(a => a.Fecha.Date == date.Date)
@@ -328,7 +553,33 @@
 
     void PrevMonth() { CurrentDate = CurrentDate.AddMonths(-1); BuildMonth(); }
     void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
-    void OpenBlockModal(Block block) => SelectedBlock = block;
+    //void OpenBlockModal(Block block) => SelectedBlock = block;
+    async Task OpenBlockModal(Block block)
+    {
+        SelectedBlock = block;
+
+        if (block.Title == "Órdenes de Trabajo")
+        {
+            var detalleCompleto = new List<object>();
+
+            foreach (var item in block.SubTasks)
+            {
+                if (item is OrdenTrabajoDTO ot)
+                {
+                    var detalle = await OrdenTrabajoService.GetDetalle(ot.id);
+                    if (detalle != null)
+                        detalleCompleto.Add(detalle);
+                }
+                else
+                {
+                    detalleCompleto.Add(item);
+                }
+            }
+
+            SelectedBlock.SubTasks = detalleCompleto;
+        }
+    }
+
     void CloseBlockModal() => SelectedBlock = null;
 
     class AutoevaluacionCalendarioItem
@@ -375,14 +626,19 @@
 
 
 <style>
+    body {
+        margin: 0;
+        overflow-y: auto;
+    }
     /* Contenedor del calendario */
     .agenda-container {
+        min-height: 100vh;
         font-family: Inter, system-ui, sans-serif;
         background: #fff;
         padding: 30px;
         border-radius: 12px;
         width: 100vw;
-        height: 100vh;
+        height: auto;
         max-width: 100%;
         max-height: 100%;
         margin: 0;
@@ -390,6 +646,7 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
+        overflow: visible; /* IMPORTANTE */
     }
 
     /* Encabezado */
@@ -448,6 +705,37 @@
             color: white;
             transform: translateY(-1px);
         }
+
+    .collapsible-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        background: #f5f7fa;
+        padding: 10px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+        .collapsible-header:hover {
+            background: #e9edf3;
+        }
+
+    .toggle-icon {
+        font-size: 13px;
+    }
+
+    .collapsible-content {
+        padding: 10px;
+        margin-top: 6px;
+        border-left: 3px solid #4f46e5;
+    }
+
+    .ot-card, .tramite-card {
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
 
     .arrow {
         font-weight: 700;
@@ -560,167 +848,163 @@
         margin-top: 10px;
     }
 
-    /* Modal */
+    /* ================= MODAL OVERLAY ================= */
     .modal-overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0,0,0,0.5);
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         z-index: 1000;
+        backdrop-filter: blur(4px);
     }
 
-    .modal-content {
-        background: #fff;
-        padding: 0px;
-        border-radius: 25px;
-        max-width: 500px;
-        width: 90%;
-        max-height: 80%;
-        overflow-y: auto;
-    }
-
-    .modern-modal {
-        background: #fff;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        border-radius: 20px;
-        padding: 25px;
-        max-width: 500px;
-        width: 90%;
-        animation: fadeIn 0.3s ease-in-out;
+    /* ================= MODAL BASE ================= */
+    .modal-content.modern-modal {
+        background: #ffffff;
+        border-radius: 22px;
+        width: 95%;
+        max-width: 1100px; /* MÁS ANCHO */
+        height: 85vh; /* MÁS ALTO */
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+        animation: modalFade 0.25s ease-out;
         overflow: hidden;
     }
 
+    /* ================= HEADER ================= */
     .modal-header {
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 14px;
+        padding: 22px;
         background: linear-gradient(90deg, #1e7a3a, #0b3c4a);
         color: white;
-        border-radius: 20px 20px 0 0; 
-        padding: 18px;
-        margin: -25px -25px 20px -25px;
-        width: calc(100% + 50px); 
+        font-size: 20px;
+        font-weight: 700;
     }
-
 
     .modal-icon {
-        font-size: 1.8rem;
-        margin-right: 10px;
+        font-size: 26px;
     }
 
-    .modern-modal h2 {
-        font-size: 1.5rem;
-        margin: 0;
+    /* ================= BODY ================= */
+    .modal-body.modal-scroll {
+        flex: 1;
+        padding: 22px 26px;
+        overflow-y: auto;
+        background: #f8fafc;
     }
 
-    .modal-body {
-        padding: 10px 5px;
+    /* Scroll elegante */
+    .modal-body::-webkit-scrollbar {
+        width: 8px;
     }
 
-    /* Listado de tareas y actividades */
-    .task-list {
-        list-style: none;
-        padding: 0;
-    }
-
-        .task-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-    /* Detalles de tareas (Administrativas/Operativas) */
-    .task-details {
-        background: #f9fafb;
-        padding: 12px;
+    .modal-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
         border-radius: 10px;
-        margin-top: 12px;
     }
 
-        .task-details p, .task-details ul {
-            margin: 5px 0;
-        }
-
-        .task-details ul {
-            padding-left: 20px;
-        }
-
-    /* Tabla para Servicio a Cliente */
-    .subtasks-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    }
-
-        .subtasks-table th, .subtasks-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 14px;
-            text-align: left;
-        }
-
-        .subtasks-table th {
-            background-color: #f3f4f6;
-            font-weight: 600;
-        }
-
-        .subtasks-table tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-
-    /* Footer del modal */
+    /* ================= FOOTER ================= */
     .modal-footer {
-        text-align: center;
-        margin-top: 15px;
+        padding: 16px;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: center;
     }
 
-    /* Hover en items de tarea */
-    .task-item {
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-        cursor: pointer;
+    /* ================= CARDS ================= */
+    .ot-card,
+    .tramite-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 16px;
+        overflow: hidden;
     }
 
-        .task-item:hover {
-            background: #f0f0f0;
-        }
-
-    .collapsible-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
+    /* ================= COLLAPSIBLE HEADER ================= */
     .collapsible-header {
+        background: #f1f5f9;
+        padding: 14px 18px;
+        font-weight: 600;
         cursor: pointer;
-        padding: 8px;
-        background-color: #f3f4f6;
-        border-radius: 6px;
-        margin-bottom: 5px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-weight: 600;
     }
 
         .collapsible-header:hover {
-            background-color: #e5e7eb;
+            background: #e2e8f0;
         }
 
     .toggle-icon {
-        font-size: 0.9rem;
-        color: #555;
+        font-size: 14px;
+    }
+
+    /* ================= COLLAPSIBLE CONTENT ================= */
+    .collapsible-content {
+        padding: 18px;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* ================= TASK DETAILS ================= */
+    .task-details {
+        background: #f9fafb;
+        padding: 16px;
+        border-radius: 12px;
+        margin-top: 12px;
+    }
+
+    /* ================= TABLES ================= */
+    .subtasks-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        font-size: 14px;
+    }
+
+        .subtasks-table th {
+            background: #f3f4f6;
+            padding: 10px;
+            font-weight: 600;
+        }
+
+        .subtasks-table td {
+            padding: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .subtasks-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+    /* ================= LIST ITEMS ================= */
+    .collapsible-list li {
+        margin-bottom: 8px;
     }
 
     .task-item.realizado {
-    text-decoration: line-through; /* o underline */
-    opacity: 0.6;
-}
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
 
+    /* ================= ANIMATION ================= */
+    @@keyframes modalFade {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
 
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 </style>
-

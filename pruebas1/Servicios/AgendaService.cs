@@ -17,6 +17,8 @@ namespace pruebas1.Servicios
         private readonly LoginService loginService;
         private int? selectedPrioridadId;
         private readonly HttpClient _http;
+        private const string BaseApi = "https://redgm.site:9096";
+
         public AgendaService(HttpClient httpClient, LoginService loginService)
         {
             this.httpClient = httpClient;
@@ -24,6 +26,7 @@ namespace pruebas1.Servicios
             this.httpClient = httpClient;
             _http = httpClient;
         }
+
 
         // CREAR TAREA
         public async Task<bool> CrearTareaApi(TareaCreada tarea)
@@ -273,93 +276,56 @@ namespace pruebas1.Servicios
 
         // PATCH
         // ===== PATCH TAREA =====
-        public async Task<bool> CambiarEstadoTareaAsync(int id, bool estado)
+
+        public async Task<bool> CambiarEstadoTareaAsync(int id, bool done)
         {
-            try
+            var body = new
             {
-                var usuario = loginService.obtenerUsuarioLogueado();
-                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
-                    return false;
+                fechaCompletada = done ? (DateTime?)DateTime.UtcNow : null
+            };
 
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+            var response = await httpClient.PatchAsync(
+                $"https://redgm.site:9096/tareas/tareas/{id}/estado",
+                JsonContent.Create(body)
+            );
 
-                var payload = new { estado = estado };
-                var content = JsonContent.Create(payload);
-
-                var response = await httpClient.PatchAsync(
-      $"tareas/{id}/estado",
-      content
-                  );
-
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
+            Debug.WriteLine($"PATCH TAREA → {response.StatusCode}");
+            return response.IsSuccessStatusCode;
         }
+
 
 
         // ===== PATCH SUBTAREA =====
         public async Task<bool> CambiarEstadoSubtareaAsync(int id, bool estado)
         {
-            try
-            {
-                var usuario = loginService.obtenerUsuarioLogueado();
-                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
-                    return false;
+            var body = new { estado = estado };
 
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+            var response = await httpClient.PatchAsync(
+                $"https://redgm.site:9096/tareas/subtareas/{id}/estado",
+                JsonContent.Create(body)
+            );
 
-                var payload = new { estado = estado };
-                var content = JsonContent.Create(payload);
-
-                var response = await httpClient.PatchAsync(
-    $"tareas/subtareas/{id}/estado",
-    content
-                );
-
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
+            Debug.WriteLine($"PATCH SUBTAREA → {response.StatusCode}");
+            return response.IsSuccessStatusCode;
         }
+
+
 
 
         // ===== PATCH EVENTO =====
 
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)
         {
-            try
-            {
-                var usuario = loginService.obtenerUsuarioLogueado();
-                if (usuario == null || string.IsNullOrEmpty(usuario.Token))
-                    return false;
+            var body = new { estado = estado };
 
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+            var response = await httpClient.PatchAsync(
+                $"https://redgm.site:9096/eventos/eventos/{id}/estado",
+                JsonContent.Create(body)
+            );
 
-                var payload = new { estado = estado };
-                var content = JsonContent.Create(payload);
-
-                var response = await httpClient.PatchAsync(
-     $"eventos/{id}/estado",
-     content
-                 );
-
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
+            Debug.WriteLine($"PATCH EVENTO → {response.StatusCode}");
+            return response.IsSuccessStatusCode;
         }
-
-
 
 
         // ===================== EDITAR =====================
