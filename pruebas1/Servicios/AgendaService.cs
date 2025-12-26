@@ -434,6 +434,49 @@ namespace pruebas1.Servicios
             await httpClient.DeleteAsync($"/tareas/eliminar/{id}");
         }
 
+        public async Task<TareaApi?> ObtenerTareaDetalle(int idTarea)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                return null;
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                // 🔴 AJUSTA ESTA URL SI TU API ES DIFERENTE
+                var url = $"tareas/{idTarea}";
+
+                return await httpClient.GetFromJsonAsync<TareaApi>(url);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error ObtenerTareaDetalle: {ex.Message}");
+                return null;
+            }
+        }
+        public async Task<EventoApiDTO?> ObtenerEventoDetalle(int idEvento)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                return null;
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+                var url = $"https://redgm.site:9096/eventos/Obtener/{idEvento}";
+                return await httpClient.GetFromJsonAsync<EventoApiDTO>(url);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error ObtenerEventoDetalle: {ex.Message}");
+                return null;
+            }
+        }
+
 
     }
 

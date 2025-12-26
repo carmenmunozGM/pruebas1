@@ -440,7 +440,6 @@
     height: 36px;
     border-radius: 50%;
     border: none;
-    
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -461,7 +460,7 @@
         }
 
 
-    
+
 
 /* ------------------------------------------------ */
 /* ------------------------------------------------ */
@@ -1129,7 +1128,7 @@
         }
 
 
-        /*aqui esta lo de tabla y el modal de tareas ordenes*/
+/*aqui esta lo de tabla y el modal de tareas ordenes*/
 .btn-eye {
     background-color: transparent;
     border: none;
@@ -1305,6 +1304,7 @@
     .view-btn:hover {
         background: #005fcc;
     }
+
 .view-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1499,6 +1499,27 @@
         color: #000;
     }
 
+    .icon-btn.edit {
+        background: #fff;
+        color: #135330;
+        border: 1px solid #135330; /* 👈 borde negro */
+    }
+
+        .icon-btn.edit:hover {
+            background: #fff;
+            transform: scale(1.08);
+        }
+
+    .icon-btn.delete {
+        background: #fff;
+        color: #A82518;
+        border: 1px solid #A82518; /* 👈 borde negro */
+    }
+
+        .icon-btn.delete:hover {
+            background: #fff;
+            transform: scale(1.08);
+        }
 /* =========================
    FOOTER
 ========================= */
@@ -1522,6 +1543,49 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4); /* Fondo destacado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.calendar-popover {
+    background: #fff;
+    padding: 16px;
+    border-radius: 10px;
+    max-height: 80vh; /* Alto máximo dinámico */
+    overflow-y: auto; /* Scroll si hay demasiados días */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    width: 320px; /* Ancho suficiente para los días */
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.calendar-week-day, .calendar-day {
+    text-align: center;
+    padding: 6px 0;
+}
+
+.calendar-today {
+    background-color: #ffeb3b;
+    border-radius: 50%;
+}
+
+.calendar-other-month {
+    color: #bbb;
 }
 
 /* =========================

@@ -73,53 +73,6 @@
     }
 </div>
 
-
-<style>
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.4); /* Fondo destacado */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .calendar-popover {
-        background: #fff;
-        padding: 16px;
-        border-radius: 10px;
-        max-height: 80vh; /* Alto máximo dinámico */
-        overflow-y: auto; /* Scroll si hay demasiados días */
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        width: 320px; /* Ancho suficiente para los días */
-    }
-
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
-        margin-top: 8px;
-    }
-
-    .calendar-week-day, .calendar-day {
-        text-align: center;
-        padding: 6px 0;
-    }
-
-    .calendar-today {
-        background-color: #ffeb3b;
-        border-radius: 50%;
-    }
-
-    .calendar-other-month {
-        color: #bbb;
-    }
-
-</style>
     <div class="modal-button-container">
         <ReusableModal OnSave="RefrescarTareas" />
 
@@ -235,13 +188,12 @@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
-                                            <button class="icon-btn edit" title="Editar"
-                                                 >
+
+                                            <button class="icon-btn edit" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
 
-                                            <button class="icon-btn delete" title="Eliminar"
-                                                    >
+                                            <button class="icon-btn delete" title="Eliminar">
                                                 <i class="bi bi-trash3"></i>
                                             </button>
 
@@ -1391,27 +1343,71 @@
     //MODAL DE VER TAREAS O EVENTOS
     private bool ShowViewModal { get; set; } = false;
 
-
-    private void OpenViewModal(SubtaskModel st)
+    private async Task OpenViewModal(SubtaskModel st)
     {
-        SelectedViewItem = new ViewAgendaItem
+        if (st.Tipo == "Tarea")
         {
-            Tipo = st.Tipo,
-            Title = st.Title,
-            Descripcion = st.Descripcion,
-            FechaInicio = st.FechaInicio,
-            FechaFin = st.FechaFin,
-            HoraInicio = st.HoraInicio,
-            HoraFin = st.HoraFin,
-            Ubicacion = st.Ubicacion,
-            Prioridad = st.Prioridad,
-            EsRecurrente = st.EsRecurrente,         // si lo tienes en tu modelo
-            ReglaRecurrencia = st.ReglaRecurrencia, // si lo tienes en tu modelo
-            Participantes = st.Participantes,
-            Subtasks = st.Subtasks ?? new List<SubtaskModel>()
-        };
+            var t = await AgendaService.ObtenerTareaDetalle(st.ApiId);
+            if (t == null) return;
+
+            SelectedViewItem = new ViewAgendaItem
+            {
+                Tipo = "Tarea",
+                Title = t.titulo,
+                Descripcion = t.descripcion,
+                Prioridad = t.idPrioridad,
+                EsRecurrente = t.esRecurrente,
+                ReglaRecurrencia = t.reglaRecurrencia ?? "",
+                FechaInicio = t.fechaInicio,
+                FechaFin = t.fechaFin,
+                Subtasks = t.subTareas?.Select(s => new SubtaskModel
+                {
+                    Title = s.titulo,
+                    IsDone = s.completada
+                }).ToList() ?? new()
+            };
+        }
+        else // EVENTO
+        {
+            var e = await AgendaService.ObtenerEventoDetalle(st.ApiId);
+            if (e == null) return;
+
+            SelectedViewItem = new ViewAgendaItem
+            {
+                Tipo = "Evento",
+                Title = e.titulo,
+                Descripcion = e.descripcion,
+                Prioridad = e.idPrioridad,
+                EsRecurrente = e.esRecurrente,
+                ReglaRecurrencia = e.reglaRecurrencia ?? "",
+                FechaInicio = e.fechaInicio,
+                FechaFin = e.fechaFin,
+                Ubicacion = e.ubicacion,
+                Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new()
+            };
+        }
 
         ShowViewModal = true;
+    }
+
+    string TraducirRecurrencia(string? regla)
+    {
+        if (string.IsNullOrWhiteSpace(regla))
+            return "No recurrente";
+
+        if (regla.Contains("DAILY"))
+            return "Cada día";
+
+        if (regla.Contains("WEEKLY"))
+            return "Cada semana";
+
+        if (regla.Contains("MONTHLY"))
+            return "Cada mes";
+
+        if (regla.Contains("YEARLY"))
+            return "Cada año";
+
+        return "Recurrente";
     }
 
     // ESTE SIRVE PARA EL CHECK DE TAREAS
@@ -1697,7 +1693,7 @@
                 ApiId = t.id,
                 IdAgenda = t.idAgenda,
                 Title = t.titulo,
-                Descripcion = t.descripcion,      // Asegúrate de traer la descripción
+                //escripcion = t.descripcion,      // Asegúrate de traer la descripción
                 IsDone = t.completada,
                 Tipo = "Tarea",
                 Prioridad = t.idPrioridad,
@@ -1726,7 +1722,7 @@
                 ApiId = ev.id,
                 IdAgenda = ev.idAgenda,
                 Title = ev.titulo,
-                Descripcion = ev.descripcion,
+                //Descripcion = ev.descripcion,
                 IsDone = ev.completada, // <--- Aquí
                 Tipo = "Evento",
                 Icon = "📅",
@@ -1875,7 +1871,7 @@
         {
             IdOrdenTramite = t.idOrden,   // 🔥 ESTE ES EL ID REAL
             NumeroOrden = t.numeroOrden,
-            FechaProgramada = DateTime.TryParse(t.fechaSolicitud, out var f) ? f : DateTime.Now,
+            FechaProgramada = DateTime.TryParse(t.fechaConclusionTramite, out var f) ? f : DateTime.Now,
             Status = status,
             Tipo = TipoOrden.Tramite
         };
