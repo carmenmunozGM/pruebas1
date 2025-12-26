@@ -9,6 +9,8 @@
 @inject AutoevaluacionService AutoevaluacionService
 @inject OrdenTrabajoService OrdenTrabajoService
 @inject OrdenTramiteService OrdenTramiteService
+@inject CalendarioService CalendarioService
+
 <br />
 <br />
 <div class="agenda-container">
@@ -38,13 +40,31 @@
         {
             @if (day != null)
             {
-                <div class="day-card @(day.Date.DayOfWeek == DayOfWeek.Sunday ? "sunday" : "")">
-                    <div class="day-header">@day.Date.ToString("dd")</div>
+                <div class="day-card @(EsNoLaboral(day.Date) ? "no-laboral" : "")"
+                     title="@DescripcionNoLaboral(day.Date)">
 
-                    @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
+                    <div class="day-header">
+                        @day.Date.ToString("dd")
+                        @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
+                        {
+                            <div class="no-laboral-text">No laborable</div>
+                        }
+                        @if (EsNoLaboral(day.Date))
+                        {
+                            <span class="no-laboral-icon">
+                                @IconoNoLaboral(day.Date)
+                            </span>
+                        }
+                    </div>
+
+
+                    @if (EsNoLaboral(day.Date))
                     {
-                        <div class="no-laboral">No laborable</div>
+                        <div class="no-laboral">
+                            @DescripcionNoLaboral(day.Date)
+                        </div>
                     }
+
                     else
                     {
                         <div class="blocks-list">
@@ -300,6 +320,7 @@
     List<EventoApiDTO> EventosApi = new();
     List<OrdenTrabajoDTO> OrdenesTrabajo = new();
     List<OrdenTramiteDTO> OrdenesTramite = new();
+    List<DiaNoLaboralDto> DiasNoLaborales = new();
 
     class TaskItem
     {
@@ -380,8 +401,50 @@
 
         TareasApi = await AgendaService.ObtenerTareasApi(idAgenda);
         EventosApi = await AgendaService.ObtenerEventos(idAgenda);
+        await CargarDiasNoLaborales();   // 👈 NUEVO
         BuildMonth();
     }
+    /*async Task CargarDiasNoLaborales()
+    {
+        DiasNoLaborales =
+            await CalendarioService.ObtenerDiasNoLaborales(
+                CurrentDate.Year,
+                CurrentDate.Month
+            );
+    }*/
+    async Task CargarDiasNoLaborales()
+    {
+        DiasNoLaborales.Clear();
+        try
+        {
+            var dias = await CalendarioService.ObtenerDiasNoLaborales(CurrentDate.Year, CurrentDate.Month);
+            DiasNoLaborales.AddRange(dias);
+        }
+        catch
+        {
+            // opcional: mostrar mensaje o log
+        }
+    }
+
+    bool EsNoLaboral(DateTime date)
+    {
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+            return true;
+
+        return DiasNoLaborales.Any(d =>
+            d.DiaInhabil.Date == date.Date);
+    }
+
+    string DescripcionNoLaboral(DateTime date)
+    {
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+            return "Domingo";
+
+        return DiasNoLaborales
+            .FirstOrDefault(d => d.DiaInhabil.Date == date.Date)
+            ?.Descripcion;
+    }
+
 
     async Task CargarOrdenes()
     {
@@ -551,8 +614,38 @@
         return day;
     }
 
-    void PrevMonth() { CurrentDate = CurrentDate.AddMonths(-1); BuildMonth(); }
-    void NextMonth() { CurrentDate = CurrentDate.AddMonths(1); BuildMonth(); }
+    async void PrevMonth()
+    {
+        CurrentDate = CurrentDate.AddMonths(-1);
+        await CargarDiasNoLaborales();
+        BuildMonth();
+        StateHasChanged();
+    }
+
+    async void NextMonth()
+    {
+        CurrentDate = CurrentDate.AddMonths(1);
+        await CargarDiasNoLaborales();
+        BuildMonth();
+        StateHasChanged();
+    }
+    string IconoNoLaboral(DateTime date)
+    {
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+            return "📅";
+
+        var dia = DiasNoLaborales
+            .FirstOrDefault(d => d.DiaInhabil.Date == date.Date);
+
+        return dia?.Tipo switch
+        {
+            "Oficial" => "🎌",
+            "InternoFijo" => "🏢",
+            "InternoVariable" => "🔁",
+            _ => "⛔"
+        };
+    }
+
     //void OpenBlockModal(Block block) => SelectedBlock = block;
     async Task OpenBlockModal(Block block)
     {
@@ -647,6 +740,29 @@
         display: flex;
         flex-direction: column;
         overflow: visible; /* IMPORTANTE */
+    }
+
+    .day-card.no-laboral {
+        background: #ffecec;
+        border: 1px solid #ff4d4d;
+    }
+
+        .day-card.no-laboral .day-header {
+            color: #a80000;
+            font-weight: bold;
+        }
+
+    .no-laboral {
+        font-size: 0.75rem;
+        color: #a80000;
+        margin-top: 4px;
+    }
+
+
+    .no-laboral-icon {
+        font-size: 0.8rem;
+        margin-left: 4px;
+        opacity: 0.8;
     }
 
     /* Encabezado */
