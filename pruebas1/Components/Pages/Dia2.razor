@@ -18,60 +18,56 @@
 @inject LoginService LoginService
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
 <br />
 <br />
 <br />
-<br />
+
 <div class="agenda-container">
-    <div class="fecha-header">
-        <button class="calendar-btn" @onclick="DiaAnterior">
-            <i class="bi bi-arrow-left-circle"></i>
-        </button>
+    <div class="top-bar-container">
+        <div class="fecha-header">
+            <button class="calendar-btn" @onclick="DiaAnterior"><i class="bi bi-arrow-left-circle"></i></button>
+            <span class="fecha-texto">@FechaFormateada</span>
+            <button class="calendar-btn" @onclick="DiaSiguiente"><i class="bi bi-arrow-right-circle"></i></button>
 
-        <span class="fecha-texto">@FechaFormateada</span>
+            <div class="calendar-wrapper">
+                <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
 
-        <button class="calendar-btn" @onclick="DiaSiguiente">
-            <i class="bi bi-arrow-right-circle"></i>
-        </button>
+                @if (MostrarModal)
+                {
+                    <div class="modal-popover" @onclick:stopPropagation="true">
+                        <div class="calendar-header">
+                            <button class="calendar-btn" @onclick="MesAnterior"><i class="bi bi-chevron-left"></i></button>
+                            <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
+                            <button class="calendar-btn" @onclick="MesSiguiente"><i class="bi bi-chevron-right"></i></button>
+                        </div>
 
-        <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
+                        <div class="calendar-grid">
+                            @foreach (var dia in DiasSemana)
+                            {
+                                <div class="calendar-week-day"><strong>@dia</strong></div>
+                            }
+                            @foreach (var day in DiasDelCalendario)
+                            {
+                                <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
+                                     @onclick="() => SeleccionarFecha(day)">
+                                    @day.Day
+                                </div>
+                            }
+                        </div>
+
+                        <div style="margin-top:10px; text-align:center;">
+                            <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+
     </div>
 
-    @if (MostrarModal)
-    {
-        <div class="modal-overlay" @onclick="CerrarCalendario">
-            <div class="calendar-popover" @onclick:stopPropagation="true">
-                <div class="calendar-header">
-                    <button class="calendar-btn" @onclick="MesAnterior">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
-                    <button class="calendar-btn" @onclick="MesSiguiente">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-
-                <div class="calendar-grid">
-                    @foreach (var dia in DiasSemana)
-                    {
-                        <div class="calendar-week-day"><strong>@dia</strong></div>
-                    }
-                    @foreach (var day in DiasDelCalendario)
-                    {
-                        <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
-                             @onclick="() => SeleccionarFecha(day)">
-                            @day.Day
-                        </div>
-                    }
-                </div>
-
-                <div class="calendar-footer">
-                    <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
-                </div>
-            </div>
-        </div>
-    }
-</div>
 
     <div class="modal-button-container">
         <ReusableModal OnSave="RefrescarTareas" />
@@ -121,10 +117,10 @@
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
 
-                                  <input type="checkbox"
-       @bind="st.IsDone"
-       @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
-       disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone && !st.IsDone))" />
+                                        <input type="checkbox"
+                                               @bind="st.IsDone"
+                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
+                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone && !st.IsDone))" />
 
 
 
@@ -143,6 +139,11 @@
                                             <span class="subtask-desc"> - @st.Descripcion</span>
                                         }
 
+                                        <!-- Estado hecho -->
+                                        @if (st.IsDone)
+                                        {
+                                            <small class="done-text">Hecho</small>
+                                        }
                                         <!-- Fechas y hora (solo para eventos) -->
                                         @if (st.Tipo == "Evento")
                                         {
@@ -153,33 +154,42 @@
                                                 }
                                                 @if (st.HoraInicio.HasValue)
                                                 {
-                                                    @($" {st.HoraInicio.Value:hh\\:mm}")
+                                                    @($" {st.HoraInicio.Value:HH\\:mm}")
                                                 }
                                             </span>
                                         }
 
 
 
-                                        <!-- Prioridad (solo para tareas) -->
+                                   @* <!-- Prioridad (solo para tareas) -->
+                                                    <!--@if (st.Tipo == "Tarea")
+                                                                    {
+                                                                            <span class="tarea-prioridad">
+                                                                                @(st.Prioridad switch
+                                                                                {
+                                                                                        1 => "🔥 Alta",
+                                                                                        2 => "⚠️ Media",
+                                                                                        3 => "🟢 Baja",
+                                                                                        _ => ""
+                                                                                })
+                                    </span>
+                                                                                                            }
+                            --> *@
                                         @if (st.Tipo == "Tarea")
                                         {
-                                            <span class="tarea-prioridad">
+                                            <span class="tarea-prioridad prioridad-@st.Prioridad">
+                                                <span class="prioridad-dot"></span>
                                                 @(st.Prioridad switch
                                                 {
-                                                    1 => "🔥 Alta",
-                                                    2 => "⚠️ Media",
-                                                    3 => "🟢 Baja",
+                                                    1 => "Alta",
+                                                    2 => "Media",
+                                                    3 => "Baja",
                                                     _ => ""
                                                 })
                         </span>
                                                 }
 
 
-                                        <!-- Estado hecho -->
-                                        @if (st.IsDone)
-                                        {
-                                            <small class="done-text">Hecho</small>
-                                        }
 
                                         <!-- Botones acciones solo si categoría es Tareas -->
                                         @if (tareasCat.Name.Trim() == "Tareas")
@@ -189,14 +199,13 @@
                                                     <i class="bi bi-eye"></i>
                                                 </button>
 
-                                            <button class="icon-btn edit" title="Editar">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
+                                                <button class="icon-btn edit" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
 
-                                            <button class="icon-btn delete" title="Eliminar">
-                                                <i class="bi bi-trash3"></i>
-                                            </button>
-
+                                                <button class="icon-btn delete" title="Eliminar">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
 
 
                                             </div>
@@ -209,16 +218,11 @@
                                             <ul class="subtask-list">
                                                 @foreach (var s2 in st.Subtasks)
                                                 {
-                                                    <li class="subtask-item" @key="s2.Id">
+                                                    <li class="subtask-item">
                                                         <div class="subtask-label @(s2.IsDone ? "done" : "")">
-                                                            <input type="checkbox"
-                                                                   @bind="s2.IsDone"
-                                                                   @bind:after="() => ToggleInnerSubtask(tareasCat, st, s2)" />
-
-                                                            <span class="subtask-text">@s2.Title</span>
-
+                                                            <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
+                                                            <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
-                                                               
                                                             </div>
                                                         </div>
                                                     </li>
@@ -265,11 +269,6 @@
                                     <div class="column column-expired block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencido).OrderBy(o => o.FechaProgramada))
                                         {
-                                            @if (ot.Tipo == TipoOrden.Tramite)
-                                            {
-                                                <span class="badge badge-tramite">Trámite</span>
-                                            }
-
                                             <div class="ot-card ot-expired">
                                                 <div class="ot-left">
                                                     <div class="ot-number">@ot.NumeroOrden</div>
@@ -343,7 +342,6 @@
             </div>
             <br />
         }
-
 
         @foreach (var cat in Categories.Where(c =>
             c.Name.Trim() != "Órdenes de Trabajo" &&
@@ -433,12 +431,7 @@
                                                             <tr>
                                                                 <td>@s2.Title</td>
                                                                 <td>
-                                                                    <input type="checkbox"
-                                                                           @bind="st.IsDone"
-                                                                           @bind:after="() => ToggleSubtaskAsync(st)"
-                                                                           disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" />
-
-
+                                                                    <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(cat, st, s2)" />
                                                                 </td>
                                                             </tr>
                                                         }
@@ -452,7 +445,7 @@
                                                     {
                                                         <li class="subtask-item">
                                                             <div class="subtask-label @(s2.IsDone ? "done" : "")">
-
+                                                                <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(cat, st, s2)" />
                                                                 <span class="subtask-text">@($"{s2.Title}")</span>
                                                                 <div class="subtask-actions">
                                                                     <button class="icon-btn edit" title="Modificar fecha" @onclick="() => OpenModificarModal(cat, st)">
@@ -592,11 +585,11 @@
                             {
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone ? "done" : "")">
+
                                         <input type="checkbox"
                                                @bind="st.IsDone"
                                                @bind:after="() => ToggleSubtaskAsync(st)"
                                                disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" />
-
                                         <span class="subtask-text">@st.Title</span>
                                     </div>
                                 </li>
@@ -610,7 +603,7 @@
 
 
     }
-
+</div>
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS-->
 @if (ShowModificarFechaModal)
 {
@@ -1157,7 +1150,6 @@
         </div>
     </div>
 }
-
 
 
 
@@ -1803,16 +1795,39 @@
     }
 
     private async Task CargarTareasPorFecha()
-
     {
+        bool esHoy = FechaSeleccionada.Date == DateTime.Today;
+
         Categories = MasterCategories.Select(c =>
         {
-            bool esOrdenes = c.Name?.Trim() == "Órdenes de Trabajo";
             var subtasksFiltradas = c.Subtasks
-        .Where(st => esOrdenes || st.Tipo == "Evento" || ((st.FechaFin ?? st.FechaConclusion).Date <= FechaSeleccionada.Date))
-        .Select(st => CloneSubtask(st))
-        .ToList();
+                .Where(st =>
+                {
+                    // 📅 SI ES HOY → mostrar todo
+                    if (esHoy)
+                        return true;
 
+                    // ⏭️ NO ES HOY → solo pendientes
+
+                    // EVENTOS
+                    if (st.Tipo == "Evento")
+                    {
+                        return !st.IsDone;
+                    }
+
+                    // TAREAS SIN SUBTAREAS
+                    if (!st.Subtasks.Any())
+                    {
+                        return !st.IsDone;
+                    }
+
+                    // TAREAS CON SUBTAREAS
+                    bool todasSubtareasHechas = st.Subtasks.All(s => s.IsDone);
+
+                    return !(st.IsDone && todasSubtareasHechas);
+                })
+                .Select(st => CloneSubtask(st))
+                .ToList();
 
             return new CategoryModel
             {
