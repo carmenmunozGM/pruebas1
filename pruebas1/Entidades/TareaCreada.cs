@@ -74,6 +74,7 @@ namespace pruebas1.Entidades
         public int Prioridad { get; set; }
         public string Ubicacion { get; set; }
         public List<string> Participantes { get; set; } = new();
+        public DateTime? FechaPendiente { get; set; } // 🔹 NUEVO
         public int ProgressPercent { get; set; }
         public List<SubtaskModel> Subtasks { get; set; } = new();
     }
@@ -107,6 +108,7 @@ namespace pruebas1.Entidades
         public string ObjetivoOtro { get; set; }
         public OrdenStatus Status { get; set; }
         public TipoOrden Tipo { get; set; }
+
         public List<TareaOrdenModel> Tareas { get; set; } = new();
     }
 

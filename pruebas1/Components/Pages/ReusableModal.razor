@@ -90,7 +90,7 @@
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Inicio</label>
                         <input type="time" class="form-input time-control"
-                               @bind="HoraInicio" @bind:event="oninput" />
+                               @bind="HoraInicio" @bind:event="oninput" step="60" />
                     </div>
 
                     <!-- Fecha fin -->
@@ -294,6 +294,8 @@
     private TareaCreada nuevaTarea = new TareaCreada();
 
 
+
+
     protected override async Task OnInitializedAsync()
     {
         var cultura = new CultureInfo("es-MX");
@@ -384,6 +386,7 @@
     // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
+        // --- VALIDACIONES ---
         if (string.IsNullOrWhiteSpace(titulo))
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
@@ -408,28 +411,27 @@
             return;
         }
 
-        // ✅ FECHAS CORREGIDAS (ANTI UTC BUG)
+        // --- FECHAS + HORAS 24h ---
         DateTime? fechaInicioFinal = null;
         DateTime? fechaFinFinal = null;
 
         if (FechaInicio.HasValue)
         {
-            var hora = HoraInicio?.ToTimeSpan() ?? TimeSpan.FromHours(12);
-            fechaInicioFinal = DateTime.SpecifyKind(
-                FechaInicio.Value.Date.Add(hora),
-                DateTimeKind.Local
-            );
+            var hora = HoraInicio?.ToTimeSpan() ?? TimeSpan.Zero; // 00:00 por defecto
+            fechaInicioFinal = FechaInicio.Value.Date.Add(hora);
         }
 
         if (FechaFin.HasValue)
         {
-            var hora = HoraFin?.ToTimeSpan() ?? TimeSpan.FromHours(12);
-            fechaFinFinal = DateTime.SpecifyKind(
-                FechaFin.Value.Date.Add(hora),
-                DateTimeKind.Local
-            );
+            var hora = HoraFin?.ToTimeSpan() ?? TimeSpan.Zero;
+            fechaFinFinal = FechaFin.Value.Date.Add(hora);
         }
 
+        // Guardar hora como HH:mm si necesitas string en base de datos
+        string horaInicio24 = HoraInicio?.ToString("HH:mm") ?? "";
+        string horaFin24 = HoraFin?.ToString("HH:mm") ?? "";
+
+        // --- UBICACIÓN ---
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
@@ -444,8 +446,10 @@
             ubicacionFinal = "";
         }
 
+        // --- PARTICIPANTES ---
         var participantesIds = participantesSeleccionados.Select(p => p.Id).ToList();
 
+        // --- CREAR OBJETO ---
         nuevaTarea = new TareaCreada
         {
             Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
@@ -478,6 +482,7 @@
             ParticipantesSeleccionados = participantesIds
         };
 
+        // --- LLAMADA A API ---
         bool ok = FormType == FormTypes.Evento
             ? await AgendaService.CrearEventoApi(nuevaTarea)
             : await AgendaService.CrearTareaApi(nuevaTarea);
@@ -492,6 +497,7 @@
             return;
         }
 
+        // --- CALLBACK Y ALERTAS ---
         await OnSave.InvokeAsync(nuevaTarea);
 
         if (FormType == FormTypes.Evento)
@@ -499,9 +505,11 @@
         else
             await JSRuntime.InvokeVoidAsync("alertaGuardadoSimple");
 
+        // --- LIMPIAR CAMPOS ---
         LimpiarCampos();
         ShowModal = false;
     }
+
 
     // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
@@ -569,6 +577,8 @@
         --color-border: #ced4da; /* Borde suave */
         --color-text-dark: #343a40; /* Texto oscuro */
         --color-text-light: #6c757d; /* Texto secundario */
+        --color-primary: #C6E9F0; /* Azul principal */
+        --color-primary-hover: #005f8f; /* Azul más oscuro */
     }
 
     /* === Botón Flotante === */
@@ -581,7 +591,7 @@
     .action-button-floating {
         margin: 10px 2% 20px 0;
         background-color: var(--color-secondary);
-        color: var(--color-primary); /* Texto oscuro en el botón amarillo */
+        color:black;
         border: none;
         border-radius: 50px;
         padding: 12px 24px;
@@ -708,7 +718,7 @@
 
     .active-type-btn {
         background: #fff;
-        color: var(--color-primary);
+        color: black;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         border: 2px solid var(--color-secondary); /* Borde para indicar activo */
         transform: translateY(-1px);
@@ -959,12 +969,18 @@
 
     .btn-add {
         background-color: var(--color-primary);
-        color: white;
-        padding: 0 15px; /* Ajuste para el botón de añadir */
+        color: #000;
+        padding: 0 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease, transform 0.15s ease;
     }
 
         .btn-add:hover {
-            background-color: #005f99;
+            background-color: var(--color-primary-hover);
+            transform: translateY(-1px);
         }
+
 
 </style>
