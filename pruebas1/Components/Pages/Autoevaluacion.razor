@@ -233,6 +233,7 @@
 
 @code {
     private bool IsSaving = false;   // CORRECTO
+    bool IsQuincenal = false;
 
     // Extrae IdTareaAU desde tu objeto de tarea del frontend
     // Si tu Tarea de frontend ya tiene IdTareaAU (recomendado), retornarlo directamente.
@@ -1237,6 +1238,10 @@ private string FormatearFechasEnLineas(List<DateTime> fechas)
 
         .badge.anual {
             background: #607d8b;
+        }
+
+        .badge.quincenal {
+            background-color: #6610f2; /* morado */
         }
 
     .check-cell {
