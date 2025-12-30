@@ -1,35 +1,106 @@
 ﻿using pruebas1.Components.DTOs;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
-public class OrdenTramiteService
+namespace pruebas1.Servicios
 {
-    private readonly HttpClient http;
-
-    public OrdenTramiteService(HttpClient http)
+    public class OrdenTramiteService
     {
-        this.http = http;
+        private readonly HttpClient _http;
+        private readonly string _baseApi;
+
+        public OrdenTramiteService(HttpClient http)
+        {
+            _http = http;
+
+            // Detectar si estás en LOCAL automáticamente
+            var host = http.BaseAddress?.Host?.ToLower() ?? "";
+
+            if (host == "localhost" || host == "127.0.0.1")
+            {
+                _baseApi = "http://localhost:5231";   
+            }
+            else
+            {
+                _baseApi = "https://redgm.site:9096"; 
+            }
+        }
+
+        // 🔵 ORDEN DE TRÁMITE (DATOS GENERALES + TABLA)
+        public async Task<OrdenTramiteDTO?> GetDetalle(int idOrden)
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite/{idOrden}";
+                return await _http.GetFromJsonAsync<OrdenTramiteDTO>(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetDetalle: {ex.Message}");
+                return null;
+            }
+        }
+
+        // 🟣 TRÁMITE INDIVIDUAL (DETALLE + TAREAS)
+        public async Task<TramiteIndividualDTO?> GetTramiteDetalle(int idTramite)
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite/tramite/{idTramite}";
+                return await _http.GetFromJsonAsync<TramiteIndividualDTO>(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetTramiteDetalle: {ex.Message}");
+                return null;
+            }
+        }
+
+        // 🔴 ÓRDENES VENCIDAS
+        public async Task<List<OrdenTramiteDTO>> GetVencidas()
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite/vencidas";
+                return await _http.GetFromJsonAsync<List<OrdenTramiteDTO>>(url)
+                       ?? new List<OrdenTramiteDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetVencidas: {ex.Message}");
+                return new List<OrdenTramiteDTO>();
+            }
+        }
+
+        // 🟡 ÓRDENES PRÓXIMAS
+        public async Task<List<OrdenTramiteDTO>> GetProximas()
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite/proximas";
+                return await _http.GetFromJsonAsync<List<OrdenTramiteDTO>>(url)
+                       ?? new List<OrdenTramiteDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetProximas: {ex.Message}");
+                return new List<OrdenTramiteDTO>();
+            }
+        }
+
+        // 🟢 ÓRDENES DE HOY
+        public async Task<List<OrdenTramiteDTO>> GetHoy()
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite/hoy";
+                return await _http.GetFromJsonAsync<List<OrdenTramiteDTO>>(url)
+                       ?? new List<OrdenTramiteDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetHoy: {ex.Message}");
+                return new List<OrdenTramiteDTO>();
+            }
+        }
     }
-
-    // 🔵 ORDEN DE TRÁMITE (DATOS GENERALES + TABLA)
-    public async Task<OrdenTramiteDTO?> GetDetalle(int idOrden)
-    {
-        return await http.GetFromJsonAsync<OrdenTramiteDTO>(
-            $"https://redgm.site:9096/ordenTramite/{idOrden}");
-    }
-
-    // 🟣 TRÁMITE INDIVIDUAL (DETALLE + TAREAS)
-    public async Task<TramiteIndividualDTO?> GetTramiteDetalle(int idTramite)
-    {
-        return await http.GetFromJsonAsync<TramiteIndividualDTO>(
-            $"https://redgm.site:9096/ordenTramite/tramite/{idTramite}");
-    }
-    public async Task<List<OrdenTramiteDTO>> GetVencidas()
-        => await http.GetFromJsonAsync<List<OrdenTramiteDTO>>("https://redgm.site:9096/ordenTramite/vencidas");
-
-    public async Task<List<OrdenTramiteDTO>> GetProximas()
-        => await http.GetFromJsonAsync<List<OrdenTramiteDTO>>("https://redgm.site:9096/ordenTramite/proximas");
-
-    public async Task<List<OrdenTramiteDTO>> GetHoy()
-        => await http.GetFromJsonAsync<List<OrdenTramiteDTO>>("https://redgm.site:9096/ordenTramite/hoy");
 }

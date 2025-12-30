@@ -70,6 +70,26 @@ namespace pruebas1.Servicios
             return true;
         }
 
+        // ------------------------------------------
+        // POST - Guardar autoevaluación (con timeout)
+        // ------------------------------------------
+        public async Task<bool> GuardarAutoevaluacion(
+            GuardarAutoevaluacionEmpleadoDTO dto,
+            CancellationToken cancellationToken)
+        {
+            string url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/guardar";
+
+            var resp = await _http.PostAsJsonAsync(url, dto, cancellationToken);
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var error = await resp.Content.ReadAsStringAsync(cancellationToken);
+                throw new Exception(error); // 🔥 mensaje real del backend
+            }
+
+            return true;
+        }
+
 
         public async Task<bool> MarcarRegistroRealizadoAsync(int idRegistro, bool realizado)
         {
