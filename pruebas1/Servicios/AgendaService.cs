@@ -327,6 +327,36 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
+        public async Task<List<EventoApiDTO>> ObtenerEventosPorEmpleado()
+        {
+            var lista = new List<EventoApiDTO>();
+
+            var usuario = loginService.obtenerUsuarioLogueado();
+            if (usuario == null || string.IsNullOrEmpty(usuario.Token))
+                return lista;
+
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            string url = "https://redgm.site:9096/eventos/Obtener/porEmpleado";
+
+            Debug.WriteLine($"[GET EVENTOS POR EMPLEADO] URL = {url}");
+
+            var response = await httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Debug.WriteLine($"❌ Error eventos por empleado → {response.StatusCode}");
+                return lista;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            lista = JsonSerializer.Deserialize<List<EventoApiDTO>>(json) ?? new();
+
+            Debug.WriteLine($"✔ Eventos visibles para el usuario: {lista.Count}");
+
+            return lista;
+        }
 
         // ===== PATCH EVENTO =====
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)

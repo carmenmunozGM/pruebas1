@@ -47,14 +47,9 @@
                         @day.Date.ToString("dd")
                         @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
                         {
-                            <div class="no-laboral-text">No laborable</div>
+                           
                         }
-                        @if (EsNoLaboral(day.Date))
-                        {
-                            <span class="no-laboral-icon">
-                                @IconoNoLaboral(day.Date)
-                            </span>
-                        }
+                       
                     </div>
 
 
@@ -438,7 +433,7 @@
     string DescripcionNoLaboral(DateTime date)
     {
         if (date.DayOfWeek == DayOfWeek.Sunday)
-            return "Domingo";
+            return "No laborable";
 
         return DiasNoLaborales
             .FirstOrDefault(d => d.DiaInhabil.Date == date.Date)
@@ -629,7 +624,7 @@
         BuildMonth();
         StateHasChanged();
     }
-    string IconoNoLaboral(DateTime date)
+    /*string IconoNoLaboral(DateTime date)
     {
         if (date.DayOfWeek == DayOfWeek.Sunday)
             return "📅";
@@ -644,7 +639,7 @@
             "InternoVariable" => "🔁",
             _ => "⛔"
         };
-    }
+    }*/
 
     //void OpenBlockModal(Block block) => SelectedBlock = block;
     async Task OpenBlockModal(Block block)

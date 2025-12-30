@@ -27,46 +27,56 @@
 <div class="agenda-container">
     <div class="top-bar-container">
         <div class="fecha-header">
-            <button class="calendar-btn" @onclick="DiaAnterior"><i class="bi bi-arrow-left-circle"></i></button>
+            <button class="calendar-btn" @onclick="DiaAnterior">
+                <i class="bi bi-arrow-left-circle"></i>
+            </button>
+
             <span class="fecha-texto">@FechaFormateada</span>
-            <button class="calendar-btn" @onclick="DiaSiguiente"><i class="bi bi-arrow-right-circle"></i></button>
 
-            <div class="calendar-wrapper">
-                <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
+            <button class="calendar-btn" @onclick="DiaSiguiente">
+                <i class="bi bi-arrow-right-circle"></i>
+            </button>
 
-                @if (MostrarModal)
-                {
-                    <div class="modal-popover" @onclick:stopPropagation="true">
-                        <div class="calendar-header">
-                            <button class="calendar-btn" @onclick="MesAnterior"><i class="bi bi-chevron-left"></i></button>
-                            <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
-                            <button class="calendar-btn" @onclick="MesSiguiente"><i class="bi bi-chevron-right"></i></button>
-                        </div>
-
-                        <div class="calendar-grid">
-                            @foreach (var dia in DiasSemana)
-                            {
-                                <div class="calendar-week-day"><strong>@dia</strong></div>
-                            }
-                            @foreach (var day in DiasDelCalendario)
-                            {
-                                <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
-                                     @onclick="() => SeleccionarFecha(day)">
-                                    @day.Day
-                                </div>
-                            }
-                        </div>
-
-                        <div style="margin-top:10px; text-align:center;">
-                            <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
-                        </div>
-                    </div>
-                }
-            </div>
-
+            <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
         </div>
 
+        @if (MostrarModal)
+        {
+            <div class="modal-overlay" @onclick="CerrarCalendario">
+                <div class="calendar-popover" @onclick:stopPropagation="true">
+                    <div class="calendar-header">
+                        <button class="calendar-btn" @onclick="MesAnterior">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <strong>@MesActual.ToString("MMMM yyyy", new CultureInfo("es-ES"))</strong>
+                        <button class="calendar-btn" @onclick="MesSiguiente">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="calendar-grid">
+                        @foreach (var dia in DiasSemana)
+                        {
+                            <div class="calendar-week-day"><strong>@dia</strong></div>
+                        }
+                        @foreach (var day in DiasDelCalendario)
+                        {
+                            <div class="calendar-day @(day.Month != MesActual.Month ? "calendar-other-month" : "") @(day.Date == DateTime.Now.Date ? "calendar-today" : "")"
+                                 @onclick="() => SeleccionarFecha(day)">
+                                @day.Day
+                            </div>
+                        }
+                    </div>
+
+                    <div class="calendar-footer">
+                        <button class="calendar-btn" @onclick="CerrarCalendario">✖ Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
+
+
 
 
     <div class="modal-button-container">
@@ -159,7 +169,12 @@
                                             </span>
                                         }
 
-
+                                        @if (st.EsInvitado)
+                                        {
+                                            <span class="badge-compartido" title="Evento al que fuiste invitado">
+                                                👥
+                                            </span>
+                                        }
 
                                    @* <!-- Prioridad (solo para tareas) -->
                                                     <!--@if (st.Tipo == "Tarea")
@@ -334,7 +349,7 @@
                             }
                             else
                             {
-                                <div class="no-ordenes">No hay órdenes para mostrar</div>
+                                <div class="no-ordenes">No hay órdenes para mostrar. ¡Esto es preocupante! ⚠️</div>
                             }
                         </div>
                     </div>
@@ -604,6 +619,7 @@
 
     }
 </div>
+
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS-->
 @if (ShowModificarFechaModal)
 {
@@ -1178,7 +1194,7 @@
     private int currentAgendaId;
     private List<CategoryModel> MasterCategories = new();
     private List<OrdenTrabajoModel> OrdenesParaMostrar = new();
-
+    private int usuarioActualId;
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
     private ViewAgendaItem? SelectedViewItem;
@@ -1671,7 +1687,12 @@
 
         MasterCategories = new();
         var tareasApi = await AgendaService.ObtenerTareasApi(currentAgendaId);
-        var eventosApi = await AgendaService.ObtenerEventos(currentAgendaId);
+        //var eventosApi = await AgendaService.ObtenerEventos(currentAgendaId);
+        var eventosApi = await AgendaService.ObtenerEventosPorEmpleado();
+        var usuarioLogueado = LoginService.obtenerUsuarioLogueado();
+
+        usuarioActualId = usuarioLogueado.IdEmpleado;
+
         var autoevaluacionesApi = await AutoevaluacionService.ObtenerAutoevaluacion();
 
         var tareasCategory = new CategoryModel
@@ -1727,7 +1748,9 @@
                 Prioridad = ev.idPrioridad,
                 EsRecurrente = ev.esRecurrente,
                 ReglaRecurrencia = ev.reglaRecurrencia ?? "",
+                EsInvitado = ev.participantes.Any(p => p.idEmpleado == usuarioActualId),
                 Participantes = ev.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>(),
+                
                 Subtasks = new()
             });
 

@@ -76,6 +76,11 @@ namespace pruebas1.Entidades
         public List<string> Participantes { get; set; } = new();
         public DateTime? FechaPendiente { get; set; } // 🔹 NUEVO
         public int ProgressPercent { get; set; }
+        public bool EsEventoCompartido => Tipo == "Evento" && Participantes?.Count > 1;
+        public int IdCreador { get; set; }
+        public bool EsInvitado { get; set; }
+
+
         public List<SubtaskModel> Subtasks { get; set; } = new();
     }
 
