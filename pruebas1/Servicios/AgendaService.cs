@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using static System.Net.WebRequestMethods;
 using System.Text.Json;
 
 
@@ -376,6 +375,7 @@ namespace pruebas1.Servicios
 
             return await response.Content.ReadFromJsonAsync<bool>();
         }
+   
 
         // ===== PATCH EVENTO =====
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)

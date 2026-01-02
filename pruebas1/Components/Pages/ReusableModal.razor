@@ -22,7 +22,7 @@
 
 @if (ShowModal)
 {
-    <div class="backdrop-overlay" @onclick="CheckClose">
+    <div class="backdrop-overlay" >
         <div class="task-modal-card" @onclick:stopPropagation="true">
 
             <div class="task-modal-header">
@@ -31,6 +31,7 @@
             </div>
 
             <div class="task-modal-body">
+
 
                 <!-- Tipo -->
                 <div class="activity-type-selector">
@@ -79,77 +80,44 @@
                     </div>
 
                     <!-- Fecha inicio -->
-                     <div class="date-time-group">
+                    <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Inicio</label>
-                         @*    <DatePicker @bind-Value="FechaInicio" CssClass="form-control" /> *@
-                             <DatePicker Value="FechaInicio"
-                                ValueChanged="async v =>
-                                        {
-                                    FechaInicio = v;
-                                            await OnCambioHorarioAsync();
-                                }"
-                                  CssClass="form-control" />
-
+                            <DatePicker @bind-Value="FechaInicio" CssClass="form-control" />
                         </div>
                     </div>
- 
-  
+
                     <!-- Hora inicio -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Inicio</label>
-                       @*  <input type="time" class="form-input time-control"
-                               @bind="HoraInicio" @bind:event="oninput" /> *@
-                        <input type="time"
-                               class="form-input time-control"
-                               @bind="HoraInicio"
-                               @bind:after="ValidarSalaAsync" />
-
-
-                    </div> 
-                    
+                        <input type="time" class="form-input time-control"
+                               @bind="HoraInicio" @bind:event="oninput" />
+                    </div>
 
                     <!-- Fecha fin -->
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Término</label>
-                            @* <DatePicker @bind-Value="FechaFin" CssClass="form-control" /> *@
-                            <DatePicker Value="FechaFin"
-                                ValueChanged="async v =>
-                                        {
-                                    FechaFin = v;
-                                            await OnCambioHorarioAsync();
-                                }"
-                                  CssClass="form-control" />
+                            <DatePicker @bind-Value="FechaFin" CssClass="form-control" />
                         </div>
-                    </div> 
-                    
-                  <!-- Hora fin -->
+                    </div>
+
+                    <!-- Hora fin -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Término</label>
-                       @*  <input type="time" class="form-input time-control"
-                               @bind="HoraFin" @bind:event="oninput" /> *@
-                        <input type="time"
-                               class="form-input time-control"
-                               @bind="HoraFin"
-                               @bind:after="ValidarSalaAsync" />
+                        <input type="time" class="form-input time-control"
+                               @bind="HoraFin" @bind:event="oninput" />
+                    </div>
 
-                    </div> 
-          
                     <!-- Ubicación -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>📍 Ubicación</label>
                         <select class="form-control"
-                                value="@selectedSalaId"
-                                @onchange="async e =>
-                                {
-                                    selectedSalaId = int.Parse(e.Value.ToString());
-                                    OnSalaChanged();
-                                    await OnCambioHorarioAsync();
-                                }">
+                                @bind="selectedSalaId"
+                                @bind:after="OnSalaChanged">
 
+                            <option value="">Selecciona una sala</option>
 
-                            <option value="0">Selecciona una sala</option>
 
                             @foreach (var sala in listaSalas)
                             {
@@ -158,12 +126,6 @@
 
                             <option value="-1">Otro...</option>
                         </select>
-                        @if (SalaOcupada)
-                        {
-                            <div class="alert alert-warning mt-2">
-                                ⚠️ Esta sala ya tiene un evento en ese horario.
-                            </div>
-                        }
 
                         @if (mostrarOtraUbicacion)
                         {
@@ -171,8 +133,6 @@
                                    placeholder="Escribe la ubicación"
                                    @bind="ubicacionOtra" />
                         }
-                       
-
                     </div>
 
                     <!-- Participantes -->
@@ -278,50 +238,40 @@
                     }
                 </script>
 
-                @if (erroresFormulario.Any())
-                {
-                    <div class="alert alert-danger">
-                        <strong>❌ Faltan campos obligatorios:</strong>
-                        <ul class="mb-0">
-                            @foreach (var err in erroresFormulario)
-                            {
-                                <li>@err</li>
-                            }
-                        </ul>
-                    </div>
-                }
-
                 <!-- Footer -->
                 <div class="task-modal-footer">
                     <button class="btn btn-secondary-action" @onclick="CheckClose">Cancelar</button>
-                    @* <button class="btn btn-primary-action" @onclick="Guardar">Guardar Actividad</button> *@
-                    <button class="btn btn-primary-action"
-                            @onclick="Guardar"
-                            disabled="@SalaOcupada">
-                        Guardar Actividad
-                    </button>
-
-
+                    <button class="btn btn-primary-action" @onclick="Guardar">Guardar Actividad</button>
                 </div>
 
             </div>
 
         </div>
     </div>
+    <script>
+                 window.disableBodyScroll = () => {
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+        }
 
+        window.enableBodyScroll = () => {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+
+    </script>
 
 @code {
 
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
 
+
     // --- FECHAS ---
-    //private DateTime? FechaInicio { get; set; }
-    //private DateTime? FechaFin { get; set; }
-    private DateTime? _fechaInicio;
-    private DateTime? _fechaFin;
-    private bool SalaOcupada = false;
-    private string MensajeSala = "";
-    private bool validandoSala = false;
+    private DateTime? FechaInicio { get; set; }
+    private DateTime? FechaFin { get; set; }
+
     // --- HORAS ---
     private TimeOnly? HoraInicio { get; set; }
     private TimeOnly? HoraFin { get; set; }
@@ -334,7 +284,8 @@
     private string newSubtask = string.Empty;
 
     private List<SalasEm> listaSalas = new();
-    private int selectedSalaId = 0;
+    // private int selectedSalaId = 0;
+    private int? selectedSalaId = null;
 
     //private string? ubicacionSeleccionada;
     //private bool showOtherLocationInput = false;
@@ -345,8 +296,7 @@
     private int? selectedPrioridadId;
     private int? selectedFrecuenciaId;
 
-    private bool ShowModal = false;
-
+    private bool ShowModal { get; set; } = false;
     private string searchText = "";
     private bool mostrarLista = false;
 
@@ -358,79 +308,7 @@
     private List<EmpleadoDTO> participantesSeleccionados = new();
     private TareaCreada TareaCreada { get; set; } = new();
     private TareaCreada nuevaTarea = new TareaCreada();
-    private List<string> erroresFormulario = new();
 
-
-    private DateTime? FechaInicio
-    {
-        get => _fechaInicio;
-        set
-        {
-            _fechaInicio = value;
-            _ = ValidarSalaAsync();
-        }
-    }
-
-    private DateTime? FechaFin
-    {
-        get => _fechaFin;
-        set
-        {
-            _fechaFin = value;
-            _ = ValidarSalaAsync();
-        }
-    }
-    private bool ValidarFormulario()
-    {
-        erroresFormulario.Clear();
-
-        if (FormType == FormTypes.Evento)
-        {
-            if (string.IsNullOrWhiteSpace(titulo))
-                erroresFormulario.Add("Título");
-
-            if (selectedPrioridadId == null)
-                erroresFormulario.Add("Prioridad");
-
-            if (selectedFrecuenciaId == null)
-                erroresFormulario.Add("Recurrencia");
-
-            if (!FechaInicio.HasValue)
-                erroresFormulario.Add("Fecha inicio");
-
-            if (!HoraInicio.HasValue)
-                erroresFormulario.Add("Hora inicio");
-
-            if (!FechaFin.HasValue)
-                erroresFormulario.Add("Fecha término");
-
-            if (!HoraFin.HasValue)
-                erroresFormulario.Add("Hora término");
-
-            if (selectedSalaId <= 0)
-                erroresFormulario.Add("Sala");
-        }
-
-        if (FormType == FormTypes.Tareas)
-        {
-            if (string.IsNullOrWhiteSpace(titulo))
-                erroresFormulario.Add("Título");
-
-            if (selectedPrioridadId == null)
-                erroresFormulario.Add("Prioridad");
-
-            if (selectedFrecuenciaId == null)
-                erroresFormulario.Add("Recurrencia");
-
-            if (!FechaInicio.HasValue)
-                erroresFormulario.Add("Fecha inicio");
-
-            if (!FechaFin.HasValue)
-                erroresFormulario.Add("Fecha término");
-        }
-
-        return erroresFormulario.Count == 0;
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -499,46 +377,61 @@
         LimpiarCampos();
         ShowModal = true;
     }
-
+   
     private void CheckClose()
     {
         LimpiarCampos();
         ShowModal = false;
     }
-    async Task OnSalaChanged()
+    void OnSalaChanged()
     {
-        if (selectedSalaId == -1)
-        {
-            mostrarOtraUbicacion = true;
-            SalaOcupada = false;
-            return;
-        }
-
+        // 🔥 LIMPIAR ESTADO
         mostrarOtraUbicacion = false;
         ubicacionOtra = "";
 
-        await ValidarSalaAsync();
+        if (!selectedSalaId.HasValue)
+            return;
+
+        if (selectedSalaId.Value == -1)
+        {
+            mostrarOtraUbicacion = true;
+        }
     }
 
     // ----------------- GUARDAR -----------------
     // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
-        // 1️⃣ Validar formulario (campos obligatorios)
-        if (!ValidarFormulario())
+        // ---------------- VALIDACIONES OBLIGATORIAS ----------------
+        string alertMessage = "";
+
+        // Campos comunes a Tareas y Eventos
+        if (string.IsNullOrWhiteSpace(titulo)) alertMessage += "Debes completar el título.\n";
+        if (!selectedPrioridadId.HasValue) alertMessage += "Debes seleccionar la prioridad.\n";
+        if (!selectedFrecuenciaId.HasValue) alertMessage += "Debes seleccionar la recurrencia.\n";
+        if (!FechaInicio.HasValue) alertMessage += "Debes seleccionar la fecha de inicio.\n";
+        if (!FechaFin.HasValue) alertMessage += "Debes seleccionar la fecha de término.\n";
+
+        // Campos específicos de Evento
+        if (FormType == FormTypes.Evento)
+        {
+            if (!HoraInicio.HasValue) alertMessage += "Debes seleccionar la hora de inicio.\n";
+            if (!HoraFin.HasValue) alertMessage += "Debes seleccionar la hora de término.\n";
+            if (selectedSalaId <= 0 && string.IsNullOrWhiteSpace(ubicacionOtra))
+                alertMessage += "Debes seleccionar o escribir la ubicación.\n";
+        }
+
+        if (!string.IsNullOrEmpty(alertMessage))
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
-                title = "Faltan campos obligatorios",
-                html = "<ul style='text-align:left'>" +
-                       string.Join("", erroresFormulario.Select(e => $"<li>{e}</li>")) +
-                       "</ul>"
+                title = "Campos obligatorios incompletos",
+                text = alertMessage
             });
             return;
         }
 
-        // 2️⃣ Validar usuario / agenda
         var idUsuario = UsuarioState.IdUsuario;
         var idAgenda = UsuarioState.IdAgenda;
 
@@ -547,12 +440,12 @@
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
-                title = "Usuario o agenda inválidos"
+                title = "Usuario/Agenda inválidos"
             });
             return;
         }
 
-        // 3️⃣ Construir fechas finales (IMPORTANTE)
+        // ✅ FECHAS CORREGIDAS (ANTI UTC BUG)
         DateTime? fechaInicioFinal = null;
         DateTime? fechaFinFinal = null;
 
@@ -574,48 +467,68 @@
             );
         }
 
-        // 4️⃣ 🔥 AQUÍ VA LA VALIDACIÓN DE SALA OCUPADA 🔥
-        if (FormType == FormTypes.Evento && selectedSalaId > 0)
-        {
-            bool ocupada = await AgendaService.SalaOcupadaAsync(
-                selectedSalaId,
-                fechaInicioFinal!.Value,
-                fechaFinFinal!.Value
-            );
+        // string ubicacionFinal = "";
+        // int idSalaFinal = 0;
 
-            if (ocupada)
-            {
-                await JSRuntime.InvokeVoidAsync("Swal.fire", new
-                {
-                    icon = "warning",
-                    title = "Sala ocupada",
-                    text = "Esta sala ya está ocupada en el horario seleccionado."
-                });
-                return;
-            }
-        }
-
-        // 5️⃣ Construir ubicación
+        // if (selectedSalaId == -1)
+        // {
+        //     idSalaFinal = 0;
+        //     ubicacionFinal = (ubicacionOtra ?? "").Trim();
+        // }
+        // else if (selectedSalaId > 0)
+        // {
+        //     idSalaFinal = selectedSalaId;
+        //     ubicacionFinal = "";
+        // }
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
-        if (selectedSalaId == -1)
+        if (selectedSalaId.HasValue)
         {
-            idSalaFinal = 0;
-            ubicacionFinal = (ubicacionOtra ?? "").Trim();
-        }
-        else if (selectedSalaId > 0)
-        {
-            idSalaFinal = selectedSalaId;
-            ubicacionFinal = "";
+            if (selectedSalaId.Value == -1)
+            {
+                idSalaFinal = 0;
+                ubicacionFinal = (ubicacionOtra ?? "").Trim();
+            }
+            else if (selectedSalaId.Value > 0)
+            {
+                idSalaFinal = selectedSalaId.Value;
+                ubicacionFinal = "";
+            }
         }
 
-        // 6️⃣ Crear objeto y guardar
         var participantesIds = participantesSeleccionados.Select(p => p.Id).ToList();
 
         nuevaTarea = new TareaCreada
         {
-            // ... tu objeto igual que ya lo tienes
+            Tipo = FormType == FormTypes.Evento ? "Evento" : "Tarea",
+            Titulo = titulo?.Trim(),
+            Descripcion = descripcion?.Trim(),
+
+            FechaInicio = fechaInicioFinal,
+            FechaFin = fechaFinFinal,
+
+            HoraInicio = HoraInicio,
+            HoraFin = HoraFin,
+
+            Ubicacion = ubicacionFinal,
+            IdSala = idSalaFinal,
+
+            Subtareas = subtasks.ToList(),
+            IsEvento = FormType == FormTypes.Evento,
+
+            IdAgenda = idAgenda,
+            IdCreador = idUsuario,
+            IdResponsable = idUsuario,
+
+            Prioridad = selectedPrioridadId ?? 0,
+
+            IdFrecuencia = selectedFrecuenciaId,
+            EsRecurrente = selectedFrecuenciaId.HasValue && selectedFrecuenciaId > 0,
+            ReglaRecurrencia = ObtenerNombreFrecuencia(selectedFrecuenciaId),
+
+            ParticipantesLista = participantesSeleccionados,
+            ParticipantesSeleccionados = participantesIds
         };
 
         bool ok = FormType == FormTypes.Evento
@@ -627,23 +540,57 @@
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
-                title = "Error al guardar"
+                title = "La Sala esta ocupada,por favor revisa la RED GM"
             });
             return;
         }
 
         await OnSave.InvokeAsync(nuevaTarea);
 
-        await JSRuntime.InvokeVoidAsync(
-            FormType == FormTypes.Evento ? "alertaGuardadoEvento" : "alertaGuardadoSimple"
-        );
+        if (FormType == FormTypes.Evento)
+            await JSRuntime.InvokeVoidAsync("alertaGuardadoEvento");
+        else
+            await JSRuntime.InvokeVoidAsync("alertaGuardadoSimple");
 
         LimpiarCampos();
         ShowModal = false;
     }
 
+
     // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
+    {
+        titulo = "";
+        descripcion = "";
+        subtasks.Clear();
+        newSubtask = "";
+
+        FechaInicio = null;
+        FechaFin = null;
+        HoraInicio = null;
+        HoraFin = null;
+
+        ubicacionOtra = "";
+        mostrarOtraUbicacion = false;
+
+        selectedSalaId = null;
+
+        selectedPrioridadId = null;
+        selectedFrecuenciaId = null;
+
+        participantesSeleccionados.Clear();
+
+        FormType = FormTypes.Tareas;
+    }
+
+    private void SetFormType(FormTypes type)
+    {
+        FormType = type;
+        if (type == FormTypes.Evento) subtasks.Clear();
+        LimpiarCamposNoTipo(); // NUEVO: limpia campos sin reiniciar FormType
+    }
+    // NUEVO: Método que limpia todos los campos excepto el tipo
+    private void LimpiarCamposNoTipo()
     {
         titulo = "";
         descripcion = "";
@@ -663,24 +610,7 @@
         selectedFrecuenciaId = null;
 
         participantesSeleccionados.Clear();
-
-        FormType = FormTypes.Tareas;
     }
-
-    /*private void SetFormType(FormTypes type)
-    {
-        FormType = type;
-        if (type == FormTypes.Evento)
-            subtasks.Clear();
-    }*/
-    private async void SetFormType(FormTypes type)
-    {
-        LimpiarCampos();
-        FormType = type;
-        await Task.Delay(1);
-    }
-
-
     private void AddSubtask()
     {
         if (!string.IsNullOrWhiteSpace(newSubtask))
@@ -699,34 +629,6 @@
     {
         subtasks.Remove(taskToRemove);
     }
-
-    private async Task ValidarSalaAsync()
-    {
-        SalaOcupada = false;
-
-        if (FormType != FormTypes.Evento)
-            return;
-
-        if (selectedSalaId <= 0 || !FechaInicio.HasValue || !FechaFin.HasValue || !HoraInicio.HasValue || !HoraFin.HasValue)
-            return;
-
-        var inicio = FechaInicio.Value.Date + HoraInicio.Value.ToTimeSpan();
-        var fin = FechaFin.Value.Date + HoraFin.Value.ToTimeSpan();
-
-        validandoSala = true;
-        StateHasChanged();
-
-        SalaOcupada = await AgendaService.SalaOcupadaAsync(selectedSalaId, inicio, fin);
-
-        validandoSala = false;
-        StateHasChanged();
-    }
-    private async Task OnCambioHorarioAsync()
-    {
-        await ValidarSalaAsync();
-    }
-
-
 }
 
                    }
@@ -743,8 +645,6 @@
         --color-border: #ced4da; /* Borde suave */
         --color-text-dark: #343a40; /* Texto oscuro */
         --color-text-light: #6c757d; /* Texto secundario */
-        --color-primary: #000;
-        --color-botnañadir: #BBD8FB;
     }
 
     /* === Botón Flotante === */
@@ -1142,5 +1042,6 @@
         .btn-add:hover {
             background-color: #BBD8FB;
         }
+
 
 </style>

@@ -985,6 +985,80 @@
     color: #0d6efd;
 }
 
+/*ESTILOS DE LOS DIAS INABILES */
+/*.dia-inhabil-container {
+    //background: linear-gradient(135deg, #ee4343, #FFFFFF);
+    min-height: 75vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    padding: 2rem;
+}
+*/
+.dia-inhabil-card {
+    background: rgba(255, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    border-radius: 14px;
+    /* Forma de cinta */
+    width: 100%;
+    max-width: 1700px;
+    min-height: 70px;
+    height: auto;
+    /* CENTRADO TOTAL */
+    display: flex;
+    flex-direction: column; /* 👈 CLAVE */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* Espaciado */
+    padding: 1rem 2.5rem;
+    /* Estilo */
+    color: #000;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+}
+
+    /* ICONO */
+    .dia-inhabil-card .icono {
+        font-size: 3rem; /* un poco más elegante */
+        margin-bottom: 0.3rem;
+    }
+
+    /* TÍTULO */
+    .dia-inhabil-card h2 {
+        font-weight: 700;
+        margin: 0.2rem 0;
+        font-size: 1.4rem;
+    }
+
+    /* FECHA */
+    .dia-inhabil-card h4 {
+        margin: 0.2rem 0;
+        font-size: 1rem;
+    }
+
+    /* DESCRIPCIÓN */
+    .dia-inhabil-card .descripcion {
+        font-size: 1rem;
+        margin: 0.3rem 0;
+    }
+
+/* BADGE */
+.badge-inhabil {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.4rem;
+    padding: 0.3rem 0.9rem;
+    background: #ffdddd;
+    color: #8b0000;
+    font-weight: 600;
+    border-radius: 999px;
+    font-size: 0.9rem;
+}
+
+
+
 /* COLORES BLOQUES */
 .verde-menta .block-header {
     background: #B5EAD7;

@@ -8,6 +8,8 @@
 @inject AutoevaluacionService AutoevaluacionService
 @using System.Net.Http.Json;
 @inject OrdenTramiteService OrdenTramiteService
+@inject CalendarioService CalendarioService
+
 
 <br />
 <br />
@@ -27,16 +29,30 @@
             Semana siguiente <span class="arrow">&#9654;</span>
         </button>
     </header>
+    @* <div style="color:red;font-weight:bold">
+        Días inhábiles cargados: @DiasNoLaboralesMes.Count
+    </div> *@
 
     <div class="days-grid weekly">
         @foreach (var day in Days.Where(d => d.Date.DayOfWeek != DayOfWeek.Sunday))
         {
-            <div class="day-card">
+            bool esNoLaboral = EsDiaNoLaboral(day.Date);
+
+            <div class="day-card @(esNoLaboral ? "dia-no-laboral" : "")">
+
                 <div class="day-header">
                     <span class="day-name">@day.Date.ToString("dddd", new CultureInfo("es-ES"))</span>
                     <span class="day-date">@day.Date.ToString("dd")</span>
                 </div>
-
+                @if (esNoLaboral)
+                {
+                    <div class="no-laboral-info">
+                        Día no laboral
+                        <br />
+                        <small>@ObtenerDescripcionNoLaboral(day.Date)</small>
+                    </div>
+                }
+                else {
                 <div class="blocks-list">
                     @foreach (var block in day.Blocks)
                     {
@@ -136,6 +152,7 @@
                         </div>
                     }
                 </div>
+                }
             </div>
         }
     </div>
@@ -441,7 +458,8 @@
 
     bool IsOTModalOpen = false;
     bool IsTramiteModalOpen = false;
-
+    // ---------- DÍAS NO LABORALES / ----------
+    List<DiaNoLaboralDto> DiasNoLaboralesMes = new();
     async Task AbrirDetalle(BaseTask task)
     {
         SelectedTask = task;
@@ -457,6 +475,50 @@
             IsTramiteModalOpen = true;
         }
     }
+    private async Task ToggleCompleteDynamic(BaseTask bt, ChangeEventArgs e)
+    {
+        bool nuevoEstado = false;
+
+        if (e?.Value is bool b) nuevoEstado = b;
+        else if (e?.Value is string s) nuevoEstado = s == "true" || s == "on";
+
+        // Optimistic UI
+        bt.IsCompleted = nuevoEstado;
+
+        bool exito = false;
+
+        try
+        {
+            if (bt.Tipo.Equals("Evento", StringComparison.OrdinalIgnoreCase))
+            {
+                exito = await AgendaService.CambiarEstadoEventoAsync(bt.ApiId, nuevoEstado);
+            }
+            else
+            {
+                exito = await AgendaService.CambiarEstadoTareaAsync(bt.ApiId, nuevoEstado);
+            }
+
+            if (!exito)
+            {
+                bt.IsCompleted = !nuevoEstado; // rollback
+                await ShowTemporaryToastAsync("Error al actualizar el estado");
+            }
+            else
+            {
+                await ShowTemporaryToastAsync(bt.IsCompleted
+                    ? $"Marcaste '{bt.Name}' como completada"
+                    : $"Desmarcaste '{bt.Name}'");
+            }
+        }
+        catch
+        {
+            bt.IsCompleted = !nuevoEstado; // rollback
+            await ShowTemporaryToastAsync("Error al actualizar el estado");
+        }
+
+        StateHasChanged();
+    }
+
     OrdenTrabajoDTO? OrdenTrabajoDetalle;
     async Task CargarOrdenTrabajo(int id)
     {
@@ -529,7 +591,8 @@
                 : "📝";
 
     }
-
+  
+    
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -592,10 +655,48 @@
         CurrentDate = CurrentDate.AddDays(7);
         await LoadWeek(CurrentDate);
     }
+    async Task CargarDiasNoLaborales(DateTime referencia)
+    {
+        DiasNoLaboralesMes.Clear();
+
+        var monday = StartOfWeek(referencia, DayOfWeek.Monday);
+        var sunday = monday.AddDays(6);
+
+        var meses = Enumerable
+            .Range(0, 7)
+            .Select(i => monday.AddDays(i))
+            .Select(d => new { d.Year, d.Month })
+            .Distinct();
+
+        foreach (var m in meses)
+        {
+            var dias = await CalendarioService
+                .ObtenerDiasNoLaborales(m.Year, m.Month);
+
+            DiasNoLaboralesMes.AddRange(dias);
+        }
+    }
+
+
+    bool EsDiaNoLaboral(DateTime fecha)
+    {
+        return DiasNoLaboralesMes.Any(d =>
+            d.DiaInhabil.Date == fecha.Date
+        );
+    }
+
+    string ObtenerDescripcionNoLaboral(DateTime fecha)
+    {
+        return DiasNoLaboralesMes
+            .FirstOrDefault(d => d.DiaInhabil.Date == fecha.Date)?
+            .Descripcion
+            ?? "Día no laboral";
+    }
 
     // ---------- Carga principal ----------
     async Task LoadWeek(DateTime reference)
     {
+        await CargarDiasNoLaborales(reference);
         Days.Clear();
         var monday = StartOfWeek(reference, DayOfWeek.Monday);
 
@@ -1096,6 +1197,97 @@
     }
 }
 <style>
+    /*ESTILOS DE LOS DIAS NO LABORALES*/
+    /* ===============================
+       DÍA NO LABORAL – ESTILO SUAVE
+       =============================== */
+
+    .day-card.dia-no-laboral {
+        background: linear-gradient( 180deg, #fdf2f2 0%, #fae8e8 100% );
+        border: 1.5px dashed #FF4D4D;
+        border-radius: 16px;
+        color: #FFECEC;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+
+        /* Header */
+        .day-card.dia-no-laboral .day-header {
+            background: transparent;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Nombre del día */
+        .day-card.dia-no-laboral .day-name {
+            font-weight: 600;
+            text-transform: capitalize;
+            color: #7a2c2c;
+        }
+
+        /* Número del día */
+        .day-card.dia-no-laboral .day-date {
+            background: #ffffff;
+            color: #e25555;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 6px 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        /* Ocultar tareas */
+        .day-card.dia-no-laboral .blocks-list {
+            display: none !important;
+        }
+
+    /* Contenido central */
+    .no-laboral-info {
+        margin-top: 28px;
+        text-align: center;
+        padding: 18px 14px;
+        background: rgba(255,255,255,0.65);
+        border-radius: 14px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+    }
+
+        /* Icono */
+        .no-laboral-info::before {
+            content: "🚫📅";
+            display: block;
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+
+    /* Texto principal */
+    .no-laboral-info {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #7a2c2c;
+    }
+
+        /* Descripción */
+        .no-laboral-info small {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: #8f4a4a;
+            opacity: 0.9;
+        }
+
+    /* Sin hover agresivo */
+    .day-card.dia-no-laboral:hover {
+        box-shadow: none;
+        transform: none;
+        cursor: default;
+    }
+
+
+    .day-card.sabado {
+        background: #f5f5f5;
+        opacity: 0.8;
+    }
+
+
     /* Contenedor principal */
     .agenda-container {
         font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
