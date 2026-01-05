@@ -8,6 +8,8 @@
 @inject AutoevaluacionService AutoevaluacionService
 @using System.Net.Http.Json;
 @inject OrdenTramiteService OrdenTramiteService
+@inject CalendarioService CalendarioService
+
 
 <br />
 <br />
@@ -27,16 +29,30 @@
             Semana siguiente <span class="arrow">&#9654;</span>
         </button>
     </header>
+    @* <div style="color:red;font-weight:bold">
+        Días inhábiles cargados: @DiasNoLaboralesMes.Count
+    </div> *@
 
     <div class="days-grid weekly">
         @foreach (var day in Days.Where(d => d.Date.DayOfWeek != DayOfWeek.Sunday))
         {
-            <div class="day-card">
+            bool esNoLaboral = EsDiaNoLaboral(day.Date);
+
+            <div class="day-card @(esNoLaboral ? "dia-no-laboral" : "")">
+
                 <div class="day-header">
                     <span class="day-name">@day.Date.ToString("dddd", new CultureInfo("es-ES"))</span>
                     <span class="day-date">@day.Date.ToString("dd")</span>
                 </div>
-
+                @if (esNoLaboral)
+                {
+                    <div class="no-laboral-info">
+                        Día no laboral
+                        <br />
+                        <small>@ObtenerDescripcionNoLaboral(day.Date)</small>
+                    </div>
+                }
+                else {
                 <div class="blocks-list">
                     @foreach (var block in day.Blocks)
                     {
@@ -136,6 +152,7 @@
                         </div>
                     }
                 </div>
+                }
             </div>
         }
     </div>
@@ -165,11 +182,18 @@
                 </div>
                 <div class="form-group">
                     <label>Prioridad:</label>
-                    <select @bind="bt.Priority" disabled="@(!IsEditMode)">
-                        <option value="Alta">🔴 Alta</option>
-                        <option value="Media">🟡 Media</option>
-                        <option value="Baja">🟢 Baja</option>
-                    </select>
+                    <select value="@bt.Priority"
+                            disabled="@(!IsEditMode)"
+                            @onchange="e =>
+                            {
+                                bt.Priority = e.Value?.ToString() ?? bt.Priority;
+                                bt.IdPrioridad = MapPriority(bt.Priority);
+                            }">
+                          <option value="Alta">🔴 Alta</option>
+                          <option value="Media">🟡 Media</option>
+                          <option value="Baja">🟢 Baja</option>
+                      </select>
+
                 </div>
                 <div class="form-group">
                     <label>Recurrencia:</label>
@@ -235,7 +259,11 @@
         <div class="modal-footer">
             @if (IsEditMode)
             {
-                <button class="action-btn save" @onclick="SaveTask">💾 Guardar</button>
+                <button class="action-btn save"
+                        @onclick="async () => await SaveTask()">
+                    💾 Guardar
+                </button>
+
                 <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
             }
             else
@@ -441,7 +469,8 @@
 
     bool IsOTModalOpen = false;
     bool IsTramiteModalOpen = false;
-
+    // ---------- DÍAS NO LABORALES / ----------
+    List<DiaNoLaboralDto> DiasNoLaboralesMes = new();
     async Task AbrirDetalle(BaseTask task)
     {
         SelectedTask = task;
@@ -457,6 +486,50 @@
             IsTramiteModalOpen = true;
         }
     }
+    private async Task ToggleCompleteDynamic(BaseTask bt, ChangeEventArgs e)
+    {
+        bool nuevoEstado = false;
+
+        if (e?.Value is bool b) nuevoEstado = b;
+        else if (e?.Value is string s) nuevoEstado = s == "true" || s == "on";
+
+        // Optimistic UI
+        bt.IsCompleted = nuevoEstado;
+
+        bool exito = false;
+
+        try
+        {
+            if (bt.Tipo.Equals("Evento", StringComparison.OrdinalIgnoreCase))
+            {
+                exito = await AgendaService.CambiarEstadoEventoAsync(bt.ApiId, nuevoEstado);
+            }
+            else
+            {
+                exito = await AgendaService.CambiarEstadoTareaAsync(bt.ApiId, nuevoEstado);
+            }
+
+            if (!exito)
+            {
+                bt.IsCompleted = !nuevoEstado; // rollback
+                await ShowTemporaryToastAsync("Error al actualizar el estado");
+            }
+            else
+            {
+                await ShowTemporaryToastAsync(bt.IsCompleted
+                    ? $"Marcaste '{bt.Name}' como completada"
+                    : $"Desmarcaste '{bt.Name}'");
+            }
+        }
+        catch
+        {
+            bt.IsCompleted = !nuevoEstado; // rollback
+            await ShowTemporaryToastAsync("Error al actualizar el estado");
+        }
+
+        StateHasChanged();
+    }
+
     OrdenTrabajoDTO? OrdenTrabajoDetalle;
     async Task CargarOrdenTrabajo(int id)
     {
@@ -512,24 +585,69 @@
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public int ApiId { get; set; } = 0;
+        public int IdAgenda { get; set; }
+        public int IdPrioridad { get; set; }
+
         public BlockType Type { get; set; }
+
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
+
         public string Priority { get; set; } = "Media";
         public string Recurrence { get; set; } = "No repetir";
+
         public bool IsCompleted { get; set; } = false;
+
         public DateTime StartDate { get; set; } = DateTime.Today;
         public DateTime DueDate { get; set; } = DateTime.Today;
-        public List<object> SubTasks { get; set; } = new();
+
+        public List<BaseSubTask> SubTasks { get; set; } = new();
+
         public Block ParentBlock { get; set; }
-        public string Tipo { get; set; } = "Tarea"; // Tarea o Evento
+
+        public string Tipo { get; set; } = "Tarea";
+
         public string IconoVisual =>
             Tipo?.Equals("Evento", StringComparison.OrdinalIgnoreCase) == true
                 ? "📅"
                 : "📝";
-
     }
 
+    class BaseSubTask
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+    }
+
+    int MapPriority(string prioridad)
+    {
+        return prioridad switch
+        {
+            "Alta" => 1,
+            "Media" => 2,
+            "Baja" => 3,
+            _ => 2
+        };
+    }
+
+    string MapPriorityBack(int id)
+    {
+        return id switch
+        {
+            1 => "Alta",
+            2 => "Media",
+            3 => "Baja",
+            _ => "Media"
+        };
+    }
+
+    public class EditarSubTareaDTO
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+    }
+  
+    
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -592,10 +710,48 @@
         CurrentDate = CurrentDate.AddDays(7);
         await LoadWeek(CurrentDate);
     }
+    async Task CargarDiasNoLaborales(DateTime referencia)
+    {
+        DiasNoLaboralesMes.Clear();
+
+        var monday = StartOfWeek(referencia, DayOfWeek.Monday);
+        var sunday = monday.AddDays(6);
+
+        var meses = Enumerable
+            .Range(0, 7)
+            .Select(i => monday.AddDays(i))
+            .Select(d => new { d.Year, d.Month })
+            .Distinct();
+
+        foreach (var m in meses)
+        {
+            var dias = await CalendarioService
+                .ObtenerDiasNoLaborales(m.Year, m.Month);
+
+            DiasNoLaboralesMes.AddRange(dias);
+        }
+    }
+
+
+    bool EsDiaNoLaboral(DateTime fecha)
+    {
+        return DiasNoLaboralesMes.Any(d =>
+            d.DiaInhabil.Date == fecha.Date
+        );
+    }
+
+    string ObtenerDescripcionNoLaboral(DateTime fecha)
+    {
+        return DiasNoLaboralesMes
+            .FirstOrDefault(d => d.DiaInhabil.Date == fecha.Date)?
+            .Descripcion
+            ?? "Día no laboral";
+    }
 
     // ---------- Carga principal ----------
     async Task LoadWeek(DateTime reference)
     {
+        await CargarDiasNoLaborales(reference);
         Days.Clear();
         var monday = StartOfWeek(reference, DayOfWeek.Monday);
 
@@ -677,19 +833,24 @@
 
             var tipoBD = esEvento ? "Evento" : "Tarea";
 
+            var idPrioridad = TryGetInt(obj, "idPrioridad") ?? 2;
+
             var mapped = new BaseTask
             {
-                ApiId = apiId,
+                ApiId = TryGetInt(obj, "id") ?? 0,        // 👈 ESTE
+                IdAgenda = TryGetInt(obj, "idAgenda") ?? 0,
                 Name = titulo,
                 Description = descripcion,
                 StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
                 DueDate = fechaFin.Value,
                 IsCompleted = TryGetBool(obj, "completada") ?? false,
-                Priority = TryGetString(obj, "prioridadTitulo")
-                               ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
+                IdPrioridad = TryGetInt(obj, "idPrioridad") ?? 2,
+                Priority = TryGetString(obj, "prioridadTitulo") ?? "Media",
                 Tipo = tipoBD,
                 Type = BlockType.GeneralTask
             };
+
+
 
 
             mapped.ParentBlock = day.Blocks[0];
@@ -1037,35 +1198,63 @@
 
     async Task DeleteConfirmedAsync()
     {
-        if (TaskToDelete != null)
-        {
-            TaskToDelete.ParentBlock?.SubTasks.Remove(TaskToDelete);
-            await ShowTemporaryToastAsync("Tarea eliminada");
-        }
+        if (TaskToDelete is not BaseTask bt || bt.ApiId <= 0)
+            return;
+
+        await AgendaService.EliminarTareaAsync(bt.ApiId);
+
+        bt.ParentBlock?.SubTasks.Remove(bt);
+
+        await ShowTemporaryToastAsync("🗑️ Tarea eliminada");
+
         TaskToDelete = null;
         ShowConfirmDelete = false;
     }
 
+
     async Task SaveTask()
     {
-        if (SelectedTaskObject is BaseTask bt)
+        if (SelectedTaskObject is not BaseTask bt)
+            return;
+
+        // Validación básica
+        if (bt.DueDate < bt.StartDate)
         {
-            if (bt.DueDate < bt.StartDate)
-            {
-                await ShowTemporaryToastAsync(
-                    "❌ La fecha fin no puede ser menor a la fecha inicio"
-                );
-                return;
-            }
+            await ShowTemporaryToastAsync(
+                "❌ La fecha fin no puede ser menor a la fecha inicio"
+            );
+            return;
         }
+
+        var model = new EditableItemModel
+        {      
+            IdAgenda = bt.IdAgenda,
+            Titulo = bt.Name,
+            Descripcion = bt.Description,
+            FechaInicio = bt.StartDate,
+            FechaFin = bt.DueDate,
+            EsRecurrente = bt.Recurrence != "No repetir",
+            ReglaRecurrencia = bt.Recurrence == "No repetir"
+                ? null
+                : bt.Recurrence,
+
+            IdPrioridad = bt.IdPrioridad,
+
+            SubTareas = bt.SubTasks
+            .Select(s => s.ToString()!)
+            .ToList()
+
+        };
+
+        Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
+        await AgendaService.EditarTareaAsync(bt.ApiId, model);
 
         IsEditMode = false;
         IsModalOpen = false;
 
-        if (SelectedTaskObject is BaseTask task)
-        {
-            await ShowSuccessAlert($"✅ La tarea '{task.Name}' se guardó correctamente");
-        }
+        await ShowSuccessAlert(
+            $"✅ La tarea '{bt.Name}' se guardó correctamente"
+        );
     }
 
     void CancelEdit()
@@ -1096,6 +1285,97 @@
     }
 }
 <style>
+    /*ESTILOS DE LOS DIAS NO LABORALES*/
+    /* ===============================
+       DÍA NO LABORAL – ESTILO SUAVE
+       =============================== */
+
+    .day-card.dia-no-laboral {
+        background: linear-gradient( 180deg, #fdf2f2 0%, #fae8e8 100% );
+        border: 1.5px dashed #FF4D4D;
+        border-radius: 16px;
+        color: #FFECEC;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+
+        /* Header */
+        .day-card.dia-no-laboral .day-header {
+            background: transparent;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Nombre del día */
+        .day-card.dia-no-laboral .day-name {
+            font-weight: 600;
+            text-transform: capitalize;
+            color: #7a2c2c;
+        }
+
+        /* Número del día */
+        .day-card.dia-no-laboral .day-date {
+            background: #ffffff;
+            color: #e25555;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 6px 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        /* Ocultar tareas */
+        .day-card.dia-no-laboral .blocks-list {
+            display: none !important;
+        }
+
+    /* Contenido central */
+    .no-laboral-info {
+        margin-top: 28px;
+        text-align: center;
+        padding: 18px 14px;
+        background: rgba(255,255,255,0.65);
+        border-radius: 14px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+    }
+
+        /* Icono */
+        .no-laboral-info::before {
+            content: "🚫📅";
+            display: block;
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+        }
+
+    /* Texto principal */
+    .no-laboral-info {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #7a2c2c;
+    }
+
+        /* Descripción */
+        .no-laboral-info small {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: #8f4a4a;
+            opacity: 0.9;
+        }
+
+    /* Sin hover agresivo */
+    .day-card.dia-no-laboral:hover {
+        box-shadow: none;
+        transform: none;
+        cursor: default;
+    }
+
+
+    .day-card.sabado {
+        background: #f5f5f5;
+        opacity: 0.8;
+    }
+
+
     /* Contenedor principal */
     .agenda-container {
         font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;

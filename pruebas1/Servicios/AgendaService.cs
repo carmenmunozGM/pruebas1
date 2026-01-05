@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using static System.Net.WebRequestMethods;
 using System.Text.Json;
 
 
@@ -357,6 +356,26 @@ namespace pruebas1.Servicios
 
             return lista;
         }
+        //--- ESTE SERV ES PARA SALAS 
+        public async Task<bool> SalaOcupadaAsync(int idSala, DateTime inicio, DateTime fin)
+        {
+            var query = new
+            {
+                inicio = inicio,
+                fin = fin
+            };
+
+            var response = await httpClient.PostAsJsonAsync(
+                $"eventos/salas/{idSala}/ocupada",
+                query
+            );
+
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            return await response.Content.ReadFromJsonAsync<bool>();
+        }
+   
 
         // ===== PATCH EVENTO =====
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)

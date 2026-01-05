@@ -16,6 +16,8 @@
 @inject HttpClient Http
 @inject AgendaService AgendaService
 @inject LoginService LoginService
+@inject CalendarioService CalendarioService
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -76,22 +78,44 @@
         }
     </div>
 
-
-
-
-    <div class="modal-button-container">
-        <ReusableModal OnSave="RefrescarTareas" />
-
-    </div>
-
-    @if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
+    @if (!EsDiaNoLaboral)
     {
-        <div class="col-12 text-center">
-            <div class="alert alert-warning shadow-sm">
-                Día no laboral – @FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"))
-            </div>
+        <div class="modal-button-container">
+            <ReusableModal OnSave="RefrescarTareas" />
         </div>
     }
+
+@* 
+    <div class="modal-button-container">
+        <ReusableModal OnSave="RefrescarTareas" /> *@
+
+    @if (EsDiaNoLaboral)
+    {
+        <!-- 🔴 SOLO ALERTA, NADA DE BLOQUES -->
+        <div class="dia-inhabil-container">
+            <div class="dia-inhabil-card">
+                <div class="icono">⛔</div>
+
+                <h2>Día inhábil</h2>
+
+                <h4>
+                    @FechaSeleccionada.ToString(
+                    "dddd, dd MMMM yyyy",
+                                new CultureInfo("es-ES"))
+            </h4>
+
+            <p class="descripcion">
+                @(DiaNoLaboralActual?.Descripcion
+                                ?? DiaNoLaboralActual?.Nombre
+                                ?? "No laborable")
+            </p>
+
+                <span class="badge-inhabil">
+                    @(DiaNoLaboralActual?.Tipo ?? "No laboral")
+                </span>
+            </div>
+        </div>
+        }
     else
     {
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas") is CategoryModel tareasCat)
@@ -235,7 +259,11 @@
                                                 {
                                                     <li class="subtask-item">
                                                         <div class="subtask-label @(s2.IsDone ? "done" : "")">
-                                                            <input type="checkbox" checked="@s2.IsDone" @onchange="(e) => ToggleInnerSubtask(tareasCat, st, s2)" />
+                                                            <input type="checkbox"
+                                                                   checked="@s2.IsDone"
+                                                                   @bind:after="() => ToggleInnerSubtask(tareasCat, st, s2)" />
+
+
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
                                                             </div>
@@ -853,16 +881,11 @@
         <div class="view-modal" @onclick:stopPropagation="true">
 
             <div class="view-header">
-                <h3>
-                    @(SelectedViewItem.Tipo == "Tarea"
-                                    ? "📝 Detalles de la Tarea"
-                                    : "📅 Detalles del Evento")
-            </h3>
-            <button class="view-close" @onclick="CloseViewModal">×</button>
-        </div>
+                <h3>@(SelectedViewItem.Tipo == "Tarea" ? "📝 Detalles de la Tarea" : "📅 Detalles del Evento")</h3>
+                <button class="view-close" @onclick="CloseViewModal">×</button>
+            </div>
 
             <div class="view-body">
-
                 <div class="view-grid">
 
                     <div class="view-field full">
@@ -880,71 +903,66 @@
                         <p>@SelectedViewItem.Tipo</p>
                     </div>
 
-                @if (!string.IsNullOrWhiteSpace(SelectedViewItem.Ubicacion))
+                    @if (SelectedViewItem.Tipo == "Evento")
                     {
                         <div class="view-field">
                             <label>📍 Ubicación</label>
                             <p>@SelectedViewItem.Ubicacion</p>
                         </div>
-                    }
 
-                    @if (SelectedViewItem.FechaInicio != null)
+                        <div class="view-field">
+                            <label>Fecha Inicio</label>
+                            <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
+                        </div>
+
+                        <div class="view-field">
+                            <label>Hora Inicio</label>
+                            <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
+                        </div>
+
+                        <div class="view-field">
+                            <label>Fecha Fin</label>
+                            <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
+                        </div>
+
+                        <div class="view-field">
+                            <label>Hora Fin</label>
+                            <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
+                        </div>
+
+                        <div class="view-field">
+                            <label>Prioridad</label>
+                            <p>
+                                @(SelectedViewItem.Prioridad switch
+                                {
+                                    1 => "🔥 Alta",
+                                    2 => "⚠️ Media",
+                                    3 => "🟢 Baja",
+                                    _ => "Sin prioridad"
+                                })
+                    </p>
+                </div>
+
+                        <div class="view-field">
+                            <label>Recurrencia</label>
+                            <p>@(SelectedViewItem.EsRecurrente? SelectedViewItem.ReglaRecurrencia: "No recurrente")</p>
+                        </div>
+                                }
+                    else if (SelectedViewItem.Tipo == "Tarea")
                     {
                         <div class="view-field">
                             <label>Fecha Inicio</label>
                             <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
                         </div>
-                    }
 
-                    @if (SelectedViewItem.FechaFin != null)
-                    {
                         <div class="view-field">
                             <label>Fecha Fin</label>
                             <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
                         </div>
                     }
-
-                    @if (SelectedViewItem.HoraInicio != null)
-                    {
-                        <div class="view-field">
-                            <label>Hora Inicio</label>
-                            <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
-                        </div>
-                    }
-
-                    @if (SelectedViewItem.HoraFin != null)
-                    {
-                        <div class="view-field">
-                            <label>Hora Fin</label>
-                            <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
-                        </div>
-                    }
-
-                <div class="view-field">
-                    <label>Prioridad</label>
-                    <p>
-                        @(SelectedViewItem.Prioridad switch
-                        {
-                            1 => "🔥 Alta",
-                            2 => "⚠️ Media",
-                            3 => "🟢 Baja",
-                            _ => "Sin prioridad"
-                        })
-                    </p>
                 </div>
 
-                <div class="view-field">
-                    <label>Recurrencia</label>
-                    <p>
-                        @(SelectedViewItem.EsRecurrente
-                                                ? SelectedViewItem.ReglaRecurrencia
-                                                : "No recurrente")
-                    </p>
-                </div>
-
-                </div>
-
-            @if (SelectedViewItem.Participantes.Any())
+                @if (SelectedViewItem.Participantes.Any())
                 {
                     <div class="view-section">
                         <h4>👥 Participantes</h4>
@@ -978,6 +996,13 @@
 
         </div>
     </div>
+    Debug.WriteLine($"Titulo: {SelectedViewItem.Title}");
+    Debug.WriteLine($"Ubicacion: {SelectedViewItem.Ubicacion}");
+    Debug.WriteLine($"HoraInicio: {SelectedViewItem.HoraInicio}");
+    Debug.WriteLine($"HoraFin: {SelectedViewItem.HoraFin}");
+    Debug.WriteLine($"Prioridad: {SelectedViewItem.Prioridad}");
+    Debug.WriteLine($"Recurrencia: {SelectedViewItem.ReglaRecurrencia}");
+
 }
 
 <!--MODAL DE ORDENES DE TRAMITE-->
@@ -1198,6 +1223,60 @@
     private bool ShowTaskDetailsModal = false;
     private TareaOrdenModel? SelectedTask;
     private ViewAgendaItem? SelectedViewItem;
+    private List<string> erroresFormulario = new();
+    // ---- DÍAS INHÁBILES ----
+    private List<DiaNoLaboralDto> DiasNoLaborales = new();
+    private DiaNoLaboralDto? DiaNoLaboralActual;
+
+    private bool EsDiaNoLaboral => DiaNoLaboralActual != null;
+    //PARA LOS DIAS INABILES 
+    // private async Task VerificarDiaNoLaboralAsync()
+    // {
+    //     DiaNoLaboralActual = null;
+
+    //     // Cargar días inhábiles SOLO del mes actual
+    //     DiasNoLaborales = await CalendarioService.ObtenerDiasNoLaborales(
+    //         FechaSeleccionada.Year,
+    //         FechaSeleccionada.Month
+    //     );
+
+    //     DiaNoLaboralActual = DiasNoLaborales
+    //         .FirstOrDefault(d =>
+    //             d.DiaInhabil.Date == FechaSeleccionada.Date ||
+    //             d.Fecha.Date == FechaSeleccionada.Date
+    //         );
+    // }
+    // PARA LOS DIAS INHÁBILES
+    // PARA LOS DIAS INHÁBILES
+    private async Task VerificarDiaNoLaboralAsync()
+    {
+        DiaNoLaboralActual = null;
+
+        // 🔴 DOMINGO = NO LABORAL (SIN USAR EsDiaNoLaboral)
+        if (FechaSeleccionada.DayOfWeek == DayOfWeek.Sunday)
+        {
+            DiaNoLaboralActual = new()
+            {
+                Nombre = "Domingo",
+                Descripcion = "No se labora los domingos",
+                Tipo = "No laboral",
+                Fecha = FechaSeleccionada
+            };
+
+            return;
+        }
+
+        // 🟡 Días inhábiles desde el servicio
+        DiasNoLaborales = await CalendarioService.ObtenerDiasNoLaborales(
+            FechaSeleccionada.Year,
+            FechaSeleccionada.Month
+        );
+
+        DiaNoLaboralActual = DiasNoLaborales.FirstOrDefault(d =>
+            d.DiaInhabil.Date == FechaSeleccionada.Date ||
+            d.Fecha.Date == FechaSeleccionada.Date
+        );
+    }
 
 
     //AUTOEVALUACION
@@ -1214,7 +1293,6 @@
             Tipo = "Tarea",
             Title = t.titulo,
             Descripcion = t.descripcion,
-
             Prioridad = t.idPrioridad,
             EsRecurrente = t.esRecurrente,
             ReglaRecurrencia = t.reglaRecurrencia ?? "",
@@ -1231,6 +1309,23 @@
 
         ShowViewModal = true;
     }
+    // void VerEvento(EventoApiDTO e)
+    // {
+    //     SelectedViewItem = new ViewAgendaItem
+    //     {
+    //         Tipo = "Evento",
+    //         Title = e.titulo,
+    //         Descripcion = e.descripcion,
+    //         FechaInicio = e.fechaInicio,
+    //         FechaFin = e.fechaFin,
+    //         Ubicacion = string.IsNullOrWhiteSpace(e.ubicacion) ? "No definida" : e.ubicacion,
+    //         Prioridad = e.idPrioridad,
+    //         EsRecurrente = e.esRecurrente,
+    //         ReglaRecurrencia = string.IsNullOrWhiteSpace(e.reglaRecurrencia) ? "Sin regla" : e.reglaRecurrencia,
+    //         Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>()
+    //     };
+    //     ShowViewModal = true;
+    // }
     void VerEvento(EventoApiDTO e)
     {
         SelectedViewItem = new ViewAgendaItem
@@ -1238,18 +1333,22 @@
             Tipo = "Evento",
             Title = e.titulo,
             Descripcion = e.descripcion,
-            FechaInicio = e.fechaInicio,
-            FechaFin = e.fechaFin,
-            Ubicacion = e.ubicacion,
-            Prioridad = e.idPrioridad,
+            FechaInicio = e.fechaInicio.Date,
+            FechaFin = e.fechaFin.Date,
+            HoraInicio = TimeOnly.FromDateTime(e.fechaInicio), // ✅ Extraer solo la hora
+            HoraFin = TimeOnly.FromDateTime(e.fechaFin),       // ✅ Extraer solo la hora
+            Ubicacion = string.IsNullOrWhiteSpace(e.ubicacion) ? "No definida" : e.ubicacion,
+            Prioridad = e.idPrioridad != 0 ? e.idPrioridad : 0,
             EsRecurrente = e.esRecurrente,
-            ReglaRecurrencia = e.reglaRecurrencia ?? "",
-
-            // ✅ Transformamos la lista de participantes de la API a lista de nombres
+            ReglaRecurrencia = string.IsNullOrWhiteSpace(e.reglaRecurrencia) ? "Sin regla" : e.reglaRecurrencia,
             Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>()
+
+
         };
+
         ShowViewModal = true;
     }
+
 
 
     private void CloseTaskModal()
@@ -1436,8 +1535,8 @@
         if (nuevoEstado)
             st.FechaPendiente = null; // ya se completó
         else
-            st.FechaPendiente = FechaSeleccionada; // queda pendiente para el próximo día
-
+            // st.FechaPendiente = FechaSeleccionada; // queda pendiente para el próximo día
+        st.FechaPendiente = FechaSeleccionada.Date;
 
         // 🔥 SINCRONIZAR MASTER
         var master = MasterCategories
@@ -1452,40 +1551,26 @@
     //SUBTAREA INTERNA (HIJA) QUE EL LA TAREA PADREE
     private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
     {
-        bool nuevoEstado = subtask.IsDone;
+        bool nuevoEstado = !subtask.IsDone;
 
-        bool ok = await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, nuevoEstado);
+        // 1️⃣ Guardar subtarea en API
+        bool okSub = await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, nuevoEstado);
+        if (!okSub) return;
 
-        if (!ok)
-        {
-            subtask.IsDone = !nuevoEstado;
-            return;
-        }
+        // 2️⃣ Actualizar en memoria
+        subtask.IsDone = nuevoEstado;
 
-        // Actualizar subtarea en parent
-        var s = parent.Subtasks.FirstOrDefault(x => x.ApiId == subtask.ApiId);
-        if (s != null)
-            s.IsDone = nuevoEstado;
+        // 3️⃣ Actualizar tarea padre
+        bool todasCompletas = parent.Subtasks.All(s => s.IsDone);
+        parent.IsDone = todasCompletas;
 
-        // Actualizar tarea principal si todas las subtareas están hechas
-        parent.IsDone = parent.Subtasks.All(s => s.IsDone);
+        // 4️⃣ Guardar tarea padre en API
+        await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, todasCompletas);
 
-        // Sincronizar en MasterCategories
-        var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
-            .FirstOrDefault(x => x.ApiId == parent.ApiId);
-
-        if (masterParent != null)
-        {
-            var masterSub = masterParent.Subtasks.FirstOrDefault(x => x.ApiId == subtask.ApiId);
-            if (masterSub != null)
-                masterSub.IsDone = nuevoEstado;
-
-            masterParent.IsDone = masterParent.Subtasks.All(s => s.IsDone);
-        }
-
-        // Refrescar UI
+        // 5️⃣ Refrescar UI
         StateHasChanged();
     }
+
 
     private void CloseViewModal()
     {
@@ -1648,10 +1733,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await CargarTareasPorFecha();
-        GenerarDiasCalendario();
-        await PrepararOrdenesVisuales();
+
+        await VerificarDiaNoLaboralAsync();
+
+        // 🔥 SIEMPRE cargar datos base
         await InitializeMasterCategoriesAsync();
+        await CargarTareasPorFecha();
+        await PrepararOrdenesVisuales();
+
+        GenerarDiasCalendario();
+        // await CargarTareasPorFecha();
+        // GenerarDiasCalendario();
+        // await PrepararOrdenesVisuales();
+        // await InitializeMasterCategoriesAsync();
     }
     async Task RecargarVista()
     {
@@ -1819,35 +1913,36 @@
 
     private async Task CargarTareasPorFecha()
     {
-        bool esHoy = FechaSeleccionada.Date == DateTime.Today;
-
         Categories = MasterCategories.Select(c =>
         {
             var subtasksFiltradas = c.Subtasks
                 .Where(st =>
                 {
-                    // 📅 SI ES HOY → mostrar todo
-                    if (esHoy)
-                        return true;
+                    // 🔒 Fecha base REAL (día donde debía realizarse)
+                    if (!st.FechaFin.HasValue)
+                        return false;
 
-                    // ⏭️ NO ES HOY → solo pendientes
+                    var fechaObjetivo = st.FechaFin.Value.Date;
+                    var fechaActual = FechaSeleccionada.Date;
 
-                    // EVENTOS
-                    if (st.Tipo == "Evento")
+                    // ❌ NUNCA antes de la fecha objetivo
+                    if (fechaActual < fechaObjetivo)
+                        return false;
+
+                    // 🔵 Si está realizada
+                    if (st.IsDone)
                     {
-                        return !st.IsDone;
+                        // Solo se muestra el día exacto donde se marcó
+                        return st.FechaPendiente == null
+                            && fechaActual == fechaObjetivo;
                     }
 
-                    // TAREAS SIN SUBTAREAS
-                    if (!st.Subtasks.Any())
-                    {
-                        return !st.IsDone;
-                    }
+                    // 🔴 NO realizada → se arrastra
+                    // Si no tiene FechaPendiente aún, empieza desde FechaFin
+                    var fechaArrastre =
+                        st.FechaPendiente?.Date ?? fechaObjetivo;
 
-                    // TAREAS CON SUBTAREAS
-                    bool todasSubtareasHechas = st.Subtasks.All(s => s.IsDone);
-
-                    return !(st.IsDone && todasSubtareasHechas);
+                    return fechaActual >= fechaArrastre;
                 })
                 .Select(st => CloneSubtask(st))
                 .ToList();
@@ -2171,13 +2266,39 @@
     private void CloseOrderModal() { SelectedOrden = null; ShowOrderModal = false; }
 
     // ---- CALENDARIO ----
-    private void DiaAnterior() { FechaSeleccionada = FechaSeleccionada.AddDays(-1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
-    private void DiaSiguiente() { FechaSeleccionada = FechaSeleccionada.AddDays(1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
+    // private void DiaAnterior() { FechaSeleccionada = FechaSeleccionada.AddDays(-1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
+    // private void DiaSiguiente() { FechaSeleccionada = FechaSeleccionada.AddDays(1); CargarTareasPorFecha(); GenerarDiasCalendario(); }
     private void AbrirCalendario() => MostrarModal = true;
     private void CerrarCalendario() => MostrarModal = false;
     private void MesAnterior() { MesActual = MesActual.AddMonths(-1); GenerarDiasCalendario(); }
     private void MesSiguiente() { MesActual = MesActual.AddMonths(1); GenerarDiasCalendario(); }
-    private void SeleccionarFecha(DateTime nuevaFecha) { FechaSeleccionada = nuevaFecha; CerrarCalendario(); CargarTareasPorFecha(); }
+    // private void SeleccionarFecha(DateTime nuevaFecha) { FechaSeleccionada = nuevaFecha; CerrarCalendario(); CargarTareasPorFecha(); }
+    private async Task DiaSiguiente()
+    {
+        FechaSeleccionada = FechaSeleccionada.AddDays(1);
+        await VerificarDiaNoLaboralAsync();
+        await CargarTareasPorFecha();
+        GenerarDiasCalendario();
+    }
+
+    private async Task DiaAnterior()
+    {
+        FechaSeleccionada = FechaSeleccionada.AddDays(-1);
+        await VerificarDiaNoLaboralAsync();
+        await CargarTareasPorFecha();
+        GenerarDiasCalendario();
+    }
+
+
+    private async Task SeleccionarFecha(DateTime nuevaFecha)
+    {
+        FechaSeleccionada = nuevaFecha;
+        CerrarCalendario();
+        await VerificarDiaNoLaboralAsync();
+
+        if (!EsDiaNoLaboral)
+            await CargarTareasPorFecha();
+    }
 
     private void GenerarDiasCalendario()
     {

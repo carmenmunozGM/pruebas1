@@ -22,7 +22,7 @@
 
 @if (ShowModal)
 {
-    <div class="backdrop-overlay" @onclick="CheckClose">
+    <div class="backdrop-overlay" >
         <div class="task-modal-card" @onclick:stopPropagation="true">
 
             <div class="task-modal-header">
@@ -31,6 +31,7 @@
             </div>
 
             <div class="task-modal-body">
+
 
                 <!-- Tipo -->
                 <div class="activity-type-selector">
@@ -115,7 +116,8 @@
                                 @bind="selectedSalaId"
                                 @bind:after="OnSalaChanged">
 
-                            <option value="0">Selecciona una sala</option>
+                            <option value="">Selecciona una sala</option>
+
 
                             @foreach (var sala in listaSalas)
                             {
@@ -246,11 +248,25 @@
 
         </div>
     </div>
+    <script>
+                 window.disableBodyScroll = () => {
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+        }
 
+        window.enableBodyScroll = () => {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+
+    </script>
 
 @code {
 
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
+
 
     // --- FECHAS ---
     private DateTime? FechaInicio { get; set; }
@@ -268,7 +284,8 @@
     private string newSubtask = string.Empty;
 
     private List<SalasEm> listaSalas = new();
-    private int selectedSalaId = 0;
+    // private int selectedSalaId = 0;
+    private int? selectedSalaId = null;
 
     //private string? ubicacionSeleccionada;
     //private bool showOtherLocationInput = false;
@@ -279,8 +296,7 @@
     private int? selectedPrioridadId;
     private int? selectedFrecuenciaId;
 
-    private bool ShowModal = false;
-
+    private bool ShowModal { get; set; } = false;
     private string searchText = "";
     private bool mostrarLista = false;
 
@@ -361,7 +377,7 @@
         LimpiarCampos();
         ShowModal = true;
     }
-
+   
     private void CheckClose()
     {
         LimpiarCampos();
@@ -369,28 +385,49 @@
     }
     void OnSalaChanged()
     {
-        // Si selecciona "Otro"
-        if (selectedSalaId == -1)
+        // 🔥 LIMPIAR ESTADO
+        mostrarOtraUbicacion = false;
+        ubicacionOtra = "";
+
+        if (!selectedSalaId.HasValue)
+            return;
+
+        if (selectedSalaId.Value == -1)
         {
             mostrarOtraUbicacion = true;
         }
-        else
-        {
-            mostrarOtraUbicacion = false;
-            ubicacionOtra = "";
-        }
     }
+
     // ----------------- GUARDAR -----------------
     // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(titulo))
+        // ---------------- VALIDACIONES OBLIGATORIAS ----------------
+        string alertMessage = "";
+
+        // Campos comunes a Tareas y Eventos
+        if (string.IsNullOrWhiteSpace(titulo)) alertMessage += "Debes completar el título.\n";
+        if (!selectedPrioridadId.HasValue) alertMessage += "Debes seleccionar la prioridad.\n";
+        if (!selectedFrecuenciaId.HasValue) alertMessage += "Debes seleccionar la recurrencia.\n";
+        if (!FechaInicio.HasValue) alertMessage += "Debes seleccionar la fecha de inicio.\n";
+        if (!FechaFin.HasValue) alertMessage += "Debes seleccionar la fecha de término.\n";
+
+        // Campos específicos de Evento
+        if (FormType == FormTypes.Evento)
+        {
+            if (!HoraInicio.HasValue) alertMessage += "Debes seleccionar la hora de inicio.\n";
+            if (!HoraFin.HasValue) alertMessage += "Debes seleccionar la hora de término.\n";
+            if (selectedSalaId <= 0 && string.IsNullOrWhiteSpace(ubicacionOtra))
+                alertMessage += "Debes seleccionar o escribir la ubicación.\n";
+        }
+
+        if (!string.IsNullOrEmpty(alertMessage))
         {
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
-                title = "Falta el título",
-                text = "Debes escribir un título."
+                title = "Campos obligatorios incompletos",
+                text = alertMessage
             });
             return;
         }
@@ -430,18 +467,34 @@
             );
         }
 
+        // string ubicacionFinal = "";
+        // int idSalaFinal = 0;
+
+        // if (selectedSalaId == -1)
+        // {
+        //     idSalaFinal = 0;
+        //     ubicacionFinal = (ubicacionOtra ?? "").Trim();
+        // }
+        // else if (selectedSalaId > 0)
+        // {
+        //     idSalaFinal = selectedSalaId;
+        //     ubicacionFinal = "";
+        // }
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
-        if (selectedSalaId == -1)
+        if (selectedSalaId.HasValue)
         {
-            idSalaFinal = 0;
-            ubicacionFinal = (ubicacionOtra ?? "").Trim();
-        }
-        else if (selectedSalaId > 0)
-        {
-            idSalaFinal = selectedSalaId;
-            ubicacionFinal = "";
+            if (selectedSalaId.Value == -1)
+            {
+                idSalaFinal = 0;
+                ubicacionFinal = (ubicacionOtra ?? "").Trim();
+            }
+            else if (selectedSalaId.Value > 0)
+            {
+                idSalaFinal = selectedSalaId.Value;
+                ubicacionFinal = "";
+            }
         }
 
         var participantesIds = participantesSeleccionados.Select(p => p.Id).ToList();
@@ -487,7 +540,7 @@
             await JSRuntime.InvokeVoidAsync("Swal.fire", new
             {
                 icon = "error",
-                title = " La sala ya está ocupada en ese horario."
+                title = "La Sala esta ocupada,por favor revisa la RED GM"
             });
             return;
         }
@@ -503,8 +556,41 @@
         ShowModal = false;
     }
 
+
     // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
+    {
+        titulo = "";
+        descripcion = "";
+        subtasks.Clear();
+        newSubtask = "";
+
+        FechaInicio = null;
+        FechaFin = null;
+        HoraInicio = null;
+        HoraFin = null;
+
+        ubicacionOtra = "";
+        mostrarOtraUbicacion = false;
+
+        selectedSalaId = null;
+
+        selectedPrioridadId = null;
+        selectedFrecuenciaId = null;
+
+        participantesSeleccionados.Clear();
+
+        FormType = FormTypes.Tareas;
+    }
+
+    private void SetFormType(FormTypes type)
+    {
+        FormType = type;
+        if (type == FormTypes.Evento) subtasks.Clear();
+        LimpiarCamposNoTipo(); // NUEVO: limpia campos sin reiniciar FormType
+    }
+    // NUEVO: Método que limpia todos los campos excepto el tipo
+    private void LimpiarCamposNoTipo()
     {
         titulo = "";
         descripcion = "";
@@ -524,17 +610,7 @@
         selectedFrecuenciaId = null;
 
         participantesSeleccionados.Clear();
-
-        FormType = FormTypes.Tareas;
     }
-
-    private void SetFormType(FormTypes type)
-    {
-        FormType = type;
-        if (type == FormTypes.Evento)
-            subtasks.Clear();
-    }
-
     private void AddSubtask()
     {
         if (!string.IsNullOrWhiteSpace(newSubtask))
@@ -958,13 +1034,14 @@
         }
 
     .btn-add {
-        background-color: var(--color-primary);
-        color: white;
+        background-color: #BBD8FB;
+        color: black;
         padding: 0 15px; /* Ajuste para el botón de añadir */
     }
 
         .btn-add:hover {
-            background-color: #005f99;
+            background-color: #BBD8FB;
         }
+
 
 </style>
