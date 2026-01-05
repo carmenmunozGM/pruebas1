@@ -90,8 +90,7 @@
                     <!-- Hora inicio -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Inicio</label>
-                        <input type="time" class="form-input time-control"
-                               @bind="HoraInicio" @bind:event="oninput" />
+                        <TimePickerList @bind-Value="HoraInicio" />
                     </div>
 
                     <!-- Fecha fin -->
@@ -105,9 +104,9 @@
                     <!-- Hora fin -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Término</label>
-                        <input type="time" class="form-input time-control"
-                               @bind="HoraFin" @bind:event="oninput" />
+                        <TimePickerList @bind-Value="HoraFin" />
                     </div>
+
 
                     <!-- Ubicación -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
@@ -1043,5 +1042,54 @@
             background-color: #BBD8FB;
         }
 
+
+    .timepicker-container {
+        position: relative;
+    }
+
+    .timepicker-input {
+        cursor: pointer;
+        background-color: #fff;
+    }
+
+    .timepicker-panel {
+        position: absolute;
+        top: 42px;
+        left: 0;
+        display: flex;
+        gap: 6px;
+        width: 160px;
+        max-height: 240px;
+        background: white;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0,0,0,.15);
+        z-index: 3000;
+        padding: 6px;
+    }
+
+    .timepicker-column {
+        flex: 1;
+        max-height: 220px;
+        overflow-y: auto;
+        border-radius: 6px;
+    }
+
+    .timepicker-item {
+        padding: 8px 0;
+        text-align: center;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+        .timepicker-item:hover {
+            background-color: #f0f7ff;
+        }
+
+        .timepicker-item.selected {
+            background-color: #0078d4;
+            color: white;
+            font-weight: 600;
+        }
 
 </style>
