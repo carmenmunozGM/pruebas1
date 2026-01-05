@@ -1,0 +1,68 @@
+﻿<div class="timepicker-container">
+    <input class="form-input timepicker-input"
+           readonly
+           value="@DisplayValue"
+           @onclick="Toggle" />
+
+    @if (IsOpen)
+    {
+        <div class="timepicker-panel">
+
+            <!-- HORAS -->
+            <div class="timepicker-column">
+                @foreach (var h in Hours)
+                {
+                    <div class="timepicker-item @(Value?.Hour == h ? "selected" : "")"
+                         @onclick="() => SelectHour(h)">
+                        @h.ToString("00")
+                    </div>
+                }
+            </div>
+
+            <!-- MINUTOS -->
+            <div class="timepicker-column">
+                @foreach (var m in Minutes)
+                {
+                    <div class="timepicker-item @(Value?.Minute == m ? "selected" : "")"
+                         @onclick="() => SelectMinute(m)">
+                        @m.ToString("00")
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public TimeOnly? Value { get; set; }
+    [Parameter] public EventCallback<TimeOnly?> ValueChanged { get; set; }
+
+    private bool IsOpen;
+
+    private int SelectedHour => Value?.Hour ?? 0;
+    private int SelectedMinute => Value?.Minute ?? 0;
+
+    private string DisplayValue =>
+        Value.HasValue ? Value.Value.ToString("HH:mm") : "--:--";
+
+    private List<int> Hours = Enumerable.Range(0, 24).ToList();
+    private List<int> Minutes = Enumerable.Range(0, 12)
+                                      .Select(i => i * 5)
+                                      .ToList();
+
+    private void Toggle() => IsOpen = !IsOpen;
+
+    private async Task SelectHour(int hour)
+    {
+        Value = new TimeOnly(hour, SelectedMinute);
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task SelectMinute(int minute)
+    {
+        Value = new TimeOnly(SelectedHour, minute);
+        IsOpen = false;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}
