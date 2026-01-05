@@ -17,6 +17,8 @@
 @inject AgendaService AgendaService
 @inject LoginService LoginService
 @inject CalendarioService CalendarioService
+@inject SalasEmService SalasService
+@inject ReglasRecurrenciaServices ReglasService
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -151,13 +153,32 @@
                                 <li class="subtask-item">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
 
-                                        <input type="checkbox"
+                                      @*   <input type="checkbox"
                                                @bind="st.IsDone"
                                                @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
                                                disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone && !st.IsDone))" />
 
+ *@
+@* 
+                                        @if (st.Subtasks != null && st.Subtasks.Any())
+                                        {
+                                            <!-- TAREA PADRE -->
+                                            <input type="checkbox"
+                                                   checked="@st.IsDone"
+                                                   disabled />
+                                        }
+                                        else
+                                        {
+                                            <!-- TAREA NORMAL / EVENTO -->
+                                            <input type="checkbox"
+                                                   checked="@st.IsDone"
+                                                   @onchange="async e => await OnToggleItemAsync(st, e.Value)" />
+                                        } *@
 
 
+                                        <input type="checkbox"
+                                               checked="@st.IsDone"
+                                               @onchange="@(e => ToggleSubtaskAsync(st, e.Value))" />
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");">
@@ -260,7 +281,7 @@
                                                     <li class="subtask-item">
                                                         <div class="subtask-label @(s2.IsDone ? "done" : "")">
                                                             <input type="checkbox"
-                                                                   checked="@s2.IsDone"
+                                                                   @bind="s2.IsDone"
                                                                    @bind:after="() => ToggleInnerSubtask(tareasCat, st, s2)" />
 
 
@@ -426,11 +447,11 @@
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
 
-
+@* 
                                         <input type="checkbox"
                                                @bind="st.IsDone"
                                                @bind:after="() => ToggleSubtaskAsync(st)"
-                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" />
+                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" /> *@
 
                                         }
 
@@ -630,9 +651,8 @@
                                     <div class="subtask-label @(st.IsDone ? "done" : "")">
 
                                         <input type="checkbox"
-                                               @bind="st.IsDone"
-                                               @bind:after="() => ToggleSubtaskAsync(st)"
-                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" />
+                                               checked="@st.IsDone"
+                                               @onchange="@(e => ToggleSubtaskAsync(st, e.Value))" />
                                         <span class="subtask-text">@st.Title</span>
                                     </div>
                                 </li>
@@ -902,7 +922,25 @@
                         <label>Tipo</label>
                         <p>@SelectedViewItem.Tipo</p>
                     </div>
+                    <div class="view-field">
+                        <label>Prioridad</label>
+                        <p>
+                            @(SelectedViewItem.Prioridad > 0
+                                                    && prioridadesLookup.ContainsKey(SelectedViewItem.Prioridad)
+                                                    ? prioridadesLookup[SelectedViewItem.Prioridad]
+                                                    : "Sin prioridad")
+                    </p>
 
+                    </div>
+
+                    <div class="view-field">
+                        <label>Recurrencia</label>
+                        <p>
+                            @(SelectedViewItem.EsRecurrente
+                                                    ? SelectedViewItem.ReglaRecurrencia
+                                                    : "No recurrente")
+                    </p>
+                    </div>
                     @if (SelectedViewItem.Tipo == "Evento")
                     {
                         <div class="view-field">
@@ -930,23 +968,7 @@
                             <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
                         </div>
 
-                        <div class="view-field">
-                            <label>Prioridad</label>
-                            <p>
-                                @(SelectedViewItem.Prioridad switch
-                                {
-                                    1 => "🔥 Alta",
-                                    2 => "⚠️ Media",
-                                    3 => "🟢 Baja",
-                                    _ => "Sin prioridad"
-                                })
-                    </p>
-                </div>
-
-                        <div class="view-field">
-                            <label>Recurrencia</label>
-                            <p>@(SelectedViewItem.EsRecurrente? SelectedViewItem.ReglaRecurrencia: "No recurrente")</p>
-                        </div>
+                     
                                 }
                     else if (SelectedViewItem.Tipo == "Tarea")
                     {
@@ -961,6 +983,13 @@
                         </div>
                     }
                 </div>
+                @if (SelectedViewItem.Tipo == "Evento")
+                {
+                    <div class="view-field full">
+                        <label>👑 Creador del evento</label>
+                        <p>@SelectedViewItem.NombreCreador</p>
+                    </div>
+                }
 
                 @if (SelectedViewItem.Participantes.Any())
                 {
@@ -974,6 +1003,7 @@
                         </ul>
                     </div>
                 }
+              
 
                 @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Subtasks.Any())
                 {
@@ -1000,8 +1030,13 @@
     Debug.WriteLine($"Ubicacion: {SelectedViewItem.Ubicacion}");
     Debug.WriteLine($"HoraInicio: {SelectedViewItem.HoraInicio}");
     Debug.WriteLine($"HoraFin: {SelectedViewItem.HoraFin}");
-    Debug.WriteLine($"Prioridad: {SelectedViewItem.Prioridad}");
-    Debug.WriteLine($"Recurrencia: {SelectedViewItem.ReglaRecurrencia}");
+    Debug.WriteLine($"🧪 Prioridad = {SelectedViewItem.Prioridad}");
+    Debug.WriteLine($"🧪 EsRecurrente = {SelectedViewItem.EsRecurrente}");
+    Debug.WriteLine($"🧪 Regla = {SelectedViewItem.ReglaRecurrencia}");
+
+    Debug.WriteLine($"👤 usuarioActualId = {usuarioActualId}");
+    Debug.WriteLine($"👑 creadorId = {SelectedViewItem.CreadorId}");
+
 
 }
 
@@ -1224,6 +1259,10 @@
     private TareaOrdenModel? SelectedTask;
     private ViewAgendaItem? SelectedViewItem;
     private List<string> erroresFormulario = new();
+    private Dictionary<int, string> salasLookup = new();
+    private Dictionary<int, string> prioridadesLookup = new();
+    private Dictionary<int, string> frecuenciaLookup = new();
+
     // ---- DÍAS INHÁBILES ----
     private List<DiaNoLaboralDto> DiasNoLaborales = new();
     private DiaNoLaboralDto? DiaNoLaboralActual;
@@ -1328,27 +1367,36 @@
     // }
     void VerEvento(EventoApiDTO e)
     {
+        bool esMio = e.creadorId == usuarioActualId;
+        bool soyInvitado = !esMio &&
+            e.participantes.Any(p => p.idEmpleado == usuarioActualId);
+
         SelectedViewItem = new ViewAgendaItem
         {
             Tipo = "Evento",
             Title = e.titulo,
             Descripcion = e.descripcion,
+
             FechaInicio = e.fechaInicio.Date,
             FechaFin = e.fechaFin.Date,
-            HoraInicio = TimeOnly.FromDateTime(e.fechaInicio), // ✅ Extraer solo la hora
-            HoraFin = TimeOnly.FromDateTime(e.fechaFin),       // ✅ Extraer solo la hora
-            Ubicacion = string.IsNullOrWhiteSpace(e.ubicacion) ? "No definida" : e.ubicacion,
-            Prioridad = e.idPrioridad != 0 ? e.idPrioridad : 0,
+            HoraInicio = TimeOnly.FromDateTime(e.fechaInicio),
+            HoraFin = TimeOnly.FromDateTime(e.fechaFin),
+
+            Ubicacion = e.ubicacion,
+            Prioridad = e.idPrioridad,
             EsRecurrente = e.esRecurrente,
-            ReglaRecurrencia = string.IsNullOrWhiteSpace(e.reglaRecurrencia) ? "Sin regla" : e.reglaRecurrencia,
-            Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>()
+            ReglaRecurrencia = e.reglaRecurrencia ?? "Sin regla",
 
+            Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new(),
 
+            // 🔥 AQUÍ ESTABA EL FALLO
+            EsEventoMio = esMio,
+            EsInvitado = soyInvitado,
+            NombreCreador = e.nombreCreador
         };
 
         ShowViewModal = true;
     }
-
 
 
     private void CloseTaskModal()
@@ -1478,24 +1526,113 @@
         {
             var e = await AgendaService.ObtenerEventoDetalle(st.ApiId);
             if (e == null) return;
+            bool esMio = e.creadorId == usuarioActualId;
+            bool soyInvitado = !esMio &&
+                e.participantes.Any(p => p.idEmpleado == usuarioActualId);
 
             SelectedViewItem = new ViewAgendaItem
             {
                 Tipo = "Evento",
                 Title = e.titulo,
                 Descripcion = e.descripcion,
+
+                // 📅 FECHAS
+                FechaInicio = e.fechaInicio.Date,
+                FechaFin = e.fechaFin.Date,
+
+                // ⏰ HORAS (🔥 ESTO FALTABA)
+                HoraInicio = TimeOnly.FromDateTime(e.fechaInicio),
+                HoraFin = TimeOnly.FromDateTime(e.fechaFin),
+
+                // 📍 UBICACIÓN CORRECTA (🔥 SALA vs TEXTO)
+                Ubicacion = e.idSala > 0 && salasLookup.ContainsKey(e.idSala)
+    ? salasLookup[e.idSala]
+    : e.ubicacion,
+
+
                 Prioridad = e.idPrioridad,
+
+                // 🔴 ESTA LÍNEA FALTABA
                 EsRecurrente = e.esRecurrente,
-                ReglaRecurrencia = e.reglaRecurrencia ?? "",
-                FechaInicio = e.fechaInicio,
-                FechaFin = e.fechaFin,
-                Ubicacion = e.ubicacion,
-                Participantes = e.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new()
+
+                ReglaRecurrencia = e.esRecurrente
+        && int.TryParse(e.reglaRecurrencia, out int freqId)
+        && frecuenciaLookup.ContainsKey(freqId)
+            ? frecuenciaLookup[freqId]
+            : "No recurrente",
+                // 👑 CREADOR
+                CreadorId = e.creadorId,
+                NombreCreador = e.nombreCreador,
+
+                // 👥 PARTICIPANTES
+                Participantes = e.participantes?
+              .Select(p => p.nombreEmpleado)
+              .ToList() ?? new(),
+
+                // FLAGS (por si los usas después)
+                EsEventoMio = esMio,
+                EsInvitado = soyInvitado
             };
         }
 
+
         ShowViewModal = true;
     }
+    private async Task OnToggleItemAsync(SubtaskModel st, object? value)
+    {
+        bool nuevoEstado = value is bool b && b;
+
+        bool ok = st.Tipo == "Evento"
+            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado)
+            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
+
+        if (!ok) return;
+
+        st.IsDone = nuevoEstado;
+
+        var master = MasterCategories
+            .SelectMany(c => c.Subtasks)
+            .FirstOrDefault(x => x.ApiId == st.ApiId);
+
+        if (master != null)
+            master.IsDone = nuevoEstado;
+
+        StateHasChanged();
+    }
+    // private async Task OnToggleSubtaskAsync(
+    // SubtaskModel parent,
+    // SubtaskModel sub,
+    // object? value)
+    // {
+    //     bool nuevoEstado = value is bool b && b;
+
+    //     bool ok = await AgendaService
+    //         .CambiarEstadoSubtareaAsync(sub.ApiId, nuevoEstado);
+
+    //     if (!ok) return;
+
+    //     sub.IsDone = nuevoEstado;
+
+    //     bool todasCompletas = parent.Subtasks.All(s => s.IsDone);
+
+    //     if (parent.IsDone != todasCompletas)
+    //     {
+    //         parent.IsDone = todasCompletas;
+    //         await AgendaService
+    //             .CambiarEstadoTareaAsync(parent.ApiId, todasCompletas);
+    //     }
+
+    //     // sincronizar master
+    //     var masterParent = MasterCategories
+    //         .SelectMany(c => c.Subtasks)
+    //         .FirstOrDefault(x => x.ApiId == parent.ApiId);
+
+    //     if (masterParent != null)
+    //         masterParent.IsDone = todasCompletas;
+
+    //     StateHasChanged();
+    // }
+   
 
     string TraducirRecurrencia(string? regla)
     {
@@ -1517,59 +1654,30 @@
         return "Recurrente";
     }
 
-    // ESTE SIRVE PARA EL CHECK DE TAREAS
-    private async Task ToggleSubtaskAsync(SubtaskModel st)
-    {
-        bool nuevoEstado = st.IsDone;
-
-        bool ok = st.Tipo == "Evento"
-            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado)
-            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
-
-        if (!ok)
-        {
-            st.IsDone = !nuevoEstado;
-            return;
-        }
-        // 🔥 Actualizar FechaPendiente
-        if (nuevoEstado)
-            st.FechaPendiente = null; // ya se completó
-        else
-            // st.FechaPendiente = FechaSeleccionada; // queda pendiente para el próximo día
-        st.FechaPendiente = FechaSeleccionada.Date;
-
-        // 🔥 SINCRONIZAR MASTER
-        var master = MasterCategories
-            .SelectMany(c => c.Subtasks)
-            .FirstOrDefault(x => x.ApiId == st.ApiId);
-
-        if (master != null)
-            master.IsDone = nuevoEstado;
-    }
 
 
-    //SUBTAREA INTERNA (HIJA) QUE EL LA TAREA PADREE
-    private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
-    {
-        bool nuevoEstado = !subtask.IsDone;
+    // //SUBTAREA INTERNA (HIJA) QUE EL LA TAREA PADREE
+    // private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
+    // {
+    //     bool nuevoEstado = !subtask.IsDone;
 
-        // 1️⃣ Guardar subtarea en API
-        bool okSub = await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, nuevoEstado);
-        if (!okSub) return;
+    //     // 1️⃣ Guardar subtarea en API
+    //     bool okSub = await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, nuevoEstado);
+    //     if (!okSub) return;
 
-        // 2️⃣ Actualizar en memoria
-        subtask.IsDone = nuevoEstado;
+    //     // 2️⃣ Actualizar en memoria
+    //     subtask.IsDone = nuevoEstado;
 
-        // 3️⃣ Actualizar tarea padre
-        bool todasCompletas = parent.Subtasks.All(s => s.IsDone);
-        parent.IsDone = todasCompletas;
+    //     // 3️⃣ Actualizar tarea padre
+    //     bool todasCompletas = parent.Subtasks.All(s => s.IsDone);
+    //     parent.IsDone = todasCompletas;
 
-        // 4️⃣ Guardar tarea padre en API
-        await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, todasCompletas);
+    //     // 4️⃣ Guardar tarea padre en API
+    //     await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, todasCompletas);
 
-        // 5️⃣ Refrescar UI
-        StateHasChanged();
-    }
+    //     // 5️⃣ Refrescar UI
+    //     StateHasChanged();
+    // }
 
 
     private void CloseViewModal()
@@ -1604,33 +1712,6 @@
         MostrarAlerta = false;
         ShowModificarFechaModal = true;
     }
-    private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
-    {
-        if (!parent.Subtasks.Any()) return;
-
-        bool nuevoEstado = parent.IsDone;
-
-        foreach (var sub in parent.Subtasks)
-        {
-            sub.IsDone = nuevoEstado;
-            await AgendaService.CambiarEstadoSubtareaAsync(sub.ApiId, nuevoEstado);
-        }
-
-        // Sincronizar Master
-        var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
-            .FirstOrDefault(x => x.ApiId == parent.ApiId);
-
-        if (masterParent != null)
-        {
-            foreach (var sub in masterParent.Subtasks)
-                sub.IsDone = nuevoEstado;
-
-            masterParent.IsDone = nuevoEstado;
-        }
-
-        StateHasChanged();
-    }
-
 
 
     private void GuardarCambioFecha()
@@ -1671,7 +1752,133 @@
         catch { }
         return null;
     }
+    /// <summary>
+    /// ntossssssssssss
+    /// </summary>
 
+    /// // 1. Manejo de Tareas Simples y Eventos
+    // private async Task ToggleSubtaskAsync(SubtaskModel st)
+    // {
+    //     // Llamar a la API según el tipo
+    //     bool ok = st.Tipo == "Evento"
+    //         ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
+    //         : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+
+    //     if (!ok)
+    //     {
+    //         st.IsDone = !st.IsDone; // Revertir si la API falla
+    //         StateHasChanged();
+    //         return;
+    //     }
+
+    //     // SINCRONIZAR MAESTRO: Buscamos el objeto original para que el cambio persista
+    //     var master = MasterCategories.SelectMany(c => c.Subtasks)
+    //                  .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
+
+    //     if (master != null)
+    //     {
+    //         master.IsDone = st.IsDone;
+    //         if (st.Tipo == "Evento") master.FechaPendiente = null;
+    //         else master.FechaPendiente = st.IsDone ? null : FechaSeleccionada.Date;
+    //     }
+
+    //     // En lugar de recargar todo, solo notificamos el cambio de estado visual
+    //     StateHasChanged();
+    // }
+    // Cambia la firma de la función en tu HTML a:
+    // @onchange="@(e => ToggleSubtaskAsync(st, e.Value))"
+
+    private async Task ToggleSubtaskAsync(SubtaskModel st, object? checkedValue)
+    {
+        // Convertimos el valor recibido del checkbox a booleano
+        bool nuevoEstado = false;
+        if (checkedValue is bool b) nuevoEstado = b;
+        else if (checkedValue is string s) bool.TryParse(s, out nuevoEstado);
+
+        // 1. Actualizar el objeto local de la UI inmediatamente
+        st.IsDone = nuevoEstado;
+
+        // 2. Llamada a API
+        bool ok = st.Tipo == "Evento"
+            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado)
+            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
+
+        if (!ok)
+        {
+            st.IsDone = !nuevoEstado; // Revertir visualmente si falla
+            StateHasChanged();
+            return;
+        }
+
+        // 3. SINCRONIZACIÓN CON MASTER (Corregido 'en' por 'in')
+        foreach (var categoriaMaestra in MasterCategories)
+        {
+            var itemEnMaestro = categoriaMaestra.Subtasks
+                .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
+
+            if (itemEnMaestro != null)
+            {
+                itemEnMaestro.IsDone = nuevoEstado;
+                if (st.Tipo == "Tarea")
+                    itemEnMaestro.FechaPendiente = nuevoEstado ? null : FechaSeleccionada.Date;
+                break;
+            }
+        }
+
+        StateHasChanged();
+    }
+    // 2. Manejo de Tarea Padre (Marcar padre marca todos los hijos)
+    private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
+    {
+        // Actualizar Padre en API
+        await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, parent.IsDone);
+
+        // Actualizar todos los hijos en API y memoria
+        foreach (var sub in parent.Subtasks)
+        {
+            sub.IsDone = parent.IsDone;
+            await AgendaService.CambiarEstadoSubtareaAsync(sub.ApiId, sub.IsDone);
+        }
+
+        // Sincronizar con el Maestro
+        var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
+                           .FirstOrDefault(x => x.ApiId == parent.ApiId);
+        if (masterParent != null)
+        {
+            masterParent.IsDone = parent.IsDone;
+            foreach (var ms in masterParent.Subtasks) ms.IsDone = parent.IsDone;
+        }
+
+        await CargarTareasPorFecha();
+    }
+
+    // 3. Manejo de Hijo a Padre (Marcar todos los hijos marca al padre)
+    private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
+    {
+        // 1. Guardar estado del hijo en API
+        await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, subtask.IsDone);
+
+        // 2. Lógica: El padre se marca solo si TODOS los hijos están marcados
+        bool todosCompletos = parent.Subtasks.All(s => s.IsDone);
+
+        if (parent.IsDone != todosCompletos)
+        {
+            parent.IsDone = todosCompletos;
+            await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, parent.IsDone);
+        }
+
+        // 3. Sincronizar Maestro (Crucial para que no se borre el check al navegar)
+        var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
+                           .FirstOrDefault(x => x.ApiId == parent.ApiId);
+        if (masterParent != null)
+        {
+            masterParent.IsDone = parent.IsDone;
+            var masterSub = masterParent.Subtasks.FirstOrDefault(s => s.ApiId == subtask.ApiId);
+            if (masterSub != null) masterSub.IsDone = subtask.IsDone;
+        }
+
+        StateHasChanged();
+    }
     public class HistorialFechaCambio
     {
         public DateTime FechaAnterior { get; set; }
@@ -1731,22 +1938,67 @@
         }
     }
 
+    // protected override async Task OnInitializedAsync()
+    // {
+
+    //     await VerificarDiaNoLaboralAsync();
+
+    //     // 🔥 SIEMPRE cargar datos base
+    //     await InitializeMasterCategoriesAsync();
+    //     await CargarTareasPorFecha();
+    //     await PrepararOrdenesVisuales();
+    //     // ✅ OBTENER USUARIO LOGUEADO (AQUÍ ESTABA EL ERROR)
+    //     var usuario = LoginService.obtenerUsuarioLogueado();
+    //     if (usuario != null)
+    //     {
+    //         usuarioActualId = usuario.IdEmpleado;
+    //     }
+
+    //     GenerarDiasCalendario();
+    //     // await CargarTareasPorFecha();
+    //     // GenerarDiasCalendario();
+    //     // await PrepararOrdenesVisuales();
+    //     // await InitializeMasterCategoriesAsync();
+    // }
     protected override async Task OnInitializedAsync()
     {
+        // ✅ PRIMERO el usuario
+        var usuario = LoginService.obtenerUsuarioLogueado();
+        if (usuario != null)
+        {
+            usuarioActualId = usuario.IdUsuario; 
+            Debug.WriteLine($"👤 usuarioActualId (IdUsuario) = {usuarioActualId}");
+        }
+        var salas = await SalasService.GetSalas();
 
+        salasLookup = salas.ToDictionary(
+            s => s.Id,
+            s => s.Salas
+        );
+
+        // PRIORIDADES
+        var prioridades = await ReglasService.GetPrioridad();
+        prioridadesLookup = prioridades.ToDictionary(
+            p => p.Id,
+            p => p.Titulo
+        );
+
+        // FRECUENCIAS DE RECURRENCIA
+        var frecuencias = await ReglasService.GetFrecuencia();
+        frecuenciaLookup = frecuencias.ToDictionary(
+            f => f.Id,
+            f => f.Nombre
+        );
         await VerificarDiaNoLaboralAsync();
 
-        // 🔥 SIEMPRE cargar datos base
+        // 🔥 DESPUÉS cargar todo lo demás
         await InitializeMasterCategoriesAsync();
         await CargarTareasPorFecha();
         await PrepararOrdenesVisuales();
 
         GenerarDiasCalendario();
-        // await CargarTareasPorFecha();
-        // GenerarDiasCalendario();
-        // await PrepararOrdenesVisuales();
-        // await InitializeMasterCategoriesAsync();
     }
+
     async Task RecargarVista()
     {
         await InitializeMasterCategoriesAsync();
@@ -1824,6 +2076,9 @@
 
         foreach (var ev in eventosApi)
         {
+            bool esMio = ev.creadorId == usuarioActualId;
+            bool soyInvitada = !esMio &&
+                ev.participantes.Any(p => p.idEmpleado == usuarioActualId);
             tareasCategory.Subtasks.Add(new SubtaskModel
             {
                 ApiId = ev.id,
@@ -1832,6 +2087,11 @@
                 //Descripcion = ev.descripcion,
                 IsDone = ev.completada, // <--- Aquí
                 Tipo = "Evento",
+
+                EsEventoMio = esMio,
+                EsInvitado = soyInvitada,
+                NombreCreador = ev.nombreCreador,
+
                 Icon = "📅",
                 FechaInicio = ev.fechaInicio,
                 FechaFin = ev.fechaFin,
@@ -1842,7 +2102,7 @@
                 Prioridad = ev.idPrioridad,
                 EsRecurrente = ev.esRecurrente,
                 ReglaRecurrencia = ev.reglaRecurrencia ?? "",
-                EsInvitado = ev.participantes.Any(p => p.idEmpleado == usuarioActualId),
+                //EsInvitado = ev.participantes.Any(p => p.idEmpleado == usuarioActualId),
                 Participantes = ev.participantes?.Select(p => p.nombreEmpleado).ToList() ?? new List<string>(),
                 
                 Subtasks = new()
@@ -1911,40 +2171,98 @@
         CargarTareasPorFecha();
     }
 
+    // private async Task CargarTareasPorFecha()
+    // {
+    //     Categories = MasterCategories.Select(c =>
+    //     {
+    //         var subtasksFiltradas = c.Subtasks
+    //             .Where(st =>
+    //             {
+    //                 // 🔒 Fecha base REAL (día donde debía realizarse)
+    //                 if (!st.FechaFin.HasValue)
+    //                     return false;
+
+    //                 var fechaObjetivo = st.FechaFin.Value.Date;
+    //                 var fechaActual = FechaSeleccionada.Date;
+
+    //                 // ❌ NUNCA antes de la fecha objetivo
+    //                 if (fechaActual < fechaObjetivo)
+    //                     return false;
+
+    //                 // // 🔵 Si está realizada
+    //                 // if (st.IsDone)
+    //                 // {
+    //                 //     // Solo se muestra el día exacto donde se marcó
+    //                 //     return st.FechaPendiente == null
+    //                 //         && fechaActual == fechaObjetivo;
+    //                 // }
+    //                 if (st.IsDone)
+    //                 {
+    //                     // Si es un EVENTO, queremos que se siga viendo en su día aunque esté terminado
+    //                     if (st.Tipo == "Evento")
+    //                     {
+    //                         return fechaActual == fechaObjetivo;
+    //                     }
+
+    //                     // Si es Tarea, mantenemos tu lógica original
+    //                     return st.FechaPendiente == null && fechaActual == fechaObjetivo;
+    //                 }
+    //                 // 🔴 NO realizada → se arrastra
+    //                 // Si no tiene FechaPendiente aún, empieza desde FechaFin
+    //                 var fechaArrastre =
+    //                     st.FechaPendiente?.Date ?? fechaObjetivo;
+
+    //                 return fechaActual >= fechaArrastre;
+    //             })
+    //             .Select(st => CloneSubtask(st))
+    //             .ToList();
+
+    //         return new CategoryModel
+    //         {
+    //             Name = c.Name,
+    //             ColorClass = c.ColorClass,
+    //             Icon = c.Icon,
+    //             Subtasks = subtasksFiltradas
+    //         };
+    //     }).ToList();
+
+    //     await PrepararOrdenesVisuales();
+    // }
+
+
     private async Task CargarTareasPorFecha()
     {
-        Categories = MasterCategories.Select(c =>
+        // Especificamos explícitamente los tipos para evitar el error CS0411
+        Categories = MasterCategories.Select<CategoryModel, CategoryModel>(c =>
         {
             var subtasksFiltradas = c.Subtasks
                 .Where(st =>
                 {
-                    // 🔒 Fecha base REAL (día donde debía realizarse)
-                    if (!st.FechaFin.HasValue)
-                        return false;
+                    // Si no tiene fecha, no lo mostramos
+                    if (!st.FechaFin.HasValue) return false;
 
-                    var fechaObjetivo = st.FechaFin.Value.Date;
-                    var fechaActual = FechaSeleccionada.Date;
+                    DateTime fechaObjetivo = st.FechaFin.Value.Date;
+                    DateTime fechaActual = FechaSeleccionada.Date;
 
-                    // ❌ NUNCA antes de la fecha objetivo
-                    if (fechaActual < fechaObjetivo)
-                        return false;
-
-                    // 🔵 Si está realizada
-                    if (st.IsDone)
+                    // --- REGLA PARA EVENTOS (VISUALIZACIÓN) ---
+                    if (st.Tipo == "Evento")
                     {
-                        // Solo se muestra el día exacto donde se marcó
-                        return st.FechaPendiente == null
-                            && fechaActual == fechaObjetivo;
+                        // El evento se muestra si estamos parados en su día de fin
+                        return fechaActual == fechaObjetivo;
                     }
 
-                    // 🔴 NO realizada → se arrastra
-                    // Si no tiene FechaPendiente aún, empieza desde FechaFin
-                    var fechaArrastre =
-                        st.FechaPendiente?.Date ?? fechaObjetivo;
+                    // --- REGLA PARA TAREAS ---
+                    if (st.IsDone)
+                    {
+                        // Si ya está hecha, solo se muestra en el día que se completó (o su fecha objetivo)
+                        return st.FechaPendiente == null && fechaActual == fechaObjetivo;
+                    }
 
+                    // Si no está hecha, se arrastra desde su fecha original o pendiente
+                    DateTime fechaArrastre = st.FechaPendiente?.Date ?? fechaObjetivo;
                     return fechaActual >= fechaArrastre;
                 })
-                .Select(st => CloneSubtask(st))
+                .Select(st => CloneSubtask(st)) // Clonamos para que la UI tenga su propia copia
                 .ToList();
 
             return new CategoryModel
@@ -1952,31 +2270,55 @@
                 Name = c.Name,
                 ColorClass = c.ColorClass,
                 Icon = c.Icon,
+                IsCollapsed = c.IsCollapsed,
                 Subtasks = subtasksFiltradas
             };
         }).ToList();
 
         await PrepararOrdenesVisuales();
     }
-
+    // private SubtaskModel CloneSubtask(SubtaskModel st)
+    // {
+    //     return new SubtaskModel
+    //     {
+    //         ApiId = st.ApiId,
+    //         Title = st.Title,
+    //         Descripcion = st.Descripcion,
+    //         IsDone = st.IsDone,
+    //         Tipo = st.Tipo,
+    //         Prioridad = st.Prioridad,
+    //         FechaInicio = st.FechaInicio,
+    //         FechaFin = st.FechaFin,
+    //         FechaPendiente = st.FechaPendiente, // NUEVO
+    //         HoraInicio = st.HoraInicio,
+    //         Subtasks = st.Subtasks?.Select(s => CloneSubtask(s)).ToList()
+    //     };
+    // }
     private SubtaskModel CloneSubtask(SubtaskModel st)
     {
         return new SubtaskModel
         {
             ApiId = st.ApiId,
+            IdAgenda = st.IdAgenda, // Importante para identificarlo
             Title = st.Title,
             Descripcion = st.Descripcion,
-            IsDone = st.IsDone,
+            IsDone = st.IsDone,      // <--- Fuente del error si se omite
             Tipo = st.Tipo,
             Prioridad = st.Prioridad,
             FechaInicio = st.FechaInicio,
             FechaFin = st.FechaFin,
-            FechaPendiente = st.FechaPendiente, // NUEVO
+            FechaPendiente = st.FechaPendiente,
             HoraInicio = st.HoraInicio,
-            Subtasks = st.Subtasks?.Select(s => CloneSubtask(s)).ToList()
+            HoraFin = st.HoraFin,    // <--- Faltaba
+            Icon = st.Icon,          // <--- Faltaba (por eso no se ven los iconos a veces)
+            EsInvitado = st.EsInvitado, // <--- Faltaba
+            EsEventoMio = st.EsEventoMio,
+            NombreCreador = st.NombreCreador,
+            Participantes = st.Participantes?.ToList() ?? new(),
+            Subtasks = st.Subtasks?.Select(s => CloneSubtask(s)).ToList() ?? new()
+
         };
     }
-
 
     // ---- ORDENES ----
     private OrdenTrabajoModel ConvertirOrdenSimple(OrdenTrabajoDTO api, OrdenStatus status) => new()

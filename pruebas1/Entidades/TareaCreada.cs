@@ -79,8 +79,8 @@ namespace pruebas1.Entidades
         public bool EsEventoCompartido => Tipo == "Evento" && Participantes?.Count > 1;
         public int IdCreador { get; set; }
         public bool EsInvitado { get; set; }
-
-
+        public bool EsEventoMio { get; set; }
+        public string NombreCreador { get; set; } = "";
         public List<SubtaskModel> Subtasks { get; set; } = new();
     }
 
