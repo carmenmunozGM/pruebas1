@@ -1,4 +1,6 @@
 ﻿@page "/plantrabajo"
+@using pruebas1.Servicios
+@inject ServicioClienteService ServicioClienteService
 <br />
 <br />
 <br />
@@ -23,7 +25,7 @@
                     <ul class="empresa-list">
                         @foreach (var empresa in grupo.Empresas)
                         {
-                            <li @onclick="() => OpenModal(empresa.Nombre, true)">
+                            <li @onclick="() => OpenModal(empresa.IdUsuarioEntidadAgenda)">
                                 🏢 @empresa.Nombre
                             </li>
                         }
@@ -40,7 +42,7 @@
         <ul class="empresa-list">
             @foreach (var cliente in ClientesIndividuales)
             {
-                <li @onclick="() => OpenModal(cliente.Nombre, false)">
+                <li @onclick="() => OpenModal(cliente.IdUsuarioEntidadAgenda)">
                     🧾 @cliente.Nombre
                 </li>
             }
@@ -55,40 +57,56 @@
         <div class="modal large" @onclick:stopPropagation="true">
             <h3 class="modal-title">@ModalEmpresa</h3>
 
-            <table class="activities-table">
-                <thead>
-                    <tr>
-                        <th>Actividad</th>
-                        <th>Fecha</th>
-                        <th>Modificar fecha</th>
-                        <th>Minuta</th>
-                        <th>Observaciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var actividad in Actividades)
-                    {
+            @foreach (var servicio in ServiciosModal)
+            {
+                <h4 class="service-subtitle">
+                    @servicio.NombreServicio
+                </h4>
+
+                <table class="activities-table">
+                    <thead>
                         <tr>
-                            <td>@actividad.Nombre</td>
-                            <td>
-                                <!-- DatePicker custom: enlazamos Value / ValueChanged con DateTime? -->
-                                <DatePicker Value="actividad.Fecha"
-                                            ValueChanged="@(fecha => actividad.Fecha = fecha)"
-                                            CssClass="input-date small" />
-                            </td>
-                            <td>
-                                <button class="btn-calendar" @onclick="() => AbrirSubModal(actividad)" aria-label="Modificar fecha">📅</button>
-                            </td>
-                            <td class="check-cell">
-                                <input type="checkbox" @bind="actividad.Completado" />
-                            </td>
-                            <td>
-                                <textarea @bind="actividad.Observaciones" class="input-text"></textarea>
-                            </td>
+                            <th>Actividad</th>
+                            <th>Fecha</th>
+                            <th>Modificar fecha</th>
+                            <th>Minuta</th>
+                            <th>Observaciones</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var actividad in servicio.Actividades)
+                        {
+                            <tr>
+                                <td>@actividad.Nombre</td>
+
+                                <td>
+                                    <DatePicker Value="actividad.Fecha"
+                                                ValueChanged="@(fecha => actividad.Fecha = fecha)"
+                                                CssClass="input-date small" />
+                                </td>
+
+                                <td>
+                                    <button class="btn-calendar"
+                                            @onclick="() => AbrirSubModal(actividad)">
+                                        📅
+                                    </button>
+                                </td>
+
+                                <td class="check-cell">
+                                    <input type="checkbox"
+                                           checked="@(actividad.Minuta == 1)"
+                                           @onchange="e => actividad.Minuta = (bool)e.Value! ? 1 : 0" />
+                                </td>
+
+                                <td>
+                                    <textarea @bind="actividad.Observaciones"
+                                              class="input-text"></textarea>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
 
             <div class="modal-footer">
                 <button class="btn-save" @onclick="GuardarActividades">Guardar</button>
@@ -173,20 +191,22 @@
 
     public class Actividad
     {
-        public string Nombre { get; set; } = string.Empty;
-        // Fecha nullable para que no tenga valor hasta que el usuario la elija
-        public DateTime? Fecha { get; set; }
-        public string Observaciones { get; set; } = string.Empty;
-        public bool Completado { get; set; }
+        public int IdCheckListAsignacion { get; set; }
+        public int IdActividadGeneral { get; set; }
 
-        // Historial de cambios de fecha
+        public string Nombre { get; set; } = string.Empty;
+        public DateTime? Fecha { get; set; }
+        public int? Minuta { get; set; }
+        public string? Observaciones { get; set; }
+
         public List<CambioFecha> HistorialFechas { get; set; } = new();
     }
 
+
     public class Empresa
     {
+        public int IdUsuarioEntidadAgenda { get; set; }
         public string Nombre { get; set; } = string.Empty;
-        public List<Actividad> Actividades { get; set; } = new();
     }
 
     public class GrupoCliente
@@ -203,6 +223,13 @@
     private string ModalEmpresa { get; set; } = string.Empty;
     private List<Actividad> Actividades { get; set; } = new();
     Actividad ActividadSeleccionada;
+    private List<ServicioModal> ServiciosModal { get; set; } = new();
+
+    public class ServicioModal
+    {
+        public string NombreServicio { get; set; } = string.Empty;
+        public List<Actividad> Actividades { get; set; } = new();
+    }
 
     // Campos para el submodal
     private DateTime? NuevaFecha { get; set; }
@@ -213,134 +240,71 @@
     bool MostrarErrorFecha = false;
     bool MostrarErrorMotivo = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        GruposClientes = new()
-        {
-            new GrupoCliente
-            {
-                Nombre = "Grupo VITA",
-                Empresas = new()
-                {
-                    new Empresa
-                    {
-                        Nombre = "1658 CASAS Y DESARROLLOS VITA SAPI DE CV",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
-                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                            new Actividad { Nombre = "Llenado de libros de bancos(entrada y salidas,facturación emiitda y recibida)" },
-                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
-                        }
-                    },
-                    new Empresa
-                    {
-                        Nombre = "1235 CONSTRUCCIONES Y DESARROLLOS NELSAN SA DE CV",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
-                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
-                        }
-                    },
-                    new Empresa
-                    {
-                        Nombre = "1395 DESARROLLOS INMOBILIARIOS JND",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Acordar con Lic.Gerardo cuando mandara el informe" },
-                            new Actividad { Nombre = "Solicitar a TI descarga de CFDIS" },
-                            new Actividad { Nombre = "Asegurar la recepción de documentos enviados por el Lic.Gerardo" },
-                            new Actividad { Nombre = "Visita a empresa(para revisar póliza,dudas del mes con Gerardo o Paola)" },
-                            new Actividad { Nombre = "Registro contable,captura por TI,generación de balanzas y calculo de impuesto" },
-                        }
-                    }
-                }
-            },
-            new GrupoCliente
-            {
-                Nombre = "Grupo NAMRON",
-                Empresas = new()
-                {
-                    new Empresa
-                    {
-                        Nombre = "2389 RODAROSA,SA DE CV",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Actualizar base de datos" },
-                            new Actividad { Nombre = "Enviar cotización" }
-                        }
-                    },
-                    new Empresa
-                    {
-                        Nombre = "2390 CASA 2B SA DE CV",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Revisión de inventario" }
-                        }
-                    },
-                    new Empresa
-                    {
-                        Nombre = "2391 EUROPREMIOS SA DE CV",
-                        Actividades = new()
-                        {
-                            new Actividad { Nombre = "Revisión de inventario" }
-                        }
-                    }
-                }
-            }
-        };
+        var data = await ServicioClienteService.ObtenerMisEmpresas();
 
-        ClientesIndividuales = new()
+        GruposClientes = data.Grupos.Select(g => new GrupoCliente
         {
-            new Empresa
+            Nombre = g.NombreGrupo,
+            Empresas = g.Clientes.Select(c => new Empresa
             {
-                Nombre = "2003  Vertisol",
-                Actividades = new()
-                {
-                    new Actividad { Nombre = "Entrega de reporte semanal" },
-                    new Actividad { Nombre = "Seguimiento post-venta" }
-                }
-            },
-            new Empresa
-            {
-                Nombre = "2205 CHILAQUILES Y ALGO MAS SA DE CV",
-                Actividades = new()
-                {
-                    new Actividad { Nombre = "Verificar documentación" }
-                }
-            },
-            new Empresa
-            {
-                Nombre = "585  RECORP CONCEPTS SAÍ DE CV",
-                Actividades = new()
-                {
-                    new Actividad { Nombre = "Envío de factura" }
-                }
-            }
-        };
+                IdUsuarioEntidadAgenda = c.IdUsuarioEntidadAgenda,
+                Nombre = c.NombreCliente
+            }).ToList()
+        }).ToList();
+
+        ClientesIndividuales = data.ClientesIndividuales.Select(c => new Empresa
+        {
+            IdUsuarioEntidadAgenda = c.IdUsuarioEntidadAgenda,
+            Nombre = c.NombreCliente
+        }).ToList();
     }
+
+
 
     private void ToggleGrupo(GrupoCliente grupo)
     {
         grupo.Expandido = !grupo.Expandido;
     }
 
-    private void OpenModal(string empresaNombre, bool esGrupo)
+    private async Task OpenModal(int idUsuarioEntidadAgenda)
     {
-        ModalEmpresa = empresaNombre;
-        Actividades = esGrupo
-            ? GruposClientes.SelectMany(g => g.Empresas)
-                .FirstOrDefault(e => e.Nombre == empresaNombre)?.Actividades ?? new()
-            : ClientesIndividuales
-                .FirstOrDefault(e => e.Nombre == empresaNombre)?.Actividades ?? new();
-
         ShowModal = true;
+        ServiciosModal.Clear();
+
+        var data = await ServicioClienteService.ObtenerActividadesEmpresa(idUsuarioEntidadAgenda);
+
+        if (data == null)
+        {
+            ModalEmpresa = "Empresa sin actividades";
+            return;
+        }
+
+        ModalEmpresa = data.NombreEmpresa;
+
+        ServiciosModal = data.Servicios
+            .Select(s => new ServicioModal
+            {
+                NombreServicio = s.NombreServicio,
+                Actividades = s.Actividades
+                    .OrderBy(a => a.IdActividadGeneral)
+                    .Select(a => new Actividad
+                    {
+                        IdCheckListAsignacion = a.IdCheckListAsignacion,
+                        IdActividadGeneral = a.IdActividadGeneral,
+                        Nombre = a.NombreActividad,
+                        Fecha = a.Fecha,
+                        Minuta = a.Minuta,
+                        Observaciones = a.Observaciones
+                    })
+                    .ToList()
+            })
+            .ToList();
     }
+
+
+
 
     private void GuardarActividades()
     {
@@ -778,6 +742,17 @@
         color: #d32f2f;
         font-size: 0.85rem;
         margin-top: 4px;
+    }
+
+
+    .service-subtitle {
+        font-size: 1.1rem; 
+        color: #1a237e; 
+        font-weight: bold; 
+        margin-top: .3rem; 
+        margin-bottom: 0.3rem; 
+        display: inline-block; 
+        min-width: 250px;
     }
 
     /* Para pantallas pequeñas, mejorar padding y tamaño */
