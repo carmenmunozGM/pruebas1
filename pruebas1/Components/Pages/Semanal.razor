@@ -182,11 +182,18 @@
                 </div>
                 <div class="form-group">
                     <label>Prioridad:</label>
-                    <select @bind="bt.Priority" disabled="@(!IsEditMode)">
-                        <option value="Alta">🔴 Alta</option>
-                        <option value="Media">🟡 Media</option>
-                        <option value="Baja">🟢 Baja</option>
-                    </select>
+                    <select value="@bt.Priority"
+                            disabled="@(!IsEditMode)"
+                            @onchange="e =>
+                            {
+                                bt.Priority = e.Value?.ToString() ?? bt.Priority;
+                                bt.IdPrioridad = MapPriority(bt.Priority);
+                            }">
+                          <option value="Alta">🔴 Alta</option>
+                          <option value="Media">🟡 Media</option>
+                          <option value="Baja">🟢 Baja</option>
+                      </select>
+
                 </div>
                 <div class="form-group">
                     <label>Recurrencia:</label>
@@ -252,7 +259,11 @@
         <div class="modal-footer">
             @if (IsEditMode)
             {
-                <button class="action-btn save" @onclick="SaveTask">💾 Guardar</button>
+                <button class="action-btn save"
+                        @onclick="async () => await SaveTask()">
+                    💾 Guardar
+                </button>
+
                 <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
             }
             else
@@ -574,22 +585,66 @@
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public int ApiId { get; set; } = 0;
+        public int IdAgenda { get; set; }
+        public int IdPrioridad { get; set; }
+
         public BlockType Type { get; set; }
+
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
+
         public string Priority { get; set; } = "Media";
         public string Recurrence { get; set; } = "No repetir";
+
         public bool IsCompleted { get; set; } = false;
+
         public DateTime StartDate { get; set; } = DateTime.Today;
         public DateTime DueDate { get; set; } = DateTime.Today;
-        public List<object> SubTasks { get; set; } = new();
+
+        public List<BaseSubTask> SubTasks { get; set; } = new();
+
         public Block ParentBlock { get; set; }
-        public string Tipo { get; set; } = "Tarea"; // Tarea o Evento
+
+        public string Tipo { get; set; } = "Tarea";
+
         public string IconoVisual =>
             Tipo?.Equals("Evento", StringComparison.OrdinalIgnoreCase) == true
                 ? "📅"
                 : "📝";
+    }
 
+    class BaseSubTask
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+    }
+
+    int MapPriority(string prioridad)
+    {
+        return prioridad switch
+        {
+            "Alta" => 1,
+            "Media" => 2,
+            "Baja" => 3,
+            _ => 2
+        };
+    }
+
+    string MapPriorityBack(int id)
+    {
+        return id switch
+        {
+            1 => "Alta",
+            2 => "Media",
+            3 => "Baja",
+            _ => "Media"
+        };
+    }
+
+    public class EditarSubTareaDTO
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
     }
   
     
@@ -778,19 +833,24 @@
 
             var tipoBD = esEvento ? "Evento" : "Tarea";
 
+            var idPrioridad = TryGetInt(obj, "idPrioridad") ?? 2;
+
             var mapped = new BaseTask
             {
-                ApiId = apiId,
+                ApiId = TryGetInt(obj, "id") ?? 0,        // 👈 ESTE
+                IdAgenda = TryGetInt(obj, "idAgenda") ?? 0,
                 Name = titulo,
                 Description = descripcion,
                 StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
                 DueDate = fechaFin.Value,
                 IsCompleted = TryGetBool(obj, "completada") ?? false,
-                Priority = TryGetString(obj, "prioridadTitulo")
-                               ?? (TryGetInt(obj, "idPrioridad")?.ToString() ?? "Media"),
+                IdPrioridad = TryGetInt(obj, "idPrioridad") ?? 2,
+                Priority = TryGetString(obj, "prioridadTitulo") ?? "Media",
                 Tipo = tipoBD,
                 Type = BlockType.GeneralTask
             };
+
+
 
 
             mapped.ParentBlock = day.Blocks[0];
@@ -1138,35 +1198,63 @@
 
     async Task DeleteConfirmedAsync()
     {
-        if (TaskToDelete != null)
-        {
-            TaskToDelete.ParentBlock?.SubTasks.Remove(TaskToDelete);
-            await ShowTemporaryToastAsync("Tarea eliminada");
-        }
+        if (TaskToDelete is not BaseTask bt || bt.ApiId <= 0)
+            return;
+
+        await AgendaService.EliminarTareaAsync(bt.ApiId);
+
+        bt.ParentBlock?.SubTasks.Remove(bt);
+
+        await ShowTemporaryToastAsync("🗑️ Tarea eliminada");
+
         TaskToDelete = null;
         ShowConfirmDelete = false;
     }
 
+
     async Task SaveTask()
     {
-        if (SelectedTaskObject is BaseTask bt)
+        if (SelectedTaskObject is not BaseTask bt)
+            return;
+
+        // Validación básica
+        if (bt.DueDate < bt.StartDate)
         {
-            if (bt.DueDate < bt.StartDate)
-            {
-                await ShowTemporaryToastAsync(
-                    "❌ La fecha fin no puede ser menor a la fecha inicio"
-                );
-                return;
-            }
+            await ShowTemporaryToastAsync(
+                "❌ La fecha fin no puede ser menor a la fecha inicio"
+            );
+            return;
         }
+
+        var model = new EditableItemModel
+        {      
+            IdAgenda = bt.IdAgenda,
+            Titulo = bt.Name,
+            Descripcion = bt.Description,
+            FechaInicio = bt.StartDate,
+            FechaFin = bt.DueDate,
+            EsRecurrente = bt.Recurrence != "No repetir",
+            ReglaRecurrencia = bt.Recurrence == "No repetir"
+                ? null
+                : bt.Recurrence,
+
+            IdPrioridad = bt.IdPrioridad,
+
+            SubTareas = bt.SubTasks
+            .Select(s => s.ToString()!)
+            .ToList()
+
+        };
+
+        Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
+        await AgendaService.EditarTareaAsync(bt.ApiId, model);
 
         IsEditMode = false;
         IsModalOpen = false;
 
-        if (SelectedTaskObject is BaseTask task)
-        {
-            await ShowSuccessAlert($"✅ La tarea '{task.Name}' se guardó correctamente");
-        }
+        await ShowSuccessAlert(
+            $"✅ La tarea '{bt.Name}' se guardó correctamente"
+        );
     }
 
     void CancelEdit()
