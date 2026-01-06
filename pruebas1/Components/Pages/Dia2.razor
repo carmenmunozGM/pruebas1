@@ -1731,67 +1731,73 @@
         return null;
     }
     
-    private async Task ToggleSubtaskAsync(
-    SubtaskModel parent,
-    SubtaskModel sub,
-    bool nuevoEstado)
-    {
-        bool ok = await AgendaService
-            .CambiarEstadoSubtareaAsync(sub.ApiId, nuevoEstado);
+  
 
-        if (!ok) return;
 
-        sub.IsDone = nuevoEstado;
-
-        bool todas = parent.Subtasks.All(s => s.IsDone);
-        parent.IsDone = todas;
-
-        await AgendaService
-            .CambiarEstadoTareaAsync(parent.ApiId, todas);
-
-        // MASTER
-        var masterParent = MasterCategories
-            .SelectMany(c => c.Subtasks)
-            .FirstOrDefault(x => x.ApiId == parent.ApiId);
-
-        if (masterParent != null)
-        {
-            masterParent.IsDone = todas;
-            var ms = masterParent.Subtasks
-                .FirstOrDefault(s => s.ApiId == sub.ApiId);
-            if (ms != null) ms.IsDone = nuevoEstado;
-        }
-
-        StateHasChanged();
-    }
 
     // 1. Manejo de Tareas Simples y Eventos
+    // private async Task ToggleSubtaskAsync(SubtaskModel st)
+    // {
+    //     // Llamar a la API según el tipo
+    //     bool ok = st.Tipo == "Evento"
+    //         ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
+    //         : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+
+    //     if (!ok)
+    //     {
+    //         st.IsDone = !st.IsDone; // Revertir si la API falla
+    //         return;
+    //     }
+
+    //     // SINCRONIZAR MAESTRO: Buscamos el objeto original para que el cambio persista
+    //     var master = MasterCategories.SelectMany(c => c.Subtasks)
+    //                  .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
+
+    //     if (master != null)
+    //     {
+    //         master.IsDone = st.IsDone;
+    //         master.FechaPendiente = st.IsDone ? null : FechaSeleccionada.Date;
+    //     }
+
+    //     await CargarTareasPorFecha(); // Refrescar la vista actual
+    // }
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
-        // Llamar a la API según el tipo
+        // 1. ANTES de enviar a la API, actualizamos la fecha de anclaje
+        if (st.IsDone)
+        {
+            // Si la marcaste hoy, guardamos que "se queda" en el día que estás viendo
+            st.FechaPendiente = FechaSeleccionada.Date;
+        }
+        else
+        {
+            // Si la desmarcas, le quitamos el anclaje para que vuelva a flotar
+            st.FechaPendiente = null;
+        }
+
+        // 2. Llamada a la API
         bool ok = st.Tipo == "Evento"
             ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
             : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
 
         if (!ok)
         {
-            st.IsDone = !st.IsDone; // Revertir si la API falla
+            st.IsDone = !st.IsDone; // Revertir en caso de error
             return;
         }
 
-        // SINCRONIZAR MAESTRO: Buscamos el objeto original para que el cambio persista
+        // 3. SINCRONIZAR MASTER (Muy importante para que el cambio sea permanente en la sesión)
         var master = MasterCategories.SelectMany(c => c.Subtasks)
                      .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
 
         if (master != null)
         {
             master.IsDone = st.IsDone;
-            master.FechaPendiente = st.IsDone ? null : FechaSeleccionada.Date;
+            master.FechaPendiente = st.FechaPendiente; // Guardamos la fecha en el objeto maestro
         }
 
-        await CargarTareasPorFecha(); // Refrescar la vista actual
+        await CargarTareasPorFecha();
     }
-
     // 2. Manejo de Tarea Padre (Marcar padre marca todos los hijos)
     private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
     {
@@ -2195,39 +2201,89 @@
     // }
 
 
+    // private async Task CargarTareasPorFecha()
+    // {
+    //     // Especificamos explícitamente los tipos para evitar el error CS0411
+    //     Categories = MasterCategories.Select<CategoryModel, CategoryModel>(c =>
+    //     {
+    //         var subtasksFiltradas = c.Subtasks
+    //             .Where(st =>
+    //             {
+    //                 // Si no tiene fecha, no lo mostramos
+    //                 if (!st.FechaFin.HasValue) return false;
+
+    //                 DateTime fechaObjetivo = st.FechaFin.Value.Date;
+    //                 DateTime fechaActual = FechaSeleccionada.Date;
+
+    //                 // --- REGLA PARA EVENTOS (VISUALIZACIÓN) ---
+    //                 if (st.Tipo == "Evento")
+    //                 {
+    //                     // El evento se muestra si estamos parados en su día de fin
+    //                     return fechaActual == fechaObjetivo;
+    //                 }
+
+    //                 // --- REGLA PARA TAREAS ---
+    //                 if (st.IsDone)
+    //                 {
+    //                     // Si ya está hecha, solo se muestra en el día que se completó (o su fecha objetivo)
+    //                     return st.FechaPendiente == null && fechaActual == fechaObjetivo;
+    //                 }
+
+    //                 // Si no está hecha, se arrastra desde su fecha original o pendiente
+    //                 DateTime fechaArrastre = st.FechaPendiente?.Date ?? fechaObjetivo;
+    //                 return fechaActual >= fechaArrastre;
+    //             })
+    //             .Select(st => CloneSubtask(st)) // Clonamos para que la UI tenga su propia copia
+    //             .ToList();
+
+    //         return new CategoryModel
+    //         {
+    //             Name = c.Name,
+    //             ColorClass = c.ColorClass,
+    //             Icon = c.Icon,
+    //             IsCollapsed = c.IsCollapsed,
+    //             Subtasks = subtasksFiltradas
+    //         };
+    //     }).ToList();
+
+    //     await PrepararOrdenesVisuales();
+    // }
+
     private async Task CargarTareasPorFecha()
     {
-        // Especificamos explícitamente los tipos para evitar el error CS0411
         Categories = MasterCategories.Select<CategoryModel, CategoryModel>(c =>
         {
             var subtasksFiltradas = c.Subtasks
                 .Where(st =>
                 {
-                    // Si no tiene fecha, no lo mostramos
                     if (!st.FechaFin.HasValue) return false;
 
                     DateTime fechaObjetivo = st.FechaFin.Value.Date;
                     DateTime fechaActual = FechaSeleccionada.Date;
 
-                    // --- REGLA PARA EVENTOS (VISUALIZACIÓN) ---
+                    // --- REGLA PARA EVENTOS ---
                     if (st.Tipo == "Evento")
                     {
-                        // El evento se muestra si estamos parados en su día de fin
                         return fechaActual == fechaObjetivo;
                     }
 
                     // --- REGLA PARA TAREAS ---
                     if (st.IsDone)
                     {
-                        // Si ya está hecha, solo se muestra en el día que se completó (o su fecha objetivo)
-                        return st.FechaPendiente == null && fechaActual == fechaObjetivo;
+                        // CAMBIO AQUÍ: Si está hecha, se debe mostrar ÚNICAMENTE
+                        // en el día que se marcó (usaremos FechaPendiente para guardar ese día)
+                        // Si no tiene fecha de marcaje, usamos la fecha original.
+                        DateTime fechaDondeSeQueda = st.FechaPendiente?.Date ?? fechaObjetivo;
+                        return fechaActual == fechaDondeSeQueda;
                     }
-
-                    // Si no está hecha, se arrastra desde su fecha original o pendiente
-                    DateTime fechaArrastre = st.FechaPendiente?.Date ?? fechaObjetivo;
-                    return fechaActual >= fechaArrastre;
+                    else
+                    {
+                        // Si NO está hecha: se muestra si hoy es >= que su fecha original
+                        // Esto es lo que hace que se "recorra" al futuro
+                        return fechaActual >= fechaObjetivo;
+                    }
                 })
-                .Select(st => CloneSubtask(st)) // Clonamos para que la UI tenga su propia copia
+                .Select(st => CloneSubtask(st))
                 .ToList();
 
             return new CategoryModel
