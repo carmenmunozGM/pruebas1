@@ -32,6 +32,7 @@ namespace pruebas1
             builder.Services.AddScoped<OrdenTrabajoService>();
             builder.Services.AddScoped<OrdenTramiteService>();
             builder.Services.AddScoped<CalendarioService>();
+            builder.Services.AddScoped<ServicioClienteService>();
             builder.Services.AddMauiBlazorWebView();
 
             // HttpClient compartido
