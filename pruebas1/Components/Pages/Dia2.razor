@@ -175,10 +175,10 @@
                                                    @onchange="async e => await OnToggleItemAsync(st, e.Value)" />
                                         } *@
 
-
                                         <input type="checkbox"
-                                               checked="@st.IsDone"
-                                               @onchange="@(e => ToggleSubtaskAsync(st, e.Value))" />
+                                               @bind="st.IsDone"
+                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
+
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");">
@@ -283,8 +283,6 @@
                                                             <input type="checkbox"
                                                                    @bind="s2.IsDone"
                                                                    @bind:after="() => ToggleInnerSubtask(tareasCat, st, s2)" />
-
-
                                                             <span class="subtask-text">@($"{s2.Title}")</span>
                                                             <div class="subtask-actions">
                                                             </div>
@@ -651,8 +649,8 @@
                                     <div class="subtask-label @(st.IsDone ? "done" : "")">
 
                                         <input type="checkbox"
-                                               checked="@st.IsDone"
-                                               @onchange="@(e => ToggleSubtaskAsync(st, e.Value))" />
+                                               @bind="st.IsDone"
+                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
                                         <span class="subtask-text">@st.Title</span>
                                     </div>
                                 </li>
@@ -1578,27 +1576,7 @@
 
         ShowViewModal = true;
     }
-    private async Task OnToggleItemAsync(SubtaskModel st, object? value)
-    {
-        bool nuevoEstado = value is bool b && b;
-
-        bool ok = st.Tipo == "Evento"
-            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado)
-            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
-
-        if (!ok) return;
-
-        st.IsDone = nuevoEstado;
-
-        var master = MasterCategories
-            .SelectMany(c => c.Subtasks)
-            .FirstOrDefault(x => x.ApiId == st.ApiId);
-
-        if (master != null)
-            master.IsDone = nuevoEstado;
-
-        StateHasChanged();
-    }
+    
     // private async Task OnToggleSubtaskAsync(
     // SubtaskModel parent,
     // SubtaskModel sub,
@@ -1752,81 +1730,68 @@
         catch { }
         return null;
     }
-    /// <summary>
-    /// ntossssssssssss
-    /// </summary>
-
-    /// // 1. Manejo de Tareas Simples y Eventos
-    // private async Task ToggleSubtaskAsync(SubtaskModel st)
-    // {
-    //     // Llamar a la API según el tipo
-    //     bool ok = st.Tipo == "Evento"
-    //         ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
-    //         : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
-
-    //     if (!ok)
-    //     {
-    //         st.IsDone = !st.IsDone; // Revertir si la API falla
-    //         StateHasChanged();
-    //         return;
-    //     }
-
-    //     // SINCRONIZAR MAESTRO: Buscamos el objeto original para que el cambio persista
-    //     var master = MasterCategories.SelectMany(c => c.Subtasks)
-    //                  .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
-
-    //     if (master != null)
-    //     {
-    //         master.IsDone = st.IsDone;
-    //         if (st.Tipo == "Evento") master.FechaPendiente = null;
-    //         else master.FechaPendiente = st.IsDone ? null : FechaSeleccionada.Date;
-    //     }
-
-    //     // En lugar de recargar todo, solo notificamos el cambio de estado visual
-    //     StateHasChanged();
-    // }
-    // Cambia la firma de la función en tu HTML a:
-    // @onchange="@(e => ToggleSubtaskAsync(st, e.Value))"
-
-    private async Task ToggleSubtaskAsync(SubtaskModel st, object? checkedValue)
+    
+    private async Task ToggleSubtaskAsync(
+    SubtaskModel parent,
+    SubtaskModel sub,
+    bool nuevoEstado)
     {
-        // Convertimos el valor recibido del checkbox a booleano
-        bool nuevoEstado = false;
-        if (checkedValue is bool b) nuevoEstado = b;
-        else if (checkedValue is string s) bool.TryParse(s, out nuevoEstado);
+        bool ok = await AgendaService
+            .CambiarEstadoSubtareaAsync(sub.ApiId, nuevoEstado);
 
-        // 1. Actualizar el objeto local de la UI inmediatamente
-        st.IsDone = nuevoEstado;
+        if (!ok) return;
 
-        // 2. Llamada a API
-        bool ok = st.Tipo == "Evento"
-            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, nuevoEstado)
-            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, nuevoEstado);
+        sub.IsDone = nuevoEstado;
 
-        if (!ok)
+        bool todas = parent.Subtasks.All(s => s.IsDone);
+        parent.IsDone = todas;
+
+        await AgendaService
+            .CambiarEstadoTareaAsync(parent.ApiId, todas);
+
+        // MASTER
+        var masterParent = MasterCategories
+            .SelectMany(c => c.Subtasks)
+            .FirstOrDefault(x => x.ApiId == parent.ApiId);
+
+        if (masterParent != null)
         {
-            st.IsDone = !nuevoEstado; // Revertir visualmente si falla
-            StateHasChanged();
-            return;
-        }
-
-        // 3. SINCRONIZACIÓN CON MASTER (Corregido 'en' por 'in')
-        foreach (var categoriaMaestra in MasterCategories)
-        {
-            var itemEnMaestro = categoriaMaestra.Subtasks
-                .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
-
-            if (itemEnMaestro != null)
-            {
-                itemEnMaestro.IsDone = nuevoEstado;
-                if (st.Tipo == "Tarea")
-                    itemEnMaestro.FechaPendiente = nuevoEstado ? null : FechaSeleccionada.Date;
-                break;
-            }
+            masterParent.IsDone = todas;
+            var ms = masterParent.Subtasks
+                .FirstOrDefault(s => s.ApiId == sub.ApiId);
+            if (ms != null) ms.IsDone = nuevoEstado;
         }
 
         StateHasChanged();
     }
+
+    // 1. Manejo de Tareas Simples y Eventos
+    private async Task ToggleSubtaskAsync(SubtaskModel st)
+    {
+        // Llamar a la API según el tipo
+        bool ok = st.Tipo == "Evento"
+            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
+            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+
+        if (!ok)
+        {
+            st.IsDone = !st.IsDone; // Revertir si la API falla
+            return;
+        }
+
+        // SINCRONIZAR MAESTRO: Buscamos el objeto original para que el cambio persista
+        var master = MasterCategories.SelectMany(c => c.Subtasks)
+                     .FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
+
+        if (master != null)
+        {
+            master.IsDone = st.IsDone;
+            master.FechaPendiente = st.IsDone ? null : FechaSeleccionada.Date;
+        }
+
+        await CargarTareasPorFecha(); // Refrescar la vista actual
+    }
+
     // 2. Manejo de Tarea Padre (Marcar padre marca todos los hijos)
     private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
     {
