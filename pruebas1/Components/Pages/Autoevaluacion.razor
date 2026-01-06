@@ -710,23 +710,37 @@
         }
         catch (Exception ex)
         {
-            // 🔥 MENSAJE CLARO DE FECHAS FUERA DEL MES
-            if (ex.Message.Contains("mes", StringComparison.OrdinalIgnoreCase))
+            // El mensaje que viene de la API ahora está en ex.Message
+            string apiMessage = ex.Message;
+
+            // 1. Manejo específico para validación de fechas
+            if (apiMessage.Contains("mes", StringComparison.OrdinalIgnoreCase))
             {
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "warning",
-                    title = "Fechas inválidas",
-                    text = "Todas las fechas seleccionadas deben ser del mes en curso"
+                    title = "Validación de Mes",
+                    text = "Las fechas deben pertenecer al mes en curso."
                 });
             }
+            // 2. Manejo para cuando la API está apagada (Error 503 / Application Shutting Down)
+            else if (apiMessage.Contains("503") || apiMessage.Contains("Shutting Down"))
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Servidor no disponible",
+                    text = "La API se está reiniciando o está fuera de servicio. Intente en unos segundos."
+                });
+            }
+            // 3. Error genérico pero con el mensaje real de la API
             else
             {
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
-                    title = "Error al guardar (Verifique que todas las fechas seleccionadas sean del mes en curso) ",
-                    text = ex.Message
+                    title = "Error al procesar",
+                    text = apiMessage // <--- Aquí verás lo que pusiste en el BadRequest de la API
                 });
             }
 

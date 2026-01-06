@@ -12,7 +12,7 @@ namespace pruebas1.Components.DTOs
         public int IdActividadGeneral { get; set; }
         public string NombreActividad { get; set; } = string.Empty;
         public DateTime? Fecha { get; set; }
-        public int? Minuta { get; set; }
+        public bool? Minuta { get; set; }
         public string? Observaciones { get; set; }
     }
     public class ServicioActividadesDTO
