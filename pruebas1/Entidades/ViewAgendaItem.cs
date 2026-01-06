@@ -21,6 +21,12 @@ namespace pruebas1.Entidades
         public string ReglaRecurrencia { get; set; } = ""; // ✔️ aquí
         public List<SubtaskModel> Subtasks { get; set; } = new();
         public List<string> Participantes { get; set; } = new();
+        public int? CreadorId { get; set; }
+        public string? NombreCreador { get; set; }
+        public bool EsEventoMio { get; set; }
+        public bool EsInvitado { get; set; }
+
+
     }
 
 

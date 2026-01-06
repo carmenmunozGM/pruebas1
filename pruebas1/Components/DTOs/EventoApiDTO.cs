@@ -25,6 +25,11 @@ namespace pruebas1.Components
         public string ubicacion { get; set; }
 
         public List<ParticipanteDTO> participantes { get; set; } = new();
+
+        public int creadorId { get; set; }
+        public string nombreCreador { get; set; } = "";
+
+
     }
 
 
