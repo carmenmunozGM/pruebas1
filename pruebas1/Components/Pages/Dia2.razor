@@ -9,6 +9,8 @@
 @using pruebas1.Servicios
 @using System.Diagnostics;
 @inject IJSRuntime JSRuntime
+@inject IJSRuntime JS
+@inject HttpClient Http
 @using System.Text.Json
 @inject OrdenTrabajoService OrdenTrabajoService
 @inject OrdenTramiteService OrdenTramiteService
@@ -258,15 +260,13 @@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
-
-                                                <button class="icon-btn edit" title="Editar">
+                                                <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(st)">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
 
-                                                <button class="icon-btn delete" title="Eliminar">
+                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => OpenDeleteModal(st)">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
-
 
                                             </div>
 
@@ -541,7 +541,20 @@
         .ToList();
 
         var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
-        var autoevalMesVacia = !AutoevaluacionesDelDia.Any();
+        int mesActual = DateTime.Today.Month;
+
+        int anioActual = DateTime.Today.Year;
+
+        var autoevalMesVacia =
+
+        !AutoevaluacionesDelDia.Any(a =>
+
+        a.Fecha.Month == mesActual &&
+
+        a.Fecha.Year == anioActual
+
+        );
+
 
         var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
 
@@ -1225,8 +1238,130 @@
     </div>
 }
 
+<!--MODAAL PARA EDITAR-->
+@if (ShowEditModal && EditItem != null)
+{
+    <div class="modal-backdrop-custom">
+        <div class="modal-card shadow-lg" style="max-width: 950px; width: 95%;">
+            @* HEADER DEL MODAL *@
+            <div class="modal-header-edit d-flex justify-content-between align-items-center mb-3">
+                <h4 class="m-0 font-weight-bold text-primary">EDITAR @EditItem.Tipo.ToUpper()</h4>
+                <button type="button" class="close-btn" @onclick="() => ShowEditModal = false">&times;</button>
+            </div>
 
+            @* TABS INDICADORES *@
+            <div class="modal-tabs">
+                <div class="tab-item @(EditItem.Tipo == "Tarea" ? "active-tarea" : "disabled-tab")">
+                    <i class="bi bi-check2-square"></i> Tarea
+                </div>
+                <div class="tab-item @(EditItem.Tipo == "Evento" ? "active-evento" : "disabled-tab")">
+                    <i class="bi bi-calendar-event"></i> Evento - Reunión
+                </div>
+            </div>
 
+            <div class="modal-body-content">
+                <div class="row">
+                    @* FILA 1: TITULO, PRIORIDAD, RECURRENCIA *@
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label-custom">🏷️ Título / Nombre *</label>
+                        <input @bind="EditItem.Title" class="form-control-custom" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">⚡ Prioridad</label>
+                        <select @bind="EditItem.Prioridad" class="form-control-custom">
+                            <option value="0">Seleccione...</option>
+                            @foreach (var p in prioridadesLookup)
+                            {
+                                <option value="@p.Key">@p.Value</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">🔄 Recurrencia</label>
+                        <select @bind="EditItem.ReglaRecurrencia" class="form-control-custom">
+                            <option value="">Seleccione...</option>
+                            @foreach (var f in frecuenciaLookup)
+                            {
+                                <option value="@f.Value">@f.Value</option>
+                            }
+                        </select>
+                    </div>
+
+                    @* FILA 2: FECHAS Y HORAS *@
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">📅 Fecha Inicio</label>
+                        <input type="date" @bind="EditItem.FechaInicio" class="form-control-custom" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">🕒 Hora Inicio</label>
+                        <input type="time" @bind="EditItem.HoraInicio" class="form-control-custom" disabled="@(EditItem.Tipo == "Tarea")" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">📅 Fecha Término</label>
+                        <input type="date" @bind="EditItem.FechaFin" class="form-control-custom" />
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label-custom">🕒 Hora Término</label>
+                        <input type="time" @bind="EditItem.HoraFin" class="form-control-custom" disabled="@(EditItem.Tipo == "Tarea")" />
+                    </div>
+
+                    @* FILA 3: UBICACIÓN Y PARTICIPANTES (BLOQUEADO PARA TAREAS) *@
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label-custom">📍 Ubicación</label>
+                        <select @bind="EditItem.Ubicacion" class="form-control-custom" disabled="@(EditItem.Tipo == "Tarea")">
+                            <option value="">Selecciona una sala</option>
+                            @foreach (var s in salasLookup)
+                            {
+                                <option value="@s.Value">@s.Value</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label-custom">👥 Participantes</label>
+                        <div class="input-group">
+                            <input @bind="nuevoParticipante" class="form-control-custom" placeholder="Agregar participante..." disabled="@(EditItem.Tipo == "Tarea")" />
+                            <button class="btn btn-outline-primary" type="button" @onclick="AgregarParticipante" disabled="@(EditItem.Tipo == "Tarea")">Añadir</button>
+                        </div>
+                        <div class="mt-2">
+                            @foreach (var p in EditItem.Participantes)
+                            {
+                                <span class="badge badge-info mr-1">@p <i class="bi bi-x pointer" @onclick="() => EditItem.Participantes.Remove(p)"></i></span>
+                            }
+                        </div>
+                    </div>
+
+                    @* FILA 4: DESCRIPCIÓN Y SUBTAREAS (BLOQUEADO PARA EVENTOS) *@
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label-custom">📝 Descripción / Detalles</label>
+                        <textarea @bind="EditItem.Descripcion" class="form-control-custom" rows="4"></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label-custom">✅ Checklist / Sub Tareas</label>
+                        <div class="input-group mb-2">
+                            <input @bind="nuevaSubtareaTexto" class="form-control-custom" placeholder="Añadir paso a la checklist" disabled="@(EditItem.Tipo == "Evento")" />
+                            <button class="btn btn-primary" @onclick="AgregarSubtarea" disabled="@(EditItem.Tipo == "Evento")">Añadir</button>
+                        </div>
+                        <div class="subtask-viewer border rounded bg-white p-2" style="max-height: 100px; overflow-y: auto;">
+                            @foreach (var sub in EditItem.Subtasks)
+                            {
+                                <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                                    <span>@(sub.IsDone ? "✔️" : "🔘") @sub.Title</span>
+                                    <i class="bi bi-trash text-danger pointer" @onclick="() => EditItem.Subtasks.Remove(sub)"></i>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer-edit d-flex justify-content-end gap-3 pt-3 border-top">
+                <button class="btn btn-danger mr-auto" @onclick="HandleDelete">Eliminar</button>
+                <button class="btn btn-secondary" @onclick="() => ShowEditModal = false">Cerrar</button>
+                <button class="btn btn-primary px-5" @onclick="HandleSave">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+}
 @code {
 
     // ---- FECHAS Y CALENDARIO ----
@@ -1285,6 +1420,12 @@
     // }
     // PARA LOS DIAS INHÁBILES
     // PARA LOS DIAS INHÁBILES
+
+    //-----PARA LOS BOTOENES 
+    // Variable para el ítem que se está editando
+    private SubtaskModel? EditItem;
+    private bool ShowEditModal = false;
+
     private async Task VerificarDiaNoLaboralAsync()
     {
         DiaNoLaboralActual = null;
@@ -2248,7 +2389,171 @@
 
     //     await PrepararOrdenesVisuales();
     // }
+    
 
+    // ESTE METODO ES PARA ABRI8L EL MODAL
+   
+    // --- MÉTODOS DE EDICIÓN ---
+
+    private void OpenEditModal(SubtaskModel st)
+    {
+        // CLONACIÓN PROFUNDA: Esto garantiza que los datos se vean en el modal
+        EditItem = new SubtaskModel
+        {
+            ApiId = st.ApiId,
+            Tipo = st.Tipo,
+            Title = st.Title,
+            Descripcion = st.Descripcion,
+            Prioridad = st.Prioridad,
+            ReglaRecurrencia = st.ReglaRecurrencia,
+            Ubicacion = st.Ubicacion,
+            FechaInicio = st.FechaInicio,
+            FechaFin = st.FechaFin,
+            HoraInicio = st.HoraInicio,
+            HoraFin = st.HoraFin,
+            // Traer participantes y subtareas existentes
+            Participantes = st.Participantes != null ? new List<string>(st.Participantes) : new List<string>(),
+            Subtasks = st.Subtasks != null ? st.Subtasks.Select(s => new SubtaskModel
+            {
+                Title = s.Title,
+                IsDone = s.IsDone
+            }).ToList() : new List<SubtaskModel>()
+        };
+
+        ShowEditModal = true;
+    }
+
+
+    // --- MÉTODOS DE ELIMINACIÓN ---
+
+    private async Task OpenDeleteModal(SubtaskModel st)
+    {
+        // 1. Confirmación nativa del navegador usando IJSRuntime
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Estás seguro de que deseas eliminar esta {st.Tipo}: '{st.Title}'?");
+
+        if (confirmado)
+        {
+            await EjecutarEliminacion(st);
+        }
+    }
+
+    private async Task EjecutarEliminacion(SubtaskModel st)
+    {
+        try
+        {
+            // 2. Identificar endpoint según el tipo
+            string endpoint = st.Tipo == "Tarea"
+                ? $"tareas/eliminar/{st.ApiId}"
+                : $"eventos/eliminar/{st.ApiId}";
+
+            // 3. Llamada a la API
+            var response = await Http.DeleteAsync(endpoint);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 4. Refrescar la vista localmente
+                await InitializeMasterCategoriesAsync();
+                StateHasChanged();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Error al intentar eliminar el registro.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    // El método HandleDelete que estaba dentro del modal de edición
+    private async Task HandleDelete()
+    {
+        if (EditItem != null)
+        {
+            await OpenDeleteModal(EditItem);
+            ShowEditModal = false; // Cerrar el modal de edición si se eliminó desde ahí
+        }
+    }
+    // 2. GUARDAR CAMBIOS (Dinámico según Tipo)
+    private async Task HandleSave()
+    {
+        if (EditItem == null) return;
+
+        string url;
+        object dto;
+
+        if (EditItem.Tipo == "Tarea")
+        {
+            url = $"https://redgm.site:9096/tareas/editar/{EditItem.ApiId}";
+            dto = new
+            {
+                id = EditItem.ApiId,
+                titulo = EditItem.Title,
+                descripcion = EditItem.Descripcion,
+                idPrioridad = EditItem.Prioridad,
+                reglaRecurrencia = EditItem.ReglaRecurrencia,
+                fechaInicio = EditItem.FechaInicio,
+                fechaFin = EditItem.FechaFin,
+                subTareas = EditItem.Subtasks // Enviamos la lista completa
+            };
+        }
+        else
+        {
+            url = $"https://redgm.site:9096/eventos/{EditItem.ApiId}";
+            dto = new
+            {
+                id = EditItem.ApiId,
+                titulo = EditItem.Title,
+                descripcion = EditItem.Descripcion,
+                idPrioridad = EditItem.Prioridad,
+                ubicacion = EditItem.Ubicacion,
+                fechaInicio = EditItem.FechaInicio,
+                fechaFin = EditItem.FechaFin,
+                horaInicio = EditItem.HoraInicio?.ToString("HH:mm"),
+                horaFin = EditItem.HoraFin?.ToString("HH:mm"),
+                participantes = EditItem.Participantes
+            };
+        }
+
+        var response = await Http.PutAsJsonAsync(url, dto);
+        if (response.IsSuccessStatusCode)
+        {
+            ShowEditModal = false;
+            await InitializeMasterCategoriesAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("alert", $"Error: {error}");
+        }
+    }
+private string nuevoParticipante = "";
+    private string nuevaSubtareaTexto = "";
+private void AgregarParticipante()
+{
+    if (!string.IsNullOrWhiteSpace(nuevoParticipante))
+    {
+        if (EditItem.Participantes == null) EditItem.Participantes = new List<string>();
+        
+        if (!EditItem.Participantes.Contains(nuevoParticipante))
+        {
+            EditItem.Participantes.Add(nuevoParticipante);
+        }
+        nuevoParticipante = ""; // Limpiar el input después de añadir
+    }
+}
+    private void AgregarSubtarea()
+    {
+        if (!string.IsNullOrWhiteSpace(nuevaSubtareaTexto))
+        {
+            if (EditItem.Subtasks == null) EditItem.Subtasks = new List<SubtaskModel>();
+            EditItem.Subtasks.Add(new SubtaskModel { Title = nuevaSubtareaTexto, IsDone = false });
+            nuevaSubtareaTexto = "";
+        }
+    }
+//------TERMINAAAAAA
     private async Task CargarTareasPorFecha()
     {
         Categories = MasterCategories.Select<CategoryModel, CategoryModel>(c =>
