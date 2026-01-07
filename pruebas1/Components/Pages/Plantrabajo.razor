@@ -1,4 +1,5 @@
 ﻿@page "/plantrabajo"
+@using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
 <br />
@@ -80,9 +81,20 @@
                                 <td>@actividad.Nombre</td>
 
                                 <td>
-                                    <DatePicker Value="actividad.Fecha"
-                                                ValueChanged="@(fecha => actividad.Fecha = fecha)"
-                                                CssClass="input-date small" />
+                                    @if (actividad.Fecha.HasValue)
+                                    {
+                                        <input type="date"
+                                               value="@actividad.Fecha.Value.ToString("yyyy-MM-dd")"
+                                               class="input-date small"
+                                               disabled
+                                               title="La fecha solo puede modificarse desde el botón 📅" />
+                                    }
+                                    else
+                                    {
+                                        <DatePicker Value="actividad.Fecha"
+                                                    ValueChanged="@(fecha => actividad.Fecha = fecha)"
+                                                    CssClass="input-date small" />
+                                    }
                                 </td>
 
                                 <td>
@@ -94,13 +106,17 @@
 
                                 <td class="check-cell">
                                     <input type="checkbox"
-                                           checked="@(actividad.Minuta == 1)"
-                                           @onchange="e => actividad.Minuta = (bool)e.Value! ? 1 : 0" />
+                                       class="form-check-input"
+                                       checked="@actividad.Minuta"
+                                       @onchange="async e => await OnMinutaChanged(actividad, e)" />
+
                                 </td>
 
                                 <td>
-                                    <textarea @bind="actividad.Observaciones"
-                                              class="input-text"></textarea>
+                                    <textarea class="input-text"
+                                              value="@actividad.Observaciones"
+                                              @onchange="async e => await OnObservacionesChanged(actividad, e)">
+                                      </textarea>
                                 </td>
                             </tr>
                         }
@@ -196,7 +212,7 @@
 
         public string Nombre { get; set; } = string.Empty;
         public DateTime? Fecha { get; set; }
-        public int? Minuta { get; set; }
+        public bool Minuta { get; set; } 
         public string? Observaciones { get; set; }
 
         public List<CambioFecha> HistorialFechas { get; set; } = new();
@@ -282,7 +298,6 @@
         }
 
         ModalEmpresa = data.NombreEmpresa;
-
         ServiciosModal = data.Servicios
             .Select(s => new ServicioModal
             {
@@ -295,12 +310,13 @@
                         IdActividadGeneral = a.IdActividadGeneral,
                         Nombre = a.NombreActividad,
                         Fecha = a.Fecha,
-                        Minuta = a.Minuta,
+                        Minuta = a.Minuta ?? false,   
                         Observaciones = a.Observaciones
                     })
                     .ToList()
             })
             .ToList();
+
     }
 
 
@@ -389,7 +405,53 @@
         }
     }
 
+
+    private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
+{
+    actividad.Minuta = (bool)e.Value!;
+
+    if (actividad.Fecha == null)
+        return; // No se guarda sin fecha
+
+    await ServicioClienteService.GuardarFechaYMinutaAsync(
+        new HorasProgramaTrabajoUpsertDTO
+        {
+            IdAsignacion = actividad.IdCheckListAsignacion,
+            Fecha = actividad.Fecha.Value,
+            Minuta = actividad.Minuta
+        }
+    );
 }
+
+    private async Task OnFechaChanged(Actividad actividad, DateTime? fecha)
+    {
+        actividad.Fecha = fecha;
+
+        if (fecha == null)
+            return;
+
+        await ServicioClienteService.GuardarFechaYMinutaAsync(
+            new HorasProgramaTrabajoUpsertDTO
+            {
+                IdAsignacion = actividad.IdCheckListAsignacion,
+                Fecha = fecha.Value,
+                Minuta = actividad.Minuta
+            }
+        );
+    }
+
+    private async Task OnObservacionesChanged(Actividad actividad, ChangeEventArgs e)
+        {
+            actividad.Observaciones = e.Value?.ToString();
+
+            await ServicioClienteService.GuardarObservacionesAsync(
+                actividad.IdCheckListAsignacion,
+                actividad.Observaciones
+            );
+        }
+
+}
+
 <style scoped>
     .column:nth-child(1) {
         background: #e3f2fd;

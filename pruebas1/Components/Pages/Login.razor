@@ -168,45 +168,39 @@
     }
 }*/
     private async Task Ingresar()
-    {
-        Loading = true;
-        mensajeError = string.Empty;
+{
+    Loading = true;
+    mensajeError = string.Empty;
 
-        // Llamada al servicio de login
+    try
+    {
+        // Login
         var usuario = await loginService.login(loginDTO);
 
-        if (usuario.IdUsuario == 0)
-        {
-            Loading = false;
-            mensajeError = "Usuario o contraseña incorrectos.";
-            return;
-        }
-
-        // 1️⃣ Obtener agendas asignadas del usuario
+        // Obtener agendas asignadas
         usuario.IdAgendasAsignadas = await AgendaService.ObtenerAgendaAsignadasAsync();
 
-        // 2️⃣ Guardar usuario COMPLETO en LoginService
+        // Guardar usuario
         loginService.guardarUsuario(usuario);
 
-        // 3️⃣ ⚡ Actualizar UsuarioState correctamente
+        // UsuarioState
         int agendaActual = usuario.IdAgendasAsignadas?.FirstOrDefault() ?? 0;
         UsuarioState.SetUsuario(usuario.IdUsuario, agendaActual);
 
-        // 🔹 Depuración opcional
         Console.WriteLine($"[Login] IdUsuario: {usuario.IdUsuario}, IdAgenda: {agendaActual}");
+
         await AgendaService.ObtenerTareasApi(agendaActual);
         await AgendaService.ObtenerEventos(agendaActual);
 
-        Loading = false;
         navigate.NavigateTo("/dia2");
     }
-
-
-
-
-
-
-
-
-
+    catch (Exception ex)
+    {
+        mensajeError = ex.Message;
+    }
+    finally
+    {
+        Loading = false;
+    }
+}
 }

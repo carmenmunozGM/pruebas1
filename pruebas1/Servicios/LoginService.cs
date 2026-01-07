@@ -19,16 +19,13 @@ namespace pruebas1.Servicios
         {
             this.httpClient = httpClient;
 
-            // 🔹 Cargar token si existe
+            // Cargar token si existe
             var tokenGuardado = Preferences.Get(KeyToken, "");
             if (!string.IsNullOrWhiteSpace(tokenGuardado))
             {
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", tokenGuardado);
             }
-
-            // ❗ NO CARGAR AGENDA AUTOMÁTICAMENTE AQUÍ
-            // Se asigna SOLO cuando el usuario hace login
         }
 
         // Agenda actual
@@ -81,56 +78,22 @@ namespace pruebas1.Servicios
                 new AuthenticationHeaderValue("Bearer", usuarioLoginDTO.Token);
         }
 
-        // LOGIN PRINCIPAL
-        /*public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
-        {
-            try
-            {
-                var respuesta = await httpClient.PostAsJsonAsync("login", loginDTO);
-
-                if (!respuesta.IsSuccessStatusCode)
-                    return new UsuarioLoginDTO();
-
-                var json = await respuesta.Content.ReadAsStringAsync();
-                var loginResponse = JsonConvert.DeserializeObject<LoginResponseDTO>(json);
-
-                if (loginResponse == null || loginResponse.Usuario == null)
-                    return new UsuarioLoginDTO();
-
-                // Asignar token al objeto usuario
-                loginResponse.Usuario.Token = loginResponse.Token;
-
-                // Guardar usuario SIN tocar agenda
-                guardarUsuario(loginResponse.Usuario);
-
-                // 🔥 AHORA SÍ asignar agenda desde la respuesta del backend
-                if (loginResponse.Usuario.IdAgendasAsignadas?.Count > 0)
-                {
-                    var agenda = loginResponse.Usuario.IdAgendasAsignadas[0];
-                    SetAgendaActual(agenda);
-
-                    // Debug
-                    Console.WriteLine($"✔ Agenda asignada tras login: {agenda}");
-                }
-
-                return loginResponse.Usuario;
-            }
-            catch
-            {
-                return new UsuarioLoginDTO();
-            }*/
         public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
         {
             var respuesta = await httpClient.PostAsJsonAsync("login", loginDTO);
 
             if (!respuesta.IsSuccessStatusCode)
-                return new UsuarioLoginDTO();
+            {
+                var error = await respuesta.Content.ReadAsStringAsync();
+                error = error.Trim('"');
+                throw new Exception(error);
+            }
 
             var loginResponse =
                 await respuesta.Content.ReadFromJsonAsync<LoginResponseDTO>();
 
             if (loginResponse?.Usuario == null)
-                return new UsuarioLoginDTO();
+                throw new Exception("Respuesta inválida del servidor.");
 
             // ✅ Token
             loginResponse.Usuario.Token = loginResponse.Token;
@@ -146,7 +109,6 @@ namespace pruebas1.Servicios
 
             return loginResponse.Usuario;
         }
-
 
     }
 }

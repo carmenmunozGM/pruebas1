@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
 using pruebas1.Components.DTOs;
-using System.Net.Http.Json;
 
 namespace pruebas1.Servicios
 {
-    using System.Net.Http.Json;
-
     public class ServicioClienteService
     {
         private readonly HttpClient _http;
@@ -33,8 +26,30 @@ namespace pruebas1.Servicios
             );
         }
 
+        public async Task GuardarFechaYMinutaAsync(HorasProgramaTrabajoUpsertDTO dto)
+        {
+            var response = await _http.PostAsJsonAsync(
+                "entidadAgenda/actividades/horas",
+                dto
+            );
 
+            response.EnsureSuccessStatusCode();
+        }
+        public async Task GuardarObservacionesAsync(
+            int idChecklistAsignacion,
+            string? observaciones)
+        {
+            var dto = new ObservacionesDTO
+            {
+                Observaciones = observaciones
+            };
+
+            var response = await _http.PatchAsJsonAsync(
+                $"entidadAgenda/actividades/{idChecklistAsignacion}/observaciones",
+                dto
+            );
+
+            response.EnsureSuccessStatusCode();
+        }
     }
-
-
 }
