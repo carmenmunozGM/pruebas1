@@ -361,8 +361,8 @@ namespace pruebas1.Servicios
         {
             var query = new
             {
-                inicio = inicio,
-                fin = fin
+                inicio,
+                fin
             };
 
             var response = await httpClient.PostAsJsonAsync(
@@ -370,12 +370,19 @@ namespace pruebas1.Servicios
                 query
             );
 
+            // Si el backend falla, NO permitas crear el evento
             if (!response.IsSuccessStatusCode)
-                return false;
+                throw new Exception("No se pudo validar la ocupación de la sala.");
 
             return await response.Content.ReadFromJsonAsync<bool>();
         }
-   
+
+        public class SalaOcupadaResponse
+        {
+            public bool Ocupada { get; set; }
+            public string Origen { get; set; } = "";
+        }
+
 
         // ===== PATCH EVENTO =====
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)
@@ -404,7 +411,6 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
-
 
         // ===================== EDITAR =====================
 
