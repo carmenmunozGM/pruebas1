@@ -51,5 +51,27 @@ namespace pruebas1.Servicios
 
             response.EnsureSuccessStatusCode();
         }
+
+        public async Task CrearHistorialFechaAsync(HistorialFechaCreateDTO dto)
+        {
+            await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+        }
+
+        public async Task<List<HistorialItemDTO>> ObtenerHistorialFechasAsync(int idHoras)
+        {
+            return await _http.GetFromJsonAsync<List<HistorialItemDTO>>(
+                $"entidadAgenda/historial-fecha/{idHoras}"
+            ) ?? new();
+        }
+
+        public async Task<List<ServicioClienteAgendaDTO>> ObtenerAgendaServicioCliente()
+        {
+            return await _http.GetFromJsonAsync<List<ServicioClienteAgendaDTO>>(
+                "entidadAgenda/mostrarDias"
+            ) ?? new();
+        }
+
     }
+
+
 }
