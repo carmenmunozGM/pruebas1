@@ -64,6 +64,13 @@ namespace pruebas1.Servicios
             ) ?? new();
         }
 
+        public async Task<List<ServicioClienteAgendaDTO>> ObtenerAgendaServicioCliente()
+        {
+            return await _http.GetFromJsonAsync<List<ServicioClienteAgendaDTO>>(
+                "entidadAgenda/mostrarDias"
+            ) ?? new();
+        }
+
     }
 
 
