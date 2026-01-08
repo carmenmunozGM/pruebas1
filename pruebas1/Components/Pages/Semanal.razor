@@ -1226,7 +1226,7 @@
             return;
         }
 
-        var model = new EditableItemModel
+        var model = new EditAgendaItemModel
         {      
             IdAgenda = bt.IdAgenda,
             Titulo = bt.Name,
@@ -1238,9 +1238,9 @@
                 ? null
                 : bt.Recurrence,
 
-            IdPrioridad = bt.IdPrioridad,
+            Prioridad = bt.IdPrioridad,
 
-            SubTareas = bt.SubTasks
+            Subtareas = bt.SubTasks
             .Select(s => s.ToString()!)
             .ToList()
 

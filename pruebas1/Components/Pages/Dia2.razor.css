@@ -1266,107 +1266,228 @@
     padding-bottom: 10px;
 }
 /*estilos del modal de editar */
-/* Contenedor Principal con desenfoque de fondo */
-.modal-backdrop-custom {
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(4px);
+/* Contenedor del Fondo (Backdrop) */
+/* =====================================================
+   MODAL EDITAR – ESTILOS AISLADOS Y PROFESIONALES
+===================================================== */
+
+/*.modal-backdrop-custom {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 9999;
-}
+}*/
+    /* TARJETA */
+    /*.modal-backdrop-custom .edit-modal {
+        width: 900px;
+        max-width: 95%;
+        background: #fff;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;*/ /* Esto recorta el azul en las esquinas */
+        /*padding: 0 !important;*/ /* <--- FUERZA EL PADDING A CERO */
+        /*border: none;
+    }*/
+    /* HEADER */
+    /*.modal-backdrop-custom .modal-header-edit {
+        background: #C6E9F0;
+        color: #000;
+        padding: 16px 25px;*/ /* Controla el tamaño de la franja azul aquí */
+        /*display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;*/ /* Asegura que abarque todo */
+        /*box-sizing: border-box;
+        border-bottom: 1px solid rgba(0,0,0,0.05);*/ /* Borde mucho más sutil */
+    /*}
 
-/* Tarjeta del Modal */
-.modal-card {
-    background: #f8f9fa; /* Fondo gris muy claro como en la imagen */
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 90%;
-    max-width: 850px;
-    padding: 25px;
-    border: 1px solid #e9ecef;
-}
+        .modal-backdrop-custom .modal-header-edit h4 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
 
-/* Tabs Superiores (Tarea / Evento) */
-.modal-tabs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-}
+    .modal-backdrop-custom .close-btn {
+        background: transparent;
+        border: none;
+        font-size: 1.4rem;
+        color: #333;*/ /* Cambiado de #fff a un gris oscuro o negro */
+        /*cursor: pointer;
+        line-height: 1;*/ /* Ayuda a centrar la X */
+    /*}*/
 
-.tab-item {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    text-align: center;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid #dee2e6;
-    background: #f1f3f5;
-    color: #495057;
+    /* BODY */
+    /*.modal-backdrop-custom .modal-body-padding {
+        padding: 16px 18px;
+    }*/
+
+    /* GRID FORM */
+    /*.modal-backdrop-custom .modal-form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px 14px;
+    }*/
+
+    /* FULL WIDTH CAMPOS */
+    /*.modal-backdrop-custom .field-title,
+    
+    .modal-backdrop-custom .field-location,
+    .modal-backdrop-custom .field-participants,
+    .modal-backdrop-custom .field-checklist {
+        grid-column: span 1;
+    }
+    .modal-backdrop-custom .field-description {
+        grid-column: span 1.5;
+    }*/
+    /* LABEL */
+    /*.modal-backdrop-custom .form-label-custom {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 4px;
+        display: block;
+    }*/
+
+    /* INPUTS */
+    /*.modal-backdrop-custom .form-control-custom {
+        width: 100%;
+        height: 36px;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .modal-backdrop-custom textarea.form-control-custom {
+        flex-grow: 1;*/ /* El input toma todo el espacio sobrante */
+        /*border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .modal-backdrop-custom .form-control-custom:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        outline: none;
+    }*/
+    /* Esto une el input y el botón en una sola línea */
+    /*.modal-backdrop-custom .input-group {
+        display: flex;
+        width: 100%;
+        align-items: stretch;*/ /* Hace que ambos tengan la misma altura */
+    /*}
+
+    .modal-backdrop-custom .border-right-0 {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }*/
+
+    /* BOTON + */
+    /* Corrige el botón de "+" que se ve cuadrado y abajo */
+/*.modal-backdrop-custom .btn-add-custom {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: all 0.2s ease;
+    background: #e5e7eb;
+    border: 1px solid #d1d5db;
+    border-left: none;*/ /* Une el botón al input */
+    /*padding: 0 15px;
 }
 
-    .tab-item.active {
-        background: #ffffff;
-        border-color: #bee3f8;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        .modal-backdrop-custom .btn-add-custom:hover {
+            background: #1e40af;
+        }*/
+
+    /* PARTICIPANTES */
+    /*.modal-backdrop-custom .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
-/* Etiquetas e Inputs */
-.form-label-custom {
-    font-weight: 600;
-    color: #4a5568;
-    margin-bottom: 6px;
-    display: block;
-    font-size: 0.95rem;
-}
-
-.form-control-custom {
-    width: 100%;
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    background: #ffffff;
-    font-size: 0.9rem;
-    color: #495057;
-    transition: border-color 0.15s;
-}
-
-    .form-control-custom:focus {
-        outline: none;
-        border-color: #3182ce;
-        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    .modal-backdrop-custom .custom-badge {
+        background: #e5edff;
+        color: #1e40af;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
-    .form-control-custom:disabled {
-        background: #f1f3f5;
-        color: #adb5bd;
-        cursor: not-allowed;
+        .modal-backdrop-custom .custom-badge i {
+            cursor: pointer;
+        }*/
+
+    /* CHECKLIST */
+    /*.modal-backdrop-custom .subtask-viewer {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
-/* Secciones específicas */
-.input-icon {
-    margin-right: 5px;
-}
+    .modal-backdrop-custom .subtask-item {
+        display: flex;
+        justify-content: space-between;*/ /* Empuja el texto a la izquierda y el icono a la derecha */
+        /*align-items: center;
+        background: #f3f4f6;
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-top: 5px;
+    }*/
 
-.subtask-add-btn {
-    background: #c6e3ff;
-    color: #004a99;
-    border: none;
-    border-radius: 8px;
-    padding: 0 20px;
-    font-weight: 600;
-}
+    /* FOOTER */
+    /*.modal-backdrop-custom .modal-footer-edit {
+        padding: 14px 18px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+    }*/
+
+    /* BOTONES */
+    /*.modal-backdrop-custom .btn-custom {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .modal-backdrop-custom .btn-cancel {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .modal-backdrop-custom .btn-save {
+        background: #2563eb;
+        color: #fff;
+    }
+
+        .modal-backdrop-custom .btn-save:hover {
+            background: #1e40af;
+        }*/
+
+/* RESPONSIVE */
+/*@media (max-width: 768px) {
+    .modal-backdrop-custom .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-backdrop-custom .field-title,
+    .modal-backdrop-custom .field-description,
+    .modal-backdrop-custom .field-location,
+    .modal-backdrop-custom .field-participants,
+    .modal-backdrop-custom .field-checklist {
+        grid-column: span 1;
+    }
+}*/
+
+
 /*TERMINAR  MODAL*/
 /* === Animaciones === */
 @keyframes viewFadeIn {

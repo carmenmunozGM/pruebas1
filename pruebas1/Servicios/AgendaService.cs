@@ -415,7 +415,7 @@ namespace pruebas1.Servicios
         // ===================== EDITAR =====================
 
 
-        public async Task EditarEventoAsync(int id, EditableItemModel model)
+        public async Task EditarEventoAsync(int id, EditAgendaItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
             httpClient.DefaultRequestHeaders.Authorization =
@@ -430,7 +430,7 @@ namespace pruebas1.Servicios
                 fechaFin = model.FechaFin,
                 esRecurrente = model.EsRecurrente,
                 reglaRecurrencia = model.ReglaRecurrencia,
-                idPrioridad = model.IdPrioridad,
+                idPrioridad = model.Prioridad,
                 idSala = 0,
                 ubicacion = model.Ubicacion,
                 idsParticipantes = model.IdsParticipantes
@@ -458,7 +458,7 @@ namespace pruebas1.Servicios
         }
 
 
-        public async Task EditarTareaAsync(int id, EditableItemModel model)
+        public async Task EditarTareaAsync(int id, EditAgendaItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
             httpClient.DefaultRequestHeaders.Authorization =
@@ -473,8 +473,8 @@ namespace pruebas1.Servicios
                 fechaFin = model.FechaFin,
                 esRecurrente = model.EsRecurrente,
                 reglaRecurrencia = model.ReglaRecurrencia,
-                idPrioridad = model.IdPrioridad,
-                subTareas = model.SubTareas.Select(t => new { titulo = t }).ToList()
+                idPrioridad = model.Prioridad,
+                subTareas = model.Subtareas.Select(t => new { titulo = t }).ToList()
             };
 
             await httpClient.PutAsJsonAsync($"/tareas/editar/{id}", dto);
