@@ -58,11 +58,20 @@
         <div class="modal large" @onclick:stopPropagation="true">
             <h3 class="modal-title">@ModalEmpresa</h3>
 
+
+            @if (MostrarAlerta)
+            {
+                <div class="alert alert-warning">
+                    @MensajeAlerta
+                </div>
+            }
+
             @foreach (var servicio in ServiciosModal)
             {
                 <h4 class="service-subtitle">
                     @servicio.NombreServicio
                 </h4>
+                
 
                 <table class="activities-table">
                     <thead>
@@ -99,7 +108,8 @@
 
                                 <td>
                                     <button class="btn-calendar"
-                                            @onclick="() => AbrirSubModal(actividad)">
+                                             title="Modificar fecha"
+                                             @onclick="() => AbrirSubModal(actividad)">
                                         📅
                                     </button>
                                 </td>
@@ -174,8 +184,8 @@
                                         <li>
                                             <div class="hist-row">
                                                 <div><strong>@(h.FechaMovimiento.ToString("g"))</strong></div>
-                                                <div>De: @(h.FechaAnterior?.ToString("yyyy-MM-dd") ?? "—")</div>
-                                                <div> A: @(h.FechaNueva?.ToString("yyyy-MM-dd") ?? "—")</div>
+                                                <div>De: @(h.FechaAnterior.ToString("yyyy-MM-dd") ?? "—")</div>
+                                                <div> A: @(h.FechaNueva.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div>Motivo: @h.Motivo</div>
                                             </div>
                                         </li>
@@ -199,24 +209,30 @@
     // Clase para historial de cambios
     public class CambioFecha
     {
-        public DateTime? FechaAnterior { get; set; }
-        public DateTime? FechaNueva { get; set; }
+        public DateTime FechaMovimiento { get; set; }
+        public DateTime FechaAnterior { get; set; }
+        public DateTime FechaNueva { get; set; }
         public string Motivo { get; set; } = string.Empty;
-        public DateTime FechaMovimiento { get; set; } = DateTime.Now;
     }
+
+
 
     public class Actividad
-    {
-        public int IdCheckListAsignacion { get; set; }
-        public int IdActividadGeneral { get; set; }
+{
+    public int IdCheckListAsignacion { get; set; }
+    public int IdActividadGeneral { get; set; }
 
-        public string Nombre { get; set; } = string.Empty;
-        public DateTime? Fecha { get; set; }
-        public bool Minuta { get; set; } 
-        public string? Observaciones { get; set; }
+    // 🔑 CLAVE PARA HISTORIAL
+    public int IdHorasProgramaTrabajo { get; set; }
 
-        public List<CambioFecha> HistorialFechas { get; set; } = new();
-    }
+    public string Nombre { get; set; } = string.Empty;
+    public DateTime? Fecha { get; set; }
+    public bool Minuta { get; set; }
+    public string? Observaciones { get; set; }
+
+    public List<CambioFecha> HistorialFechas { get; set; } = new();
+}
+
 
 
     public class Empresa
@@ -299,23 +315,26 @@
 
         ModalEmpresa = data.NombreEmpresa;
         ServiciosModal = data.Servicios
-            .Select(s => new ServicioModal
+    .Select(s => new ServicioModal
+    {
+        NombreServicio = s.NombreServicio,
+        Actividades = s.Actividades
+            .OrderBy(a => a.IdActividadGeneral)
+            .Select(a => new Actividad
             {
-                NombreServicio = s.NombreServicio,
-                Actividades = s.Actividades
-                    .OrderBy(a => a.IdActividadGeneral)
-                    .Select(a => new Actividad
-                    {
-                        IdCheckListAsignacion = a.IdCheckListAsignacion,
-                        IdActividadGeneral = a.IdActividadGeneral,
-                        Nombre = a.NombreActividad,
-                        Fecha = a.Fecha,
-                        Minuta = a.Minuta ?? false,   
-                        Observaciones = a.Observaciones
-                    })
-                    .ToList()
+                IdCheckListAsignacion = a.IdCheckListAsignacion,
+                IdActividadGeneral = a.IdActividadGeneral,
+                IdHorasProgramaTrabajo = a.IdHorasProgramaTrabajo,
+
+                Nombre = a.NombreActividad,
+                Fecha = a.Fecha,
+                Minuta = a.Minuta ?? false,
+                Observaciones = a.Observaciones
             })
-            .ToList();
+            .ToList()
+    })
+    .ToList();
+
 
     }
 
@@ -327,20 +346,41 @@
         ShowModal = false;
     }
 
-    void AbrirSubModal(Actividad actividad)
+    private async Task AbrirSubModal(Actividad actividad)
     {
+        if (!actividad.Fecha.HasValue)
+        {
+            MostrarAlertaSinFecha();
+            return;
+        }
+
         ActividadSeleccionada = actividad;
-        OriginalFecha = actividad.Fecha; // fecha actual (no editable)
-        NuevaFecha = actividad.Fecha; // prellenamos con la fecha actual por conveniencia (puedes dejar null si prefieres)
-        MotivoCambio = "";
-        MostrarErrorFecha = false;
-        MostrarErrorMotivo = false;
+        OriginalFecha = actividad.Fecha;
+        NuevaFecha = actividad.Fecha;
+
+        var historialDto =
+            await ServicioClienteService.ObtenerHistorialFechasAsync(
+                actividad.IdHorasProgramaTrabajo
+            );
+
+        actividad.HistorialFechas = historialDto
+            .Select(h => new CambioFecha
+            {
+                FechaMovimiento = h.FechaMovimiento,
+                FechaAnterior = h.FechaAnterior,
+                FechaNueva = h.FechaNueva,
+                Motivo = h.Motivo
+            })
+            .ToList();
+
         ShowSubModal = true;
     }
 
     void CerrarSubModal()
     {
         ShowSubModal = false;
+        MostrarAlerta = false;
+        MensajeAlerta = "";
         ActividadSeleccionada = null;
         NuevaFecha = null;
         OriginalFecha = null;
@@ -353,56 +393,59 @@
     {
         ShowModal = false;
         ShowSubModal = false;
+        MostrarAlerta = false;
+        MensajeAlerta = "";
         ActividadSeleccionada = null;
-        NuevaFecha = null;
-        OriginalFecha = null;
-        MotivoCambio = "";
     }
 
-    void GuardarCambioFecha()
+
+    bool MostrarAlerta = false;
+    string MensajeAlerta = "";
+
+void MostrarAlertaSinFecha()
     {
-        MostrarErrorFecha = false;
-        MostrarErrorMotivo = false;
+        MensajeAlerta = "Para modificar la fecha, primero debes registrar una fecha en la actividad.";
+        MostrarAlerta = true;
+    }
 
-        // Validaciones
-        if (NuevaFecha == null)
-        {
-            MostrarErrorFecha = true;
-        }
 
-        if (string.IsNullOrWhiteSpace(MotivoCambio))
-        {
-            MostrarErrorMotivo = true;
-        }
+    private async Task GuardarCambioFecha()
+    {
+        if (ActividadSeleccionada == null)
+            return;
 
-        if (MostrarErrorFecha || MostrarErrorMotivo)
-        {
-            return; // no guardamos hasta que todo esté correcto
-        }
+        if (NuevaFecha == null || string.IsNullOrWhiteSpace(MotivoCambio))
+            return;
 
-        if (ActividadSeleccionada != null)
-        {
-            // Añadimos registro al historial
-            var cambio = new CambioFecha
+        await ServicioClienteService.CrearHistorialFechaAsync(
+            new HistorialFechaCreateDTO
             {
-                FechaAnterior = OriginalFecha,
-                FechaNueva = NuevaFecha,
-                Motivo = MotivoCambio,
-                FechaMovimiento = DateTime.Now
-            };
+                IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
+                FechaNueva = NuevaFecha.Value,
+                Motivo = MotivoCambio
+            }
+        );
 
-            ActividadSeleccionada.HistorialFechas.Add(cambio);
+        // 🔁 refrescar historial (MAPEO OBLIGATORIO)
+        var historialDto =
+            await ServicioClienteService.ObtenerHistorialFechasAsync(
+                ActividadSeleccionada.IdHorasProgramaTrabajo
+            );
 
-            // Actualizamos la fecha de la actividad
-            ActividadSeleccionada.Fecha = NuevaFecha;
+        ActividadSeleccionada.HistorialFechas = historialDto
+            .Select(h => new CambioFecha
+            {
+                FechaMovimiento = h.FechaMovimiento,
+                FechaAnterior = h.FechaAnterior,
+                FechaNueva = h.FechaNueva,
+                Motivo = h.Motivo
+            })
+            .ToList();
 
-            // Cerrar modal y limpiar
-            ShowSubModal = false;
-            ActividadSeleccionada = null;
-            NuevaFecha = null;
-            OriginalFecha = null;
-            MotivoCambio = "";
-        }
+        // actualizar fecha visible
+        ActividadSeleccionada.Fecha = NuevaFecha;
+
+        ShowSubModal = false;
     }
 
 
@@ -549,16 +592,16 @@
         overflow-y: auto;
     }
 
-    .submodal {
+        .submodal {
         background: #fff;
         border-radius: 14px;
         padding: 1.8rem 2.2rem;
         width: 100%;
         max-width: 600px;
+        max-height: 90vh;
         box-shadow: 0 8px 30px rgba(0,0,0,0.25);
         display: flex;
         flex-direction: column;
-        gap: 1rem;
         animation: fadeIn 0.3s ease forwards;
         position: relative;
     }
@@ -664,7 +707,7 @@
     .modal.large {
         width: 90%;
         max-width: 1100px;
-        max-height: 90vh; /* Máximo 90% de la altura de la ventana */
+        max-height: 90vh; 
         background: #fff;
         border-radius: 14px;
         padding: 2rem 2.5rem;

@@ -10,6 +10,7 @@ namespace pruebas1.Components.DTOs
     {
         public int IdCheckListAsignacion { get; set; }
         public int IdActividadGeneral { get; set; }
+        public int IdHorasProgramaTrabajo { get; set; }
         public string NombreActividad { get; set; } = string.Empty;
         public DateTime? Fecha { get; set; }
         public bool? Minuta { get; set; }
