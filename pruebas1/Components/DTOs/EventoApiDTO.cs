@@ -16,7 +16,7 @@ namespace pruebas1.Components
         public DateTime fechaInicio { get; set; }
         public DateTime fechaFin { get; set; }
 
-        public bool completada { get; set; } // 🔥 ESTE CAMPO FALTABA
+        public bool completada { get; set; } 
 
         public bool esRecurrente { get; set; }
         public string reglaRecurrencia { get; set; }
@@ -29,9 +29,6 @@ namespace pruebas1.Components
         public int creadorId { get; set; }
         public string nombreCreador { get; set; } = "";
 
-
     }
-
-
 
 }
