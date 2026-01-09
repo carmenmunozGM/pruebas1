@@ -73,10 +73,19 @@
                                         <span class="task-count">
                                             @(
                                                                         block.Title == "Autoevaluación"
-                                                                        ? block.SubTasks.OfType<AutoevaluacionItem>().Count(a => !a.Realizado)
+                                                                        ? block.SubTasks
+                                                                        .OfType<AutoevaluacionItem>()
+                                                                        .Count(a => !a.Realizado)
+
+                                                                        : block.Title == "Servicio a Cliente"
+                                                                        ? block.SubTasks
+                                                                        .OfType<ServicioClienteAgendaDTO>()
+                                                                        .Count(x => x.Completada != true)
+
                                                                         : block.SubTasks.Count
                                                                         )
                                     </span>
+
                                 </div>
                             </div>
                                 }
@@ -243,10 +252,11 @@
                                 <tbody>
                                     @foreach (var act in servicio)
                                     {
-                                        <tr>
+                                        <tr class="@(act.Completada == true ? "actividad-completada" : "")">
                                             <td>@act.NombreActividad</td>
                                         </tr>
                                     }
+
                                 </tbody>
                             </table>
                         }
@@ -1104,5 +1114,10 @@
             opacity: 1;
             transform: scale(1);
         }
+    }
+
+    .actividad-completada td {
+        text-decoration: line-through;
+        opacity: 0.6;
     }
 </style>
