@@ -1937,9 +1937,12 @@
                 HoraFin = TimeOnly.FromDateTime(e.fechaFin),
 
                 // 📍 UBICACIÓN CORRECTA (🔥 SALA vs TEXTO)
-                Ubicacion = e.idSala > 0 && salasLookup.ContainsKey(e.idSala)
-    ? salasLookup[e.idSala]
-    : e.ubicacion,
+                Ubicacion = e.idSala.HasValue
+                && e.idSala.Value > 0
+    && salasLookup.ContainsKey(e.idSala.Value)
+        ? salasLookup[e.idSala.Value]
+        : e.ubicacion,
+
 
 
                 Prioridad = e.idPrioridad,
