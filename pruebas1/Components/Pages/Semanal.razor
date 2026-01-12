@@ -108,17 +108,12 @@
                                                 case BaseTask bt:
                                                     if (block.Title != "Órdenes de Trabajo")
                                                     {
-                                                        <input type="checkbox"
-                                                               @onchange="(e) => ToggleComplete(bt, e)"
-                                                               checked="@bt.IsCompleted"
-                                                               @onclick:stopPropagation />
-
                                                             <span class="task-name @(bt.IsCompleted ? "completed" : "")"
                                                                   @onclick="() => OpenTaskModal(bt, false)">
                                                                 <span class="task-icon">@bt.IconoVisual</span>
                                                                 @bt.Name
                                                             </span>
-
+                                                            
                                                         <div class="task-actions">
                                                             <button class="edit-btn"
                                                                     title="Editar"
@@ -188,7 +183,7 @@
                     <div class="modal-body">
                         <!-- Nombre/Actividad -->
                         <div class="form-group">
-                            <label>Actividad:</label>
+                            <label>Título</label>
                             <input type="text" @bind="bt.Name" disabled="@(!IsEditMode)" />
                         </div>
 
@@ -201,18 +196,14 @@
                         <!-- Prioridad -->
                         <div class="form-group">
                             <label>Prioridad:</label>
-                            <select value="@bt.Priority"
-                                    disabled="@(!IsEditMode)"
-                                    @onchange="e =>
-                                    {
-                                        bt.Priority = e.Value?.ToString() ?? bt.Priority;
-                                        bt.IdPrioridad = MapPriority(bt.Priority);
-                                    }">
-                                  <option value="Alta">🔴 Alta</option>
-                                  <option value="Media">🟡 Media</option>
-                                  <option value="Baja">🟢 Baja</option>
-                              </select>
-                          </div>
+
+                            <select @bind="bt.IdPrioridad"
+                                    disabled="@(!IsEditMode)">
+                                <option value="1">🔴 Alta</option>
+                                <option value="2">🟡 Media</option>
+                                <option value="3">🟢 Baja</option>
+                            </select>
+                        </div>
 
                         <!-- Recurrencia -->
                         <div class="form-group">
@@ -317,7 +308,7 @@
                                         <li>@st.Name @if(st.IsCompleted){
                                         <span>✔️</span>
                                     }
-            </li>
+                                    </li>
                                 }
                             </ul>
                         </div>
@@ -693,7 +684,6 @@
         public string Description { get; set; } = "";
 
         // Prioridad / recurrencia (ya existentes)
-        public string Priority { get; set; } = "Media";
         public string Recurrence { get; set; } = "No repetir";
 
         // Estado
@@ -932,7 +922,6 @@
                     HoraInicio = TimeOnly.FromDateTime(t.fechaInicio),
                     HoraFin = TimeOnly.FromDateTime(t.fechaFin),
 
-
                     Prioridad = t.idPrioridad,
                     IdAgenda = t.idAgenda,
 
@@ -1019,8 +1008,7 @@
                         ParentBlock = day.Blocks[0],
 
                     // Prioridad
-                        IdPrioridad = item.Prioridad,
-                        Priority = MapPriorityBack(item.Prioridad),
+                    IdPrioridad = item.Prioridad,
 
                     // Recurrencia
                         Recurrence = item.EsRecurrente
@@ -1345,10 +1333,13 @@
 
     void OpenTaskModal(BaseTask task, bool editMode)
     {
+        
+        Console.WriteLine($"ANTES MODAL: {task.IdPrioridad}"); 
         SelectedTaskObject = null;
         IsModalOpen = false;
 
         SelectedTaskObject = task;
+        //Console.WriteLine($"EN MODAL (POST ASSIGN): {SelectedTaskObject.IdPrioridad}");
         IsEditMode = editMode;
         IsModalOpen = true;
     }
