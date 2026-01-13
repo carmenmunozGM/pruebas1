@@ -433,7 +433,7 @@ namespace pruebas1.Servicios
                 idPrioridad = model.Prioridad,
                 idSala = 0,
                 ubicacion = model.Ubicacion,
-                idsParticipantes = model.IdsParticipantes
+               // idsParticipantes = model.IdsParticipantes
             };
 
             var json = JsonSerializer.Serialize(dto);

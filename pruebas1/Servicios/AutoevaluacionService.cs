@@ -23,11 +23,11 @@ namespace pruebas1.Servicios
 
             if (host == "localhost" || host == "127.0.0.1")
             {
-                _baseApi = "http://localhost:5231";   // 👈 tu API local
+                _baseApi = "http://localhost:5231";   
             }
             else
             {
-                _baseApi = "https://redgm.site:9096"; // 👈 tu servidor real
+                _baseApi = "https://redgm.site:9096"; 
             }
         }
 
@@ -64,7 +64,7 @@ namespace pruebas1.Servicios
             if (!resp.IsSuccessStatusCode)
             {
                 var error = await resp.Content.ReadAsStringAsync();
-                throw new Exception(error);   // 🔥 ERROR REAL DEL SERVIDOR
+                throw new Exception(error);  
             }
 
             return true;
@@ -84,7 +84,7 @@ namespace pruebas1.Servicios
             if (!resp.IsSuccessStatusCode)
             {
                 var error = await resp.Content.ReadAsStringAsync(cancellationToken);
-                throw new Exception(error); // 🔥 mensaje real del backend
+                throw new Exception(error); 
             }
 
             return true;

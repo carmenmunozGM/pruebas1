@@ -1429,28 +1429,28 @@
             return;
         }
 
-        var model = new EditAgendaItemModel
-        {      
-            IdAgenda = bt.IdAgenda,
-            Titulo = bt.Name,
-            Descripcion = bt.Description,
-            FechaInicio = bt.StartDate,
-            FechaFin = bt.DueDate,
-            EsRecurrente = bt.Recurrence != "No repetir",
-            ReglaRecurrencia = bt.Recurrence == "No repetir"
-                ? null
-                : bt.Recurrence,
+        // var model = new EditAgendaItemModel
+        // {      
+        //     IdAgenda = bt.IdAgenda,
+        //     Titulo = bt.Name,
+        //     Descripcion = bt.Description,
+        //     FechaInicio = bt.StartDate,
+        //     FechaFin = bt.DueDate,
+        //     EsRecurrente = bt.Recurrence != "No repetir",
+        //     ReglaRecurrencia = bt.Recurrence == "No repetir"
+        //         ? null
+        //         : bt.Recurrence,
 
-            Prioridad = bt.IdPrioridad,
+        //     Prioridad = bt.IdPrioridad,
 
-            Subtareas = bt.SubTasks
-            .Select(s => s.ToString()!)
-            .ToList()
+        //     Subtareas = bt.SubTasks
+        //     .Select(s => s.ToString()!)
+        //     .ToList()
 
-        };
+        // };
 
         Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
-        await AgendaService.EditarTareaAsync(bt.ApiId, model);
+        //await AgendaService.EditarTareaAsync(bt.ApiId, model);
 
         IsEditMode = false;
         IsModalOpen = false;
