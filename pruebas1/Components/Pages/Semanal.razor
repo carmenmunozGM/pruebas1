@@ -1217,7 +1217,6 @@
         if (SelectedTaskObject is not BaseTask bt)
             return;
 
-        // Validación básica
         if (bt.DueDate < bt.StartDate)
         {
             await ShowTemporaryToastAsync(
@@ -1227,24 +1226,34 @@
         }
 
         var model = new EditAgendaItemModel
-        {      
+        {
             IdAgenda = bt.IdAgenda,
-            Titulo = bt.Name,
-            Descripcion = bt.Description,
+            Tipo = "Tarea",
+
+            Titulo = bt.Name ?? "",
+            Descripcion = bt.Description ?? "",
+
             FechaInicio = bt.StartDate,
             FechaFin = bt.DueDate,
-            EsRecurrente = bt.Recurrence != "No repetir",
-            ReglaRecurrencia = bt.Recurrence == "No repetir"
-                ? null
-                : bt.Recurrence,
 
             Prioridad = bt.IdPrioridad,
 
-            Subtareas = bt.SubTasks
-            .Select(s => s.ToString()!)
-            .ToList()
+            ReglaRecurrencia = bt.Recurrence == "No repetir"
+                ? ""
+                : bt.Recurrence,
 
+            // 🔥 CAMBIO CLAVE
+            Subtareas = bt.SubTasks?
+                .Select(s => new EditableSubtask
+                {
+                    Titulo = s.ToString()!
+                })
+                .ToList()
+                ?? new()
         };
+
+        // aquí sigue tu lógica de guardado (API)
+    
 
         Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
         await AgendaService.EditarTareaAsync(bt.ApiId, model);

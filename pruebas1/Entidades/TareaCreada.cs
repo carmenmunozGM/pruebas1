@@ -31,7 +31,7 @@ namespace pruebas1.Entidades
 
         public List<int> ParticipantesSeleccionados { get; set; } = new();
 
-        public int IdSala { get; set; } = 0;
+        public int? IdSala { get; set; } = 0;
         public bool EsRecurrente { get; set; } = false;
         public string ReglaRecurrencia { get; set; } = "";
         public int? IdFrecuencia { get; set; }  // FK al catálogo

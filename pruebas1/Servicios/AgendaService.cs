@@ -428,12 +428,12 @@ namespace pruebas1.Servicios
                 descripcion = model.Descripcion,
                 fechaInicio = model.FechaInicio,
                 fechaFin = model.FechaFin,
-                esRecurrente = model.EsRecurrente,
+               
                 reglaRecurrencia = model.ReglaRecurrencia,
                 idPrioridad = model.Prioridad,
                 idSala = 0,
                 ubicacion = model.Ubicacion,
-                idsParticipantes = model.IdsParticipantes
+                participantes = model.Participantes
             };
 
             var json = JsonSerializer.Serialize(dto);
@@ -471,7 +471,7 @@ namespace pruebas1.Servicios
                 descripcion = model.Descripcion ?? "",
                 fechaInicio = model.FechaInicio,
                 fechaFin = model.FechaFin,
-                esRecurrente = model.EsRecurrente,
+            
                 reglaRecurrencia = model.ReglaRecurrencia,
                 idPrioridad = model.Prioridad,
                 subTareas = model.Subtareas.Select(t => new { titulo = t }).ToList()
