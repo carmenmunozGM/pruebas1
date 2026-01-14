@@ -273,24 +273,8 @@
                         @if (bt.EsEvento)
                         {
                             <div class="form-group">
-                                <label>Ubicación:</label>
-                                <select @bind="salaSeleccionada" disabled="@(!IsEditMode)">
-                                    <option value="">-- Selecciona una ubicación --</option>
-
-                                    @foreach (var s in salasList)
-                                    {
-                                        <option value="@s.Id">@s.Salas</option>
-                                    }
-
-                                    <option value="0">Otra ubicación...</option>
-                                </select>
-                                @if (EsOtraSala)
-                                {
-                                    <input type="text"
-                                           placeholder="Escribe la ubicación"
-                                           @bind="bt.Ubicacion"
-                                           disabled="@(!IsEditMode)" />
-                                }
+                                <label>Ubicación</label>
+                                <input type="text" @bind="bt.Ubicacion" disabled="@(!IsEditMode)" />
                             </div>
                         }
 
@@ -643,6 +627,29 @@
         StateHasChanged();
     }
 
+    void OnSalaChanged(ChangeEventArgs e)
+    {
+        if (SelectedTaskObject is not BaseTask bt)
+            return;
+
+        if (!int.TryParse(e.Value?.ToString(), out var value))
+        {
+            salaSeleccionada = null;
+            return;
+        }
+
+        salaSeleccionada = value;
+
+        if (value == 0)
+        {
+            if (bt.IdSala.HasValue && bt.IdSala > 0)
+            {
+                bt.IdSala = null;
+                bt.Ubicacion = string.Empty;
+            }
+        }
+    }
+
     OrdenTrabajoDTO? OrdenTrabajoDetalle;
     async Task CargarOrdenTrabajo(int id)
     {
@@ -834,32 +841,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadWeek(CurrentDate);
-
-        if (catalogosCargados) return;
-
-        salasList = await SalasEmService.GetSalas();
-        frecuenciasList = await ReglasRecurrenciaServices.GetFrecuencia();
-        prioridadesList = await ReglasRecurrenciaServices.GetPrioridad();
-
-        catalogosCargados = true;
-    }
-
-    protected override void OnParametersSet()
-    {
-        if (bt.IdSala.HasValue && bt.IdSala > 0)
-        {
-            // Sala
-            salaSeleccionada = bt.IdSala.Value;
-        }
-        else if (!string.IsNullOrWhiteSpace(bt.Ubicacion))
-        {
-            // Ubicacion
-            salaSeleccionada = 0;
-        }
-        else
-        {
-            salaSeleccionada = null;
-        }
     }
 
 
@@ -1397,17 +1378,33 @@
         await ShowTemporaryToastAsync(cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada");
     }
 
+    void InicializarUbicacion(BaseTask bt)
+    {
+        if (bt.IdSala.HasValue && bt.IdSala > 0)
+        {
+            salaSeleccionada = bt.IdSala.Value;
+        }
+        else if (!string.IsNullOrWhiteSpace(bt.Ubicacion))
+        {
+            salaSeleccionada = 0;
+        }
+        else
+        {
+            salaSeleccionada = null;
+        }
+    }
+
     void OpenTaskModal(BaseTask task, bool editMode)
     {
-
-        Console.WriteLine($"ANTES MODAL: {task.IdPrioridad}");
+        
+        Console.WriteLine($"ANTES MODAL: {task.IdPrioridad}"); 
         SelectedTaskObject = null;
         IsModalOpen = false;
 
         SelectedTaskObject = task;
-        //Console.WriteLine($"EN MODAL (POST ASSIGN): {SelectedTaskObject.IdPrioridad}");
         IsEditMode = editMode;
         IsModalOpen = true;
+        InicializarUbicacion(task);
     }
 
 
@@ -1493,6 +1490,17 @@
                 "❌ La fecha fin no puede ser menor a la fecha inicio"
             );
             return;
+        }
+
+        if (salaSeleccionada.HasValue && salaSeleccionada > 0)
+        {
+            bt.IdSala = salaSeleccionada.Value;
+            bt.Ubicacion = salasList
+                .FirstOrDefault(s => s.Id == salaSeleccionada)?.Salas;
+        }
+        else
+        {
+            bt.IdSala = null;
         }
 
         // var model = new EditAgendaItemModel
@@ -2195,4 +2203,5 @@
             transform: scale(1);
         }
     }
+
 </style>
