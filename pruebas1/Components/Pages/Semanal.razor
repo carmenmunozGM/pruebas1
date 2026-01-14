@@ -994,6 +994,10 @@
                     ubicacionFinal = item.Ubicacion;
                 }
 
+                var prioridadFinal = item.Prioridad >= 1 && item.Prioridad <= 3
+                ? item.Prioridad
+                : 2; // Media por default
+
                 var mapped = new BaseTask
                     {
                         ApiId = item.IdAgenda,
@@ -1008,7 +1012,7 @@
                         ParentBlock = day.Blocks[0],
 
                     // Prioridad
-                    IdPrioridad = item.Prioridad,
+                    IdPrioridad = prioridadFinal,
 
                     // Recurrencia
                         Recurrence = item.EsRecurrente
@@ -1163,9 +1167,6 @@
                 }
             }
         }
-
-
-
 
         StateHasChanged();
     }
