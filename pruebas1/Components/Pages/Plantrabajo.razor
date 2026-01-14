@@ -2,6 +2,7 @@
 @using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
+@inject HttpClient _http
 <br />
 <br />
 <br />
@@ -161,17 +162,34 @@
                         }
 
                         <!-- Motivo del cambio (obligatorio) -->
-                        <label>Motivo del cambio <span class="required">*</span>:</label>
-                        <textarea @bind="MotivoCambio" class="input-text"></textarea>
-                        @if (MostrarErrorMotivo)
+                        <label>Motivo del cambio <span class="required" style="color:red;">*</span>:</label>
+                            <textarea @bind="MotivoCambio"
+                                      class="input-text @(MostrarErrorMotivo ? "is-invalid" : "")"
+                                      style="@(MostrarErrorMotivo ? "border: 1px solid red;" : "")">
+                            </textarea>
+
+                                            @if (MostrarErrorMotivo)
+                                            {
+                                                <div style="color: red; font-size: 0.85em; margin-top: 4px;">
+                                                    ✖ El motivo es obligatorio para justificar el cambio de fecha.
+                                                </div>
+                                            }
+
+
+                        @if (!string.IsNullOrEmpty(ErrorServidor))
                         {
-                            <div class="error-msg">El motivo es obligatorio.</div>
+                            <div class="alert alert-danger" style="color: red; background: #fee; padding: 10px; margin-bottom: 10px; border: 1px solid red;">
+                                ⚠️ @ErrorServidor
+                            </div>
                         }
 
                         <div class="modal-footer">
-                            <button class="btn-save" @onclick="GuardarCambioFecha">Guardar</button>
-                            <button class="btn-cancel" @onclick="CerrarSubModal">Cancelar</button>
+                            <button class="btn-save" @onclick="GuardarCambioFecha" disabled="@Procesando">
+                                @(Procesando ? "Guardando..." : "Guardar")
+                            </button>
+                            <button class="btn-cancel" @onclick="CerrarSubModal" disabled="@Procesando">Cancelar</button>
                         </div>
+                        
 
                         <!-- Historial compacto con scroll -->
                         <label style="margin-top:8px;">Historial de cambios:</label>
@@ -183,7 +201,7 @@
                                     {
                                         <li>
                                             <div class="hist-row">
-                                                <div><strong>@(h.FechaMovimiento.ToString("g"))</strong></div>
+                                                <div> @(h.FechaMovimiento.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div>De: @(h.FechaAnterior.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div> A: @(h.FechaNueva.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div>Motivo: @h.Motivo</div>
@@ -216,6 +234,8 @@
     }
 
 
+    private string? ErrorServidor = null;
+private bool Procesando = false; // Para deshabilitar el botón mientras guarda
 
     public class Actividad
 {
@@ -348,6 +368,12 @@
 
     private async Task AbrirSubModal(Actividad actividad)
     {
+
+        // Limpiar rastro de errores anteriores antes de mostrar el modal
+        ErrorServidor = null;
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
+        MotivoCambio = ""; // Opcional: limpiar el motivo anterior
         if (!actividad.Fecha.HasValue)
         {
             MostrarAlertaSinFecha();
@@ -366,7 +392,7 @@
         actividad.HistorialFechas = historialDto
             .Select(h => new CambioFecha
             {
-                FechaMovimiento = h.FechaMovimiento,
+                FechaMovimiento = h.FechaModificacion,
                 FechaAnterior = h.FechaAnterior,
                 FechaNueva = h.FechaNueva,
                 Motivo = h.Motivo
@@ -379,14 +405,21 @@
     void CerrarSubModal()
     {
         ShowSubModal = false;
-        MostrarAlerta = false;
-        MensajeAlerta = "";
-        ActividadSeleccionada = null;
-        NuevaFecha = null;
-        OriginalFecha = null;
-        MotivoCambio = "";
+
+        // --- LIMPIEZA DE MENSAJES DE ERROR ---
+        ErrorServidor = null;
         MostrarErrorFecha = false;
         MostrarErrorMotivo = false;
+
+        // --- LIMPIEZA DE CAMPOS ---
+        MotivoCambio = "";
+        NuevaFecha = null;
+        OriginalFecha = null;
+        ActividadSeleccionada = null;
+
+        // Si tenías una alerta general en el modal principal, también la limpiamos
+        MostrarAlerta = false;
+        MensajeAlerta = "";
     }
 
     void CloseModal()
@@ -408,46 +441,83 @@ void MostrarAlertaSinFecha()
         MostrarAlerta = true;
     }
 
-
     private async Task GuardarCambioFecha()
     {
-        if (ActividadSeleccionada == null)
+        // 1. Limpiar errores previos y mostrar que estamos trabajando
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
+        ErrorServidor = null;
+
+        // 2. Validaciones locales (Para que el usuario no envíe campos vacíos)
+        if (NuevaFecha == null) MostrarErrorFecha = true;
+        if (string.IsNullOrWhiteSpace(MotivoCambio)) MostrarErrorMotivo = true;
+
+        // Si algo falta, no seguimos
+        if (MostrarErrorFecha || MostrarErrorMotivo || ActividadSeleccionada == null)
             return;
 
-        if (NuevaFecha == null || string.IsNullOrWhiteSpace(MotivoCambio))
-            return;
+        try
+        {
+            Procesando = true;
 
-        await ServicioClienteService.CrearHistorialFechaAsync(
-            new HistorialFechaCreateDTO
+            var dto = new HistorialFechaCreateDTO
             {
                 IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
                 FechaNueva = NuevaFecha.Value,
                 Motivo = MotivoCambio
-            }
-        );
+            };
 
-        // 🔁 refrescar historial (MAPEO OBLIGATORIO)
-        var historialDto =
-            await ServicioClienteService.ObtenerHistorialFechasAsync(
-                ActividadSeleccionada.IdHorasProgramaTrabajo
-            );
+            // 3. Intentar guardar en la API
+            var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
 
-        ActividadSeleccionada.HistorialFechas = historialDto
-            .Select(h => new CambioFecha
+            if (response.IsSuccessStatusCode)
             {
-                FechaMovimiento = h.FechaMovimiento,
-                FechaAnterior = h.FechaAnterior,
-                FechaNueva = h.FechaNueva,
-                Motivo = h.Motivo
-            })
-            .ToList();
+                // --- CASO ÉXITO ---
+                var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(
+                    ActividadSeleccionada.IdHorasProgramaTrabajo);
 
-        // actualizar fecha visible
-        ActividadSeleccionada.Fecha = NuevaFecha;
+                ActividadSeleccionada.HistorialFechas = historialDto.Select(h => new CambioFecha
+                {
+                    FechaMovimiento = h.FechaModificacion,
+                    FechaAnterior = h.FechaAnterior,
+                    FechaNueva = h.FechaNueva,
+                    Motivo = h.Motivo
+                }).ToList();
 
-        ShowSubModal = false;
+                ActividadSeleccionada.Fecha = NuevaFecha;
+
+                // Solo aquí cerramos el modal
+                ShowSubModal = false;
+                ErrorServidor = null;
+                MotivoCambio = ""; // Limpiamos para la próxima
+            }
+            else
+            {
+                // --- CASO ERROR DE VALIDACIÓN SQL ---
+                // Leemos el contenido del error 500 que mandaste antes
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                // Si el error contiene el mensaje del SQL, lo mostramos
+                if (errorContent.Contains("La nueva fecha debe ser mayor"))
+                {
+                    ErrorServidor = "La nueva fecha debe ser mayor a la última fecha registrada en el historial.";
+                }
+                else
+                {
+                    ErrorServidor = "Error del servidor: No se pudo validar la fecha. Intente con una fecha posterior.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Error de red o crash inesperado
+            ErrorServidor = "Error de conexión o del sistema: " + ex.Message;
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
-
 
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {

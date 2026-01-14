@@ -1,5 +1,7 @@
 ﻿@page "/semanal"
 @using System.Globalization
+@using System.Diagnostics
+@using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
 @inject AgendaService AgendaService
@@ -9,6 +11,8 @@
 @using System.Net.Http.Json;
 @inject OrdenTramiteService OrdenTramiteService
 @inject CalendarioService CalendarioService
+@inject SalasEmService SalasEmService
+
 
 
 <br />
@@ -94,26 +98,22 @@
                                                            @onchange="(e) => ToggleCompleteSelf(sa, e)"
                                                            @onclick:stopPropagation />
 
-                                                    <span class="task-name @(sa.IsCompleted ? "completed" : "")"
-                                                          @onclick="() => OpenTaskModal(sa, false)">
-                                                        @sa.ActivityName
-                                                    </span>
+                                                        <span class="task-name @(sa.IsCompleted ? "completed" : "")"
+                                                              @onclick="() => OpenSelfAssessmentModal(sa)">
+                                                            @sa.ActivityName
+                                                        </span>
+
                                                     break;
 
                                                 case BaseTask bt:
                                                     if (block.Title != "Órdenes de Trabajo")
                                                     {
-                                                        <input type="checkbox"
-                                                               @onchange="(e) => ToggleComplete(bt, e)"
-                                                               checked="@bt.IsCompleted"
-                                                               @onclick:stopPropagation />
-
-                                                        <span class="task-name @(bt.IsCompleted ? "completed" : "")"
-                                                              @onclick="() => OpenTaskModal(bt, false)">
-                                                            <span class="task-icon">@bt.IconoVisual</span>
-                                                            @bt.Name
-                                                        </span>
-
+                                                            <span class="task-name @(bt.IsCompleted ? "completed" : "")"
+                                                                  @onclick="() => OpenTaskModal(bt, false)">
+                                                                <span class="task-icon">@bt.IconoVisual</span>
+                                                                @bt.Name
+                                                            </span>
+                                                            
                                                         <div class="task-actions">
                                                             <button class="edit-btn"
                                                                     title="Editar"
@@ -170,83 +170,166 @@
         </div>
 
         <div class="modal-body">
-            @if (SelectedTaskObject is BaseTask bt)
+            @if (IsModalOpen && SelectedTaskObject is BaseTask bt)
             {
-                <div class="form-group">
-                    <label>Actividad:</label>
-                    <input type="text" @bind="bt.Name" disabled="@(!IsEditMode)" />
-                </div>
-                <div class="form-group">
-                    <label>Descripción:</label>
-                    <textarea @bind="bt.Description" disabled="@(!IsEditMode)"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Prioridad:</label>
-                    <select value="@bt.Priority"
-                            disabled="@(!IsEditMode)"
-                            @onchange="e =>
-                            {
-                                bt.Priority = e.Value?.ToString() ?? bt.Priority;
-                                bt.IdPrioridad = MapPriority(bt.Priority);
-                            }">
-                          <option value="Alta">🔴 Alta</option>
-                          <option value="Media">🟡 Media</option>
-                          <option value="Baja">🟢 Baja</option>
-                      </select>
+                <div class="modal-backdrop" @onclick="CloseTaskModal"></div>
 
-                </div>
-                <div class="form-group">
-                    <label>Recurrencia:</label>
-                    <select @bind="bt.Recurrence" disabled="@(!IsEditMode)">
-                        <option value="No repetir">No repetir</option>
-                        <option value="Diario">Diario</option>
-                        <option value="Semanal">Semanal</option>
-                        <option value="Quincenal">Quincenal</option>
-                        <option value="Mensual">Mensual</option>
-                        <option value="Anual">Anual</option>
-                    </select>
-                </div>
-                <div class="form-group inline">
-                    <label>Fecha inicio</label>
-
-                    @if (IsEditMode)
-                    {
-                        <DatePicker Value="bt.StartDate"
-                                    ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
-                    }
-                    else
-                    {
-                        <input type="text"
-                               class="read-only-field"
-                               value="@bt.StartDate.ToString("dd/MM/yyyy")"
-                               readonly />
-                    }
-                </div>
-                <div class="form-group inline">
-                    <label>Fecha fin</label>
-
-                    @if (IsEditMode)
-                    {
-                        <DatePicker Value="bt.DueDate"
-                                    ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
-                    }
-                    else
-                    {
-                        <input type="text"
-                               class="read-only-field"
-                               value="@bt.DueDate.ToString("dd/MM/yyyy")"
-                               readonly />
-                    }
-                </div>
-
-                @if (IsEditMode && bt.DueDate < bt.StartDate)
-                {
-                    <div class="validation-error">
-                        ⚠️ La fecha fin no puede ser menor que la fecha inicio
+                <div class="modal-content" @onclick:stopPropagation>
+                    <div class="modal-header">
+                        <h2>@(bt.EsEvento ? "📅 Detalles del Evento" : "📝 Detalles de la Tarea")</h2>
+                        <button class="close-btn" @onclick="CloseTaskModal">&times;</button>
                     </div>
-                }
 
-            }
+                    <div class="modal-body">
+                        <!-- Nombre/Actividad -->
+                        <div class="form-group">
+                            <label>Título</label>
+                            <input type="text" @bind="bt.Name" disabled="@(!IsEditMode)" />
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="form-group">
+                            <label>Descripción:</label>
+                            <textarea @bind="bt.Description" disabled="@(!IsEditMode)"></textarea>
+                        </div>
+
+                        <!-- Prioridad -->
+                        <div class="form-group">
+                            <label>Prioridad:</label>
+
+                            <select @bind="bt.IdPrioridad"
+                                    disabled="@(!IsEditMode)">
+                                <option value="1">🔴 Alta</option>
+                                <option value="2">🟡 Media</option>
+                                <option value="3">🟢 Baja</option>
+                            </select>
+                        </div>
+
+                        <!-- Recurrencia -->
+                        <div class="form-group">
+                            <label>Recurrencia:</label>
+                            <select @bind="bt.Recurrence" disabled="@(!IsEditMode)">
+                                <option value="No repetir">No repetir</option>
+                                <option value="Diario">Diario</option>
+                                <option value="Semanal">Semanal</option>
+                                <option value="Quincenal">Quincenal</option>
+                                <option value="Mensual">Mensual</option>
+                                <option value="Anual">Anual</option>
+                            </select>
+                        </div>
+
+                        <!-- Fechas y horas -->
+                        <div class="form-group inline">
+                            <label>Fecha inicio</label>
+                            @if (IsEditMode)
+                            {
+                                <DatePicker Value="bt.StartDate"
+                                            ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="read-only-field"
+                                       value="@bt.StartDate.ToString("dd/MM/yyyy")" readonly />
+                            }
+                        </div>
+
+                        @if (bt.EsEvento)
+                        {
+                            <div class="form-group inline">
+                                <label>Hora inicio</label>
+                                <input type="text" class="read-only-field"
+                                       value="@bt.HoraInicio?.ToString("HH:mm")" readonly />
+                            </div>
+                        }
+
+                        <div class="form-group inline">
+                            <label>Fecha fin</label>
+                            @if (IsEditMode)
+                            {
+                                <DatePicker Value="bt.DueDate"
+                                            ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="read-only-field"
+                                       value="@bt.DueDate.ToString("dd/MM/yyyy")" readonly />
+                            }
+                        </div>
+
+                        @if (bt.EsEvento)
+                        {
+                            <div class="form-group inline">
+                                <label>Hora fin</label>
+                                <input type="text" class="read-only-field"
+                                       value="@bt.HoraFin?.ToString("HH:mm")" readonly />
+                            </div>
+                        }
+
+                        <!-- Ubicación -->
+                        @if (bt.EsEvento)
+                        {
+                            <div class="form-group">
+                                <label>Ubicación</label>
+                                <input type="text" @bind="bt.Ubicacion" disabled="@(!IsEditMode)" />
+                            </div>
+                        }
+
+                        <!-- Creador (solo eventos) -->
+                        @if (bt.EsEvento)
+                        {
+                            <div class="form-group">
+                                <label>👑 Creador del evento</label>
+                                <input type="text" value="@bt.nombreCreador" readonly />
+                            </div>
+                        }
+
+                        <!-- Participantes (solo eventos) -->
+                        @if (bt.EsEvento && bt.Participantes.Any())
+                        {
+                            <div class="form-group">
+                                <label>👥 Participantes</label>
+                                <ul>
+                                    @foreach (var p in bt.Participantes)
+                                    {
+                                        <li>@p</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        <!-- Subtareas (solo tareas) -->
+                        @if (!bt.EsEvento && bt.SubTasks.Any())
+                        {
+                            <div class="form-group">
+                                <label>✔️ Subtareas</label>
+                                <ul>
+                                    @foreach (var st in bt.SubTasks)
+                                    {
+                                        <li>@st.Name @if(st.IsCompleted){
+                                        <span>✔️</span>
+                                    }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+                    @if (IsEditMode)
+                    {
+                        <button class="action-btn save" @onclick="async () => await SaveTask()">💾 Guardar</button>
+                        <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
+                    }
+                    else
+                    {
+                        <button class="action-btn save" @onclick="() => IsModalOpen = false">✔️ Cerrar</button>
+                    }
+                </div>
+            </div>
+        }
+
             else if (SelectedTaskObject is SelfAssessment sa)
             {
                 <div class="form-group">
@@ -467,6 +550,8 @@
 @code {
     BaseTask? SelectedTask;
 
+    List<SalasEm> salasList = new();
+
     bool IsOTModalOpen = false;
     bool IsTramiteModalOpen = false;
     // ---------- DÍAS NO LABORALES / ----------
@@ -475,16 +560,17 @@
     {
         SelectedTask = task;
 
-        if (task.Type == BlockType.WorkOrder)
+        if (task.Tipo.Equals("WorkOrder", StringComparison.OrdinalIgnoreCase))
         {
             await CargarOrdenTrabajo(task.ApiId);
             IsOTModalOpen = true;
         }
-        else if (task.Type == BlockType.Tramite)
+        else if (task.Tipo.Equals("Tramite", StringComparison.OrdinalIgnoreCase))
         {
             await CargarOrdenTramite(task.ApiId);
             IsTramiteModalOpen = true;
         }
+
     }
     private async Task ToggleCompleteDynamic(BaseTask bt, ChangeEventArgs e)
     {
@@ -584,39 +670,61 @@
     class BaseTask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public int ApiId { get; set; } = 0;
+
+        // Identidad
+        public int ApiId { get; set; }
         public int IdAgenda { get; set; }
         public int IdPrioridad { get; set; }
 
-        public BlockType Type { get; set; }
+        // Tipo
+        public string Tipo { get; set; } = "Tarea";
 
+        // Contenido base
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
 
-        public string Priority { get; set; } = "Media";
+        // Prioridad / recurrencia (ya existentes)
         public string Recurrence { get; set; } = "No repetir";
 
-        public bool IsCompleted { get; set; } = false;
+        // Estado
+        public bool IsCompleted { get; set; }
 
-        public DateTime StartDate { get; set; } = DateTime.Today;
-        public DateTime DueDate { get; set; } = DateTime.Today;
+        // Fechas (ya existentes)
+        public DateTime StartDate { get; set; }
+        public DateTime DueDate { get; set; }
 
+        // Recurrencia real
+        public bool EsRecurrente { get; set; }
+        public string? ReglaRecurrencia { get; set; }
+
+        // Evento
+        public string? Ubicacion { get; set; }
+        public int? IdSala { get; set; }
+        public TimeOnly? HoraInicio { get; set; }
+        public TimeOnly? HoraFin { get; set; }
+
+        public int CreadorId { get; set; }
+        public string? nombreCreador { get; set; }
+        public List<string> Participantes { get; set; } = new();
+
+        // Tarea
         public List<BaseSubTask> SubTasks { get; set; } = new();
 
-        public Block ParentBlock { get; set; }
+        // UI
+        public Block? ParentBlock { get; set; }
 
-        public string Tipo { get; set; } = "Tarea";
+        public bool EsEvento =>
+            Tipo.Equals("Evento", StringComparison.OrdinalIgnoreCase);
 
         public string IconoVisual =>
-            Tipo?.Equals("Evento", StringComparison.OrdinalIgnoreCase) == true
-                ? "📅"
-                : "📝";
+            EsEvento ? "📅" : "📝";
     }
 
     class BaseSubTask
     {
         public int Id { get; set; }
-        public string Titulo { get; set; } = "";
+        public string Name { get; set; } = "";
+        public bool IsCompleted { get; set; } = false;
     }
 
     int MapPriority(string prioridad)
@@ -646,8 +754,8 @@
         public int Id { get; set; }
         public string Titulo { get; set; } = string.Empty;
     }
-  
-    
+
+
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -787,75 +895,156 @@
         var agendas = await AgendaService.ObtenerAgendaAsignadasAsync();
         var idAgenda = agendas.FirstOrDefault();
 
-        // 1) Obtener tareas (api) y eventos (api)
-        List<object> tareasApi = new();
-        try
-        {
-            if (idAgenda > 0)
-            {
-                // el método puede devolver TareaApi o TareaApiDto según tu proyecto; usamos object y mapeamos
-                var tareas = await AgendaService.ObtenerTareasApi(idAgenda);
-                if (tareas != null)
-                    tareasApi.AddRange(tareas);
-            }
-        }
-        catch { /* ignore */ }
+        salasList = await SalasEmService.GetSalas();
+        Debug.WriteLine($"Salas cargadas (post fetch): {salasList.Count}");
 
-        try
+
+        // 1) Obtener tareas (api) y eventos (api)
+        List<TareaCreada> agendaItems = new();
+
+        if (idAgenda > 0)
         {
-            if (idAgenda > 0)
+            var tareasApi = await AgendaService.ObtenerTareasApi(idAgenda);
+
+            foreach (var t in tareasApi)
             {
-                var eventos = await AgendaService.ObtenerEventos(idAgenda);
-                if (eventos != null)
-                    tareasApi.AddRange(eventos);
+                agendaItems.Add(new TareaCreada
+                {
+                    Tipo = "Tarea",
+                    IsEvento = false,
+
+                    Titulo = t.titulo,
+                    Descripcion = t.descripcion,
+
+                    FechaInicio = t.fechaInicio.Date,
+                    FechaFin = t.fechaFin.Date,
+
+                    HoraInicio = TimeOnly.FromDateTime(t.fechaInicio),
+                    HoraFin = TimeOnly.FromDateTime(t.fechaFin),
+
+                    Prioridad = t.idPrioridad,
+                    IdAgenda = t.idAgenda,
+
+                    EsRecurrente = t.esRecurrente,
+                    ReglaRecurrencia = t.reglaRecurrencia,
+
+                    Subtareas = t.subTareas?
+                    .Select(st => st.titulo)
+                    .ToList()
+                    ?? new List<string>()
+                });
+            }
+
+            var eventosApi = await AgendaService.ObtenerEventosPorEmpleado();
+
+            foreach (var e in eventosApi)
+            {
+                agendaItems.Add(new TareaCreada
+                {
+                    Tipo = "Evento",
+                    IsEvento = true,
+
+                    Titulo = e.titulo,
+                    Descripcion = e.descripcion,
+
+                    FechaInicio = e.fechaInicio.Date,
+                    FechaFin = e.fechaFin.Date,
+
+                    HoraInicio = TimeOnly.FromDateTime(e.fechaInicio),
+                    HoraFin = TimeOnly.FromDateTime(e.fechaFin),
+
+                    Ubicacion = e.ubicacion,
+
+                    Prioridad = e.idPrioridad,
+                    EsRecurrente = e.esRecurrente,
+                    ReglaRecurrencia = e.reglaRecurrencia,
+
+                    IdAgenda = e.idAgenda,
+                    IdSala = e.idSala,
+
+                    IdCreador = e.creadorId,
+                    NombreCreador = e.nombreCreador,
+
+                    ParticipantesLista = e.participantes
+                    .Select(p => new EmpleadoDTO
+                        {
+                            Id = p.idEmpleado,
+                            Nombre = p.nombreEmpleado
+                        })
+                        .ToList()
+                    });
+            }
+
+            foreach (var item in agendaItems)
+            {
+                if (item.FechaFin == null) continue;
+                if (item.FechaFin.Value.Date < startOfWeek || item.FechaFin.Value.Date > endOfWeek) continue;
+
+                var day = Days.FirstOrDefault(d => d.Date.Date == item.FechaFin.Value.Date);
+                if (day == null) continue;
+
+                string ubicacionFinal;
+                if (item.IdSala > 0)
+                {
+                    var sala = salasList.FirstOrDefault(s => s.Id == item.IdSala);
+                    ubicacionFinal = sala?.Salas ?? item.Ubicacion;
+                }
+                else
+                {
+                    ubicacionFinal = item.Ubicacion;
+                }
+
+                var prioridadFinal = item.Prioridad >= 1 && item.Prioridad <= 3
+                ? item.Prioridad
+                : 2; // Media por default
+
+                var mapped = new BaseTask
+                    {
+                        ApiId = item.IdAgenda,
+                        Name = item.Titulo,
+                        Description = item.Descripcion,
+
+                        StartDate = item.FechaInicio ?? item.FechaFin ?? DateTime.Today,
+                        DueDate = item.FechaFin ?? item.FechaInicio ?? DateTime.Today,
+
+                        IsCompleted = false,
+                        Tipo = item.Tipo,
+                        ParentBlock = day.Blocks[0],
+
+                    // Prioridad
+                    IdPrioridad = prioridadFinal,
+
+                    // Recurrencia
+                        Recurrence = item.EsRecurrente
+                        ? item.ReglaRecurrencia
+                        : "No repetir",
+
+                    // Evento
+                    Ubicacion = ubicacionFinal,
+                    IdSala = item.IdSala,
+                    HoraInicio = item.HoraInicio,
+                    HoraFin = item.HoraFin,
+                        
+                    // Auditoría
+                    CreadorId = item.IdCreador,
+                    nombreCreador = item.NombreCreador ?? "",
+                       
+                     // Subtareas (solo texto)
+                    SubTasks = item.Subtareas
+                    .Select(st => new BaseSubTask { Name = st })
+                    .ToList() ?? new(),
+
+                    // Participantes
+                    Participantes = item.ParticipantesLista
+                    .Select(p => p.Nombre)
+                    .ToList() ?? new()
+                    };
+
+                day.Blocks[0].SubTasks.Add(mapped);
             }
         }
-        catch { /* ignore */ }
 
         // Mapear y filtrar por fechaFin (acepta propiedades fechaFin o fechaFinal o fechaFinal en ordenes)
-        foreach (var obj in tareasApi)
-        {
-            DateTime? fechaFin = TryGetDateTime(obj, "fechaFin") ?? TryGetDateTime(obj, "fechaFinal") ?? TryGetDateTime(obj, "fechaConclusion");
-            if (fechaFin == null) continue;
-            if (fechaFin.Value.Date < startOfWeek || fechaFin.Value.Date > endOfWeek) continue;
-
-            var day = Days.FirstOrDefault(d => d.Date.Date == fechaFin.Value.Date);
-            if (day == null) continue;
-
-            // Obtener titulo/nombre
-            var titulo = TryGetString(obj, "titulo") ?? TryGetString(obj, "strClave") ?? TryGetString(obj, "tituloEvento") ?? TryGetString(obj, "Name") ?? "Sin título";
-
-            var descripcion = TryGetString(obj, "descripcion") ?? TryGetString(obj, "strObjetivoOtro") ?? "";
-
-            var apiId = TryGetInt(obj, "idAgenda") ?? TryGetInt(obj, "id") ?? 0;
-            // bool esEvento = TryGetString(obj, "tituloEvento") != null;
-            bool esEvento = TryGetString(obj, "tituloEvento") != null;
-
-            var tipoBD = esEvento ? "Evento" : "Tarea";
-
-            var idPrioridad = TryGetInt(obj, "idPrioridad") ?? 2;
-
-            var mapped = new BaseTask
-            {
-                ApiId = TryGetInt(obj, "id") ?? 0,        // 👈 ESTE
-                IdAgenda = TryGetInt(obj, "idAgenda") ?? 0,
-                Name = titulo,
-                Description = descripcion,
-                StartDate = TryGetDateTime(obj, "fechaInicio") ?? fechaFin.Value,
-                DueDate = fechaFin.Value,
-                IsCompleted = TryGetBool(obj, "completada") ?? false,
-                IdPrioridad = TryGetInt(obj, "idPrioridad") ?? 2,
-                Priority = TryGetString(obj, "prioridadTitulo") ?? "Media",
-                Tipo = tipoBD,
-                Type = BlockType.GeneralTask
-            };
-
-
-
-
-            mapped.ParentBlock = day.Blocks[0];
-            day.Blocks[0].SubTasks.Add(mapped);
-        }
 
         // 2) Obtener órdenes de trabajo y mapear
         List<OrdenTrabajoDTO> ordenes = new();
@@ -885,7 +1074,7 @@
                 StartDate = o.dteFechaSolicitud,
                 DueDate = o.fechaFinal,
                 IsCompleted = string.Equals(o.estado, "Completado", StringComparison.OrdinalIgnoreCase),
-                Type = BlockType.WorkOrder,
+                Tipo = "WorkOrder",
                 ParentBlock = day.Blocks[1]
             };
 
@@ -928,8 +1117,8 @@
                     ? fs
                     : fecha,
                 DueDate = fecha,
-                IsCompleted = false, // puedes mejorar esto si hay estado
-                Type = BlockType.Tramite,
+                IsCompleted = false,
+                Tipo = "Tramite",
 
                 ParentBlock = day.Blocks[1]
             };
@@ -978,9 +1167,6 @@
                 }
             }
         }
-
-
-
 
         StateHasChanged();
     }
@@ -1146,12 +1332,30 @@
         await ShowTemporaryToastAsync(cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada");
     }
 
-    void OpenTaskModal(object task, bool editMode)
+    void OpenTaskModal(BaseTask task, bool editMode)
     {
+        
+        Console.WriteLine($"ANTES MODAL: {task.IdPrioridad}"); 
+        SelectedTaskObject = null;
+        IsModalOpen = false;
+
         SelectedTaskObject = task;
-        IsModalOpen = true;
+        //Console.WriteLine($"EN MODAL (POST ASSIGN): {SelectedTaskObject.IdPrioridad}");
         IsEditMode = editMode;
+        IsModalOpen = true;
     }
+
+
+    void OpenSelfAssessmentModal(SelfAssessment sa)
+    {
+        SelectedTaskObject = null;
+        IsModalOpen = false;
+
+        SelectedTaskObject = sa;
+        IsEditMode = false;
+        IsModalOpen = true;
+    }
+
 
     void CloseTaskModal()
     {
@@ -1179,14 +1383,14 @@
     string GetModalTitle()
     {
         if (SelectedTaskObject is BaseTask bt)
-            return bt.Type switch
+            return bt.Tipo switch
             {
-
-                BlockType.GeneralTask => "Tarea",
+                "Tarea" => "Tarea",
                 _ => "Detalles de la tarea"
             };
         else if (SelectedTaskObject is SelfAssessment)
             return "Registro de Autoevaluación";
+
         return "Detalles";
     }
 
@@ -1226,37 +1430,27 @@
         }
 
         var model = new EditAgendaItemModel
-        {
+        {      
             IdAgenda = bt.IdAgenda,
-            Tipo = "Tarea",
-
-            Titulo = bt.Name ?? "",
-            Descripcion = bt.Description ?? "",
-
+            Titulo = bt.Name,
+            Descripcion = bt.Description,
             FechaInicio = bt.StartDate,
             FechaFin = bt.DueDate,
-
-            Prioridad = bt.IdPrioridad,
-
+            EsRecurrente = bt.Recurrence != "No repetir",
             ReglaRecurrencia = bt.Recurrence == "No repetir"
-                ? ""
+                ? null
                 : bt.Recurrence,
 
-            // 🔥 CAMBIO CLAVE
-            Subtareas = bt.SubTasks?
-                .Select(s => new EditableSubtask
-                {
-                    Titulo = s.ToString()!
-                })
-                .ToList()
-                ?? new()
-        };
+        //     Prioridad = bt.IdPrioridad,
 
-        // aquí sigue tu lógica de guardado (API)
-    
+        //     Subtareas = bt.SubTasks
+        //     .Select(s => s.ToString()!)
+        //     .ToList()
+
+        // };
 
         Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
-        await AgendaService.EditarTareaAsync(bt.ApiId, model);
+        //await AgendaService.EditarTareaAsync(bt.ApiId, model);
 
         IsEditMode = false;
         IsModalOpen = false;

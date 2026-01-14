@@ -275,10 +275,6 @@
     private bool IsSaving = false;   // CORRECTO
     public List<DateTime?> FechasQuincenales { get; set; } = new();
 
-
-    // Extrae IdTareaAU desde tu objeto de tarea del frontend
-    // Si tu Tarea de frontend ya tiene IdTareaAU (recomendado), retornarlo directamente.
-    // Si no, implementa la forma en que lo guardaste (por ejemplo: tarea.IdTareaAU)
     private int GetIdFromTareaObject(Tarea tarea)
     {
         return (tarea as dynamic)?.IdTareaAU ?? 0;
@@ -321,7 +317,7 @@
 
     public class Tarea
     {
-        public int IdTareaAU { get; set; }  // ← 🔥 NECESARIO
+        public int IdTareaAU { get; set; } 
         public string Nombre { get; set; } = "";
         public string Periodicidad { get; set; } = "";
         public bool Realizado { get; set; } = false;
@@ -367,7 +363,6 @@
         if (CurrentTask == null)
             return;
 
-        // 👉 Marcar como realizada SIN fechas
         CurrentTask.Realizado = true;
         CurrentTask.RegistradoProgramado = "";
 
@@ -384,16 +379,12 @@
         if (CurrentTask == null)
             return;
 
-        // ✔ Marcar como realizada
         CurrentTask.Realizado = true;
 
-        // ✔ Anual puede ir vacío
         CurrentTask.RegistradoProgramado = "";
 
-        // ✔ Limpiar selección
         SelectedDate = null;
 
-        // ✔ Cerrar modal
         IsAnnual = false;
         ShowModal = false;
     }
@@ -580,7 +571,6 @@
         }
     }
 
-
     // Helper: intenta extraer una fecha usable para "Mensual" desde el texto Programado.
     // Acepta formatos:
     //  - "dd/MM/yyyy"   -> devuelve esa fecha
@@ -751,9 +741,6 @@
             IsSaving = false;
         }
     }
-
-
-
 
     private int ConvertirDiaSemana(string diaTexto)
     {
@@ -1263,9 +1250,6 @@ private string FormatearFechasEnLineas(List<DateTime> fechas)
     }
 
 }
-
-
-
 
 <style>
     /* -------------------- ESTILOS -------------------- */

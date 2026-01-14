@@ -14,6 +14,8 @@ namespace pruebas1.Components.DTOs
         public string NombreEmpresa { get; set; }
         public DateTime FechaAsignacion { get; set; }
         public DateTime FechaConclusion { get; set; }
+
+        public bool? Completada { get; set; }
     }
 
 }

@@ -74,6 +74,7 @@ public class EditAgendaItemModel
     public string Tipo { get; set; } = "Tarea";
     public string Titulo { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
+    public bool EsRecurrente { get; set; }
     public DateTime FechaInicio { get; set; } = DateTime.Now;
     public DateTime FechaFin { get; set; } = DateTime.Now;
     // IMPORTANTE: Usa TimeOnly o TimeSpan para los inputs de hora

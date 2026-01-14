@@ -8,7 +8,7 @@ namespace pruebas1.Components.DTOs
 {
     public class HistorialItemDTO
     {
-        public DateTime FechaMovimiento { get; set; }
+        public DateTime FechaModificacion { get; set; }
         public DateTime FechaAnterior { get; set; }
         public DateTime FechaNueva { get; set; }
         public string Motivo { get; set; } = string.Empty;

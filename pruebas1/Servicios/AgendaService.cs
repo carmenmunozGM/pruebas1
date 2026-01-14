@@ -338,7 +338,7 @@ namespace pruebas1.Servicios
                 new AuthenticationHeaderValue("Bearer", usuario.Token);
 
             string url = "https://redgm.site:9096/eventos/Obtener/porEmpleado";
-
+            //string url = "http://localhost:5231/eventos/Obtener/porEmpleado";
             Debug.WriteLine($"[GET EVENTOS POR EMPLEADO] URL = {url}");
 
             var response = await httpClient.GetAsync(url);

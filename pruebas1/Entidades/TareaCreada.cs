@@ -27,6 +27,7 @@ namespace pruebas1.Entidades
 
         // 🔥 Extras
         public string? Ubicacion { get; set; }
+        public string? NombreCreador { get; set; }
         public List<EmpleadoDTO> ParticipantesLista { get; set; } = new();
 
         public List<int> ParticipantesSeleccionados { get; set; } = new();
