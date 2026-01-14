@@ -82,6 +82,8 @@ namespace pruebas1.Entidades
         public bool EsEventoMio { get; set; }
         public string NombreCreador { get; set; } = "";
         public List<SubtaskModel> Subtasks { get; set; } = new();
+        public DateTime? FechaCompletado { get; set; }
+
     }
 
 

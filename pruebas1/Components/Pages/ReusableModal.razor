@@ -84,10 +84,12 @@
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Inicio</label>
-                            <DatePicker @bind-Value="FechaInicio" CssClass="form-control" />
+                            <DatePicker Value="FechaInicio"
+                                        ValueChanged="OnFechaInicioChanged"
+                                        CssClass="form-control" />
+
                         </div>
                     </div>
-
                     <!-- Hora inicio -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Inicio</label>
@@ -98,7 +100,9 @@
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Término</label>
-                            <DatePicker @bind-Value="FechaFin" CssClass="form-control" />
+                            <DatePicker Value="FechaFin"
+                                        ValueChanged="OnFechaFinChanged"
+                                        CssClass="form-control" />
                         </div>
                     </div>
 
@@ -406,17 +410,34 @@
         string alertMessage = "";
 
         // Campos comunes a Tareas y Eventos
-        if (string.IsNullOrWhiteSpace(titulo)) alertMessage += "Debes completar el título.\n";
-        if (!selectedPrioridadId.HasValue) alertMessage += "Debes seleccionar la prioridad.\n";
-        if (!selectedFrecuenciaId.HasValue) alertMessage += "Debes seleccionar la recurrencia.\n";
-        if (!FechaInicio.HasValue) alertMessage += "Debes seleccionar la fecha de inicio.\n";
-        if (!FechaFin.HasValue) alertMessage += "Debes seleccionar la fecha de término.\n";
+        if (string.IsNullOrWhiteSpace(titulo))
+            alertMessage += "Debes completar el título.\n";
+
+        if (!selectedPrioridadId.HasValue)
+            alertMessage += "Debes seleccionar la prioridad.\n";
+
+        if (!selectedFrecuenciaId.HasValue)
+            alertMessage += "Debes seleccionar la recurrencia.\n";
+
+        if (!FechaInicio.HasValue)
+            alertMessage += "Debes seleccionar la fecha de inicio.\n";
+        else if (FechaInicio.Value.Date < DateTime.Today)
+            alertMessage += "La fecha de inicio debe ser hoy o una fecha futura.\n";
+
+        if (!FechaFin.HasValue)
+            alertMessage += "Debes seleccionar la fecha de término.\n";
+        else if (FechaInicio.HasValue && FechaFin.Value.Date < FechaInicio.Value.Date)
+            alertMessage += "La fecha de término no puede ser menor a la fecha de inicio.\n";
 
         // Campos específicos de Evento
         if (FormType == FormTypes.Evento)
         {
-            if (!HoraInicio.HasValue) alertMessage += "Debes seleccionar la hora de inicio.\n";
-            if (!HoraFin.HasValue) alertMessage += "Debes seleccionar la hora de término.\n";
+            if (!HoraInicio.HasValue)
+                alertMessage += "Debes seleccionar la hora de inicio.\n";
+
+            if (!HoraFin.HasValue)
+                alertMessage += "Debes seleccionar la hora de término.\n";
+
             if (selectedSalaId <= 0 && string.IsNullOrWhiteSpace(ubicacionOtra))
                 alertMessage += "Debes seleccionar o escribir la ubicación.\n";
         }
@@ -445,7 +466,7 @@
             return;
         }
 
-        // ✅ FECHAS CORREGIDAS (ANTI UTC BUG)
+        // ---------------- FECHAS (ANTI UTC BUG) ----------------
         DateTime? fechaInicioFinal = null;
         DateTime? fechaFinFinal = null;
 
@@ -467,19 +488,7 @@
             );
         }
 
-        // string ubicacionFinal = "";
-        // int idSalaFinal = 0;
-
-        // if (selectedSalaId == -1)
-        // {
-        //     idSalaFinal = 0;
-        //     ubicacionFinal = (ubicacionOtra ?? "").Trim();
-        // }
-        // else if (selectedSalaId > 0)
-        // {
-        //     idSalaFinal = selectedSalaId;
-        //     ubicacionFinal = "";
-        // }
+        // ---------------- UBICACIÓN ----------------
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
@@ -554,6 +563,74 @@
 
         LimpiarCampos();
         ShowModal = false;
+    }
+
+    private async Task OnFechaInicioChanged(DateTime? value)
+    {
+        if (value.HasValue && value.Value.Date < DateTime.Today)
+        {
+            FechaInicio = null;
+
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Fecha inválida",
+                text = "La fecha debe ser hoy o una fecha futura."
+            });
+
+            return;
+        }
+
+        FechaInicio = value;
+    }
+    private async Task OnFechaFinChanged(DateTime? value)
+    {
+        // Debe existir fecha inicio primero
+        if (!FechaInicio.HasValue)
+        {
+            FechaFin = null;
+
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Primero selecciona la fecha de inicio",
+                text = "Debes elegir una fecha de inicio antes de seleccionar la fecha de término."
+            });
+
+            return;
+        }
+
+        // No permitir fechas pasadas
+        if (value.HasValue && value.Value.Date < DateTime.Today)
+        {
+            FechaFin = null;
+
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Fecha inválida",
+                text = "La fecha de término debe ser hoy o una fecha futura."
+            });
+
+            return;
+        }
+
+        // No permitir fecha fin menor a inicio
+        if (value.HasValue && value.Value.Date < FechaInicio.Value.Date)
+        {
+            FechaFin = null;
+
+            await JSRuntime.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Fecha inválida",
+                text = "La fecha de término no puede ser menor a la fecha de inicio."
+            });
+
+            return;
+        }
+
+        FechaFin = value;
     }
 
 
