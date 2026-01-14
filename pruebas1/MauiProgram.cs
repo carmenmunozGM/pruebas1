@@ -40,7 +40,7 @@ namespace pruebas1
             {
                 return new HttpClient
                 {
-                  //BaseAddress = new Uri("https://redgm.site:9096/")
+                 // BaseAddress = new Uri("https://redgm.site:9096/")
                   BaseAddress = new Uri("http://localhost:5231/")
                 };
             });
