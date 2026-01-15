@@ -2432,15 +2432,14 @@
             var eventoCompleto = await AgendaService.ObtenerEventoDetalle(st.ApiId);
             if (eventoCompleto != null)
             {
-                // 1. Cargamos los participantes reales con sus IDs desde el detalle
+           
                 EditItem.Participantes = eventoCompleto.participantes?
           .Select(p => new EmpleadoDTO
           {
-              Id = p.idEmpleado, // Asegúrate que estos nombres coincidan con tu ParticipanteDTO
+              Id = p.idEmpleado, 
               Nombre = p.nombreEmpleado ?? p.nombreEmpleado
           }).ToList() ?? new List<EmpleadoDTO>();
 
-                // 2. Sincronizamos la ubicación
                 if (eventoCompleto.idSala.HasValue && eventoCompleto.idSala.Value > 0)
                 {
                     if (salasLookup.TryGetValue(eventoCompleto.idSala.Value, out string? nombreSala))
@@ -2480,7 +2479,7 @@
             Subtareas = st.Subtasks?.Select(s => new EditableSubtask { Titulo = s.Title }).ToList() ?? new()
         };
 
-        // Reconstruir participantes con ID buscando en la lista maestra
+        
         if (st.Participantes != null && todosLosEmpleados != null)
         {
             model.Participantes = todosLosEmpleados
@@ -2511,32 +2510,46 @@
             ubicacionOtra = "";
         }
     }
+    
     private async Task HandleSave()
-    {
-        if (EditItem == null) return;
+{
+    if (EditItem == null) return;
+    var fInicio = EditItem.FechaInicio.Date.Add(EditItem.HoraInicio.ToTimeSpan());
+    var fFin = EditItem.FechaFin.Date.Add(EditItem.HoraFin.ToTimeSpan());
 
-        // Combinar Fecha y Hora correctamente
-        var fInicio = EditItem.FechaInicio.Date.Add(EditItem.HoraInicio.ToTimeSpan());
-        var fFin = EditItem.FechaFin.Date.Add(EditItem.HoraFin.ToTimeSpan());
+    try
+    {
+        HttpResponseMessage res;
 
         if (EditItem.Tipo == "Tarea")
         {
-            // ... (Tu lógica de tarea que dices que ya funciona)
+            var dtoTarea = new
+            {
+                titulo = EditItem.Titulo,
+                descripcion = EditItem.Descripcion,
+                fechaInicio = fInicio,
+                fechaFin = fFin,
+                idPrioridad = EditItem.Prioridad,
+                esRecurrente = !string.IsNullOrEmpty(EditItem.ReglaRecurrencia) && EditItem.ReglaRecurrencia != "No se repite",
+                reglaRecurrencia = EditItem.ReglaRecurrencia,
+                 subTareas = EditItem.Subtareas.Select(s => new { id = s.Index, titulo = s.Titulo }).ToList()
+            };
+      
+            res = await Http.PutAsJsonAsync($"https://redgm.site:9096/tareas/editar/{EditItem.ApiId}", dtoTarea);
         }
-        else
+        else 
         {
             int idSalaFinal = 0;
             string ubicacionFinal = "";
 
-            // Lógica de ubicación mejorada
             if (EditItem.Ubicacion == "-1")
             {
                 idSalaFinal = 0;
-                ubicacionFinal = ubicacionOtra; // Toma el valor del input de texto
+                ubicacionFinal = ubicacionOtra; 
             }
             else
             {
-                // Buscar el ID de la sala por el nombre seleccionado
+                
                 var sala = salasLookup.FirstOrDefault(s => s.Value == EditItem.Ubicacion);
                 idSalaFinal = sala.Key;
                 ubicacionFinal = "";
@@ -2546,8 +2559,6 @@
             {
                 titulo = EditItem.Titulo,
                 descripcion = EditItem.Descripcion,
-                // Quitamos la Z manual para evitar desfase de horas si tu API no espera UTC estricto
-                // O usamos el formato estándar que entiende ASP.NET Core
                 fechaInicio = fInicio.ToString("yyyy-MM-ddTHH:mm:ss"),
                 fechaFin = fFin.ToString("yyyy-MM-ddTHH:mm:ss"),
                 esRecurrente = !string.IsNullOrEmpty(EditItem.ReglaRecurrencia) && EditItem.ReglaRecurrencia != "No se repite",
@@ -2555,36 +2566,29 @@
                 idPrioridad = EditItem.Prioridad,
                 idSala = idSalaFinal,
                 ubicacion = ubicacionFinal,
-                // Asegurar que no enviamos IDs nulos o 0
-                idsParticipantes = EditItem.Participantes?
-                                    .Select(p => p.Id)
-                                    .Where(id => id > 0)
-                                    .ToList() ?? new List<int>()
+                idsParticipantes = EditItem.Participantes?.Select(p => p.Id).Where(id => id > 0).ToList() ?? new List<int>()
             };
 
-            try
-            {
-                var res = await Http.PutAsJsonAsync($"https://redgm.site:9096/eventos/{EditItem.ApiId}", dtoEvento);
-
-                if (res.IsSuccessStatusCode)
-                {
-                    ShowEditModal = false;
-                    await JS.InvokeVoidAsync("Swal.fire", "¡Actualizado!", "El evento se editó con éxito.", "success");
-                    await InitializeMasterCategoriesAsync(); // Recargar la lista
-                }
-                else
-                {
-                    var errorBody = await res.Content.ReadAsStringAsync();
-                    await JS.InvokeVoidAsync("Swal.fire", "Error", "No se pudo actualizar: " + errorBody, "error");
-                }
-            }
-            catch (Exception ex)
-            {
-                await JS.InvokeVoidAsync("Swal.fire", "Error de conexión", ex.Message, "error");
-            }
+            res = await Http.PutAsJsonAsync($"https://redgm.site:9096/eventos/{EditItem.ApiId}", dtoEvento);
+        }
+        if (res.IsSuccessStatusCode)
+        {
+            ShowEditModal = false; 
+            await JS.InvokeVoidAsync("Swal.fire", "¡Éxito!", "Se actualizó correctamente.", "success");
+            await InitializeMasterCategoriesAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            var errorBody = await res.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("Swal.fire", "Error", "No se pudo guardar: " + errorBody, "error");
         }
     }
-    // --- MÉTODOS DE ELIMINACIÓN ---
+    catch (Exception ex)
+    {
+        await JS.InvokeVoidAsync("Swal.fire", "Error de conexión", ex.Message, "error");
+    }
+}
     private async Task OpenDeleteModal(SubtaskModel st)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar {st.Tipo}: '{st.Title}'?");
@@ -2642,12 +2646,10 @@
             Console.WriteLine($"Error al eliminar: {ex.Message}");
         }
     }
-    // --- GUARDAR CAMBIOS (EDITAR) ---
     private string searchText = "";
     private bool mostrarLista = false;
     private List<EmpleadoDTO> empleadosFiltrados = new();
     private List<EmpleadoDTO> todosLosEmpleados = new();
-    // --- LÓGICA DE PARTICIPANTES ---
     private void ActualizarDatosParticipantesExistentes()
     {
         if (EditItem?.Participantes != null && todosLosEmpleados.Any())
@@ -2673,10 +2675,7 @@
             mostrarLista = false;
             return;
         }
-
         var busqueda = searchText.Trim().ToLower();
-
-        // Ahora 'todosLosEmpleados' ya tiene datos, por lo que el filtrado funcionará
         empleadosFiltrados = todosLosEmpleados
             .Where(x => (x.Nombre.ToLower().Contains(busqueda) ||
                          x.ClavePersonal.ToString().Contains(busqueda)) &&
@@ -2700,7 +2699,7 @@
 
         searchText = "";
         mostrarLista = false;
-        StateHasChanged(); // Forzar refresco
+        StateHasChanged(); 
     }
     private void QuitarParticipante(EmpleadoDTO emp)
     {
