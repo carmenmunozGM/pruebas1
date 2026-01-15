@@ -106,7 +106,6 @@ namespace pruebas1.Servicios
             {
                 SetAgendaActual(loginResponse.Usuario.IdAgendasAsignadas[0]);
             }
-
             return loginResponse.Usuario;
         }
 
