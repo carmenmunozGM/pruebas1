@@ -23,15 +23,11 @@
 @inject CalendarioService CalendarioService
 @inject SalasEmService SalasService
 @inject ReglasRecurrenciaServices ReglasService
-
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-
 <br />
 <br />
 <br />
-
 <div class="agenda-container">
     <div class="top-bar-container">
         <div class="fecha-header">
@@ -90,14 +86,8 @@
             <ReusableModal OnSave="RefrescarTareas" />
         </div>
     }
-
-    @* 
-    <div class="modal-button-container">
-        <ReusableModal OnSave="RefrescarTareas" /> *@
-
     @if (EsDiaNoLaboral)
     {
-        <!-- 🔴 SOLO ALERTA, NADA DE BLOQUES -->
         <div class="dia-inhabil-container">
             <div class="dia-inhabil-card">
                 <div class="icono">⛔</div>
@@ -150,48 +140,16 @@
                 {
                     <div class="card-body block-body block-scroll @(tareasCat.IsCollapsed ? "collapsed" : "")">
                         <ul class="subtask-list">
-
-
                             @foreach (var st in tareasCat.Subtasks)
                             {
                                 <li class="subtask-item" @key="st.Id">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
-
-                                        @*   <input type="checkbox"
+                                        @if (st.Tipo == "Tarea" || st.EsEventoMio)
+                                                {
+                                                         <input type="checkbox"
                                                @bind="st.IsDone"
-                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
-                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone && !st.IsDone))" />
-
- *@
-                                        @* 
-                                        @if (st.Subtasks != null && st.Subtasks.Any())
-                                        {
-                                            <!-- TAREA PADRE -->
-                                            <input type="checkbox"
-                                                   checked="@st.IsDone"
-                                                   disabled />
-                                        }
-                                        else
-                                        {
-                                            <!-- TAREA NORMAL / EVENTO -->
-                                            <input type="checkbox"
-                                                   checked="@st.IsDone"
-                                                   @onchange="async e => await OnToggleItemAsync(st, e.Value)" />
-                                        } *@
-
-                                          <input type="checkbox"
-                                               @bind="st.IsDone"
-                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />  
-                                    @*     @if (st.Tipo != "Evento")
-                                        {
-                        <input type="checkbox"
-                               @bind="st.IsDone"
-                               @bind:after="() => st.Subtasks.Any()
-                                                                             ? ToggleParentSubtaskAsync(st)
-                                                                             : ToggleSubtaskAsync(st)" />
-                                                } *@
-
-
+                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" /> 
+                                                }
                                         <!-- Icono y tipo -->
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");"></span>
@@ -243,22 +201,12 @@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
-
-                                                @*   <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(st)">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                    
-                                               
-                                                <button class="icon-btn delete" title="Eliminar" @onclick="() => OpenDeleteModal(st)">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                                 *@
                                                 @if (st.Tipo == "Tarea" || st.EsEventoMio)
                                                 {
                                                     <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(st)">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button class="icon-btn delete" title="Eliminar" @onclick="() => OpenDeleteModal(st)">
+                                                    <button class="icon-btn delete" title="Eliminar" @onclick="() => EliminarSubtask(st)">
                                                         <i class="bi bi-trash3"></i>
                                                     </button>
                                                 }
@@ -319,9 +267,6 @@
                             @if (OrdenesParaMostrar != null && OrdenesParaMostrar.Any())
                             {
                                 <div class="columns-container block-scroll">
-
-
-
                                     <!-- 🔴 Columna 1: Vencidas -->
                                     <div class="column column-expired block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Vencido).OrderBy(o => o.FechaProgramada))
@@ -342,7 +287,6 @@
                                             </div>
                                         }
                                     </div>
-
                                     <!-- 🟡 Columna 2: Próximas -->
                                     <div class="column column-soon block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Proximo).OrderBy(o => o.FechaProgramada))
@@ -1303,8 +1247,6 @@
                             </div>
                             <div class="modern-field">
                                 <label><i class="bi bi-people"></i> Invitados / Participantes</label>
-
-                                @* Contenedor con posición relativa para que la lista se posicione respecto a este *@
                                 <div class="autocomplete-container" style="position: relative;">
 
                                     <div class="chips-container">
@@ -1328,7 +1270,6 @@
 
                                     @if (mostrarLista && empleadosFiltrados?.Count > 0)
                                     {
-                                        @* Estilo mejorado para flotar fuera del contenedor *@
                                         <ul class="autocomplete-list shadow-lg"
                                             style="position: absolute;
                                    top: 100%;
@@ -2589,14 +2530,25 @@
         await JS.InvokeVoidAsync("Swal.fire", "Error de conexión", ex.Message, "error");
     }
 }
-    private async Task OpenDeleteModal(SubtaskModel st)
+    private async Task EliminarSubtask(SubtaskModel st)
     {
-        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar {st.Tipo}: '{st.Title}'?");
+        var result = await JS.InvokeAsync<object>("Swal.fire", new
+        {
+            title = "¿Estás seguro?",
+            text = $"Vas a eliminar la {st.Tipo}: '{st.Title}'",
+            icon = "warning",
+            showCancelButton = true,
+            confirmButtonColor = "#d33",
+            cancelButtonColor = "#3085d6",
+            confirmButtonText = "Sí, eliminar",
+            cancelButtonText = "Cancelar"
+        });
+        bool confirmado = await JS.InvokeAsync<bool>("eval", "Swal.fire({ title: '¿Eliminar?', text: 'No podrás revertir esto', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sí, borrar' }).then((result) => result.isConfirmed)");
+
         if (confirmado)
         {
             try
             {
-               
                 string url = st.Tipo == "Tarea"
                     ? $"https://redgm.site:9096/tareas/eliminar/{st.ApiId}"
                     : $"https://redgm.site:9096/eventos/{st.ApiId}";
@@ -2605,45 +2557,21 @@
 
                 if (response.IsSuccessStatusCode)
                 {
+                    await JS.InvokeVoidAsync("Swal.fire", "¡Eliminado!", $"{st.Tipo} eliminada correctamente.", "success");
+
                     await InitializeMasterCategoriesAsync();
                     StateHasChanged();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar. Código: " + response.StatusCode);
+               
+                    await JS.InvokeVoidAsync("Swal.fire", "Error", "No se pudo eliminar. Código: " + response.StatusCode, "error");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", "Error de conexión: " + ex.Message);
+                await JS.InvokeVoidAsync("Swal.fire", "Error de conexión", ex.Message, "error");
             }
-        }
-    }
-
-    private async Task EjecutarEliminacion(SubtaskModel st)
-    {
-        try
-        {
-       
-            string endpoint = st.Tipo == "Tarea"
-                ? $"tareas/eliminar/{st.ApiId}"
-                : $"eventos/{st.ApiId}";
-
-            var response = await Http.DeleteAsync($"https://redgm.site:9096/{endpoint}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                await InitializeMasterCategoriesAsync(); 
-                StateHasChanged();
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "No se pudo eliminar el registro.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al eliminar: {ex.Message}");
         }
     }
     private string searchText = "";
