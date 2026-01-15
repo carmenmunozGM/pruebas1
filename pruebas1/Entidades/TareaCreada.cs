@@ -86,27 +86,10 @@ namespace pruebas1.Entidades
         public DateTime? FechaCompletado { get; set; }
 
     }
-
-
-    /* public class OrdenTrabajoModel
-     {
-         public int Id { get; set; }
-         public int IdOrdenReal { get; set; }         // 🔥 ID REAL API
-         public string NumeroOrden { get; set; }
-         public DateTime? FechaSolicitud { get; set; }
-         public DateTime FechaProgramada { get; set; }
-         public string Autor { get; set; }
-         public string Cliente { get; set; }
-         public string Objetivo { get; set; }
-         public string ObjetivoOtro { get; set; }
-         public OrdenStatus Status { get; set; }
-         public TipoOrden Tipo { get; set; }   // 🔥 NUEVO
-         public List<TareaOrdenModel> Tareas { get; set; } = new();
-     }*/
     public class OrdenTrabajoModel
     {
-        public int Id { get; set; }              // UI / trabajo
-        public int? IdOrdenTramite { get; set; }     // 🔥 ÓRDEN DE TRÁMITE
+        public int Id { get; set; }              
+        public int? IdOrdenTramite { get; set; }     
         public string NumeroOrden { get; set; }
         public DateTime? FechaSolicitud { get; set; }
         public DateTime FechaProgramada { get; set; }
@@ -119,8 +102,6 @@ namespace pruebas1.Entidades
 
         public List<TareaOrdenModel> Tareas { get; set; } = new();
     }
-
-
     public class TareaOrdenModel
     {
         public string Nombre { get; set; }
@@ -129,7 +110,6 @@ namespace pruebas1.Entidades
         public string Valor { get; set; }
         public string Observacion { get; set; }
     }
-
     public enum OrdenStatus
     {
         Hoy,
