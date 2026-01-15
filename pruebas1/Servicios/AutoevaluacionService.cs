@@ -32,7 +32,29 @@ namespace pruebas1.Servicios
         }
 
         // ------------------------------------------
-        // GET - Obtener Autoevaluación del empleado
+        // GET - Obtener Autoevaluación del empleado por mes y año
+        // ------------------------------------------
+        public async Task<List<AutoevaluacionDTO>> ObtenerAutoevaluacionMesAnio(int mes, int anio)
+        {
+            try
+            {
+                string url =
+                    $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/AutoevalacionMesAnio" +
+                    $"?mes={mes}&anio={anio}";
+
+                var result = await _http.GetFromJsonAsync<List<AutoevaluacionDTO>>(url);
+
+                return result ?? new List<AutoevaluacionDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AutoevaluacionService] ObtenerAutoevaluacion(mes/anio): {ex.Message}");
+                return new List<AutoevaluacionDTO>();
+            }
+        }
+
+        // ------------------------------------------
+        // GET - Obtener Autoevaluación del empleado general
         // ------------------------------------------
         public async Task<List<AutoevaluacionDTO>> ObtenerAutoevaluacion()
         {

@@ -58,6 +58,8 @@ namespace pruebas1.Components.DTOs
 
     public class GuardarAutoevaluacionEmpleadoDTO
     {
+        public int Mes { get; set; }
+        public int Anio { get; set; }
         public List<RegistroTareaDTO> Tareas { get; set; } = new();
     }
 }
