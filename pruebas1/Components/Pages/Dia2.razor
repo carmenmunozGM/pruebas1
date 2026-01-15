@@ -2055,6 +2055,8 @@
         }
       
         MasterCategories.Add(tareasCategory);
+
+        
         MasterCategories.Add(new CategoryModel
         {
             Name = "Órdenes de Trabajo",
@@ -2063,13 +2065,52 @@
             Subtasks = new()
             });
         MasterCategories.Add(autoevaluacionCategory);
-        MasterCategories.Add(new CategoryModel
+     
+        var servicioClienteCategory = new CategoryModel
         {
             Name = "Servicio a Cliente",
             ColorClass = "azul-morado",
             Icon = "🤝",
             Subtasks = new()
-            });
+        };
+
+        List<ServicioClienteAgendaDTO> servicioClienteAgenda = new();
+
+        try
+        {
+            servicioClienteAgenda =
+                await ServicioClienteService.ObtenerAgendaServicioCliente();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR Servicio Cliente: " + ex.Message);
+        }
+
+       foreach (var sc in servicioClienteAgenda)
+{
+    servicioClienteCategory.Subtasks.Add(new SubtaskModel
+    {
+        ApiId = sc.IdHorasProgramaTrabajo,
+        Title = $"{sc.NombreEmpresa} – {sc.NombreServicio} – {sc.NombreActividad}",
+
+        Descripcion = $"{sc.NombreServicio} – {sc.NombreEmpresa}",
+        Tipo = "ServicioCliente",
+        FechaInicio = sc.FechaAsignacion.Date,
+        FechaFin = sc.FechaConclusion.Date,
+        IsDone = sc.Completada ?? false,
+                FechaCompletado = sc.Completada == true
+            ? sc.FechaCompletada
+            : null,
+        Icon = "🤝",
+        Prioridad = 0,
+        Subtasks = new()
+    });
+}
+
+MasterCategories.Add(servicioClienteCategory);
+
+
+
 
         foreach (var c in MasterCategories)
             c.Icon = GetIcon(c.Name);

@@ -71,6 +71,25 @@ namespace pruebas1.Servicios
             ) ?? new();
         }
 
+        public async Task<bool> CambiarEstadoServicioClienteAsync(
+    int idHorasProgramaTrabajo,
+    bool completada)
+        {
+            var dto = new
+            {
+                idPT = idHorasProgramaTrabajo,
+                completada = completada
+            };
+
+            var response = await _http.PostAsJsonAsync(
+                "entidadAgenda/horas-reales",
+                dto
+            );
+
+            return response.IsSuccessStatusCode;
+        }
+
+
     }
 
 
