@@ -23,6 +23,7 @@
 @inject CalendarioService CalendarioService
 @inject SalasEmService SalasService
 @inject ReglasRecurrenciaServices ReglasService
+@inject ServicioClienteService ServicioClienteService
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <br />
@@ -473,24 +474,17 @@
             <br />
         }
 
+        // 1. Filtramos las actividades que corresponden al día seleccionado
         var autoevalDia = AutoevaluacionesDelDia
         .Where(a => a.Fecha.Date == FechaSeleccionada.Date)
         .ToList();
 
+        // 2. Determinamos si el bloque está vacío para el día seleccionado
+        // Si no hay ninguna actividad programada para esa fecha específica, mostramos el mensaje.
+        var mostrarMensajeRegistro = !autoevalDia.Any();
+
+        // 3. (Opcional) Saber si todas las del día están listas
         var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
-        int mesActual = DateTime.Today.Month;
-
-        int anioActual = DateTime.Today.Year;
-
-        var autoevalMesVacia =
-
-        !AutoevaluacionesDelDia.Any(a =>
-
-        a.Fecha.Month == mesActual &&
-
-        a.Fecha.Year == anioActual
-
-        );
 
 
         var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
@@ -532,10 +526,10 @@
                 {
                     <div class="card-body block-body block-scroll">
 
-                        @if (autoevalMesVacia)
+                        @if (mostrarMensajeRegistro)
                         {
                             <div class="empty-block-message">
-                                ¡Ya puedes registar tu autoevaluación de este mes!
+                                ¡No tienes tareas programadas para hoy! Registra tu autoevaluación mensual en el apartado "Autoevaluación"
                             </div>
                         }
                         else
@@ -1378,258 +1372,6 @@
 }
 
 
-<style>
-    :root {
-        --modal-bg: #ffffff;
-        --primary-color: #1E7E34;
-        --accent-evento: #8b5cf6;
-        --text-main: #1e293b;
-        --text-muted: #64748b;
-        --input-border: #e2e8f0;
-        --input-focus: #4f46e5;
-        --bg-soft: #f8fafc;
-        --primary-cancelar: #C42B1C;
-    }
-
-    /* Contenedor Principal con desenfoque de fondo */
-    .modern-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1050;
-        animation: fadeIn 0.2s ease-out;
-    }
-
-    .modern-modal-container {
-        background: var(--modal-bg);
-        width: 95%;
-        max-width: 850px;
-        max-height: 90vh;
-        border-radius: 20px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    /* Header Estilizado */
-    .modern-modal-header {
-        padding: 20px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
-    }
-
-    .header-tarea {
-        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
-    }
-
-    .header-evento {
-        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
-    }
-
-    .type-badge {
-        background: rgba(255,255,255,0.2);
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-
-    .modal-title {
-        margin-top: 5px;
-        font-weight: 700;
-        font-size: 1.25rem;
-    }
-
-    .modern-close-btn {
-        background: rgba(255,255,255,0.1);
-        border: none;
-        color: white;
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-
-        .modern-close-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: rotate(90deg);
-        }
-
-    /* Cuerpo y Grid */
-    .modern-modal-content {
-        padding: 30px;
-        overflow-y: auto;
-        background: var(--bg-soft);
-    }
-
-    .modern-form-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 30px;
-    }
-
-    @@media (max-width: 768px) {
-        .modern-form-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Campos de Formulario */
-    .modern-field {
-        margin-bottom: 20px;
-    }
-
-        .modern-field label {
-            display: block;
-            font-weight: 600;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-        }
-
-    .modern-input {
-        width: 100%;
-        padding: 10px 14px;
-        border-radius: 10px;
-        border: 1px solid var(--input-border);
-        background: white;
-        font-size: 0.95rem;
-        transition: all 0.2s;
-    }
-
-        .modern-input:focus {
-            outline: none;
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-    /* Grupos de entrada (Tags y Subtareas) */
-    .modern-input-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    .add-inner-btn {
-        background: #FFECEC;
-        color: black;
-        border: none;
-        border-radius: 10px;
-        padding: 0 15px;
-        cursor: pointer;
-    }
-
-    /* Tags y Subtareas */
-    .modern-tag-cloud {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-    }
-
-    .modern-tag {
-        background: #e2e8f0;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-        .modern-tag i {
-            cursor: pointer;
-            color: #ef4444;
-        }
-
-    .modern-subtask-list {
-        margin-top: 12px;
-        background: white;
-        border-radius: 12px;
-        border: 1px solid var(--input-border);
-    }
-
-    .modern-subtask-item {
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-        .modern-subtask-item:last-child {
-            border-bottom: none;
-        }
-
-    /* Footer */
-    .modern-modal-footer {
-        padding: 20px 30px;
-        background: white;
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        border-top: 1px solid #f1f5f9;
-    }
-
-    .m-btn {
-        padding: 10px 24px;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-        border: none;
-    }
-
-    .btn-ghost {
-        background: var(--primary-cancelar);
-        color: white;
-        box-shadow: 0 4px 6px -1px rgba(255, 77, 77);
-    }
-
-    .btn-basura {
-        background: #ffff;
-    }
-
-    .btn-primary {
-        background: var(--primary-color);
-        color: white;
-        box-shadow: 0 4px 6px -1px rgba(19, 83, 48);
-    }
-
-
-    .modern-row {
-        display: flex;
-        gap: 15px;
-    }
-
-        .modern-row .modern-field {
-            flex: 1;
-        }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
-
-
 @code {
 
     // ---- FECHAS Y CALENDARIO ----
@@ -1896,32 +1638,22 @@
 
                
                 Ubicacion = e.idSala.HasValue
-&& e.idSala.Value > 0
-&& salasLookup.ContainsKey(e.idSala.Value)
-    ? salasLookup[e.idSala.Value]
-    : e.ubicacion,
-
-
+                && e.idSala.Value > 0
+                && salasLookup.ContainsKey(e.idSala.Value)
+                    ? salasLookup[e.idSala.Value]
+                    : e.ubicacion,
                 Prioridad = e.idPrioridad,
-
-             
                 EsRecurrente = e.esRecurrente,
-
                 ReglaRecurrencia = e.esRecurrente
-        && int.TryParse(e.reglaRecurrencia, out int freqId)
-        && frecuenciaLookup.ContainsKey(freqId)
-            ? frecuenciaLookup[freqId]
+                    && int.TryParse(e.reglaRecurrencia, out int freqId)
+                    && frecuenciaLookup.ContainsKey(freqId)
+                        ? frecuenciaLookup[freqId]
             : "No recurrente",
-     
                 CreadorId = e.creadorId,
                 NombreCreador = e.nombreCreador,
-
-          
                 Participantes = e.participantes?
               .Select(p => p.nombreEmpleado)
               .ToList() ?? new(),
-
-           
                 EsEventoMio = esMio,
                 EsInvitado = soyInvitado
             };
@@ -2329,7 +2061,7 @@
             ColorClass = "naranja-melocoton",
             Icon = "🔧",
             Subtasks = new()
-        });
+            });
         MasterCategories.Add(autoevaluacionCategory);
         MasterCategories.Add(new CategoryModel
         {
@@ -2337,7 +2069,7 @@
             ColorClass = "azul-morado",
             Icon = "🤝",
             Subtasks = new()
-        });
+            });
 
         foreach (var c in MasterCategories)
             c.Icon = GetIcon(c.Name);
@@ -2677,46 +2409,43 @@
         }
     }
    
-    //------TERMINAAAAAA MODAAL EDITAR
-  
-    private async Task CargarTareasPorFecha()
-    {
-        var fechaActual = FechaSeleccionada.Date;
+  private async Task CargarTareasPorFecha()
+{
+    var fechaActual = FechaSeleccionada.Date;
 
-        Categories = MasterCategories.Select(c =>
+    Categories = MasterCategories.Select(c =>
+    {
+        var subtasksFiltradas = c.Subtasks.Where(st =>
         {
-            var subtasksFiltradas = c.Subtasks.Where(st =>
+            if (st.Tipo == "Evento")
             {
-                if (st.Tipo == "Evento")
-                {
-                    return st.FechaInicio.HasValue
-                        && st.FechaInicio.Value.Date == fechaActual;
-                }
-                if (st.IsDone && st.FechaCompletado.HasValue)
-                {
-              
-                    return st.FechaCompletado.Value.Date == fechaActual;
-                }
+                return st.FechaInicio.HasValue
+                    && st.FechaInicio.Value.Date == fechaActual;
+            }
+            if (st.IsDone && st.FechaCompletado.HasValue)
+            {
+                return st.FechaCompletado.Value.Date == fechaActual;
+            }
 
                 if (!st.FechaInicio.HasValue) return false;
 
                 var inicio = st.FechaInicio.Value.Date;
 
                 return fechaActual >= inicio;
-            }).ToList();
-
-            return new CategoryModel
-            {
-                Name = c.Name,
-                ColorClass = c.ColorClass,
-                Icon = c.Icon,
-                IsCollapsed = c.IsCollapsed,
-                Subtasks = subtasksFiltradas
-            };
         }).ToList();
 
-        StateHasChanged();
-    }
+        return new CategoryModel
+        {
+            Name = c.Name,
+            ColorClass = c.ColorClass,
+            Icon = c.Icon,
+            IsCollapsed = c.IsCollapsed,
+            Subtasks = subtasksFiltradas
+        };
+    }).ToList();
+
+    StateHasChanged();
+}
 
 
     private SubtaskModel CloneSubtask(SubtaskModel st)
@@ -3058,3 +2787,254 @@
     }
 
 }
+
+<style>
+    :root {
+        --modal-bg: #ffffff;
+        --primary-color: #1E7E34;
+        --accent-evento: #8b5cf6;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --input-border: #e2e8f0;
+        --input-focus: #4f46e5;
+        --bg-soft: #f8fafc;
+        --primary-cancelar: #C42B1C;
+    }
+
+    /* Contenedor Principal con desenfoque de fondo */
+    .modern-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .modern-modal-container {
+        background: var(--modal-bg);
+        width: 95%;
+        max-width: 850px;
+        max-height: 90vh;
+        border-radius: 20px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Header Estilizado */
+    .modern-modal-header {
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+    }
+
+    .header-tarea {
+        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
+    }
+
+    .header-evento {
+        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
+    }
+
+    .type-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .modal-title {
+        margin-top: 5px;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    .modern-close-btn {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .modern-close-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+    /* Cuerpo y Grid */
+    .modern-modal-content {
+        padding: 30px;
+        overflow-y: auto;
+        background: var(--bg-soft);
+    }
+
+    .modern-form-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 30px;
+    }
+
+    @@media (max-width: 768px) {
+        .modern-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Campos de Formulario */
+    .modern-field {
+        margin-bottom: 20px;
+    }
+
+        .modern-field label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+    .modern-input {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--input-border);
+        background: white;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+    /* Grupos de entrada (Tags y Subtareas) */
+    .modern-input-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .add-inner-btn {
+        background: #FFECEC;
+        color: black;
+        border: none;
+        border-radius: 10px;
+        padding: 0 15px;
+        cursor: pointer;
+    }
+
+    /* Tags y Subtareas */
+    .modern-tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .modern-tag {
+        background: #e2e8f0;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .modern-tag i {
+            cursor: pointer;
+            color: #ef4444;
+        }
+
+    .modern-subtask-list {
+        margin-top: 12px;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--input-border);
+    }
+
+    .modern-subtask-item {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .modern-subtask-item:last-child {
+            border-bottom: none;
+        }
+
+    /* Footer */
+    .modern-modal-footer {
+        padding: 20px 30px;
+        background: white;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .m-btn {
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        border: none;
+    }
+
+    .btn-ghost {
+        background: var(--primary-cancelar);
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(255, 77, 77);
+    }
+
+    .btn-basura {
+        background: #ffff;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(19, 83, 48);
+    }
+
+
+    .modern-row {
+        display: flex;
+        gap: 15px;
+    }
+
+        .modern-row .modern-field {
+            flex: 1;
+        }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
