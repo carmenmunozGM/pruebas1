@@ -11,8 +11,6 @@
 @inject OrdenTramiteService OrdenTramiteService
 @inject CalendarioService CalendarioService
 @inject ServicioClienteService ServicioClienteService
-
-
 <br />
 <br />
 <div class="agenda-container">
@@ -82,7 +80,11 @@
                                                                         .OfType<ServicioClienteAgendaDTO>()
                                                                         .Count(x => x.Completada != true)
 
+                                                                        : (block.Title == "Tareas" || block.Title == "Tareas Operativas")
+                                                                        ? (block.SubTasks.OfType<TaskItem>().Count(t => !t.Completada) +
+                                                                        block.SubTasks.OfType<EventItem>().Count(e => !e.Completada))
                                                                         : block.SubTasks.Count
+
                                                                         )
                                     </span>
 
@@ -112,215 +114,237 @@
             </div>
 
             <div class="modal-body modal-scrol">
+
+                @* ================= AUTOEVALUACIÓN ================= *@
                 @if (SelectedBlock.Title == "Autoevaluación")
                 {
-                    <ul class="collapsible-list">
-                        @foreach (var task in SelectedBlock.SubTasks.OfType<AutoevaluacionItem>())
-                        {
-                            <li class="task-item @(task.Realizado ? "realizado" : "")">
-                                @task.Nombre
-                            </li>
-                        }
-                    </ul>
+                    @if (!SelectedBlock.SubTasks.Any())
+                    {
+                        <div class="no-tasks-msg">✅ No tienes autoevaluaciones pendientes para este día.</div>
+                    }
+                    else
+                    {
+                        <ul class="collapsible-list">
+                            @foreach (var task in SelectedBlock.SubTasks.OfType<AutoevaluacionItem>())
+                            {
+                                <li class="task-item @(task.Realizado ? "realizado" : "")">
+                                    @task.Nombre
+                                </li>
+                            }
+                        </ul>
+                    }
                 }
+
+                @* ================= ÓRDENES DE TRABAJO ================= *@
                 else if (SelectedBlock.Title == "Órdenes de Trabajo")
                 {
-                    <!-- ================= ORDENES DE TRABAJO ================= -->
-                    @foreach (var ot in SelectedBlock.SubTasks.OfType<OrdenTrabajoDTO>())
+                    var ots = SelectedBlock.SubTasks.OfType<OrdenTrabajoDTO>().ToList();
+                    var tramites = SelectedBlock.SubTasks.OfType<OrdenTramiteDTO>().ToList();
+
+                    @if (!ots.Any() && !tramites.Any())
                     {
-                        <div class="ot-card">
-
-                            <!-- HEADER -->
-                            <div class="collapsible-header"
-                                 @onclick="() => ToggleOrdenTrabajo(ot.id)">
-                                <span>
-                                    🧾 <b>@ot.strClave</b> — @ot.nombreCliente
-                                </span>
-                                <span class="toggle-icon">
-                                    @(OrdenesTrabajoExpandidas.Contains(ot.id) ? "▲" : "▼")
-                                </span>
-                            </div>
-
-                            @if (OrdenesTrabajoExpandidas.Contains(ot.id))
-                            {
-                                <div class="collapsible-content">
-                                    <p><b>Autor:</b> @ot.nombreCompleto</p>
-                                    <p><b>Fecha solicitud:</b> @ot.dteFechaSolicitud.ToShortDateString()</p>
-                                    <p><b>Objetivo:</b> @ot.strValor</p>
-
-                                    @if (!string.IsNullOrWhiteSpace(ot.strObjetivoOtro))
-                                    {
-                                        <p><b>Objetivo otros:</b> @ot.strObjetivoOtro</p>
-                                    }
-
-                                    <p><b>Conclusión programada:</b> @ot.fechaFinal.ToShortDateString()</p>
-
-                                    <table class="subtasks-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Tarea</th>
-                                                <th>Descripción</th>
-                                                <th>Avance</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var t in ot.tareas)
-                                            {
-                                                <tr>
-                                                    <td>@t.strNombreTarea</td>
-                                                    <td>@t.strDescripcionAutor</td>
-                                                    <td>@t.avance</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                        </div>
+                        <div class="no-tasks-msg">📋 No se encontraron órdenes de trabajo ni trámites para hoy.</div>
                     }
-
-                    <!-- ================= ORDENES DE TRAMITE ================= -->
-                    @foreach (var tr in SelectedBlock.SubTasks.OfType<OrdenTramiteDTO>())
+                    else
                     {
-                        <div class="tramite-card">
-
-                            <!-- HEADER -->
-                            <div class="collapsible-header"
-                                 @onclick="() => ToggleOrdenTramite(tr.idOrden)">
-                                <span>
-                                    📁 <b>@tr.numeroOrden</b> — @tr.nombreGlobal
-                                </span>
-                                <span class="toggle-icon">
-                                    @(OrdenesTramiteExpandidas.Contains(tr.idOrden) ? "▲" : "▼")
-                                </span>
-                            </div>
-
-                            @if (OrdenesTramiteExpandidas.Contains(tr.idOrden))
-                            {
-                                <div class="collapsible-content">
-                                    <p><b>Solicitante:</b> @tr.solicitanteInterno</p>
-                                    <p><b>Cliente:</b> @tr.cliente</p>
-                                    <p><b>Fecha solicitud:</b> @tr.fechaSolicitud</p>
-                                    <p><b>Conclusión:</b> @tr.fechaConclusionTramite</p>
-
-                                    <table class="subtasks-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Clave</th>
-                                                <th>Trámite</th>
-                                                <th>Encargado</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var ti in tr.tramitesIndividuales)
-                                            {
-                                                <tr>
-                                                    <td>@ti.clave</td>
-                                                    <td>@ti.tramiteIndividual</td>
-                                                    <td>@ti.personalEncargado</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
+                        @* --- SECCIÓN OT --- *@
+                        @foreach (var ot in ots)
+                        {
+                            <div class="ot-card">
+                                <div class="collapsible-header" @onclick="() => ToggleOrdenTrabajo(ot.id)">
+                                    <span>🧾 <b>@ot.strClave</b> — @ot.nombreCliente</span>
+                                    <span class="toggle-icon">@(OrdenesTrabajoExpandidas.Contains(ot.id) ? "▲" : "▼")</span>
                                 </div>
-                            }
-                        </div>
+
+                                @if (OrdenesTrabajoExpandidas.Contains(ot.id))
+                                {
+                                    <div class="collapsible-content">
+                                        <p><b>Autor:</b> @ot.nombreCompleto</p>
+                                        <p><b>Fecha solicitud:</b> @ot.dteFechaSolicitud.ToShortDateString()</p>
+                                        <p><b>Objetivo:</b> @ot.strValor</p>
+                                        @if (!string.IsNullOrWhiteSpace(ot.strObjetivoOtro))
+                                        {
+                                            <p><b>Objetivo otros:</b> @ot.strObjetivoOtro</p>
+                                        }
+                                        <p><b>Conclusión programada:</b> @ot.fechaFinal.ToShortDateString()</p>
+
+                                        <table class="subtasks-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tarea</th>
+                                                    <th>Descripción</th>
+                                                    <th>Avance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var t in ot.tareas)
+                                                {
+                                                    <tr>
+                                                        <td>@t.strNombreTarea</td>
+                                                        <td>@t.strDescripcionAutor</td>
+                                                        <td>@t.avance%</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @* --- SECCIÓN TRÁMITES --- *@
+                        @foreach (var tr in tramites)
+                        {
+                            <div class="tramite-card">
+                                <div class="collapsible-header" @onclick="() => ToggleOrdenTramite(tr.idOrden)">
+                                    <span>📁 <b>@tr.numeroOrden</b> — @tr.nombreGlobal</span>
+                                    <span class="toggle-icon">@(OrdenesTramiteExpandidas.Contains(tr.idOrden) ? "▲" : "▼")</span>
+                                </div>
+
+                                @if (OrdenesTramiteExpandidas.Contains(tr.idOrden))
+                                {
+                                    <div class="collapsible-content">
+                                        <p><b>Solicitante:</b> @tr.solicitanteInterno</p>
+                                        <p><b>Cliente:</b> @tr.cliente</p>
+                                        <p><b>Fecha solicitud:</b> @tr.fechaSolicitud</p>
+                                        <p><b>Conclusión:</b> @tr.fechaConclusionTramite</p>
+
+                                        <table class="subtasks-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Clave</th>
+                                                    <th>Trámite</th>
+                                                    <th>Encargado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var ti in tr.tramitesIndividuales)
+                                                {
+                                                    <tr>
+                                                        <td>@ti.clave</td>
+                                                        <td>@ti.tramiteIndividual</td>
+                                                        <td>@ti.personalEncargado</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        }
                     }
                 }
 
+                @* ================= SERVICIO A CLIENTE ================= *@
                 else if (SelectedBlock.Title == "Servicio a Cliente")
                 {
-                        var items = SelectedBlock.SubTasks
-                            .OfType<ServicioClienteAgendaDTO>()
-                            .GroupBy(x => x.NombreEmpresa);
+                    var items = SelectedBlock.SubTasks.OfType<ServicioClienteAgendaDTO>().GroupBy(x => x.NombreEmpresa);
 
-                    @foreach (var empresa in items)
+                    @if (!items.Any())
                     {
-                        <h3 class="empresa-title">@empresa.Key</h3>
-
-                        @foreach (var servicio in empresa.GroupBy(x => x.NombreServicio))
-                        {
-                            <!-- SERVICIO FUERA DE LA TABLA -->
-                            <h4 class="service-subtitle">@servicio.Key</h4>
-
-                            <table class="subtasks-table">
-                                <thead>
-                                    <tr>
-                                        <th>Actividad</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var act in servicio)
-                                    {
-                                        <tr class="@(act.Completada == true ? "actividad-completada" : "")">
-                                            <td>@act.NombreActividad</td>
-                                        </tr>
-                                    }
-
-                                </tbody>
-                            </table>
-                        }
+                        <div class="no-tasks-msg">🏢 Este día no tienes servicios programados.</div>
                     }
-                    
-                }
-                else if (SelectedBlock.Title == "Tareas" || SelectedBlock.Title == "Tareas Operativas")
-                {
-                    <ul class="collapsible-list">
-                        @foreach (var item in SelectedBlock.SubTasks)
+                    else
+                    {
+                        @foreach (var empresa in items)
                         {
-                            if (item is TaskItem task)
-                            {
-                                <li>
-                                    <div class="collapsible-header" @onclick="() => ToggleTask(task)">
-                                        📝 @task.Nombre
-                                        <span class="toggle-icon">@((ExpandedTasks.Contains(task) ? "▲" : "▼"))</span>
-                                    </div>
-
-                                    @if (ExpandedTasks.Contains(task))
+                            <div class="ot-card">
+                                <div class="collapsible-header empresa-header">
+                                    <span>🏢 <b>@empresa.Key</b></span>
+                                </div>
+                                <div class="collapsible-content" style="display: block;">
+                                    @foreach (var servicio in empresa.GroupBy(x => x.NombreServicio))
                                     {
-                                        <div class="task-details">
-                                            <p><strong>Descripción:</strong> @task.Descripcion</p>
-                                            <p><strong>Fecha Inicio:</strong> @task.FechaInicio.ToShortDateString()</p>
-                                            <p><strong>Fecha Fin:</strong> @task.FechaFin.ToShortDateString()</p>
-                                            <p><strong>Prioridad:</strong> @task.Prioridad</p>
+                                        var servicioId = $"{empresa.Key}_{servicio.Key}";
+                                        <div class="service-card">
+                                            <div class="collapsible-header service-header" @onclick="() => ToggleServicio(servicioId)">
+                                                <span>▪️ @servicio.Key</span>
+                                                <span class="toggle-icon">@(ServiciosExpandidos.Contains(servicioId) ? "▲" : "▼")</span>
+                                            </div>
 
-                                            @if (task.Subtareas.Any())
+                                            @if (ServiciosExpandidos.Contains(servicioId))
                                             {
-                                                <p><strong>Subtareas:</strong></p>
-                                                <ul>
-                                                    @foreach (var sub in task.Subtareas)
-                                                    {
-                                                        <li>@sub</li>
-                                                    }
-                                                </ul>
+                                                <div class="collapsible-content">
+                                                    <ul class="actividad-list">
+                                                        @foreach (var act in servicio)
+                                                        {
+                                                            <li class="actividad-item @(act.Completada == true ? "actividad-completada" : "")">
+                                                                ↳ @act.NombreActividad
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
                                             }
                                         </div>
                                     }
-                                </li>
-                            }
-                            else if (item is EventItem ev)
-                            {
-                                <li>
-                                    <div class="collapsible-header" @onclick="() => ToggleEvent(ev)">
-                                        📅 @ev.Nombre
-                                        <span class="toggle-icon">@((ExpandedEvents.Contains(ev) ? "▲" : "▼"))</span>
-                                    </div>
-
-                                    @if (ExpandedEvents.Contains(ev))
-                                    {
-                                        <div class="task-details">
-                                            <p><strong>Descripción:</strong> @ev.Descripcion</p>
-                                            <p><strong>Fecha Inicio:</strong> @ev.FechaInicio.ToShortDateString()</p>
-                                            <p><strong>Fecha Fin:</strong> @ev.FechaFin.ToShortDateString()</p>
-                                            <p><strong>Horario:</strong> @ev.HoraInicio - @ev.HoraFin</p>
-                                        </div>
-                                    }
-                                </li>
-                            }
-
+                                </div>
+                            </div>
                         }
+                    }
+                }
 
-                    </ul>
+                @* ================= TAREAS Y EVENTOS ================= *@
+                else if (SelectedBlock.Title == "Tareas" || SelectedBlock.Title == "Tareas Operativas")
+                {
+                    @if (!SelectedBlock.SubTasks.Any())
+                    {
+                        <div class="no-tasks-msg">📑 No tienes tareas ni eventos agendados para este día.</div>
+                    }
+                    else
+                    {
+                        <ul class="collapsible-list">
+                            @foreach (var item in SelectedBlock.SubTasks)
+                            {
+                                if (item is TaskItem task)
+                                {
+                                    <li class="ot-card">
+                                        <div class="collapsible-header @(task.Completada ? "actividad-completada" : "")" @onclick="() => ToggleTask(task)">
+                                            <span>📑 <b>@task.Nombre</b></span>
+                                            <span class="toggle-icon">@(ExpandedTasks.Contains(task) ? "▲" : "▼")</span>
+                                        </div>
+                                        @if (ExpandedTasks.Contains(task))
+                                        {
+                                            <div class="collapsible-content task-details">
+                                                <p><strong>Descripción:</strong> @task.Descripcion</p>
+                                                <p><strong>Fecha Inicio:</strong> @task.FechaInicio.ToShortDateString()</p>
+                                                <p><strong>Fecha Fin:</strong> @task.FechaFin.ToShortDateString()</p>
+                                                <p><strong>Prioridad:</strong> @task.Prioridad</p>
+
+                                                @if (task.Subtareas != null && task.Subtareas.Any())
+                                                {
+                                                    <p><strong>Subtareas:</strong></p>
+                                                    <ul class="actividad-list">
+                                                        @foreach (var sub in task.Subtareas)
+                                                        {
+                                                            <li class="actividad-item">▪ @sub</li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </div>
+                                        }
+                                    </li>
+                                }
+                                else if (item is EventItem ev)
+                                {
+                                    <li class="ot-card">
+                                        <div class="collapsible-header @(ev.Completada ? "actividad-completada" : "")" @onclick="() => ToggleEvent(ev)">
+                                            <span>📅 <b>@ev.Nombre</b></span>
+                                            <span class="toggle-icon">@(ExpandedEvents.Contains(ev) ? "▲" : "▼")</span>
+                                        </div>
+                                        @if (ExpandedEvents.Contains(ev))
+                                        {
+                                            <div class="collapsible-content task-details">
+                                                <p><strong>Descripción:</strong> @ev.Descripcion</p>
+                                                <p><strong>Fecha Inicio:</strong> @ev.FechaInicio.ToShortDateString()</p>
+                                                <p><strong>Fecha Fin:</strong> @ev.FechaFin.ToShortDateString()</p>
+                                                <p><strong>Horario:</strong> @ev.HoraInicio - @ev.HoraFin</p>
+                                            </div>
+                                        }
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    }
                 }
             </div>
 
@@ -330,6 +354,8 @@
         </div>
     </div>
 }
+
+
 
 @code {
     List<pruebas1.Entidades.TareaApi> TareasApi = new();
@@ -348,6 +374,7 @@
         public DateTime FechaFin { get; set; }
         public string Prioridad { get; set; }
         public List<string> Subtareas { get; set; } = new();
+        public bool Completada { get; set; }
     }
     class EventItem
     {
@@ -357,6 +384,14 @@
         public DateTime FechaFin { get; set; }
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
+        public bool Completada { get; set; }
+    }
+    private HashSet<string> ServiciosExpandidos = new();
+
+    private void ToggleServicio(string servicio)
+    {
+        if (!ServiciosExpandidos.Add(servicio))
+            ServiciosExpandidos.Remove(servicio);
     }
 
     HashSet<int> OrdenesTrabajoExpandidas = new();
@@ -438,7 +473,7 @@
         }
         catch
         {
-            // opcional: mostrar mensaje o log
+            
         }
     }
 
@@ -526,7 +561,8 @@
         FechaInicio = t.fechaInicio,
         FechaFin = t.fechaFin,
         Prioridad = t.prioridadTitulo ?? "Sin prioridad",
-        Subtareas = t.subTareas.Select(s => s.titulo).ToList()
+        Subtareas = t.subTareas.Select(s => s.titulo).ToList(),
+        Completada = t.completada
     })
     .Cast<object>();
 
@@ -697,7 +733,7 @@
     string GetIcon(string title) => title switch
     {
         "Órdenes de Trabajo" => "🧾",
-        "Tareas" => "🗂️",
+        "Tareas" => "🗃️",
         "Autoevaluación" => "⭐",
         "Servicio a Cliente" => "🏢",
         _ => "📋"
@@ -706,418 +742,3 @@
 
 
 
-<style>
-    body {
-        margin: 0;
-        overflow-y: auto;
-    }
-    /* Contenedor del calendario */
-    .agenda-container {
-        min-height: 100vh;
-        font-family: Inter, system-ui, sans-serif;
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        width: 100vw;
-        height: auto;
-        max-width: 100%;
-        max-height: 100%;
-        margin: 0;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        overflow: visible; /* IMPORTANTE */
-    }
-
-    .day-card.no-laboral {
-        background: #ffecec;
-        border: 1px solid #ff4d4d;
-    }
-
-        .day-card.no-laboral .day-header {
-            color: #a80000;
-            font-weight: bold;
-        }
-
-    .no-laboral {
-        font-size: 0.95rem;
-        font-weight: 500;
-        color: #7a2c2;
-        display: block;
-        margin-top: 6px;
-      
-        
-    }
-
-
-    .no-laboral-icon {
-        font-size: 0.8rem;
-        margin-left: 4px;
-        opacity: 0.8;
-    }
-
-    /* Encabezado */
-    .agenda-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 0 10px;
-    }
-
-        .agenda-header h1 {
-            font-size: 32px;
-            margin: 0;
-            color: #000;
-            font-weight: 700;
-        }
-
-    /* Controles de botones */
-    .header-controls {
-        display: flex;
-        gap: 15px;
-    }
-
-    .agenda-header > .header-controls:first-child {
-        min-width: 150px;
-        justify-content: flex-start;
-    }
-
-    .agenda-header > .header-controls:last-child {
-        min-width: 150px;
-        justify-content: flex-end;
-    }
-
-    /* Botones */
-    .btn {
-        background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 140px;
-        justify-content: center;
-    }
-
-        .btn.primary {
-            background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
-        }
-
-        .btn:hover {
-            background: linear-gradient(90deg, #155d2b, #062b35);
-            color: white;
-            transform: translateY(-1px);
-        }
-
-    .collapsible-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        background: #f5f7fa;
-        padding: 10px;
-        border-radius: 6px;
-        font-weight: 600;
-    }
-
-        .collapsible-header:hover {
-            background: #e9edf3;
-        }
-
-    .toggle-icon {
-        font-size: 13px;
-    }
-
-    .collapsible-content {
-        padding: 10px;
-        margin-top: 6px;
-        border-left: 3px solid #4f46e5;
-    }
-
-    .ot-card, .tramite-card {
-        margin-bottom: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-    }
-
-    .arrow {
-        font-weight: 700;
-    }
-
-    /* Grid de días */
-    .days-grid-mensual {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        flex-grow: 1;
-    }
-
-    .day-name-header {
-        font-weight: 700;
-        text-align: center;
-        padding: 10px 0;
-        color: #6B7280;
-        border-bottom: 2px solid #F3F4F6;
-    }
-
-    .day-card {
-        background: #ffffff;
-        border: 1px solid #E5E7EB;
-        border-radius: 10px;
-        padding: 10px;
-        min-height: 150px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        transition: box-shadow 0.2s;
-    }
-
-        .day-card:hover {
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        }
-
-        .day-card.empty {
-            background-color: transparent;
-            border: none;
-            box-shadow: none;
-        }
-
-        .day-card.sunday {
-            background: #F9FAFB;
-            color: #9CA3AF;
-        }
-
-    .day-header {
-        display: flex;
-        justify-content: flex-start;
-        font-size: 18px;
-        font-weight: 700;
-        color: #333;
-    }
-
-    .day-card.sunday .day-name {
-        color: #9CA3AF;
-    }
-
-    /* Bloques de tareas */
-    .blocks-list {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        list-style: none;
-        padding: 0;
-    }
-
-    .list-item {
-        border-radius: 6px;
-        padding: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        cursor: pointer;
-        overflow: hidden;
-        color: #333;
-        font-size: 14px;
-        line-height: 1.3;
-    }
-
-        .list-item:hover {
-            filter: brightness(0.97);
-            transform: translateY(-1px);
-            transition: all 0.15s ease-in-out;
-        }
-
-    .list-title {
-        font-weight: 600;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .task-count {
-        background-color: rgba(255, 255, 255, 0.5);
-        color: #333;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        min-width: 15px;
-        text-align: center;
-    }
-
-    .no-laboral {
-        font-weight: 600;
-        font-size: 14px;
-        color: #EF4444;
-        text-align: center;
-        margin-top: 10px;
-    }
-
-    /* ================= MODAL OVERLAY ================= */
-    .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.65);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        backdrop-filter: blur(4px);
-    }
-
-    /* ================= MODAL BASE ================= */
-    .modal-content.modern-modal {
-        background: #ffffff;
-        border-radius: 22px;
-        width: 95%;
-        max-width: 1100px; /* MÁS ANCHO */
-        height: 85vh; /* MÁS ALTO */
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 25px 60px rgba(0,0,0,0.35);
-        animation: modalFade 0.25s ease-out;
-        overflow: hidden;
-    }
-
-    /* ================= HEADER ================= */
-    .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
-        padding: 22px;
-        background: linear-gradient(90deg, #1e7a3a, #0b3c4a);
-        color: white;
-        font-size: 20px;
-        font-weight: 700;
-    }
-
-    .modal-icon {
-        font-size: 26px;
-    }
-
-    /* ================= BODY ================= */
-    .modal-body.modal-scroll {
-        flex: 1;
-        padding: 22px 26px;
-        overflow-y: auto;
-        background: #f8fafc;
-    }
-
-    /* Scroll elegante */
-    .modal-body::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .modal-body::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-
-    /* ================= FOOTER ================= */
-    .modal-footer {
-        padding: 16px;
-        background: #ffffff;
-        border-top: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: center;
-    }
-
-    /* ================= CARDS ================= */
-    .ot-card,
-    .tramite-card {
-        background: white;
-        border-radius: 14px;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 16px;
-        overflow: hidden;
-    }
-
-    /* ================= COLLAPSIBLE HEADER ================= */
-    .collapsible-header {
-        background: #f1f5f9;
-        padding: 14px 18px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-        .collapsible-header:hover {
-            background: #e2e8f0;
-        }
-
-    .toggle-icon {
-        font-size: 14px;
-    }
-
-    /* ================= COLLAPSIBLE CONTENT ================= */
-    .collapsible-content {
-        padding: 18px;
-        background: #ffffff;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    /* ================= TASK DETAILS ================= */
-    .task-details {
-        background: #f9fafb;
-        padding: 16px;
-        border-radius: 12px;
-        margin-top: 12px;
-    }
-
-    /* ================= TABLES ================= */
-    .subtasks-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 14px;
-        font-size: 14px;
-    }
-
-        .subtasks-table th {
-            background: #f3f4f6;
-            padding: 10px;
-            font-weight: 600;
-        }
-
-        .subtasks-table td {
-            padding: 10px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .subtasks-table tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-    /* ================= LIST ITEMS ================= */
-    .collapsible-list li {
-        margin-bottom: 8px;
-    }
-
-    .task-item.realizado {
-        text-decoration: line-through;
-        opacity: 0.6;
-    }
-
-    /* ================= ANIMATION ================= */
-    @@keyframes modalFade {
-        from {
-            opacity: 0;
-            transform: scale(0.96);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    .actividad-completada td {
-        text-decoration: line-through;
-        opacity: 0.6;
-    }
-</style>

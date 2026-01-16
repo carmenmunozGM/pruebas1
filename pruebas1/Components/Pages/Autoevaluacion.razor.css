@@ -1,0 +1,459 @@
+﻿
+/* === Paleta de Colores Nueva (Azul y Amarillo/Naranja) === */
+:root {
+    --color-secondary: #C6E9F0; /* Amarillo/Dorado (Para Acentos y Activo) */
+    --color-success: #28a745; /* Verde para éxito (Guardar) */
+    --color-danger: #dc3545; /* Rojo para cancelar */
+    --color-background-light: #f8f9fa; /* Gris muy claro para el cuerpo */
+    --color-border: #ced4da; /* Borde suave */
+    --color-text-dark: #343a40; /* Texto oscuro */
+    --color-text-light: #6c757d; /* Texto secundario */
+}
+
+/* === Botón Flotante === */
+.action-button-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 2%;
+}
+
+.action-button-floating {
+    margin: 10px 2% 20px 0;
+    background-color: var(--color-secondary);
+    color: var(--color-primary); /* Texto oscuro en el botón amarillo */
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    transition: 0.3s ease;
+}
+
+    .action-button-floating:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+        border-block-color: black;
+    }
+
+/* === Contenedor principal del Modal (Fondo Oscuro) === */
+.backdrop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    padding: 20px;
+}
+
+/* === Tarjeta Modal === */
+.task-modal-card {
+    width: 95%;
+    max-width: 950px;
+    background: #fff;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    animation: scaleIn 0.3s ease-out;
+    max-height: 90vh;
+}
+
+/* Animación de entrada */
+@@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* === Encabezado === */
+.task-modal-header {
+    background: #C6E9F0;
+    color: #000;
+    padding: 16px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--color-secondary); /* Acento de color */
+}
+
+.header-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.close-btn {
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+    .close-btn:hover {
+        color: var(--color-secondary); /* Color suave para hover */
+        transform: rotate(90deg) scale(1.1);
+        opacity: 1;
+    }
+
+/* === Cuerpo del Formulario === */
+.task-modal-body {
+    padding: 20px 25px;
+    background: var(--color-background-light);
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* === Selector de Tipo de Actividad === */
+.activity-type-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #e9ecef; /* Fondo sutil para el selector */
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: none;
+}
+
+    .type-btn:hover {
+        background: #dcdcdc; /* Gris de hover */
+    }
+
+.active-type-btn {
+    background: #fff;
+    color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--color-secondary); /* Borde para indicar activo */
+    transform: translateY(-1px);
+}
+
+/* === Estructura del Formulario (Grid) === */
+.main-form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.col-span-2 {
+    grid-column: span 2;
+}
+
+.date-time-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.btn btn-secondary-action {
+}
+
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Chips */
+.chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+    min-height: 45px;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.chip {
+    background: #e7f0ff;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+.chip-remove {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Input dentro de los chips */
+.chip-input {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    min-width: 120px;
+    font-size: 14px;
+}
+
+/* Lista autocomplete */
+.autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 8px;
+    padding: 4px 0;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 9999;
+}
+
+    .autocomplete-list li {
+        padding: 12px 14px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+        .autocomplete-list li:hover {
+            background: #f0f4ff;
+        }
+
+/* Responsive Grid */
+@@media (max-width: 1024px) {
+    .main-form-grid, .date-time-group {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .col-span-2 {
+        grid-column: span 2;
+    }
+}
+
+@@media (max-width: 600px) {
+    .main-form-grid, .date-time-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* === Control de Formulario === */
+.form-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-text-dark);
+}
+
+.form-input {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: 0.2s ease;
+    background-color: #fff;
+}
+
+    .form-input:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(0, 119, 182, 0.3); /* Sombra de acento */
+        outline: none;
+    }
+
+.large-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+/* === Estado Deshabilitado (Solo para ubicacion/participantes en Tarea) === */
+.disabled-field {
+    /* Mantiene el estilo de opacidad para Sub Tareas en Eventos */
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* NUEVO: Mantener campos de Evento deshabilitados si no es Evento */
+.disabled-field-if-tarea {
+    /* Usa la clase 'disabled-field' para Ubicación y Participantes si es Tarea */
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+}
+
+
+/* === Checklist / Subtareas === */
+.input-with-button-group {
+    display: flex;
+    gap: 8px;
+}
+
+.checklist-list-wrapper {
+    margin-top: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.checklist-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checklist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+    color: var(--color-text-dark);
+}
+
+.delete-checklist-item {
+    background: none;
+    border: none;
+    color: var(--color-danger);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: 0.2s;
+}
+
+    .delete-checklist-item:hover {
+        color: #ef4444;
+        transform: scale(1.1);
+    }
+
+/* === Pie de Página (Footer) === */
+.task-modal-footer {
+    padding: 15px 25px;
+    background: #f1f5f9;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* === Botones de Acción === */
+.btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.btn-primary-action {
+    background-color: var(--color-success);
+}
+
+    .btn-primary-action:hover {
+        background-color: #1e7e34;
+        box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+    }
+
+.btn-secondary-action {
+    background-color: var(--color-danger);
+}
+
+    .btn-secondary-action:hover {
+        background-color: #bd2130;
+    }
+
+.btn-add {
+    background-color: #BBD8FB;
+    color: black;
+    padding: 0 15px; /* Ajuste para el botón de añadir */
+}
+
+    .btn-add:hover {
+        background-color: #BBD8FB;
+    }
+
+
+.timepicker-container {
+    position: relative;
+}
+
+.timepicker-input {
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.timepicker-panel {
+    position: absolute;
+    top: 42px;
+    left: 0;
+    display: flex;
+    gap: 6px;
+    width: 160px;
+    max-height: 240px;
+    background: white;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    z-index: 3000;
+    padding: 6px;
+}
+
+.timepicker-column {
+    flex: 1;
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 6px;
+}
+
+.timepicker-item {
+    padding: 8px 0;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+    .timepicker-item:hover {
+        background-color: #f0f7ff;
+    }
+
+    .timepicker-item.selected {
+        background-color: #0078d4;
+        color: white;
+        font-weight: 600;
+    }
+
+

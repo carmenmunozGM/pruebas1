@@ -151,7 +151,7 @@
                                                @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" /> 
                                                 }
                                         <!-- Icono y tipo -->
-                                        <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "📝"))</span>
+                                        <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "🗒️"))</span>
                                         <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");"></span>
                                         <!-- Título -->
                                         <span class="subtask-text">@st.Title</span>
@@ -2480,20 +2480,29 @@
         }
         else 
         {
-            int idSalaFinal = 0;
-            string ubicacionFinal = "";
+                int? idSalaFinal = null;
+                string? ubicacionFinal = null;
 
             if (EditItem.Ubicacion == "-1")
             {
-                idSalaFinal = 0;
+                idSalaFinal = null;
                 ubicacionFinal = ubicacionOtra; 
             }
             else
             {
                 
                 var sala = salasLookup.FirstOrDefault(s => s.Value == EditItem.Ubicacion);
-                idSalaFinal = sala.Key;
-                ubicacionFinal = "";
+                    
+                    if (sala.Key > 0)
+                    {
+                        idSalaFinal = sala.Key;
+                        ubicacionFinal = null; 
+                    }
+                    else
+                    {
+                        idSalaFinal = null;
+                        ubicacionFinal = "";
+                    }
             }
 
             var dtoEvento = new

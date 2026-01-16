@@ -14,48 +14,34 @@
 @using pruebas1.Servicios
 @using pruebas1.Components
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-﻿
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>﻿
 <div class="action-button-wrapper">
     <button class="action-button-floating" @onclick="@OpenModal">➕ Crear Nueva Actividad</button>
 </div>
-
-
 @if (ShowModal)
 {
     <div class="backdrop-overlay" >
         <div class="task-modal-card" @onclick:stopPropagation="true">
-
             <div class="task-modal-header">
                 <h2 class="header-title">🌟 Crea tu nueva actividad</h2>
                 <span class="close-btn" @onclick="CheckClose">&times;</span>
             </div>
-
             <div class="task-modal-body">
-
-
-                <!-- Tipo -->
                 <div class="activity-type-selector">
                     <button @onclick="() => SetFormType(FormTypes.Tareas)"
                             class="@(FormType == FormTypes.Tareas ? "type-btn active-type-btn" : "type-btn")">
                         ✅ Tarea
                     </button>
-
                     <button @onclick="() => SetFormType(FormTypes.Evento)"
                             class="@(FormType == FormTypes.Evento ? "type-btn active-type-btn" : "type-btn")">
                         🗓️ Evento - Reunión
                     </button>
                 </div>
-
                 <div class="main-form-grid">
-
-                    <!-- Título -->
                     <div class="form-control-group col-span-2">
                         <label>🏷️Título / Nombre *</label>
                         <InputText class="form-control" @bind-Value="titulo" />
                     </div>
-
-                    <!-- Prioridad -->
                     <div class="form-control-group">
                         <label>⚡Prioridad</label>
                         <select class="form-input" @bind="selectedPrioridadId">
@@ -66,8 +52,6 @@
                             }
                         </select>
                     </div>
-
-                    <!-- Recurrencia -->
                     <div class="form-control-group">
                         <label>🔁 Recurrencia</label>
                         <select class="form-input" @bind="selectedFrecuenciaId">
@@ -77,26 +61,19 @@
                                 <option value="@f.Id">@f.Descripcion</option>
                             }
                         </select>
-
                     </div>
-
-                    <!-- Fecha inicio -->
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Inicio</label>
                             <DatePicker Value="FechaInicio"
                                         ValueChanged="OnFechaInicioChanged"
                                         CssClass="form-control" />
-
                         </div>
                     </div>
-                    <!-- Hora inicio -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Inicio</label>
                         <TimePickerList @bind-Value="HoraInicio" />
                     </div>
-
-                    <!-- Fecha fin -->
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Término</label>
@@ -105,32 +82,23 @@
                                         CssClass="form-control" />
                         </div>
                     </div>
-
-                    <!-- Hora fin -->
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Término</label>
                         <TimePickerList @bind-Value="HoraFin" />
                     </div>
-
-
                     <!-- Ubicación -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>📍 Ubicación</label>
                         <select class="form-control"
                                 @bind="selectedSalaId"
                                 @bind:after="OnSalaChanged">
-
                             <option value="">Selecciona una sala</option>
-
-
                             @foreach (var sala in listaSalas)
                             {
                                 <option value="@sala.Id">@sala.Salas</option>
                             }
-
                             <option value="-1">Otro...</option>
                         </select>
-
                         @if (mostrarOtraUbicacion)
 
                         {
@@ -139,14 +107,9 @@
                                    @bind="ubicacionOtra" />
                         }
                     </div>
-
-                    <!-- Participantes -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>👥Participantes</label>
-
                         <div class="autocomplete-container">
-
-                            <!-- Chips -->
                             <div class="chips-container">
                                 @foreach (var p in participantesSeleccionados)
                                 {
@@ -155,8 +118,6 @@
                                         <span class="chip-remove" @onclick="() => QuitarParticipante(p)">×</span>
                                     </div>
                                 }
-
-                                <!-- Input -->
                                 <input type="text"
                                        class="chip-input"
                                        placeholder="Agregar participante..."
@@ -164,8 +125,6 @@
                                        @oninput="FiltrarEmpleados"
                                        disabled="@(FormType != FormTypes.Evento)" />
                             </div>
-
-                            <!-- Lista Autocomplete -->
                             @if (mostrarLista && empleadosFiltrados?.Count > 0)
                             {
                                 <ul class="autocomplete-list">
@@ -180,14 +139,10 @@
                             }
                         </div>
                     </div>
-
-                    <!-- Descripción -->
                     <div class="form-control-group col-span-2">
                         <label>📝Descripción / Detalles</label>
                         <InputTextArea class="form-control" @bind-Value="descripcion" />
                     </div>
-
-                    <!-- Subtareas -->
                     <div class="form-control-group col-span-2 @(FormType == FormTypes.Evento ? "disabled-field" : "")">
                         <label>✅Checklist / Sub Tareas</label>
 
@@ -242,8 +197,6 @@
                         });
                     }
                 </script>
-
-                <!-- Footer -->
                 <div class="task-modal-footer">
                     <button class="btn btn-secondary-action" @onclick="CheckClose">Cancelar</button>
                     <button class="btn btn-primary-action" @onclick="Guardar">Guardar Actividad</button>
@@ -269,45 +222,31 @@
     </script>
 
 @code {
-
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
-
-
     // --- FECHAS ---
     private DateTime? FechaInicio { get; set; }
     private DateTime? FechaFin { get; set; }
-
     // --- HORAS ---
     private TimeOnly? HoraInicio { get; set; }
     private TimeOnly? HoraFin { get; set; }
-
     // --- VARIABLES ---
     private string titulo = string.Empty;
     private string descripcion = string.Empty;
-
     private List<string> subtasks = new();
     private string newSubtask = string.Empty;
-
     private List<SalasEm> listaSalas = new();
-    // private int selectedSalaId = 0;
     private int? selectedSalaId = null;
-
-    //private string? ubicacionSeleccionada;
-    //private bool showOtherLocationInput = false;
     bool mostrarOtraUbicacion = false;
     string ubicacionOtra = "";
     private List<FrecuenciaRecurrencia> frecuencias = new();
     private List<Prioridad> prioridadesDisponibles = new();
     private int? selectedPrioridadId;
     private int? selectedFrecuenciaId;
-
     private bool ShowModal { get; set; } = false;
     private string searchText = "";
     private bool mostrarLista = false;
-
     public enum FormTypes { Evento, Tareas }
     public FormTypes FormType { get; set; } = FormTypes.Tareas;
-
     List<EmpleadoDTO> empleados = new();
     List<EmpleadoDTO> empleadosFiltrados = new();
     private List<EmpleadoDTO> participantesSeleccionados = new();
@@ -390,7 +329,6 @@
     }
     void OnSalaChanged()
     {
-        // 🔥 LIMPIAR ESTADO
         mostrarOtraUbicacion = false;
         ubicacionOtra = "";
 
@@ -402,15 +340,10 @@
             mostrarOtraUbicacion = true;
         }
     }
-
-    // ----------------- GUARDAR -----------------
     // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
-        // ---------------- VALIDACIONES OBLIGATORIAS ----------------
         string alertMessage = "";
-
-        // Campos comunes a Tareas y Eventos
         if (string.IsNullOrWhiteSpace(titulo))
             alertMessage += "Debes completar el título.\n";
 
@@ -429,8 +362,6 @@
             alertMessage += "Debes seleccionar la fecha de término.\n";
         else if (FechaInicio.HasValue && FechaFin.Value.Date < FechaInicio.Value.Date)
             alertMessage += "La fecha de término no puede ser menor a la fecha de inicio.\n";
-
-        // Campos específicos de Evento
         if (FormType == FormTypes.Evento)
         {
             if (!HoraInicio.HasValue)
@@ -466,8 +397,6 @@
             });
             return;
         }
-
-        // ---------------- FECHAS (ANTI UTC BUG) ----------------
         DateTime? fechaInicioFinal = null;
         DateTime? fechaFinFinal = null;
 
@@ -488,8 +417,6 @@
                 DateTimeKind.Local
             );
         }
-
-        // ---------------- UBICACIÓN ----------------
         string ubicacionFinal = "";
         int idSalaFinal = 0;
 
@@ -586,7 +513,6 @@
     }
     private async Task OnFechaFinChanged(DateTime? value)
     {
-        // Debe existir fecha inicio primero
         if (!FechaInicio.HasValue)
         {
             FechaFin = null;
@@ -600,8 +526,6 @@
 
             return;
         }
-
-        // No permitir fechas pasadas
         if (value.HasValue && value.Value.Date < DateTime.Today)
         {
             FechaFin = null;
@@ -615,8 +539,6 @@
 
             return;
         }
-
-        // No permitir fecha fin menor a inicio
         if (value.HasValue && value.Value.Date < FechaInicio.Value.Date)
         {
             FechaFin = null;
@@ -633,9 +555,6 @@
 
         FechaFin = value;
     }
-
-
-    // ----------------- LIMPIAR -----------------
     private void LimpiarCampos()
     {
         titulo = "";
@@ -665,9 +584,8 @@
     {
         FormType = type;
         if (type == FormTypes.Evento) subtasks.Clear();
-        LimpiarCamposNoTipo(); // NUEVO: limpia campos sin reiniciar FormType
+        LimpiarCamposNoTipo(); 
     }
-    // NUEVO: Método que limpia todos los campos excepto el tipo
     private void LimpiarCamposNoTipo()
     {
         titulo = "";
@@ -710,11 +628,8 @@
 }
 
                    }
-
-
-
 <style>
-    /* === Paleta de Colores Nueva (Azul y Amarillo/Naranja) === */
+
     :root {
         --color-secondary: #C6E9F0; /* Amarillo/Dorado (Para Acentos y Activo) */
         --color-success: #28a745; /* Verde para éxito (Guardar) */

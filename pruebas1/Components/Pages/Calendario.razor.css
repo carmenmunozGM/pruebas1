@@ -1,0 +1,478 @@
+﻿
+body {
+    margin: 0;
+    overflow-y: auto;
+}
+/* Contenedor del calendario */
+.agenda-container {
+    min-height: 100vh;
+    font-family: Inter, system-ui, sans-serif;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100vw;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: visible; /* IMPORTANTE */
+}
+
+.day-card.no-laboral {
+    background: #ffecec;
+    border: 1px solid #ff4d4d;
+}
+
+    .day-card.no-laboral .day-header {
+        color: #a80000;
+        font-weight: bold;
+    }
+
+.no-laboral {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #7a2c2;
+    display: block;
+    margin-top: 6px;
+}
+
+.task-details p {
+    margin: 6px 0;
+}
+
+.subtask-block {
+    margin-top: 10px;
+}
+
+.actividad-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.actividad-completada {
+    text-decoration: line-through;
+    opacity: 0.6;
+    color: #000 !important;
+}
+.actividad-item {
+    padding: 10px 14px;
+    font-size: 16px;
+    border-bottom: 1.5px solid #e5e7eb;
+}
+
+    .actividad-item:last-child {
+        border-bottom: none;
+    }
+
+.no-laboral-icon {
+    font-size: 0.8rem;
+    margin-left: 4px;
+    opacity: 0.8;
+}
+
+/* Encabezado */
+.agenda-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+    .agenda-header h1 {
+        font-size: 32px;
+        margin: 0;
+        color: #000;
+        font-weight: 700;
+    }
+
+/* Controles de botones */
+.header-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.agenda-header > .header-controls:first-child {
+    min-width: 150px;
+    justify-content: flex-start;
+}
+
+.agenda-header > .header-controls:last-child {
+    min-width: 150px;
+    justify-content: flex-end;
+}
+
+/* Botones */
+.btn {
+    background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    justify-content: center;
+}
+
+    .btn.primary {
+        background: linear-gradient(90deg,#1e7a3a,#0b3c4a);
+    }
+
+    .btn:hover {
+        background: linear-gradient(90deg, #155d2b, #062b35);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #f5f7fa;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+    .collapsible-header:hover {
+        background: #e9edf3;
+    }
+
+.toggle-icon {
+    font-size: 13px;
+}
+
+.collapsible-content {
+    padding: 10px;
+    margin-top: 6px;
+    border-left: 3px solid #4f46e5;
+}
+
+.ot-card, .tramite-card {
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.arrow {
+    font-weight: 700;
+}
+
+/* Grid de días */
+.days-grid-mensual {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.day-name-header {
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 0;
+    color: #6B7280;
+    border-bottom: 2px solid #F3F4F6;
+}
+
+.day-card {
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: box-shadow 0.2s;
+}
+
+    .day-card:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .day-card.empty {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    .day-card.sunday {
+        background: #F9FAFB;
+        color: #9CA3AF;
+    }
+
+.day-header {
+    display: flex;
+    justify-content: flex-start;
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.day-card.sunday .day-name {
+    color: #9CA3AF;
+}
+
+/* Bloques de tareas */
+.blocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    list-style: none;
+    padding: 0;
+}
+
+.list-item {
+    border-radius: 6px;
+    padding: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    overflow: hidden;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+    .list-item:hover {
+        filter: brightness(0.97);
+        transform: translateY(-1px);
+        transition: all 0.15s ease-in-out;
+    }
+
+.list-title {
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-count {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #333;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    min-width: 15px;
+    text-align: center;
+}
+
+.no-laboral {
+    font-weight: 600;
+    font-size: 14px;
+    color: #EF4444;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* ================= MODAL OVERLAY ================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+/* ================= MODAL BASE ================= */
+.modal-content.modern-modal {
+    background: #ffffff;
+    border-radius: 20px; /* Bordes un poco más suaves */
+    width: 90%; /* Margen lateral en móviles */
+    max-width: 750px; /* REDUCIDO: Antes era 1100px. Un tamaño ideal para lectura */
+    max-height: 85vh; /* Altura máxima permitida */
+    height: auto; /* CAMBIO: Ahora crece según el contenido */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    animation: modalFade 0.25s ease-out;
+    overflow: hidden;
+}
+
+/* ================= HEADER ================= */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 20px; /* REDUCIDO: Antes era 22px */
+    background: linear-gradient(90deg, #ffffff, #f9f9f9);
+    color: black;
+}
+    .modal-header h2 {
+        font-size: 1.4rem; /* Tamaño de fuente más balanceado */
+        margin: 0;
+    }
+.modal-icon {
+    font-size: 26px;
+}
+
+/* ================= BODY ================= */
+.modal-body.modal-scroll {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8fafc;
+}
+
+/* Scroll elegante */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* ================= FOOTER ================= */
+.modal-footer {
+    padding: 12px;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+}
+    .modal-footer .btn {
+        min-width: 120px; /* Botón un poco más pequeño */
+        padding: 8px 16px;
+        background: #e74c3c;
+    }
+/* Estilo para los mensajes de 'No hay datos' */
+.no-tasks-msg {
+    padding: 50px 20px;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #888;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+    margin: 20px;
+}
+
+/* Unificación del tachado para todas las tareas completadas */
+.actividad-completada,
+.actividad-completada b,
+.actividad-completada span {
+    text-decoration: line-through !important;
+    color: #adb5bd !important;
+    opacity: 0.7;
+}
+
+/* Opcional: un toque sutil para los ítems de autoevaluación realizados */
+.realizado {
+    text-decoration: line-through;
+    color: #000;
+}
+/* ================= CARDS ================= */
+.ot-card,
+.tramite-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+/* ================= COLLAPSIBLE HEADER ================= */
+.collapsible-header {
+    background: #f1f5f9;
+    padding: 14px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .collapsible-header:hover {
+        background: #e2e8f0;
+    }
+
+.toggle-icon {
+    font-size: 14px;
+}
+
+/* ================= COLLAPSIBLE CONTENT ================= */
+.collapsible-content {
+    padding: 18px;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ================= TASK DETAILS ================= */
+.task-details {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+/* ================= TABLES ================= */
+.subtasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+    .subtasks-table th {
+        background: #f3f4f6;
+        padding: 10px;
+        font-weight: 600;
+    }
+
+    .subtasks-table td {
+        padding: 10px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .subtasks-table tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+/* ================= LIST ITEMS ================= */
+.collapsible-list li {
+    margin-bottom: 8px;
+}
+/* Para los ítems de Autoevaluación */
+.task-item {
+    font-size: 16px;
+    padding: 8px 0;
+}
+
+.task-item.realizado {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* ================= ANIMATION ================= */
+@@keyframes modalFade {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.actividad-completada td {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
