@@ -380,7 +380,8 @@
     {
         if (CurrentTask == null) return;
         CurrentTask.Realizado = true;
-        CurrentTask.RegistradoProgramado = "";
+        CurrentTask.RegistradoProgramado = "Sin fechas";
+        CurrentTask.EditadoManualmente = true;
         SelectedDate = null;
         IsAnnual = false;
         ShowModal = false;
@@ -407,6 +408,12 @@
         int mesFiltro = FechaConsulta.Month;
         int añoFiltro = FechaConsulta.Year;
 
+        // 1. Verificar si el usuario tiene CUALQUIER registro guardado en este mes/año
+        bool usuarioYaTieneRegistrosEnMes = data
+            .SelectMany(b => b.Tareas)
+            .Any(t => t.Registros != null &&
+                 t.Registros.Any(r => r.Fecha.Month == mesFiltro && r.Fecha.Year == añoFiltro));
+
         Bloques.Clear();
         foreach (var bloqueApi in data)
         {
@@ -419,9 +426,11 @@
                 bool tieneRegistros = registrosMes.Any();
                 string programadoTexto = "";
                 DateTime? primeraFecha = null;
+                bool marcado = false;
 
                 if (tieneRegistros)
                 {
+                    marcado = true;
                     var fechasSorted = registrosMes.Select(r => r.Fecha.ToDateTime(TimeOnly.MinValue)).OrderBy(f => f).ToList();
                     primeraFecha = fechasSorted.FirstOrDefault();
                     programadoTexto = t.Periodicidad switch
@@ -432,11 +441,11 @@
                         _ => string.Join(", ", fechasSorted.Select(f => f.ToString("dd/MM")))
                     };
                 }
-                else if (t.Periodicidad is "Eventual" or "Anual")
+                // LÓGICA CLAVE: Si el usuario ya guardó algo este mes, y esta tarea es Eventual/Anual y está vacía
+                else if (usuarioYaTieneRegistrosEnMes && (t.Periodicidad is "Eventual" or "Anual"))
                 {
-                    // Si llegamos aquí y el backend tuviera una forma de saber que se marcó
-                    // pero quedó vacía, podrías poner "Sin fechas". Por ahora queda listo para el flujo.
-                    programadoTexto = "";
+                    marcado = true;
+                    programadoTexto = "Sin fechas";
                 }
 
                 nuevoBloque.Tareas.Add(new Tarea
@@ -445,10 +454,10 @@
                     Nombre = t.Tarea,
                     Periodicidad = t.Periodicidad,
                     RegistradoProgramado = programadoTexto,
-                    Realizado = tieneRegistros, // El check depende de si hay registros en DB
+                    Realizado = marcado,
                     FechaMensualSeleccionada = primeraFecha,
                     Registros = t.Registros,
-                    EditadoManualmente = false // Resetear flag al cargar
+                    EditadoManualmente = false
                 });
             }
             Bloques.Add(nuevoBloque);
@@ -519,6 +528,7 @@
     {
         if (IsSaving) return;
 
+        // Validación de obligatorios (Mantenida)
         foreach (var b in Bloques)
         {
             foreach (var t in b.Tareas)
@@ -545,12 +555,12 @@
         {
             foreach (var tarea in bloque.Tareas)
             {
-                // Solo procesamos tareas marcadas o Eventuales/Anuales (que permiten vacío)
+                // Solo procesamos tareas marcadas o Eventuales/Anuales (que permiten vacío intencional)
                 if (!tarea.Realizado && tarea.Periodicidad != "Eventual" && tarea.Periodicidad != "Anual") continue;
 
                 var registro = new RegistroTareaDTO { IdTareaAU = tarea.IdTareaAU, Fechas = new List<DateOnly>() };
 
-                // PRIORIDAD 1: Edición Manual (incluye el botón "No seleccionar fechas")
+                // 1. SI SE EDITÓ MANUALMENTE (Incluye "Sin fechas")
                 if (tarea.EditadoManualmente)
                 {
                     if (tarea.RegistradoProgramado != "Sin fechas")
@@ -561,12 +571,17 @@
                                               .Select(f => DateOnly.FromDateTime(f)).ToList();
                         }
                     }
-                    // Si es "Sin fechas", registro.Fechas ya es una lista vacía, lo cual es correcto.
+                    // Si es "Sin fechas", registro.Fechas queda vacío (Correcto para DB)
 
                     if (tarea.Periodicidad == "Semanal")
                         registro.DiaSemana = ConvertirDiaSemana(tarea.RegistradoProgramado);
                 }
-                // PRIORIDAD 2: Datos existentes en la DB (Protección contra borrado accidental)
+                // 2. SI EL ESTADO CARGADO ES "SIN FECHAS"
+                else if (tarea.RegistradoProgramado == "Sin fechas")
+                {
+                    registro.Fechas = new List<DateOnly>();
+                }
+                // 3. SI HAY REGISTROS EN DB (Protección contra pérdida)
                 else if (tarea.Registros != null && tarea.Registros.Any(r => r.Fecha.Month == FechaConsulta.Month && r.Fecha.Year == FechaConsulta.Year))
                 {
                     registro.Fechas = tarea.Registros
@@ -576,7 +591,7 @@
                     if (tarea.Periodicidad == "Semanal")
                         registro.DiaSemana = ConvertirDiaSemana(tarea.RegistradoProgramado);
                 }
-                // PRIORIDAD 3: Tareas nuevas marcadas sin entrar al modal (ej. Diario)
+                // 4. TAREAS NUEVAS (Ej: Diario)
                 else if (!string.IsNullOrWhiteSpace(tarea.RegistradoProgramado))
                 {
                     if (tarea.Periodicidad is "Eventual" or "Quincenal" or "Anual" or "Mensual")
@@ -641,21 +656,79 @@
         CurrentTask = tarea;
         BackupRealizado = tarea.Realizado;
         BackupRegistradoProgramado = tarea.RegistradoProgramado;
-
-
         tarea.Realizado = true;
-        if (tarea.Periodicidad == "Eventual" && !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado)) return;
-        if (tarea.Periodicidad == "Diario"){tarea.RegistradoProgramado = "Registrado"; return;}
+
+        // Si es Diario, registramos directo y salimos
+        if (tarea.Periodicidad == "Diario")
+        {
+            tarea.RegistradoProgramado = "Registrado";
+            return;
+        }
+
+        // Si es Eventual y ya tiene datos (y no es "Sin fechas"), permitimos que el check se quede
+        // Pero si el usuario hace click de nuevo, normalmente es para editar,
+        // así que quitamos el return para que los modales siempre puedan abrirse si es necesario.
+        // if (tarea.Periodicidad == "Eventual" && !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado) && tarea.RegistradoProgramado != "Sin fechas") return;
+
         ResetModalFlags();
-        if (tarea.Periodicidad == "Semanal") { IsWeekly = true; SelectedWeekIndex = Array.IndexOf(WeekDays, tarea.RegistradoProgramado); ShowModal = true; }
-        else if (tarea.Periodicidad == "Mensual") { IsMonthly = true; CurrentTask.FechaMensualSeleccionada = FechaConsulta; ShowModal = true; }
-        else if (tarea.Periodicidad == "Anual") { IsAnnual = true; ShowModal = true; }
-        else if (tarea.Periodicidad == "Eventual") { IsEventual = true; FechasEventuales = new List<DateTime> { FechaConsulta }; ShowModal = true; }
-        else if (tarea.Periodicidad == "Quincenal") {IsQuincenal = true;FechasQuincenales = new List<DateTime?> { FechaConsulta, FechaConsulta.AddDays(15) };ShowModal = true;}
-
         ModalTitle = tarea.Nombre;
-    }
 
+        if (tarea.Periodicidad == "Semanal")
+        {
+            IsWeekly = true;
+            SelectedWeekIndex = Array.IndexOf(WeekDays, tarea.RegistradoProgramado);
+            ShowModal = true;
+        }
+        else if (tarea.Periodicidad == "Mensual")
+        {
+            IsMonthly = true;
+            // Forzamos a que el calendario mensual abra en el mes de consulta
+            CurrentTask.FechaMensualSeleccionada = new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1);
+            ShowModal = true;
+        }
+        else if (tarea.Periodicidad == "Anual")
+        {
+            IsAnnual = true;
+
+            if (string.IsNullOrEmpty(tarea.RegistradoProgramado) || tarea.RegistradoProgramado == "Sin fechas")
+            {
+                SelectedDate = new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1);
+            }
+            else
+            {
+                var fechas = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
+                // Verificamos si la lista tiene elementos antes de asignar
+                if (fechas.Any())
+                {
+                    SelectedDate = fechas.First();
+                }
+                else
+                {
+                    SelectedDate = new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1);
+                }
+            }
+            ShowModal = true;
+        }
+        else if (tarea.Periodicidad == "Eventual")
+        {
+            IsEventual = true;
+            // Iniciamos con el primer día del mes de consulta
+            FechasEventuales = new List<DateTime> { new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1) };
+            ShowModal = true;
+        }
+        else if (tarea.Periodicidad == "Quincenal")
+        {
+            IsQuincenal = true;
+            // Iniciamos la quincena basada en el mes de consulta
+            FechasQuincenales = new List<DateTime?> {
+            new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1),
+            new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1).AddDays(14)
+        };
+            ModalTitle = tarea.Nombre;
+            ShowModal = true;
+        }
+    }
+    
     private void ResetModalFlags() { IsWeekly = IsMonthly = IsAnnual = IsEventual = IsQuincenal = false; }
     private void CloseModal() { if (CurrentTask != null) { CurrentTask.Realizado = BackupRealizado; CurrentTask.RegistradoProgramado = BackupRegistradoProgramado; } ShowModal = false; }
     private void ConfirmarGuardar() => ShowConfirm = true;
