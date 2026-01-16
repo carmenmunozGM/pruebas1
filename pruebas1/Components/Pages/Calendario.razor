@@ -114,8 +114,6 @@
             </div>
 
             <div class="modal-body modal-scrol">
-
-                @* ================= AUTOEVALUACIÓN ================= *@
                 @if (SelectedBlock.Title == "Autoevaluación")
                 {
                     @if (!SelectedBlock.SubTasks.Any())
@@ -134,8 +132,6 @@
                         </ul>
                     }
                 }
-
-                @* ================= ÓRDENES DE TRABAJO ================= *@
                 else if (SelectedBlock.Title == "Órdenes de Trabajo")
                 {
                     var ots = SelectedBlock.SubTasks.OfType<OrdenTrabajoDTO>().ToList();
@@ -147,7 +143,7 @@
                     }
                     else
                     {
-                        @* --- SECCIÓN OT --- *@
+        
                         @foreach (var ot in ots)
                         {
                             <div class="ot-card">
@@ -191,8 +187,6 @@
                                 }
                             </div>
                         }
-
-                        @* --- SECCIÓN TRÁMITES --- *@
                         @foreach (var tr in tramites)
                         {
                             <div class="tramite-card">
@@ -234,8 +228,6 @@
                         }
                     }
                 }
-
-                @* ================= SERVICIO A CLIENTE ================= *@
                 else if (SelectedBlock.Title == "Servicio a Cliente")
                 {
                     var items = SelectedBlock.SubTasks.OfType<ServicioClienteAgendaDTO>().GroupBy(x => x.NombreEmpresa);
@@ -282,8 +274,6 @@
                         }
                     }
                 }
-
-                @* ================= TAREAS Y EVENTOS ================= *@
                 else if (SelectedBlock.Title == "Tareas" || SelectedBlock.Title == "Tareas Operativas")
                 {
                     @if (!SelectedBlock.SubTasks.Any())
