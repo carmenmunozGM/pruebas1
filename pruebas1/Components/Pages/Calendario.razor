@@ -445,8 +445,7 @@
         await CargarOrdenes();
 
         TareasApi = await AgendaService.ObtenerTareasApi(idAgenda);
-        EventosApi = await AgendaService.ObtenerEventos(idAgenda);
-
+        EventosApi = await AgendaService.ObtenerEventosPorEmpleado();
         ServicioClienteAgenda = await ServicioClienteService.ObtenerAgendaServicioCliente();
 
         await CargarDiasNoLaborales();
@@ -463,7 +462,7 @@
         }
         catch
         {
-            
+
         }
     }
 
@@ -489,6 +488,7 @@
 
     async Task CargarOrdenes()
     {
+        var otPen = await OrdenTrabajoService.GetOrdenesPendntes();
         var otHoy = await OrdenTrabajoService.GetOrdenesHoy();
         var otProx = await OrdenTrabajoService.GetOrdenesProximas();
         var otVenc = await OrdenTrabajoService.GetOrdenesVencidas();
@@ -496,10 +496,12 @@
         OrdenesTrabajo = otHoy
             .Concat(otProx)
             .Concat(otVenc)
+            .Concat(otPen)
             .GroupBy(o => o.id)
             .Select(g => g.First())
             .ToList();
 
+        var trPen = await OrdenTramiteService.GetPendientes();
         var trHoy = await OrdenTramiteService.GetHoy();
         var trProx = await OrdenTramiteService.GetProximas();
         var trVenc = await OrdenTramiteService.GetVencidas();
@@ -507,6 +509,7 @@
         OrdenesTramite = trHoy
             .Concat(trProx)
             .Concat(trVenc)
+            .Concat(trPen)
             .GroupBy(o => o.idOrden)
             .Select(g => g.First())
             .ToList();

@@ -55,7 +55,6 @@ namespace pruebas1.Servicios
             }
         }
 
-        // 🔴 ÓRDENES VENCIDAS
         public async Task<List<OrdenTramiteDTO>> GetVencidas()
         {
             try
@@ -71,7 +70,6 @@ namespace pruebas1.Servicios
             }
         }
 
-        // 🟡 ÓRDENES PRÓXIMAS
         public async Task<List<OrdenTramiteDTO>> GetProximas()
         {
             try
@@ -87,7 +85,6 @@ namespace pruebas1.Servicios
             }
         }
 
-        // 🟢 ÓRDENES DE HOY
         public async Task<List<OrdenTramiteDTO>> GetHoy()
         {
             try
@@ -99,6 +96,21 @@ namespace pruebas1.Servicios
             catch (Exception ex)
             {
                 Console.WriteLine($"[OrdenTramiteService] GetHoy: {ex.Message}");
+                return new List<OrdenTramiteDTO>();
+            }
+        }
+
+        public async Task<List<OrdenTramiteDTO>> GetPendientes()
+        {
+            try
+            {
+                string url = $"{_baseApi}/ordenTramite";
+                return await _http.GetFromJsonAsync<List<OrdenTramiteDTO>>(url)
+                       ?? new List<OrdenTramiteDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrdenTramiteService] GetPendientes: {ex.Message}");
                 return new List<OrdenTramiteDTO>();
             }
         }

@@ -33,5 +33,11 @@ namespace pruebas1.Servicios
             return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
                 "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/hoy");
         }
+
+        public async Task<List<OrdenTrabajoDTO>> GetOrdenesPendntes()
+        {
+            return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
+                "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/pendientes");
+        }
     }
 }

@@ -109,7 +109,7 @@
                                                         break;
 
                                                     case BaseTask bt:
-                                                        <span>@bt.Name - Completed: @bt.IsCompleted - EsEvento: @bt.EsEvento</span>
+                                                        //<span>@bt.Name - Completed: @bt.IsCompleted - EsEvento: @bt.EsEvento</span>
 
                                                         @if (block.Title != "Órdenes de Trabajo")
                                                         {
@@ -1398,12 +1398,9 @@
         List<OrdenTrabajoDTO> ordenes = new();
         try
         {
-            var ordProx = await OrdenService.GetOrdenesProximas();
-            if (ordProx != null) ordenes.AddRange(ordProx);
-            var ordHoy = await OrdenService.GetOrdenesHoy();
-            if (ordHoy != null) ordenes.AddRange(ordHoy);
-            var ordVenc = await OrdenService.GetOrdenesVencidas();
-            if (ordVenc != null) ordenes.AddRange(ordVenc);
+            var ordPen = await OrdenService.GetOrdenesPendntes();
+            if (ordPen != null) ordenes.AddRange(ordPen);
+            Debug.WriteLine($"Ordenes pendientes totales: {ordPen.Count}");
         }
         catch { /* ignore */ }
 
@@ -1433,14 +1430,8 @@
 
         try
         {
-            var tVenc = await OrdenTramiteService.GetVencidas();
-            if (tVenc != null) tramites.AddRange(tVenc);
-
-            var tHoy = await OrdenTramiteService.GetHoy();
-            if (tHoy != null) tramites.AddRange(tHoy);
-
-            var tProx = await OrdenTramiteService.GetProximas();
-            if (tProx != null) tramites.AddRange(tProx);
+            var tPen = await OrdenTramiteService.GetPendientes();
+            if (tPen != null) tramites.AddRange(tPen);
         }
         catch { /* ignore */ }
 
@@ -1984,6 +1975,12 @@
 
     void CancelEdit()
     {
+        IsEditMode = false;
+        SelectedTask = null;
+        OriginalTask = null;
+        salaSeleccionada = null;
+
+        IsModalOpen = false;
         IsEditMode = false;
     }
 
