@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using static pruebas1.Components.Pages.Semanal;
 
 
 namespace pruebas1.Servicios
@@ -414,7 +415,6 @@ namespace pruebas1.Servicios
 
         // ===================== EDITAR =====================
 
-
         public async Task EditarEventoAsync(int id, EditAgendaItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
@@ -424,11 +424,12 @@ namespace pruebas1.Servicios
             var dto = new
             {
                 idAgenda = model.IdAgenda,
+                ApiId = model.ApiId,
                 titulo = model.Titulo,
                 descripcion = model.Descripcion,
                 fechaInicio = model.FechaInicio,
                 fechaFin = model.FechaFin,
-               
+
                 reglaRecurrencia = model.ReglaRecurrencia,
                 idPrioridad = model.Prioridad,
                 idSala = 0,
@@ -446,6 +447,21 @@ namespace pruebas1.Servicios
             );
 
             Console.WriteLine($"📡 STATUS EVENTO: {response.StatusCode}");
+        }
+
+        public async Task EditarEventoRawAsync(int id, EventoEditDTO dto)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            var json = JsonSerializer.Serialize(dto);
+
+            var response = await httpClient.PutAsync(
+                $"/eventos/{id}",
+                new StringContent(json, Encoding.UTF8, "application/json")
+            );
         }
 
         public async Task EliminarEventoAsync(int id)
@@ -478,6 +494,21 @@ namespace pruebas1.Servicios
             };
 
             await httpClient.PutAsJsonAsync($"/tareas/editar/{id}", dto);
+        }
+
+        public async Task EditarTareaRawAsync(int id, TareaEditDTO dto)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", usuario.Token);
+
+            var json = JsonSerializer.Serialize(dto);
+
+            var response = await httpClient.PutAsync(
+                $"/tareas/editar/{id}",
+                new StringContent(json, Encoding.UTF8, "application/json")
+                );
         }
 
         public async Task EliminarTareaAsync(int id)

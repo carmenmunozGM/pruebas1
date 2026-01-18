@@ -1,6 +1,7 @@
 ﻿@page "/semanal"
 @using System.Globalization
 @using System.Diagnostics
+@using Newtonsoft.Json
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
@@ -14,7 +15,7 @@
 @inject SalasEmService SalasEmService
 @inject ReglasRecurrenciaServices ReglasRecurrenciaServices
 @inject LoginService LoginService
-
+@inject HttpClient Http
 
 <br />
 <br />
@@ -108,6 +109,8 @@
                                                         break;
 
                                                     case BaseTask bt:
+                                                        <span>@bt.Name - Completed: @bt.IsCompleted - EsEvento: @bt.EsEvento</span>
+
                                                         @if (block.Title != "Órdenes de Trabajo")
                                                         {
                                                             <div class="task-item @(bt.IsCompleted ? "completed-task" : "")">
@@ -177,7 +180,7 @@
         </div>
 
         <div class="modal-body">
-            @if (IsModalOpen && SelectedTaskObject != null)
+            @if (IsModalOpen && SelectedTask != null)
             {
                 var bt = SelectedTask;
 
@@ -220,14 +223,16 @@
                         <!-- Recurrencia -->
                         <div class="form-group">
                             <label>🔄 Recurrencia:</label>
+
                             <select @bind="bt.Recurrence" disabled="@(!IsEditMode)">
                                 @foreach (var f in frecuenciasList)
                                 {
                                     <option value="@f.Nombre">@f.Nombre</option>
                                 }
+                                <option value="No repetir">No repetir</option>
                             </select>
-
                         </div>
+
 
                         <!-- Fechas y horas -->
                         <div class="form-group inline">
@@ -301,8 +306,10 @@
                         {
                             <div class="form-group">
                                 <label>📍 Ubicación:</label>
+
                                 <select value="@salaSeleccionada"
-                                        @onchange="OnSalaChanged" disabled="@(!IsEditMode)">
+                                        @onchange="OnSalaChanged"
+                                        disabled="@(!IsEditMode)">
                                     <option value="">-- Selecciona una ubicación --</option>
 
                                     @foreach (var s in salasList)
@@ -312,6 +319,7 @@
 
                                     <option value="0">Otra ubicación...</option>
                                 </select>
+
                                 @if (EsOtraSala)
                                 {
                                     <input type="text"
@@ -331,20 +339,55 @@
                             </div>
                         }
 
-
                         <!-- Participantes (solo eventos) -->
-                        @if (bt.EsEvento && bt.Participantes.Any())
+                        @if (bt.EsEvento)
                         {
                             <div class="form-group">
-                                <label>👥 Participantes:</label>
-                                <ul>
-                                    @foreach (var p in bt.Participantes)
-                                    {
-                                        <li>@p</li>
-                                    }
-                                </ul>
+                                <label>👥 Participantes</label>
+
+                                @if (!IsEditMode)
+                                {
+                                    <ul>
+                                        @foreach (var p in bt.Participantes)
+                                        {
+                                            <li>@p</li>
+                                        }
+                                    </ul>
+                                }
+
+                                @if (IsEditMode)
+                                {
+                                    <ul class="participant-list">
+                                        @foreach (var p in ParticipantesEdit)
+                                        {
+                                            <li>
+                                                <span>@p.nombreEmpleado</span>
+
+                                                <button class="remove-btn"
+                                                        @onclick="() => QuitarParticipante(p)">
+                                                    ❌
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+
+                                    <input type="text"
+                                           placeholder="Buscar empleado por nombre o ID"
+                                           @bind="BusquedaEmpleado"
+                                           @bind:event="oninput" />
+
+                                    <ul class="search-results">
+                                        @foreach (var emp in EmpleadosFiltrados)
+                                        {
+                                            <li @onclick="() => AgregarParticipante(emp)">
+                                                ➕ <strong>@emp.ClavePersonal</strong> – @emp.Nombre
+                                            </li>
+                                        }
+                                    </ul>
+                                }
                             </div>
                         }
+
 
                         <!-- Subtareas (solo tareas) -->
                         @if (!bt.EsEvento)
@@ -352,53 +395,70 @@
                             <div class="form-group">
                                 <label>✔️ Subtareas</label>
 
-                                <ul class="subtask-list">
-                                    @foreach (var st in bt.SubTasks)
-                                    {
-                                        <li class="subtask-item">
-                                            <span>@st.Name</span>
-
-                                            @if (IsEditMode)
-                                            {
-                                                <button class="remove-subtask-btn"
-                                                        @onclick="() => RemoveSubTask(st)">
-                                                    ❌
-                                                </button>
-                                            }
-                                            else if (st.IsCompleted)
-                                            {
-                                                <span class="subtask-done">✔️</span>
-                                            }
-                                        </li>
-                                    }
-                                </ul>
+                                @* Modo lectura *@
+                                @if (!IsEditMode)
+                                {
+                                    <ul class="subtask-list">
+                                        @foreach (var st in SelectedTask.SubTasks)
+                                        {
+                                            <li @key="st.TempId">
+                                                @st.Name
+                                                @if (st.IsCompleted)
+                                                {
+                                                    <span class="subtask-done">✔️</span>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                }
 
                                 @if (IsEditMode)
                                 {
+                                    <ul class="subtask-list">
+                                        @foreach (var st in SelectedTask.SubTasks)
+                                        {
+                                            <li @key="st.TempId">
+                                                <span>@st.Name</span>
+                                                <button class="remove-subtask-btn"
+                                                        @onclick="() => RemoveSubTask(st)">
+                                                    🗑️
+                                                </button>
+                                            </li>
+                                        }
+                                    </ul>
+
                                     <div class="add-subtask">
                                         <input type="text"
                                                placeholder="Nueva subtarea"
                                                @bind="NuevaSubtarea" />
-
                                         <button @onclick="AddSubTask">➕ Agregar</button>
                                     </div>
                                 }
                             </div>
                         }
-
                 </div>
 
-                <div class="modal-footer">
-                    @if (IsEditMode)
-                    {
-                        <button class="action-btn save" @onclick="async () => await SaveTask()">💾 Guardar</button>
-                        <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
-                    }
-                    else
-                    {
-                        <button class="action-btn save" @onclick="() => IsModalOpen = false">✔️ Cerrar</button>
-                    }
-                </div>
+                    <div class="modal-footer">
+                        @if (IsEditMode)
+                        {
+                            <button class="action-btn save"
+                                    @onclick="SaveTask">
+                                💾 Guardar
+                            </button>
+
+                            <button class="action-btn cancel"
+                                    @onclick="CancelEdit">
+                                ❌ Cancelar
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="action-btn save"
+                                    @onclick="() => IsModalOpen = false">
+                                ✔️ Cerrar
+                            </button>
+                        }
+                    </div>
             </div>
         }
 
@@ -411,23 +471,31 @@
         }
     </div>
 
-    <div class="modal-footer">
-        @if (IsEditMode)
-        {
-            <button class="action-btn save"
-                    @onclick="async () => await SaveTask()">
-                💾 Guardar
-            </button>
+        <div class="modal-footer">
+            @if (IsEditMode)
+            {
+                <button class="action-btn save"
+                        @onclick="SaveTask">
+                    💾 Guardar
+                </button>
 
-            <button class="action-btn cancel" @onclick="CancelEdit">❌ Cancelar</button>
-        }
-        else
-        {
-            <button class="action-btn save" @onclick="() => IsModalOpen = false">✔️ Cerrar</button>
-        }
-    </div>
+                <button class="action-btn cancel"
+                        @onclick="CancelEdit">
+                    ❌ Cancelar
+                </button>
+            }
+            else
+            {
+                <button class="action-btn save"
+                        @onclick="() => IsModalOpen = false">
+                    ✔️ Cerrar
+                </button>
+            }
+        </div>
 </div>
 }
+
+
 @if (IsClientModalOpen && SelectedClientTask != null)
 {
     <div class="modal-backdrop" @onclick="CloseClientModal"></div>
@@ -644,25 +712,49 @@
     protected override void OnInitialized()
     {
         var usuario = LoginService.obtenerUsuarioLogueado();
-        UsuarioActualId = usuario.IdUsuario;
-
-        
+        UsuarioActualId = usuario.IdUsuario;        
     }
 
-    string NuevaSubtarea = "";
+    public List<ParticipanteDTO> ParticipantesEdit { get; set; } = new();
+    List<EmpleadoDTO> todosLosEmpleados = new();
+    string BusquedaEmpleado = string.Empty;
+
+    IEnumerable<EmpleadoDTO> EmpleadosFiltrados =>
+    string.IsNullOrWhiteSpace(BusquedaEmpleado)
+        ? Enumerable.Empty<EmpleadoDTO>()
+        : todosLosEmpleados
+            .Where(e =>
+                e.Nombre.Contains(BusquedaEmpleado, StringComparison.OrdinalIgnoreCase)
+                || e.Id.ToString().Contains(BusquedaEmpleado)
+            )
+            .Take(10);
+
+
+    string NuevaSubtarea { get; set; } = "";
 
     void AddSubTask()
     {
         if (string.IsNullOrWhiteSpace(NuevaSubtarea)) return;
 
-        bt.SubTasks.Add(new BaseSubTask { Name = NuevaSubtarea });
+        SelectedTask.SubTasks.Add(new BaseSubTask
+        {
+            Name = NuevaSubtarea,
+            TempId = Guid.NewGuid()
+        });
+
         NuevaSubtarea = "";
+        StateHasChanged();
     }
+
 
     void RemoveSubTask(BaseSubTask st)
     {
-        bt.SubTasks.Remove(st);
+        SelectedTask.SubTasks.Remove(st);
+        StateHasChanged();
     }
+
+
+
 
     // ---------- DÍAS NO LABORALES / ----------
     List<DiaNoLaboralDto> DiasNoLaboralesMes = new();
@@ -737,17 +829,29 @@
             return;
         }
 
+        var veniaDeSala = bt.IdSala.HasValue && bt.IdSala > 0;
+
         salaSeleccionada = value;
 
         if (value == 0)
         {
-            if (bt.IdSala.HasValue && bt.IdSala > 0)
+            // Otra ubicación
+            bt.IdSala = null;
+
+            if (veniaDeSala)
             {
-                bt.IdSala = null;
                 bt.Ubicacion = string.Empty;
             }
         }
+        else
+        {
+            // Sala seleccionada
+            bt.IdSala = value;
+            bt.Ubicacion = null;
+        }
     }
+
+
 
     OrdenTrabajoDTO? OrdenTrabajoDetalle;
     async Task CargarOrdenTrabajo(int id)
@@ -803,6 +907,7 @@
     class BaseTask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid TempId { get; set; } = Guid.NewGuid();
 
         // Identidad
         public int ApiId { get; set; }
@@ -858,6 +963,18 @@
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public bool IsCompleted { get; set; } = false;
+        public Guid TempId { get; set; } = Guid.NewGuid();
+
+        public BaseSubTask Clone()
+        {
+            return new BaseSubTask
+            {
+                Id = this.Id,
+                Name = this.Name,
+                IsCompleted = this.IsCompleted,
+                TempId = this.TempId 
+            };
+        }
     }
 
     int MapPriority(string prioridad)
@@ -888,6 +1005,35 @@
         public string Titulo { get; set; } = string.Empty;
     }
 
+    public class EventoEditDTO
+    {
+        public string titulo { get; set; } = "";
+        public string descripcion { get; set; } = "";
+        public DateTime fechaInicio { get; set; }
+        public DateTime fechaFin { get; set; }
+        public bool esRecurrente { get; set; }
+        public string? reglaRecurrencia { get; set; }
+        public int idPrioridad { get; set; }
+        public int? idSala { get; set; }
+        public string? ubicacion { get; set; }
+
+        public List<int> idsParticipantes { get; set; } = new();
+    }
+
+    public class TareaEditDTO
+    {
+        public string titulo { get; set; } = "";
+        public string descripcion { get; set; } = "";
+        public DateTime fechaInicio { get; set; }
+        public DateTime fechaFin { get; set; }
+        public bool esRecurrente { get; set; }
+        public string? reglaRecurrencia { get; set; }
+        public int idPrioridad { get; set; }
+
+        public List<EditableSubtask> subTareas { get; set; } = new();
+    }
+
+
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -895,7 +1041,7 @@
         public string ActivityName { get; set; } = "";
         public bool IsCompleted { get; set; } = false;
 
-        public DateTime TaskDate { get; set; }   // 🔥 FECHA DE LA TAREA
+        public DateTime TaskDate { get; set; }
 
         public Block ParentBlock { get; set; }
     }
@@ -947,7 +1093,38 @@
         prioridadesList = await ReglasRecurrenciaServices.GetPrioridad();
 
         catalogosCargados = true;
+
+        try
+        {
+            var json = await Http.GetStringAsync("empleado");
+            todosLosEmpleados =
+                JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error cargando empleados: {ex.Message}");
+        }
     }
+
+    void AgregarParticipante(EmpleadoDTO emp)
+    {
+        if (ParticipantesEdit.Any(p => p.idEmpleado == emp.Id))
+            return;
+
+        ParticipantesEdit.Add(new ParticipanteDTO
+        {
+            idEmpleado = emp.Id,
+            nombreEmpleado = emp.Nombre
+        });
+
+        BusquedaEmpleado = "";
+    }
+
+    void QuitarParticipante(ParticipanteDTO p)
+    {
+        ParticipantesEdit.Remove(p);
+    }
+
 
     protected override void OnParametersSet()
     {
@@ -969,7 +1146,6 @@
             salaSeleccionada = null;
         }
     }
-
 
     async Task PrevWeek()
     {
@@ -1096,6 +1272,7 @@
 
                     Prioridad = t.idPrioridad,
                     IdAgenda = t.idAgenda,
+                    Id = t.id,
 
                     EsRecurrente = t.esRecurrente,
                     ReglaRecurrencia = t.reglaRecurrencia,
@@ -1132,6 +1309,7 @@
                     EsRecurrente = e.esRecurrente,
                     ReglaRecurrencia = e.reglaRecurrencia,
 
+                    Id = e.id,
                     IdAgenda = e.idAgenda,
                     IdSala = e.idSala,
 
@@ -1169,7 +1347,8 @@
 
                 var mapped = new BaseTask
                 {
-                    ApiId = item.IdAgenda,
+                    ApiId = item.Id,
+                    IdAgenda = item.IdAgenda,
                     Name = item.Titulo,
                     Description = item.Descripcion,
 
@@ -1473,7 +1652,6 @@
         }
         catch
         {
-            // 🔥 rollback si falla
             sa.IsCompleted = !nuevoValor;
 
             await ShowTemporaryToastAsync(
@@ -1512,8 +1690,8 @@
     }
 
     BaseTask CreateSnapshot(BaseTask source)
-        {
-            return new BaseTask
+    {
+        return new BaseTask
             {
                 ApiId = source.ApiId,
                 IdAgenda = source.IdAgenda,
@@ -1544,25 +1722,40 @@
                     .Select(st => new BaseSubTask { Name = st.Name })
                     .ToList()
             };
-        }
+    }
 
     void OpenTaskModal(BaseTask task, bool editMode)
     {
         OriginalTask = task;
         SelectedTask = CreateSnapshot(task);
-        
-        salaSeleccionada = SelectedTask.IdSala > 0
-        ? SelectedTask.IdSala
-        : 0;
-
-        SelectedTaskObject = null;
-        IsModalOpen = false;
+        SelectedTask.SubTasks = task.SubTasks;
 
         SelectedTaskObject = task;
         IsEditMode = editMode;
         IsModalOpen = true;
+
+        salaSeleccionada = SelectedTask.IdSala.HasValue && SelectedTask.IdSala > 0
+            ? SelectedTask.IdSala
+            : null;
+
         InicializarUbicacion(task);
+        if (task.EsEvento)
+        {
+            ParticipantesEdit = todosLosEmpleados
+                .Where(e => task.Participantes.Contains(e.Nombre))
+                .Select(e => new ParticipanteDTO
+                {
+                    idEmpleado = e.Id,
+                    nombreEmpleado = e.Nombre
+                })
+                .ToList();
+        }
+        else
+        {
+            ParticipantesEdit.Clear();
+        }
     }
+
 
     void OpenSelfAssessmentModal(SelfAssessment sa)
     {
@@ -1573,7 +1766,6 @@
         IsEditMode = false;
         IsModalOpen = true;
     }
-
 
     void CloseTaskModal()
     {
@@ -1624,89 +1816,171 @@
         if (TaskToDelete is not BaseTask bt || bt.ApiId <= 0)
             return;
 
-        await AgendaService.EliminarTareaAsync(bt.ApiId);
+        if (bt.EsEvento)
+        {
+            await AgendaService.EliminarEventoAsync(bt.ApiId);
+            await ShowTemporaryToastAsync("🗑️ Evento eliminado");
+        }
+        else
+        {
+            await AgendaService.EliminarTareaAsync(bt.ApiId);
+            await ShowTemporaryToastAsync("🗑️ Tarea eliminada");
+        }
 
         bt.ParentBlock?.SubTasks.Remove(bt);
-
-        await ShowTemporaryToastAsync("🗑️ Tarea eliminada");
 
         TaskToDelete = null;
         ShowConfirmDelete = false;
     }
 
-
     async Task SaveTask()
     {
-        if (SelectedTask == null || OriginalTask == null)
+        if (SelectedTask is not BaseTask bt || OriginalTask == null)
             return;
 
-        OriginalTask.Name = SelectedTask.Name;
-        OriginalTask.Description = SelectedTask.Description;
-        OriginalTask.StartDate = SelectedTask.StartDate;
-        OriginalTask.DueDate = SelectedTask.DueDate;
-
-        OriginalTask.IdPrioridad = SelectedTask.IdPrioridad;
-        OriginalTask.EsRecurrente = SelectedTask.EsRecurrente;
-        OriginalTask.ReglaRecurrencia = SelectedTask.ReglaRecurrencia;
-
-        OriginalTask.IdSala = SelectedTask.IdSala;
-        OriginalTask.Ubicacion = SelectedTask.Ubicacion;
-
-        OriginalTask.SubTasks = SelectedTask.SubTasks;
-        
-        if (SelectedTaskObject is not BaseTask bt)
+        if (!ValidarFechas(bt))
             return;
 
-        // Validación básica
-        if (bt.DueDate < bt.StartDate)
+        SincronizarSnapshot(bt);
+
+        if (bt.EsEvento)
         {
-            await ShowTemporaryToastAsync(
-                "❌ La fecha fin no puede ser menor a la fecha inicio"
-            );
-            return;
+            await GuardarEvento(OriginalTask);
+        }
+        else
+        {
+            await GuardarTarea(OriginalTask);
         }
 
+        IsEditMode = false;
+        IsModalOpen = false;
+
+        await ShowSuccessAlert($"✅ '{bt.Name}' se guardó correctamente");
+    }
+
+    bool ValidarFechas(BaseTask bt)
+    {
+        if (bt.DueDate < bt.StartDate)
+        {
+            _ = ShowTemporaryToastAsync(
+            "❌ La fecha fin no puede ser menor a la fecha inicio"
+        );
+            return false;
+        }
+        return true;
+    }
+
+    void SincronizarSnapshot(BaseTask bt)
+    {
+        OriginalTask.Name = bt.Name;
+        OriginalTask.Description = bt.Description;
+        OriginalTask.StartDate = bt.StartDate;
+        OriginalTask.DueDate = bt.DueDate;
+        OriginalTask.IdPrioridad = bt.IdPrioridad;
+        OriginalTask.EsRecurrente = bt.EsRecurrente;
+        OriginalTask.ReglaRecurrencia = bt.ReglaRecurrencia;
+        OriginalTask.Recurrence = bt.Recurrence;
+        OriginalTask.IdSala = bt.IdSala;
+        OriginalTask.Ubicacion = bt.Ubicacion;
+        OriginalTask.HoraInicio = bt.HoraInicio;
+        OriginalTask.HoraFin = bt.HoraFin;
+        OriginalTask.Participantes = bt.Participantes.ToList();
+    }
+
+    async Task GuardarTarea(BaseTask bt)
+    {
+        if (bt.Recurrence == "No repetir" || string.IsNullOrWhiteSpace(bt.Recurrence))
+        {
+            bt.EsRecurrente = false;
+            bt.ReglaRecurrencia = null;
+        }
+        else
+        {
+            bt.EsRecurrente = true;
+            bt.ReglaRecurrencia = bt.Recurrence;
+        }
+
+        Debug.WriteLine("SubTasks antes de enviar:");
+        foreach (var st in bt.SubTasks)
+            Debug.WriteLine($"- {st.Name}");
+
+        var dto = new TareaEditDTO
+        {
+            titulo = bt.Name,
+            descripcion = bt.Description,
+            fechaInicio = CombinarFechaHora(bt.StartDate, new TimeOnly(0, 0)),
+            fechaFin = CombinarFechaHora(bt.DueDate, new TimeOnly(0, 0)),
+            esRecurrente = bt.EsRecurrente,
+            reglaRecurrencia = bt.ReglaRecurrencia,
+            idPrioridad = bt.IdPrioridad,
+            subTareas = SelectedTask.SubTasks
+            .Select(s => new EditableSubtask { Titulo = s.Name })
+            .ToList()
+        };
+        await AgendaService.EditarTareaRawAsync(bt.ApiId, dto);
+    }
+ 
+    async Task GuardarEvento(BaseTask bt)
+    {
         if (salaSeleccionada.HasValue && salaSeleccionada > 0)
         {
             bt.IdSala = salaSeleccionada.Value;
-            bt.Ubicacion = salasList
-                .FirstOrDefault(s => s.Id == salaSeleccionada)?.Salas;
+            bt.Ubicacion = null;
         }
         else
         {
             bt.IdSala = null;
         }
 
-        // var model = new EditAgendaItemModel
-        // {
-        //     IdAgenda = bt.IdAgenda,
-        //     Titulo = bt.Name,
-        //     Descripcion = bt.Description,
-        //     FechaInicio = bt.StartDate,
-        //     FechaFin = bt.DueDate,
-        //     EsRecurrente = bt.Recurrence != "No repetir",
-        //     ReglaRecurrencia = bt.Recurrence == "No repetir"
-        //         ? null
-        //         : bt.Recurrence,
+        if (bt.Recurrence == "No repetir" || string.IsNullOrWhiteSpace(bt.Recurrence))
+        {
+            bt.EsRecurrente = false;
+            bt.ReglaRecurrencia = null;
+        }
+        else
+        {
+            bt.EsRecurrente = true;
+            bt.ReglaRecurrencia = bt.Recurrence;
+        }
 
-        //     Prioridad = bt.IdPrioridad,
+        var dto = new EventoEditDTO
+        {
+            titulo = bt.Name,
+            descripcion = bt.Description,
+            fechaInicio = CombinarFechaHora(bt.StartDate, bt.HoraInicio),
+            fechaFin = CombinarFechaHora(bt.DueDate, bt.HoraFin),
+            esRecurrente = bt.EsRecurrente,
+            reglaRecurrencia = bt.ReglaRecurrencia,
+            idPrioridad = bt.IdPrioridad,
+            idSala = bt.IdSala,
+            ubicacion = bt.IdSala == null ? bt.Ubicacion : null,
 
-        //     Subtareas = bt.SubTasks
-        //     .Select(s => s.ToString()!)
-        //     .ToList()
+            idsParticipantes = ParticipantesEdit
+                .Where(p => p.idEmpleado > 0)
+                .Select(p => p.idEmpleado)
+                .Distinct()
+                .ToList()
+        };
 
-        // };
+        await AgendaService.EditarEventoRawAsync(bt.ApiId, dto);
 
-        Console.WriteLine($"🧪 ApiId enviado: {bt.ApiId}");
-        //await AgendaService.EditarTareaAsync(bt.ApiId, model);
-
-        IsEditMode = false;
-        IsModalOpen = false;
-
-        await ShowSuccessAlert(
-            $"✅ La tarea '{bt.Name}' se guardó correctamente"
-        );
+        bt.Participantes = ParticipantesEdit
+        .Select(p => p.nombreEmpleado)
+        .ToList();
     }
+
+    DateTime CombinarFechaHora(DateTime? fecha, TimeOnly? hora)
+    {
+        if (fecha == null || hora == null)
+            return DateTime.MinValue;
+
+        var dt = fecha.Value.Date
+            .AddHours(hora.Value.Hour)
+            .AddMinutes(hora.Value.Minute);
+
+        return DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+    }
+
 
     void CancelEdit()
     {
@@ -2024,6 +2298,7 @@
     }
 
     /* === Igual funcionalidad que subtareas === */
+    .completed-task,
     .task-name.completed {
         text-decoration: line-through; /* misma línea encima */
         opacity: 0.6; /* más tenue */

@@ -16,6 +16,7 @@ public class EditAgendaItemModel
     public TimeOnly HoraFin { get; set; } = new TimeOnly(10, 0);
     public int Prioridad { get; set; }
     public string Ubicacion { get; set; } = string.Empty;
+    public int? idSala { get; set; }
     public string ReglaRecurrencia { get; set; } = string.Empty;
     public List<EmpleadoDTO> Participantes { get; set; } = new();
     public List<EditableSubtask> Subtareas { get; set; } = new();
