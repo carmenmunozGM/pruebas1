@@ -29,6 +29,8 @@
 <br />
 <br />
 <br />
+   
+
 <div class="agenda-container">
     <div class="top-bar-container">
         <div class="fecha-header">
@@ -43,7 +45,9 @@
             </button>
 
             <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
+  
         </div>
+  
 
         @if (MostrarModal)
         {
@@ -80,11 +84,23 @@
             </div>
         }
     </div>
-
+      <button class="btn btn-primary btn-sm" 
+            @onclick="RefreshData" 
+            disabled="@isRefreshing">
+        @if (isRefreshing)
+        {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+        }
+        else
+        {
+            <i class="bi bi-arrow-clockwise"></i> <span> Actualizar</span>
+        }
+    </button>
     @if (!EsDiaNoLaboral)
     {
         <div class="modal-button-container">
             <ReusableModal OnSave="RefrescarTareas" />
+           
         </div>
     }
     @if (EsDiaNoLaboral)
@@ -113,8 +129,12 @@
             </div>
         </div>
         }
+         
     else
     {
+          
+   
+
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas") is CategoryModel tareasCat)
         {
             <div class="card block-card @tareasCat.ColorClass">
@@ -1432,7 +1452,39 @@
     private bool MostrarAlerta = false;
     private string MensajeAlerta = string.Empty;
     private string TipoAlerta = "exito";
+    private bool isRefreshing = false;
 
+    private async Task RefreshData()
+    {
+        if (isRefreshing) return;
+
+        try
+        {
+            isRefreshing = true;
+
+            // 1. Volvemos a verificar si es día festivo/domingo
+            await VerificarDiaNoLaboralAsync();
+
+            // 2. Recargamos todas las categorías desde la API (MasterCategories)
+            await InitializeMasterCategoriesAsync();
+
+            // 3. Aplicamos los filtros de la fecha seleccionada
+            await CargarTareasPorFecha();
+
+            // 4. Actualizamos órdenes de trabajo si existen
+            await PrepararOrdenesVisuales();
+
+            StateHasChanged(); // Forzamos el renderizado
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al refrescar: {ex.Message}");
+        }
+        finally
+        {
+            isRefreshing = false;
+        }
+    }
     private async Task VerificarDiaNoLaboralAsync()
     {
         DiaNoLaboralActual = null;
