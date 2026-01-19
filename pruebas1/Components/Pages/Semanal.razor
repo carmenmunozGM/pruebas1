@@ -16,6 +16,7 @@
 @inject ReglasRecurrenciaServices ReglasRecurrenciaServices
 @inject LoginService LoginService
 @inject HttpClient Http
+@inject ServicioClienteService ServicioClienteService
 
 <br />
 <br />
@@ -84,15 +85,43 @@
                                                 @switch (taskObj)
                                                 {
                                                     case ClientServiceTask cs:
-                                                        <input type="checkbox"
-                                                               checked="@cs.IsCompleted"
-                                                               @onchange="(e) => ToggleCompleteClient(cs, e)"
-                                                               @onclick:stopPropagation />
-                                                        <span class="task-name @(cs.IsCompleted ? "completed" : "")"
-                                                              @onclick="() => OpenClientModal(cs)">
-                                                            @cs.CompanyName
-                                                        </span>
-                                                        break;
+                                                        {
+                                                            bool esActividad = cs.ApiId > 0;
+
+                                                            <div class="client-task-row">
+                                                                @if (esActividad)
+                                                                {
+                                                                    <input type="checkbox"
+                                                                           checked="@cs.IsCompleted"
+                                                                           @onchange="(e) => ToggleServicioClienteAsync(cs, e)"
+                                                                           @onclick:stopPropagation />
+                                                                }
+
+                                                                <span class="task-name
+                                                     @(esActividad && cs.IsCompleted ? "completed" : "")
+                                                     @(esActividad ? "clickable" : "group")"
+                                                                      @onclick="() =>
+                                                                      {
+                                                                          if (esActividad)
+                                                                              OpenClientModal(cs);
+                                                                      }">
+                                                                    @if (!string.IsNullOrEmpty(cs.Actividad))
+                                                                    {
+                                                                        @cs.Actividad
+                                                                    }
+                                                                    else if (!string.IsNullOrEmpty(cs.Servicio))
+                                                                    {
+                                                                        @cs.Servicio
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        @cs.Empresa
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            break;
+                                                        }
+
 
                                                     case SelfAssessment sa:
                                                         <input type="checkbox"
@@ -509,12 +538,17 @@
         <div class="modal-body">
             <div class="form-group">
                 <label>Empresa</label>
-                <p class="read-only-field">@SelectedClientTask.CompanyName</p>
+                <p class="read-only-field">@SelectedClientTask.Empresa</p>
+            </div>
+
+            <div class="form-group">
+                <label>Servicio</label>
+                <p class="read-only-field">@SelectedClientTask.Servicio</p>
             </div>
 
             <div class="form-group">
                 <label>Actividad</label>
-                <p class="read-only-field">@SelectedClientTask.ActivityDetail</p>
+                <p class="read-only-field">@SelectedClientTask.Actividad</p>
             </div>
         </div>
 
@@ -1055,11 +1089,19 @@
     class ClientServiceTask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string CompanyName { get; set; } = "";
-        public string ActivityDetail { get; set; } = "";
-        public bool IsCompleted { get; set; } = false;
+
+        public int ApiId { get; set; } // IdHorasProgramaTrabajo
+
+        public string Empresa { get; set; } = "";
+        public string Servicio { get; set; } = "";
+        public string Actividad { get; set; } = "";
+
+        public bool IsCompleted { get; set; }
+        public DateTime? FechaCompletada { get; set; }
+
         public Block ParentBlock { get; set; }
     }
+
 
     // ---------- Estado del componente ----------
     List<DayColumn> Days = new();
@@ -1222,14 +1264,12 @@
             // Bloque 2 - Órdenes de Trabajo (dinámico)
             day.Blocks.Add(new Block { Title = "Órdenes de Trabajo", Color = "#FFDAC1", IsExpanded = false });
 
-            // Bloque 3 - Autoevaluación (ESTÁTICO)
+            // Bloque 3 - Autoevaluación (dinámico)
             day.Blocks.Add(new Block { Title = "Autoevaluación", Color = "#E2F0CB", IsExpanded = false });
 
-            // Bloque 4 - Servicio al Cliente (ESTÁTICO)
-            var clienteBlock = new Block { Title = "Servicio al Cliente", Color = "#D7D1DD", IsExpanded = false };
-            clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo A", ActivityDetail = "Seguimiento semanal", ParentBlock = clienteBlock });
-            clienteBlock.SubTasks.Add(new ClientServiceTask { CompanyName = "Cliente ejemplo B", ActivityDetail = "Revisión de pendientes", ParentBlock = clienteBlock });
-            day.Blocks.Add(clienteBlock);
+            // Bloque 4 - Servicio al Cliente (dinámico)
+            day.Blocks.Add(new Block {Title = "Servicio al Cliente", Color = "#D7D1DD", IsExpanded = false});
+
 
             Days.Add(day);
         }
@@ -1505,6 +1545,112 @@
             }
         }
 
+
+        // 4) Obtener Servicio al Cliente (AGRUPADO, NO por día)
+        List<ServicioClienteAgendaDTO> serviciosCliente = new();
+
+        try
+        {
+            serviciosCliente = await ServicioClienteService.ObtenerAgendaServicioCliente();
+        }
+        catch
+        {
+            serviciosCliente = new();
+        }
+
+        // Agrupar por EMPRESA → SERVICIO
+        var empresas = serviciosCliente
+            .GroupBy(sc => sc.NombreEmpresa);
+
+        foreach (var empresa in empresas)
+        {
+            foreach (var servicio in empresa.GroupBy(sc => sc.NombreServicio))
+            {
+                foreach (var sc in servicio)
+                {
+                    var inicio = sc.FechaAsignacion.Date;
+                    var fin = sc.FechaConclusion.Date;
+
+                    foreach (var day in Days)
+                    {
+                        var fecha = day.Date.Date;
+
+                        if (fecha < inicio || fecha > fin)
+                            continue;
+
+                        var bloqueCliente = day.Blocks
+                            .First(b => b.Title == "Servicio al Cliente");
+
+                        // ===== EMPRESA =====
+                        var empresaNode = bloqueCliente.SubTasks
+                            .OfType<ClientServiceTask>()
+                            .FirstOrDefault(x =>
+                                x.Empresa == sc.NombreEmpresa &&
+                                string.IsNullOrEmpty(x.Servicio) &&
+                                string.IsNullOrEmpty(x.Actividad));
+
+                        if (empresaNode == null)
+                        {
+                            empresaNode = new ClientServiceTask
+                            {
+                                Empresa = sc.NombreEmpresa,
+                                ParentBlock = bloqueCliente
+                            };
+                            bloqueCliente.SubTasks.Add(empresaNode);
+                        }
+
+                        // ===== SERVICIO =====
+                        var servicioNode = bloqueCliente.SubTasks
+                            .OfType<ClientServiceTask>()
+                            .FirstOrDefault(x =>
+                                x.Empresa == sc.NombreEmpresa &&
+                                x.Servicio == sc.NombreServicio &&
+                                string.IsNullOrEmpty(x.Actividad));
+
+                        if (servicioNode == null)
+                        {
+                            servicioNode = new ClientServiceTask
+                            {
+                                Empresa = sc.NombreEmpresa,
+                                Servicio = sc.NombreServicio,
+                                ParentBlock = bloqueCliente
+                            };
+                            bloqueCliente.SubTasks.Add(servicioNode);
+                        }
+
+                        // ===== ACTIVIDAD (REAL) =====
+                        bool yaExiste = bloqueCliente.SubTasks
+    .OfType<ClientServiceTask>()
+    .Any(x =>
+        x.ApiId == sc.IdHorasProgramaTrabajo &&
+        x.Empresa == sc.NombreEmpresa &&
+        x.Servicio == sc.NombreServicio &&
+        x.Actividad == sc.NombreActividad
+    );
+
+                        if (!yaExiste)
+                        {
+                            bloqueCliente.SubTasks.Add(new ClientServiceTask
+                            {
+                                ApiId = sc.IdHorasProgramaTrabajo,
+                                Empresa = sc.NombreEmpresa,
+                                Servicio = sc.NombreServicio,
+                                Actividad = sc.NombreActividad,
+                                IsCompleted = sc.Completada ?? false,
+                                FechaCompletada = sc.FechaCompletada,
+                                ParentBlock = bloqueCliente
+                            });
+                        }
+
+                    }
+                }
+            }
+        }
+
+
+
+
+
         StateHasChanged();
     }
 
@@ -1593,8 +1739,11 @@
                     if (!sa.IsCompleted) count++;
                     break;
                 case ClientServiceTask cs:
-                    if (!cs.IsCompleted) count++;
+                    // SOLO contar ACTIVIDADES reales
+                    if (!string.IsNullOrEmpty(cs.Actividad) && !cs.IsCompleted)
+                        count++;
                     break;
+
             }
         }
         return count;
@@ -1663,6 +1812,32 @@
         }
         await ShowTemporaryToastAsync(cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada");
     }
+
+    private async Task ToggleServicioClienteAsync(
+    ClientServiceTask cs,
+    ChangeEventArgs e)
+    {
+        bool nuevoEstado =
+            e.Value is bool b
+                ? b
+                : e.Value is string s && (s == "true" || s == "on");
+
+        // Optimistic UI
+        cs.IsCompleted = nuevoEstado;
+        cs.FechaCompletada = nuevoEstado ? DateTime.Now : null;
+
+        var ok = await ServicioClienteService
+            .CambiarEstadoServicioClienteAsync(cs.ApiId, nuevoEstado);
+
+        if (!ok)
+        {
+            cs.IsCompleted = !nuevoEstado;
+            cs.FechaCompletada = cs.IsCompleted ? DateTime.Now : null;
+            StateHasChanged();
+        }
+    }
+
+
 
     void InicializarUbicacion(BaseTask bt)
     {
@@ -2006,6 +2181,7 @@
         StateHasChanged();
     }
 }
+
 <style>
     /*ESTILOS DE LOS DIAS NO LABORALES*/
     /* ===============================
