@@ -10,12 +10,15 @@ namespace pruebas1.Entidades
 {
     public class TareaCreada
     {
+        public int Id { get; set; }
         public string Tipo { get; set; } = "";
         public string Titulo { get; set; } = "";
         public string Descripcion { get; set; } = "";
 
         public List<string> Subtareas { get; set; } = new();
+        public List<SubTareaApi> SubtareasLista { get; set; } = new();
         public bool IsEvento { get; set; } = false;
+        public bool IsCompleted { get; set; } = false;
 
         // 🔥 Fechas reales
         public DateTime? FechaInicio { get; set; }
@@ -41,7 +44,6 @@ namespace pruebas1.Entidades
         public int IdCreador { get; set; }
         public int IdResponsable { get; set; }
         public int Prioridad { get; set; }
-
     }
     public class Participante
     {
@@ -49,7 +51,6 @@ namespace pruebas1.Entidades
         public int IdEmpleado { get; set; }
         public string NombreEmpleado { get; set; } = "";
     }
-
     public class SubtaskModel
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();

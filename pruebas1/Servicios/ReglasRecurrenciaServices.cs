@@ -37,7 +37,5 @@ namespace pruebas1.Servicios
             var respuesta = await httpClient.GetFromJsonAsync<List<Prioridad>>("prioridad");
             return respuesta ?? new List<Prioridad>();
         }
-
-
     }
 }

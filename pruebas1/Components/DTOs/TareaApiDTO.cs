@@ -1,4 +1,5 @@
-﻿using System;
+﻿using pruebas1.Entidades;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,8 +8,7 @@ using System.Threading.Tasks;
 namespace pruebas1.Components.DTOs
 {
     public class TareaApiDto
-    {
-     
+    {    
         public int idAgenda { get; set; }
         public string titulo { get; set; } = string.Empty;
         public string descripcion { get; set; } = string.Empty;
@@ -24,7 +24,7 @@ namespace pruebas1.Components.DTOs
         public int idBloque { get; set; }
         public bool esEvento { get; set; }
 
-        public List<SubTareaApiDto> subTareas { get; set; } = new();
+        public List<SubTareaApi> subTareas { get; set; } = new();
     }
 
     public class SubTareaApiDto
