@@ -65,40 +65,6 @@ namespace pruebas1.Servicios
             var freq = frecuencias.FirstOrDefault(f => f.Id == idFrecuencia.Value);
             return freq?.Nombre ?? "";
         }
-
-        // CREAR EVENTO
-        /*  public async Task<bool> CrearEventoApi(TareaCreada t)
-          {
-              // Obtener usuario actual
-              var usuario = loginService.obtenerUsuarioLogueado();
-              if (usuario == null)
-                  return false;
-
-              // Asegurar agenda
-              int idAgenda = t.IdAgenda > 0 ? t.IdAgenda : usuario.IdAgendasAsignadas.FirstOrDefault();
-
-              var dto = new
-              {
-                  idAgenda = idAgenda,
-                  titulo = t.Titulo,
-                  descripcion = t.Descripcion,
-                  fechaInicio = t.FechaInicio ?? DateTime.Now,
-                  fechaFin = t.FechaFin ?? DateTime.Now,
-                  todoElDia = true,
-                  idPrioridad = 1,
-                  idSala = 0,
-                  ubicacion = t.Ubicacion ?? "",
-                  participantes = new List<object>()
-              };
-
-              Debug.WriteLine($"[CREAR EVENTO] POST /eventos  → Agenda: {idAgenda}, Título: {t.Titulo}");
-
-              var response = await httpClient.PostAsJsonAsync("eventos", dto);
-
-              Debug.WriteLine($"Respuesta crear evento: {response.StatusCode}");
-
-              return response.IsSuccessStatusCode;
-          }*/
         public async Task<bool> CrearEventoApi(TareaCreada evento)
         {
             try

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace pruebas1.Entidades
@@ -84,8 +85,9 @@ namespace pruebas1.Entidades
         public bool EsEventoMio { get; set; }
         public string NombreCreador { get; set; } = "";
         public List<SubtaskModel> Subtasks { get; set; } = new();
-        public DateTime? FechaCompletado { get; set; }
 
+        [JsonPropertyName("fechaCompletada")]
+        public DateTime? FechaCompletada { get; set; } // Terminando en 'a'
     }
     public class OrdenTrabajoModel
     {

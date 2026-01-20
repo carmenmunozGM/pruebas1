@@ -16,8 +16,8 @@ namespace pruebas1.Components
         public DateTime fechaInicio { get; set; }
         public DateTime fechaFin { get; set; }
 
-        public bool completada { get; set; } 
-
+        public bool completada { get; set; }
+        public DateTime? fechaCompletada { get; set; }
         public bool esRecurrente { get; set; }
         public string reglaRecurrencia { get; set; }
         public int idPrioridad { get; set; }
