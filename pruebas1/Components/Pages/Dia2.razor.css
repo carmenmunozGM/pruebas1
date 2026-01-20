@@ -1254,447 +1254,172 @@
     z-index: 1000;
 }
 
-/* === Modal (MUCHO MÁS GRANDE) === */
-.view-modal {
-    background: white;
-    width: 95%;
-    max-width: 850px; /* MODAL MÁS ANCHO */
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-    overflow: hidden;
-}
-/*estilos del modal de editar */
-/* Contenedor del Fondo (Backdrop) */
-/* =====================================================
-   MODAL EDITAR – ESTILOS AISLADOS Y PROFESIONALES
-===================================================== */
-
-/*.modal-backdrop-custom {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}*/
-    /* TARJETA */
-    /*.modal-backdrop-custom .edit-modal {
-        width: 900px;
-        max-width: 95%;
-        background: #fff;
-        border-radius: 14px;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;*/ /* Esto recorta el azul en las esquinas */
-        /*padding: 0 !important;*/ /* <--- FUERZA EL PADDING A CERO */
-        /*border: none;
-    }*/
-    /* HEADER */
-    /*.modal-backdrop-custom .modal-header-edit {
-        background: #C6E9F0;
-        color: #000;
-        padding: 16px 25px;*/ /* Controla el tamaño de la franja azul aquí */
-        /*display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;*/ /* Asegura que abarque todo */
-        /*box-sizing: border-box;
-        border-bottom: 1px solid rgba(0,0,0,0.05);*/ /* Borde mucho más sutil */
-    /*}
-
-        .modal-backdrop-custom .modal-header-edit h4 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-    .modal-backdrop-custom .close-btn {
-        background: transparent;
-        border: none;
-        font-size: 1.4rem;
-        color: #333;*/ /* Cambiado de #fff a un gris oscuro o negro */
-        /*cursor: pointer;
-        line-height: 1;*/ /* Ayuda a centrar la X */
-    /*}*/
-
-    /* BODY */
-    /*.modal-backdrop-custom .modal-body-padding {
-        padding: 16px 18px;
-    }*/
-
-    /* GRID FORM */
-    /*.modal-backdrop-custom .modal-form-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px 14px;
-    }*/
-
-    /* FULL WIDTH CAMPOS */
-    /*.modal-backdrop-custom .field-title,
-    
-    .modal-backdrop-custom .field-location,
-    .modal-backdrop-custom .field-participants,
-    .modal-backdrop-custom .field-checklist {
-        grid-column: span 1;
-    }
-    .modal-backdrop-custom .field-description {
-        grid-column: span 1.5;
-    }*/
-    /* LABEL */
-    /*.modal-backdrop-custom .form-label-custom {
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 4px;
-        display: block;
-    }*/
-
-    /* INPUTS */
-    /*.modal-backdrop-custom .form-control-custom {
-        width: 100%;
-        height: 36px;
-        padding: 6px 10px;
-        font-size: 0.85rem;
-        border-radius: 8px;
-        border: 1px solid #d1d5db;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .modal-backdrop-custom textarea.form-control-custom {
-        flex-grow: 1;*/ /* El input toma todo el espacio sobrante */
-        /*border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    .modal-backdrop-custom .form-control-custom:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-        outline: none;
-    }*/
-    /* Esto une el input y el botón en una sola línea */
-    /*.modal-backdrop-custom .input-group {
-        display: flex;
-        width: 100%;
-        align-items: stretch;*/ /* Hace que ambos tengan la misma altura */
-    /*}
-
-    .modal-backdrop-custom .border-right-0 {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }*/
-
-    /* BOTON + */
-    /* Corrige el botón de "+" que se ve cuadrado y abajo */
-/*.modal-backdrop-custom .btn-add-custom {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #e5e7eb;
-    border: 1px solid #d1d5db;
-    border-left: none;*/ /* Une el botón al input */
-    /*padding: 0 15px;
+.bento-modal {
+    background: #ffffff;
+    width: 90%;
+    max-width: 750px;
+    border-radius: 28px;
+    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25);
+    padding: 30px;
+    font-family: 'Segoe UI', Roboto, sans-serif;
 }
 
-        .modal-backdrop-custom .btn-add-custom:hover {
-            background: #1e40af;
-        }*/
-
-    /* PARTICIPANTES */
-    /*.modal-backdrop-custom .tags-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .modal-backdrop-custom .custom-badge {
-        background: #e5edff;
-        color: #1e40af;
-        padding: 4px 8px;
-        font-size: 0.75rem;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-        .modal-backdrop-custom .custom-badge i {
-            cursor: pointer;
-        }*/
-
-    /* CHECKLIST */
-    /*.modal-backdrop-custom .subtask-viewer {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .modal-backdrop-custom .subtask-item {
-        display: flex;
-        justify-content: space-between;*/ /* Empuja el texto a la izquierda y el icono a la derecha */
-        /*align-items: center;
-        background: #f3f4f6;
-        padding: 8px 12px;
-        border-radius: 8px;
-        margin-top: 5px;
-    }*/
-
-    /* FOOTER */
-    /*.modal-backdrop-custom .modal-footer-edit {
-        padding: 14px 18px;
-        border-top: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: flex-end;
-    }*/
-
-    /* BOTONES */
-    /*.modal-backdrop-custom .btn-custom {
-        padding: 8px 16px;
-        font-size: 0.85rem;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-    }
-
-    .modal-backdrop-custom .btn-cancel {
-        background: #e5e7eb;
-        color: #374151;
-    }
-
-    .modal-backdrop-custom .btn-save {
-        background: #2563eb;
-        color: #fff;
-    }
-
-        .modal-backdrop-custom .btn-save:hover {
-            background: #1e40af;
-        }*/
-
-/* RESPONSIVE */
-/*@media (max-width: 768px) {
-    .modal-backdrop-custom .modal-form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .modal-backdrop-custom .field-title,
-    .modal-backdrop-custom .field-description,
-    .modal-backdrop-custom .field-location,
-    .modal-backdrop-custom .field-participants,
-    .modal-backdrop-custom .field-checklist {
-        grid-column: span 1;
-    }
-}*/
-
-
-/*TERMINAR  MODAL*/
-/* === Animaciones === */
-@keyframes viewFadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes viewSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px) scale(0.96);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* ======== HEADER ======== */
-.view-header {
-    padding: 20px 30px;
-    background: #FFDAC1;
+/* Header */
+.bento-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 25px;
+    padding: 0 5px;
 }
 
-    .view-header h3 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 700;
-    }
+.type-tag {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
 
-/* Botón cerrar */
-.view-close {
+.bento-header h3 {
+    margin: 8px 0 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.bento-close {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 20px;
+    color: #94a3b8;
     cursor: pointer;
-    color: #666;
 }
 
-    .view-close:hover {
-        transform: scale(1.2);
-    }
-
-/* ======== BODY ======== */
-.view-body {
-    padding: 25px 35px;
-    max-height: 80vh;
-    overflow-y: auto;
+/* Grid de Cajas (Bento) */
+.bento-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 15px;
 }
 
-.view-field {
-    margin-bottom: 22px;
+.bento-item {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
+    padding: 20px;
+    transition: 0.3s;
 }
 
-    .view-field label {
+    .bento-item label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
         font-weight: 800;
-        font-size: 15px;
-        color: #222;
+        color: #111; /* <--- ANTES: #94a3b8 (Cambiado a negro para mejor lectura) */
+        text-transform: uppercase;
+        margin-bottom: 12px;
     }
 
-    .view-field p {
-        margin: 6px 0 0;
-        font-size: 16px;
-        color: #333;
-    }
-.view-section-title {
-    grid-column: span 3;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #999;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-}
-/* Estilos específicos para textos */
-.title-text {
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    color: #007bff !important;
+/* Ajustes de celdas */
+.full-width {
+    grid-column: span 2;
 }
 
-.desc-text {
-    background: #f9f9f9;
-    padding: 10px;
-    border-radius: 8px;
-    font-style: italic;
+.description p {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0;
 }
-.view-section-list {
-    background: #f8f9fa;
-    padding: 15px;
+
+/* Prioridad y Tiempo */
+.status-box {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #f1f5f9;
+}
+
+.prio-label {
+    font-weight: 800;
+    font-size: 14px;
+}
+
+    .prio-label.Alta {
+        color: #e11d48;
+    }
+
+    .prio-label.Media {
+        color: #d97706;
+    }
+
+    .prio-label.Baja {
+        color: #059669;
+    }
+
+.time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #334155;
+    margin-bottom: 5px;
+}
+
+/* Listas de Nombres Full */
+.names-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.full-name-tag {
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 6px 14px;
     border-radius: 12px;
-    margin-top: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
 }
-    .view-section-list h4 {
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        color: #444;
-    }
 
-    .view-section-list ul {
-        margin: 0;
-        padding-left: 20px;
-    }
+/* Subtareas */
+.subtasks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
 
-    .view-section-list li {
-        font-size: 13px;
-        margin-bottom: 5px;
-        color: #555;
-    }
-.creator-box {
-    background: #fff4e5;
+.subtask-card {
+    background: white;
     padding: 10px;
-    border-radius: 8px;
-    margin-top: 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    border-left: 4px solid #3b82f6;
+    /* MODIFICA ESTO */
+    font-size: 16px; /* Tamaño del texto */
+    font-weight: 600; /* Grosor de la letra para que resalte más */
+    color: #1a1a1a; /* Color negro para mejor legibilidad */
 }
-/* ======== LISTAS ======== */
-.view-list {
-    padding-left: 22px;
-    margin: 8px 0 0;
-}
 
-
-    .view-list li {
-        margin-bottom: 7px;
-        font-size: 16px;
-    }
-
-/* ======== FOOTER ======== */
-.view-footer {
-    padding: 18px;
-    background: #f5f5f5;
-    border-radius: 0 0 22px 22px;
+/* Footer */
+.bento-footer {
+    margin-top: 25px;
     text-align: right;
 }
 
-.view-btn {
-    background: #007bff;
+.bento-btn {
+    background: #FF4D4D;
     color: white;
     border: none;
-    padding: 12px 26px;
-    border-radius: 10px;
+    padding: 12px 35px;
+    border-radius: 14px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: 0.25s;
 }
-
-    .view-btn:hover {
-        background: #005fcc;
-    }
-
-.view-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* TRES COLUMNAS EQUITATIVAS */
-    gap: 20px;
-    margin-bottom: 25px;
-}
-.view-field.full-row {
-    grid-column: span 3; /* OCUPA TODO EL ANCHO */
-}
-.view-field.two-cols {
-    grid-column: span 2; /* OCUPA DOS COLUMNAS */
-}
-.view-field.full {
-    grid-column: span 2;
-    margin-bottom: 15px;
-}
-
-.view-field label {
-    display: block;
-    font-size: 13px;
-    color: #666;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.view-field p {
-    margin-top: 6px;
-    font-size: 16px;
-    color: #222;
-}
-
-.view-section {
-    margin-top: 28px;
-}
-
-    .view-section h4 {
-        margin-bottom: 10px;
-        font-size: 17px;
-        color: #333;
-    }
-
-    .view-section ul {
-        padding-left: 20px;
-    }
-
-    .view-section li {
-        margin-bottom: 6px;
-    }
 
 /* OVERLAY */
 .tramite-overlay {

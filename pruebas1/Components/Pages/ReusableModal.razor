@@ -42,23 +42,13 @@
                         <label>🏷️Título / Nombre *</label>
                         <InputText class="form-control" @bind-Value="titulo" />
                     </div>
-                    <div class="form-control-group">
+                    <div class="form-control-group col-span-2">
                         <label>⚡Prioridad</label>
                         <select class="form-input" @bind="selectedPrioridadId">
                             <option value="">Seleccione...</option>
                             @foreach (var p in prioridadesDisponibles)
                             {
                                 <option value="@p.Id">@p.Titulo</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-control-group">
-                        <label>🔁 Recurrencia</label>
-                        <select class="form-input" @bind="selectedFrecuenciaId">
-                            <option value="">Seleccione...</option>
-                            @foreach (var f in frecuencias)
-                            {
-                                <option value="@f.Id">@f.Descripcion</option>
                             }
                         </select>
                     </div>
@@ -349,10 +339,6 @@
 
         if (!selectedPrioridadId.HasValue)
             alertMessage += "Debes seleccionar la prioridad.\n";
-
-        if (!selectedFrecuenciaId.HasValue)
-            alertMessage += "Debes seleccionar la recurrencia.\n";
-
         if (!FechaInicio.HasValue)
             alertMessage += "Debes seleccionar la fecha de inicio.\n";
         else if (FechaInicio.Value.Date < DateTime.Today)
@@ -905,7 +891,7 @@
         border-radius: 8px;
         padding: 10px 12px;
         font-size: 0.9rem;
-        width: 100%;
+        width: 150%;
         transition: 0.2s ease;
         background-color: #fff;
     }

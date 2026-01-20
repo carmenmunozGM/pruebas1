@@ -84,18 +84,51 @@
             </div>
         }
     </div>
-      <button class="btn btn-primary btn-sm" 
-            @onclick="RefreshData" 
-            disabled="@isRefreshing">
-        @if (isRefreshing)
-        {
-            <span class="spinner-border spinner-border-sm" role="status"></span>
+    <div class="text-start">
+        <button class="btn-sm refresh-glow"
+                @onclick="RefreshData"
+                disabled="@isRefreshing">
+            @if (isRefreshing)
+            {
+                <span class="spinner-border spinner-border-sm text-light"></span>
+            }
+            else
+            {
+                <span> 🔄 Actualizar</span>
+            }
+        </button>
+    </div>
+
+    <style>
+        .refresh-glow {
+            background-color: #BDEAF9;
+            color: black;
+            border: none;
+            border-radius: 10px;
+            padding: 5px 30px;
+            transform: translateY(102px);
+            font-weight: 600;
+            font-size: 1rem;
+            min-width: 32px;
+            height: 32px;
+            box-shadow: 0 0 8px rgba(183, 183, 183);
+            transition: box-shadow 0.25s ease-in-out, background-color 0.25s ease-in-out;
         }
-        else
-        {
-            <i class="bi bi-arrow-clockwise"></i> <span> Actualizar</span>
+
+            .refresh-glow:hover,
+            .refresh-glow:focus,
+            .refresh-glow:active {
+                transform: translateY(102px);
+            }
+
+
+        .rotate-icon {
+            display: inline-block;
+            animation: spin 1s linear infinite;
         }
-    </button>
+
+       
+    </style>
     @if (!EsDiaNoLaboral)
     {
         <div class="modal-button-container">
@@ -812,6 +845,8 @@
     </div>
 }
 
+
+
 <!-- MODAL DE DETALLE DE TAREA ORDENES TRABAJO -->
 @if (ShowTaskDetailsModal && SelectedTask != null)
 {
@@ -859,145 +894,94 @@
 @if (ShowViewModal && SelectedViewItem != null)
 {
     <div class="view-overlay" @onclick="CloseViewModal">
-        <div class="view-modal" @onclick:stopPropagation="true">
+        <div class="bento-modal @SelectedViewItem.Tipo.ToLower()" @onclick:stopPropagation="true">
 
-            <div class="view-header">
-                <h3>@(SelectedViewItem.Tipo == "Tarea" ? "📝 Detalles de la Tarea" : "📅 Detalles del Evento")</h3>
-                <button class="view-close" @onclick="CloseViewModal">×</button>
+            <div class="bento-header">
+                <div class="header-info">
+                    <span class="type-tag">@SelectedViewItem.Tipo</span>
+                    <h3>🏷️ @SelectedViewItem.Title</h3>
+                </div>
+                <button class="bento-close" @onclick="CloseViewModal">✕</button>
             </div>
 
-            <div class="view-body">
-                <div class="view-section-title">Información General</div>
-
-                <div class="view-grid">
-                    <div class="view-field full-row">
-                        <label>Título</label>
-                        <p class="title-text">@SelectedViewItem.Title</p>
-                    </div>
-
-                    <div class="view-field full-row">
-                        <label>Descripción</label>
-                        <p class="desc-text">@(string.IsNullOrEmpty(SelectedViewItem.Descripcion) ? "Sin descripción" : SelectedViewItem.Descripcion)</p>
-                    </div>
-
-                    <div class="view-field">
-                        <label>Tipo</label>
-                        <p>@SelectedViewItem.Tipo</p>
-                    </div>
-                    <div class="view-field">
-                        <label>Prioridad</label>
-                        <p class="priority-tag">
-                            @(SelectedViewItem.Prioridad > 0 && prioridadesLookup.ContainsKey(SelectedViewItem.Prioridad)
-                                                    ? prioridadesLookup[SelectedViewItem.Prioridad]
-                                                    : "Sin prioridad")
-                    </p>
+            <div class="bento-grid">
+                <div class="bento-item description">
+                    <label>📝 Descripción</label>
+                    <p>@(string.IsNullOrEmpty(SelectedViewItem.Descripcion) ? "Sin descripción detallada disponible." : SelectedViewItem.Descripcion)</p>
                 </div>
-                <div class="view-field">
-                    <label>Recurrencia</label>
-                    <p>@(SelectedViewItem.EsRecurrente? SelectedViewItem.ReglaRecurrencia: "No recurrente")</p>
+
+                <div class="bento-item status-box">
+                    <div class="mini-block">
+                        <label>⚡Prioridad</label>
+                        <span class="prio-label @(prioridadesLookup.ContainsKey(SelectedViewItem.Prioridad) ? prioridadesLookup[SelectedViewItem.Prioridad] : "Baja")">
+                            @(prioridadesLookup.ContainsKey(SelectedViewItem.Prioridad) ? prioridadesLookup[SelectedViewItem.Prioridad] : "Baja")
+                        </span>
+                    </div>
+                    <div class="mini-block">
+                        <label>Planificación</label>
+                        <div class="time-row">
+                            <span><strong>🗓️Inicia:</strong> @SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</span>
+                            @if (SelectedViewItem.Tipo == "Evento")
+                            {
+                                <small>🕒@SelectedViewItem.HoraInicio?.ToString("HH:mm")</small>
+                            }
+                        </div>
+                        <div class="time-row">
+                            <span><strong>🗓️Termina:</strong> @SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</span>
+                            @if (SelectedViewItem.Tipo == "Evento")
+                            {
+                                <small>🕒@SelectedViewItem.HoraFin?.ToString("HH:mm")</small>
+                            }
+                        </div>
+                    </div>
                 </div>
 
                 @if (SelectedViewItem.Tipo == "Evento")
-                    {
-                        <div class="view-field full-row">
-                            <label>📍 Ubicación</label>
-                            <p>@SelectedViewItem.Ubicacion</p>
-                        </div>
-                    }
-                </div>
-
-                <div class="view-section-title">Tiempos y Planificación</div>
-                <div class="view-grid">
-                    <div class="view-field">
-                        <label>Fecha Inicio</label>
-                        <p>@SelectedViewItem.FechaInicio?.ToString("dd/MM/yyyy")</p>
+                {
+                    <div class="bento-item location-box">
+                        <label>📍 Ubicación</label>
+                        <p>@SelectedViewItem.Ubicacion</p>
                     </div>
 
-                    @if (SelectedViewItem.Tipo == "Evento")
-                    {
-                        <div class="view-field">
-                            <label>Hora Inicio</label>
-                            <p>@SelectedViewItem.HoraInicio?.ToString("HH:mm")</p>
-                        </div>
-                        <div class="view-field">
-                        </div>
-                    }
-
-                    <div class="view-field">
-                        <label>Fecha Fin</label>
-                        <p>@SelectedViewItem.FechaFin?.ToString("dd/MM/yyyy")</p>
+                    <div class="bento-item creator-box">
+                        <label>👑 Organizado por</label>
+                        <p>@SelectedViewItem.NombreCreador</p>
                     </div>
+                }
 
-                    @if (SelectedViewItem.Tipo == "Evento")
-                    {
-                        <div class="view-field">
-                            <label>Hora Fin</label>
-                            <p>@SelectedViewItem.HoraFin?.ToString("HH:mm")</p>
+                @if (SelectedViewItem.Participantes?.Any() == true)
+                {
+                    <div class="bento-item people-box full-width">
+                        <label>👥 Equipo de Trabajo</label>
+                        <div class="names-grid">
+                            @foreach (var p in SelectedViewItem.Participantes)
+                            {
+                                <span class="full-name-tag">📌 @p</span>
+                            }
                         </div>
-                    }
-                </div>
-
-                <div class="view-grid mt-3">
-                    @if (SelectedViewItem.Tipo == "Evento")
-                    {
-                        <div class="view-field two-cols">
-                            <div class="creator-box">
-                                <label>👑 Creador del evento</label>
-                                <p>@SelectedViewItem.NombreCreador</p>
-                            </div>
-                        </div>
-                    }
-
-                    <div class="view-field @(SelectedViewItem.Tipo == "Evento" ? "" : "full-row")">
-                        @if (SelectedViewItem.Participantes?.Any() == true)
-                        {
-                            <div class="view-section-list">
-                                <h4>👥 Participantes</h4>
-                                <ul>
-                                    @foreach (var p in SelectedViewItem.Participantes)
-                                    {
-                                        <li>@p</li>
-                                    }
-                                </ul>
-                            </div>
-                        }
-
-                        @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Subtasks?.Any() == true)
-                        {
-                            <div class="view-section-list">
-                                <h4>✔️ Subtareas</h4>
-                                <ul>
-                                    @foreach (var s in SelectedViewItem.Subtasks)
-                                    {
-                                        <li>@s.Title</li>
-                                    }
-                                </ul>
-                            </div>
-                        }
                     </div>
-                </div>
+                }
+
+                @if (SelectedViewItem.Tipo == "Tarea" && SelectedViewItem.Subtasks?.Any() == true)
+                {
+                    <div class="bento-item tasks-box full-width">
+                        <label> ✅Subtareas asociadas</label>
+                        <div class="subtasks-grid">
+                            @foreach (var s in SelectedViewItem.Subtasks)
+                            {
+                                <div class="subtask-card">  @s.Title</div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
 
-            <div class="view-footer">
-                <button class="view-btn" @onclick="CloseViewModal">Cerrar</button>
+            <div class="bento-footer">
+                <button class="bento-btn" @onclick="CloseViewModal">Cerrar</button>
             </div>
         </div>
     </div>
-
-    Debug.WriteLine($"Titulo: {SelectedViewItem.Title}");
-    Debug.WriteLine($"Ubicacion: {SelectedViewItem.Ubicacion}");
-    Debug.WriteLine($"HoraInicio: {SelectedViewItem.HoraInicio}");
-    Debug.WriteLine($"HoraFin: {SelectedViewItem.HoraFin}");
-    Debug.WriteLine($"🧪 Prioridad = {SelectedViewItem.Prioridad}");
-    Debug.WriteLine($"🧪 EsRecurrente = {SelectedViewItem.EsRecurrente}");
-    Debug.WriteLine($"🧪 Regla = {SelectedViewItem.ReglaRecurrencia}");
-
-    Debug.WriteLine($"👤 usuarioActualId = {usuarioActualId}");
-    Debug.WriteLine($"👑 creadorId = {SelectedViewItem.CreadorId}");
-
-
 }
-
 <!--MODAL DE ORDENES DE TRAMITE-->
 @if (ShowTramiteModal && SelectedOrdenTramite != null)
 {
@@ -1451,39 +1435,7 @@
     private bool MostrarAlerta = false;
     private string MensajeAlerta = string.Empty;
     private string TipoAlerta = "exito";
-    private bool isRefreshing = false;
 
-    private async Task RefreshData()
-    {
-        if (isRefreshing) return;
-
-        try
-        {
-            isRefreshing = true;
-
-            // 1. Volvemos a verificar si es día festivo/domingo
-            await VerificarDiaNoLaboralAsync();
-
-            // 2. Recargamos todas las categorías desde la API (MasterCategories)
-            await InitializeMasterCategoriesAsync();
-
-            // 3. Aplicamos los filtros de la fecha seleccionada
-            await CargarTareasPorFecha();
-
-            // 4. Actualizamos órdenes de trabajo si existen
-            await PrepararOrdenesVisuales();
-
-            StateHasChanged(); // Forzamos el renderizado
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error al refrescar: {ex.Message}");
-        }
-        finally
-        {
-            isRefreshing = false;
-        }
-    }
     private async Task VerificarDiaNoLaboralAsync()
     {
         DiaNoLaboralActual = null;
@@ -1776,19 +1728,19 @@
     }
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
-       
+        // Cambiar estado en la API
         bool ok = st.Tipo == "Evento"
             ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
             : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
 
         if (!ok)
         {
-            st.IsDone = !st.IsDone; 
+            st.IsDone = !st.IsDone; // Revertir si falla
             StateHasChanged();
             return;
         }
 
-
+        // Actualizar MasterCategories local
         foreach (var categoriaMaestra in MasterCategories)
         {
             var itemOriginal = categoriaMaestra.Subtasks
@@ -1796,29 +1748,36 @@
 
             if (itemOriginal != null)
             {
-                itemOriginal.IsDone = st.IsDone; 
+                itemOriginal.IsDone = st.IsDone;
 
                 if (st.Tipo == "Tarea")
                 {
+                    // Si se marca como completada, asigna la fecha seleccionada
                     itemOriginal.FechaCompletado = st.IsDone ? FechaSeleccionada.Date : null;
                 }
-                break; 
+
+                break;
             }
         }
+
+        // Recargar tareas según la fecha seleccionada
         await CargarTareasPorFecha();
     }
 
-   
+
+
     private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
     {
-      
         await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, parent.IsDone);
 
-       
         foreach (var sub in parent.Subtasks)
         {
             sub.IsDone = parent.IsDone;
             await AgendaService.CambiarEstadoSubtareaAsync(sub.ApiId, sub.IsDone);
+
+            // 🔹 Registrar FechaCompletado solo si es tarea y se marcó como completa
+            if (sub.Tipo == "Tarea")
+                sub.FechaCompletado = sub.IsDone ? FechaSeleccionada.Date : null;
         }
 
         var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
@@ -1826,18 +1785,26 @@
         if (masterParent != null)
         {
             masterParent.IsDone = parent.IsDone;
-            foreach (var ms in masterParent.Subtasks) ms.IsDone = parent.IsDone;
+            foreach (var ms in masterParent.Subtasks)
+            {
+                ms.IsDone = parent.IsDone;
+                if (ms.Tipo == "Tarea")
+                    ms.FechaCompletado = parent.IsDone ? FechaSeleccionada.Date : null;
+            }
         }
 
         await CargarTareasPorFecha();
     }
 
-   
+
     private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
     {
         await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, subtask.IsDone);
 
-      
+        // 🔹 Registrar FechaCompletado
+        if (subtask.Tipo == "Tarea")
+            subtask.FechaCompletado = subtask.IsDone ? FechaSeleccionada.Date : null;
+
         bool todosCompletos = parent.Subtasks.All(s => s.IsDone);
 
         if (parent.IsDone != todosCompletos)
@@ -1845,17 +1812,24 @@
             parent.IsDone = todosCompletos;
             await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, parent.IsDone);
         }
+
         var masterParent = MasterCategories.SelectMany(c => c.Subtasks)
                            .FirstOrDefault(x => x.ApiId == parent.ApiId);
         if (masterParent != null)
         {
             masterParent.IsDone = parent.IsDone;
             var masterSub = masterParent.Subtasks.FirstOrDefault(s => s.ApiId == subtask.ApiId);
-            if (masterSub != null) masterSub.IsDone = subtask.IsDone;
+            if (masterSub != null)
+            {
+                masterSub.IsDone = subtask.IsDone;
+                if (masterSub.Tipo == "Tarea")
+                    masterSub.FechaCompletado = subtask.IsDone ? FechaSeleccionada.Date : null;
+            }
         }
 
         StateHasChanged();
     }
+
     public class HistorialFechaCambio
     {
         public DateTime FechaAnterior { get; set; }
@@ -2510,43 +2484,72 @@ MasterCategories.Add(servicioClienteCategory);
         }
     }
    
-  private async Task CargarTareasPorFecha()
-{
-    var fechaActual = FechaSeleccionada.Date;
-
-    Categories = MasterCategories.Select(c =>
+    private async Task CargarTareasPorFecha()
     {
-        var subtasksFiltradas = c.Subtasks.Where(st =>
-        {
-            if (st.Tipo == "Evento")
-            {
-                return st.FechaInicio.HasValue
-                    && st.FechaInicio.Value.Date == fechaActual;
-            }
-            if (st.IsDone && st.FechaCompletado.HasValue)
-            {
-                return st.FechaCompletado.Value.Date == fechaActual;
-            }
+        var fechaActual = FechaSeleccionada.Date;
 
-                if (!st.FechaInicio.HasValue) return false;
+        // 🔹 Actualizar localmente FechaCompletado si no está
+        foreach (var c in MasterCategories)
+        {
+            foreach (var st in c.Subtasks)
+            {
+                if (st.IsDone && st.Tipo == "Tarea" && !st.FechaCompletado.HasValue)
+                {
+                    st.FechaCompletado = st.FechaCompletado ?? FechaSeleccionada.Date;
+                }
+            }
+        }
+
+        Categories = MasterCategories.Select(c =>
+        {
+            var subtasksFiltradas = c.Subtasks.Where(st =>
+            {
+                // 🔹 Debug en consola
+                _ = JSRuntime.InvokeVoidAsync(
+                    "console.log",
+                    $"[FILTRO] | Nombre={st.Descripcion} | IsDone={st.IsDone} | Inicio={st.FechaInicio?.Date} | Completado={st.FechaCompletado?.Date} | FechaActual={fechaActual}"
+                );
+
+                // --- EVENTOS ---
+                if (st.Tipo == "Evento")
+                {
+                    if (!st.FechaInicio.HasValue || !st.FechaFin.HasValue)
+                        return false;
+
+                    return fechaActual >= st.FechaInicio.Value.Date &&
+                           fechaActual <= st.FechaFin.Value.Date;
+                }
+
+                if (!st.FechaInicio.HasValue)
+                    return false;
 
                 var inicio = st.FechaInicio.Value.Date;
 
+                // --- TAREAS COMPLETADAS ---
+                if (st.IsDone)
+                {
+                    return st.FechaCompletado.HasValue && st.FechaCompletado.Value.Date == fechaActual;
+                }
+
+                // --- TAREAS PENDIENTES ---
                 return fechaActual >= inicio;
+
+            }).ToList();
+
+            return new CategoryModel
+            {
+                Name = c.Name,
+                ColorClass = c.ColorClass,
+                Icon = c.Icon,
+                IsCollapsed = c.IsCollapsed,
+                Subtasks = subtasksFiltradas
+            };
         }).ToList();
 
-        return new CategoryModel
-        {
-            Name = c.Name,
-            ColorClass = c.ColorClass,
-            Icon = c.Icon,
-            IsCollapsed = c.IsCollapsed,
-            Subtasks = subtasksFiltradas
-        };
-    }).ToList();
+        StateHasChanged();
+    }
 
-    StateHasChanged();
-}
+
 
 
     private SubtaskModel CloneSubtask(SubtaskModel st)
@@ -2887,7 +2890,41 @@ MasterCategories.Add(servicioClienteCategory);
         return st.Tipo == "Evento" && st.EsEventoMio;
     }
 
+    private bool isRefreshing = false;
+
+    private async Task RefreshData()
+    {
+        if (isRefreshing) return;
+
+        try
+        {
+            isRefreshing = true;
+
+            // 1. Volvemos a verificar si es día festivo/domingo
+            await VerificarDiaNoLaboralAsync();
+
+            // 2. Recargamos todas las categorías desde la API (MasterCategories)
+            await InitializeMasterCategoriesAsync();
+
+            // 3. Aplicamos los filtros de la fecha seleccionada
+            await CargarTareasPorFecha();
+
+            // 4. Actualizamos órdenes de trabajo si existen
+            await PrepararOrdenesVisuales();
+
+            StateHasChanged(); // Forzamos el renderizado
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al refrescar: {ex.Message}");
+        }
+        finally
+        {
+            isRefreshing = false;
+        }
+    }
 }
+
 
 <style>
     :root {
