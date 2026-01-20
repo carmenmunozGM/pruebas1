@@ -81,110 +81,142 @@
                                     <ul class="subtasks">
                                         @foreach (var taskObj in block.SubTasks)
                                         {
-                                            <li class="task-item">
+                                            @* <li class="task-item"> *@
                                                 @switch (taskObj)
                                                 {
+
                                                     case ClientServiceTask cs:
+{
+    bool esEmpresa = string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
+    bool esServicio = !string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
+    bool esActividad = cs.ApiId > 0;
+
+    var empresaNode = cs.ParentBlock.SubTasks
+        .OfType<ClientServiceTask>()
+        .First(e => e.Empresa == cs.Empresa && string.IsNullOrEmpty(e.Servicio));
+
+    if (!empresaNode.IsExpanded && !esEmpresa)
+        break;
+
+    if (esActividad)
+    {
+        var servicioNode = cs.ParentBlock.SubTasks
+            .OfType<ClientServiceTask>()
+            .First(s =>
+                s.Empresa == cs.Empresa &&
+                s.Servicio == cs.Servicio &&
+                string.IsNullOrEmpty(s.Actividad));
+
+        if (!servicioNode.IsExpanded)
+            break;
+    }
+
+    <li class="task-item">
+        <div class="client-row
+            @(esEmpresa ? "lvl-empresa" :
+              esServicio ? "lvl-servicio" :
+              "lvl-actividad")">
+
+            @if (esActividad)
+            {
+                <input type="checkbox"
+                       checked="@cs.IsCompleted"
+                       disabled="@(day.Date.Date != DateTime.Today)"
+                       @onchange="(e) => ToggleServicioClienteAsync(cs, e)"
+                       @onclick:stopPropagation />
+            }
+            else
+            {
+                <span class="toggle-icon"
+                      @onclick="() => cs.IsExpanded = !cs.IsExpanded">
+                    @(cs.IsExpanded ? "▾" : "▸")
+                </span>
+            }
+
+            <span class="task-name @(esActividad && cs.IsCompleted ? "completed" : "")"
+                  @onclick="() =>
+                  {
+                      if (esActividad)
+                          OpenClientModal(cs);
+                      else
+                          cs.IsExpanded = !cs.IsExpanded;
+                  }">
+                @(esActividad ? cs.Actividad :
+                  esServicio ? cs.Servicio :
+                  cs.Empresa)
+            </span>
+        </div>
+    </li>
+    break;
+}
+
+
+
+
+                                                    case SelfAssessment sa:
                                                         {
-                                                            bool esActividad = cs.ApiId > 0;
+                                                            <li class="task-item">
+                                                                <input type="checkbox"
+                                                                       checked="@sa.IsCompleted"
+                                                                       disabled="@(!IsToday(sa))"
+                                                                       @onchange="(e) => ToggleCompleteSelf(sa, e)"
+                                                                       @onclick:stopPropagation />
 
-                                                            <div class="client-task-row">
-                                                                @if (esActividad)
-                                                                {
-                                                                    <input type="checkbox"
-                                                                           checked="@cs.IsCompleted"
-                                                                           @onchange="(e) => ToggleServicioClienteAsync(cs, e)"
-                                                                           @onclick:stopPropagation />
-                                                                }
-
-                                                                <span class="task-name
-                                                     @(esActividad && cs.IsCompleted ? "completed" : "")
-                                                     @(esActividad ? "clickable" : "group")"
-                                                                      @onclick="() =>
-                                                                      {
-                                                                          if (esActividad)
-                                                                              OpenClientModal(cs);
-                                                                      }">
-                                                                    @if (!string.IsNullOrEmpty(cs.Actividad))
-                                                                    {
-                                                                        @cs.Actividad
-                                                                    }
-                                                                    else if (!string.IsNullOrEmpty(cs.Servicio))
-                                                                    {
-                                                                        @cs.Servicio
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        @cs.Empresa
-                                                                    }
+                                                                <span class="task-name @(sa.IsCompleted ? "completed" : "")"
+                                                                      @onclick="() => OpenSelfAssessmentModal(sa)">
+                                                                    @sa.ActivityName
                                                                 </span>
-                                                            </div>
+                                                            </li>
                                                             break;
                                                         }
 
 
-                                                    case SelfAssessment sa:
-                                                        <input type="checkbox"
-                                                               checked="@sa.IsCompleted"
-                                                               disabled="@(!IsToday(sa))"
-                                                               @onchange="(e) => ToggleCompleteSelf(sa, e)"
-                                                               @onclick:stopPropagation />
-
-                                                        <span class="task-name @(sa.IsCompleted ? "completed" : "")"
-                                                              @onclick="() => OpenSelfAssessmentModal(sa)">
-                                                            @sa.ActivityName
-                                                        </span>
-
-                                                        break;
-
                                                     case BaseTask bt:
-                                                        //<span>@bt.Name - Completed: @bt.IsCompleted - EsEvento: @bt.EsEvento</span>
-
-                                                        @if (block.Title != "Órdenes de Trabajo")
-                                                        {
-                                                            <div class="task-item @(bt.IsCompleted ? "completed-task" : "")">
+                                                    {
+                                                        <li class="task-item">
+                                                            @if (block.Title != "Órdenes de Trabajo")
+                                                            {
                                                                 <span class="task-name @(bt.IsCompleted ? "completed" : "")"
                                                                       @onclick="() => OpenTaskModal(bt, false)">
                                                                     <span class="task-icon">@bt.IconoVisual</span>
                                                                     @bt.Name
                                                                 </span>
-                                                            </div>
 
-                                                            @if (!bt.IsCompleted && (!bt.EsEvento || bt.CreadorId == UsuarioActualId))
-                                                            {
-                                                                <div class="task-actions">
-                                                                    <button class="edit-btn"
-                                                                            title="Editar"
-                                                                            @onclick="(MouseEventArgs e) => OpenTaskModal(bt, true)"
-                                                                            @onclick:stopPropagation="true">
-                                                                        ✏️
-                                                                    </button>
+                                                                @if (!bt.IsCompleted && (!bt.EsEvento || bt.CreadorId == UsuarioActualId))
+                                                                {
+                                                                    <div class="task-actions">
+                                                                        <button class="edit-btn"
+                                                                                @onclick="(MouseEventArgs e) => OpenTaskModal(bt, true)"
+                                                                                @onclick:stopPropagation>
+                                                                            ✏️
+                                                                        </button>
 
-                                                                    <button class="delete-btn"
-                                                                            title="Eliminar"
-                                                                            @onclick="(MouseEventArgs e) => ConfirmDelete(bt)"
-                                                                            @onclick:stopPropagation="true">
-                                                                        🗑️
-                                                                    </button>
-                                                                </div>
+                                                                        <button class="delete-btn"
+                                                                                @onclick="(MouseEventArgs e) => ConfirmDelete(bt)"
+                                                                                @onclick:stopPropagation>
+                                                                            🗑️
+                                                                        </button>
+                                                                    </div>
+                                                                }
                                                             }
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="task-name @(bt.IsCompleted ? "completed" : "")"
-                                                                  @onclick="() => AbrirDetalle(bt)">
-                                                                @bt.Name
-                                                            </span>
-
-                                                        }
+                                                            else
+                                                            {
+                                                                <span class="task-name @(bt.IsCompleted ? "completed" : "")"
+                                                                      @onclick="() => AbrirDetalle(bt)">
+                                                                    @bt.Name
+                                                                </span>
+                                                            }
+                                                        </li>
                                                         break;
+                                                    }
+
 
                                                     default:
                                                         <span>Desconocido</span>
                                                         ;
                                                         break;
                                                 }
-                                            </li>
+                                            @* </li> *@
                                         }
                                     </ul>
                                 }
@@ -1091,7 +1123,7 @@
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public int ApiId { get; set; } // IdHorasProgramaTrabajo
-
+        public bool IsExpanded { get; set; } = false;
         public string Empresa { get; set; } = "";
         public string Servicio { get; set; } = "";
         public string Actividad { get; set; } = "";
@@ -1581,6 +1613,11 @@
                         var bloqueCliente = day.Blocks
                             .First(b => b.Title == "Servicio al Cliente");
 
+                        if (bloqueCliente != null)
+                        {
+                            RecalcularEstadoServicioCliente(bloqueCliente);
+                        }
+
                         // ===== EMPRESA =====
                         var empresaNode = bloqueCliente.SubTasks
                             .OfType<ClientServiceTask>()
@@ -1813,14 +1850,97 @@
         await ShowTemporaryToastAsync(cs.IsCompleted ? "Actividad completada" : "Actividad desmarcada");
     }
 
+
+    void RecalcularEstadoServicioCliente(Block bloque)
+    {
+
+
+        var all = bloque.SubTasks
+            .OfType<ClientServiceTask>()
+            .ToList();
+
+        var actividades = all
+            .Where(x => !string.IsNullOrEmpty(x.Actividad))
+            .ToList();
+
+        var servicios = all
+            .Where(x =>
+                !string.IsNullOrEmpty(x.Servicio) &&
+                string.IsNullOrEmpty(x.Actividad))
+            .ToList();
+
+        var empresas = all
+            .Where(x =>
+                string.IsNullOrEmpty(x.Servicio) &&
+                string.IsNullOrEmpty(x.Actividad))
+            .ToList();
+
+        Debug.WriteLine($"ALL: {all.Count}");
+        Debug.WriteLine($"ACTIVIDADES: {actividades.Count}");
+        Debug.WriteLine($"SERVICIOS: {servicios.Count}");
+        Debug.WriteLine($"EMPRESAS: {empresas.Count}");
+
+      
+        // ===== SERVICIOS =====
+        foreach (var servicio in servicios)
+        {
+            var acts = actividades
+                .Where(a =>
+                    a.Empresa == servicio.Empresa &&
+                    a.Servicio == servicio.Servicio)
+                .ToList();
+
+            servicio.IsCompleted =
+                acts.Count > 0 &&
+                acts.All(a => a.IsCompleted);
+
+            // ✅ DEBUG CORRECTO
+            Debug.WriteLine(
+                $"Servicio [{servicio.Servicio}] | Actividades: {acts.Count} | Completado: {servicio.IsCompleted}"
+            );
+        }
+
+
+        foreach (var empresa in empresas)
+        {
+            var actsEmpresa = actividades
+                .Where(a => a.Empresa == empresa.Empresa)
+                .ToList();
+
+            var serviciosEmpresa = actsEmpresa
+                .GroupBy(a => a.Servicio)
+                .ToList();
+
+            bool empresaCompleta =
+                serviciosEmpresa.Count > 0 &&
+                serviciosEmpresa.All(g => g.All(a => a.IsCompleted));
+
+            empresa.IsCompleted = empresaCompleta;
+
+            foreach (var servicioGroup in serviciosEmpresa)
+            {
+                bool servicioCompleto = servicioGroup.All(a => a.IsCompleted);
+
+                Debug.WriteLine(
+                    $"Servicio [{servicioGroup.Key}] | Completado: {servicioCompleto}"
+                );
+            }
+
+            Debug.WriteLine(
+                $"Empresa [{empresa.Empresa}] | Completado: {empresa.IsCompleted}"
+            );
+        }
+
+
+    }
+
+
+
     private async Task ToggleServicioClienteAsync(
     ClientServiceTask cs,
     ChangeEventArgs e)
     {
-        bool nuevoEstado =
-            e.Value is bool b
-                ? b
-                : e.Value is string s && (s == "true" || s == "on");
+        var nuevoEstado = (bool)e.Value;
 
         // Optimistic UI
         cs.IsCompleted = nuevoEstado;
@@ -1832,10 +1952,33 @@
         if (!ok)
         {
             cs.IsCompleted = !nuevoEstado;
-            cs.FechaCompletada = cs.IsCompleted ? DateTime.Now : null;
+            cs.FechaCompletada = !nuevoEstado ? DateTime.Now : null;
             StateHasChanged();
+            return;
         }
+
+        // 🔁 sincronización por ApiId
+        foreach (var day in Days)
+        {
+            foreach (var block in day.Blocks)
+            {
+                foreach (var t in block.SubTasks
+                    .OfType<ClientServiceTask>()
+                    .Where(x => x.ApiId == cs.ApiId))
+                {
+                    t.IsCompleted = nuevoEstado;
+                    t.FechaCompletada = cs.FechaCompletada;
+                }
+
+                RecalcularEstadoServicioCliente(block);
+            }
+        }
+
+        StateHasChanged();
     }
+
+
+
 
 
 
@@ -2578,6 +2721,13 @@
         color: #444;
     }
 
+    input[type="checkbox"]:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+
+
     .modal-footer {
         display: flex;
         justify-content: flex-end;
@@ -2856,16 +3006,39 @@
             background: #fafafa;
         }
 
-    /* ================= ANIMATION ================= */
-    @@keyframes modalFade {
-        from {
-            opacity: 0;
-            transform: scale(0.96);
-        }
 
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+    .client-row {
+        display: flex;
+        align-items: center;
+        gap: 6px; /* ⬅️ menos separación horizontal */
+        padding: 2px 0; /* ⬅️ menos altura por fila */
+        line-height: 1.2;
     }
+
+    .lvl-empresa {
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .lvl-servicio {
+        padding-left: 16px; /* ⬅️ menos indent */
+        font-weight: 500;
+    }
+
+    .lvl-actividad {
+        padding-left: 32px; /* ⬅️ menos indent */
+    }
+
+    .toggle-icon {
+        cursor: pointer;
+        width: 12px;
+        font-size: 11px;
+        color: #444;
+    }
+
+    .task-name.completed {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+
 </style>
