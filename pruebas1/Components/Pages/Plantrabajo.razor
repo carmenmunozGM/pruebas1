@@ -2,6 +2,7 @@
 @using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
+@inject IJSRuntime JS
 @inject HttpClient _http
 <br />
 <br />
@@ -91,18 +92,20 @@
                                 <td>@actividad.Nombre</td>
 
                                 <td>
-                                    @if (actividad.Fecha.HasValue)
+                                                                    @* Si la fecha viene de la DB, mostramos el campo bloqueado *@
+                                    @if (actividad.FechaOriginalDesdeDB)
                                     {
                                         <input type="date"
-                                               value="@actividad.Fecha.Value.ToString("yyyy-MM-dd")"
+                                               value="@actividad.Fecha?.ToString("yyyy-MM-dd")"
                                                class="input-date small"
                                                disabled
-                                               title="La fecha solo puede modificarse desde el botón 📅" />
+                                               title="Para modificar una fecha guardada, usa el botón 📅" />
                                     }
                                     else
                                     {
+                                        @* Si NO viene de la DB (estaba vacía), mostramos el DatePicker editable *@
                                         <DatePicker Value="actividad.Fecha"
-                                                    ValueChanged="@(fecha => actividad.Fecha = fecha)"
+                                                    ValueChanged="@((fecha) => OnFechaChanged(actividad, fecha))"
                                                     CssClass="input-date small" />
                                     }
                                 </td>
@@ -135,8 +138,8 @@
                 </table>
             }
 
-            <div class="modal-footer">
-                <button class="btn-save" @onclick="GuardarActividades">Guardar</button>
+                        <div class="modal-footer">
+                <button class="btn-save" @onclick="GuardarTodo">Guardar</button>
                 <button class="btn-cancel" @onclick="CloseModal">Cerrar</button>
             </div>
 
@@ -201,7 +204,7 @@
                                     {
                                         <li>
                                             <div class="hist-row">
-                                                <div> @(h.FechaMovimiento.ToString("yyyy-MM-dd") ?? "—")</div>
+                                                <div> Cambiado el: @(h.FechaMovimiento.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div>De: @(h.FechaAnterior.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div> A: @(h.FechaNueva.ToString("yyyy-MM-dd") ?? "—")</div>
                                                 <div>Motivo: @h.Motivo</div>
@@ -249,7 +252,7 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
     public DateTime? Fecha { get; set; }
     public bool Minuta { get; set; }
     public string? Observaciones { get; set; }
-
+    public bool FechaOriginalDesdeDB { get; set; }
     public List<CambioFecha> HistorialFechas { get; set; } = new();
 }
 
@@ -335,27 +338,26 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
 
         ModalEmpresa = data.NombreEmpresa;
         ServiciosModal = data.Servicios
-    .Select(s => new ServicioModal
-    {
-        NombreServicio = s.NombreServicio,
-        Actividades = s.Actividades
-            .OrderBy(a => a.IdActividadGeneral)
-            .Select(a => new Actividad
+            .Select(s => new ServicioModal
             {
-                IdCheckListAsignacion = a.IdCheckListAsignacion,
-                IdActividadGeneral = a.IdActividadGeneral,
-                IdHorasProgramaTrabajo = a.IdHorasProgramaTrabajo,
-
-                Nombre = a.NombreActividad,
-                Fecha = a.Fecha,
-                Minuta = a.Minuta ?? false,
-                Observaciones = a.Observaciones
+                NombreServicio = s.NombreServicio,
+                Actividades = s.Actividades
+                    .OrderBy(a => a.IdActividadGeneral)
+                    .Select(a => new Actividad
+                    {
+                        IdCheckListAsignacion = a.IdCheckListAsignacion,
+                        IdActividadGeneral = a.IdActividadGeneral,
+                        IdHorasProgramaTrabajo = a.IdHorasProgramaTrabajo,
+                        Nombre = a.NombreActividad,
+                        Fecha = a.Fecha,
+                        // Si ya tiene fecha en la DB, bloqueamos el input directo
+                        FechaOriginalDesdeDB = a.Fecha.HasValue, 
+                        Minuta = a.Minuta ?? false,
+                        Observaciones = a.Observaciones
+                    })
+                    .ToList()
             })
-            .ToList()
-    })
-    .ToList();
-
-
+            .ToList();
     }
 
 
@@ -366,41 +368,53 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
         ShowModal = false;
     }
 
-    private async Task AbrirSubModal(Actividad actividad)
+   private async Task AbrirSubModal(Actividad actividad)
+{
+    ErrorServidor = null;
+    MostrarErrorFecha = false;
+    MostrarErrorMotivo = false;
+    MotivoCambio = "";
+
+    // VALIDACIÓN 1: ¿Tiene fecha seleccionada?
+    if (!actividad.Fecha.HasValue)
     {
+        MostrarAlertaSinFecha();
+        return;
+    }
 
-        // Limpiar rastro de errores anteriores antes de mostrar el modal
-        ErrorServidor = null;
-        MostrarErrorFecha = false;
-        MostrarErrorMotivo = false;
-        MotivoCambio = ""; // Opcional: limpiar el motivo anterior
-        if (!actividad.Fecha.HasValue)
+    // VALIDACIÓN 2: ¿La fecha ya fue guardada en DB? 
+    // Si no ha sido guardada, la bandera FechaOriginalDesdeDB será false.
+    if (!actividad.FechaOriginalDesdeDB)
+    {
+        MensajeAlerta = "Debes guardar la fecha seleccionada antes de poder ver o modificar su historial.";
+        MostrarAlerta = true;
+        return;
+    }
+
+    ActividadSeleccionada = actividad;
+    OriginalFecha = actividad.Fecha;
+    NuevaFecha = actividad.Fecha;
+
+    try 
+    {
+        var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(actividad.IdHorasProgramaTrabajo);
+
+        actividad.HistorialFechas = historialDto.Select(h => new CambioFecha
         {
-            MostrarAlertaSinFecha();
-            return;
-        }
-
-        ActividadSeleccionada = actividad;
-        OriginalFecha = actividad.Fecha;
-        NuevaFecha = actividad.Fecha;
-
-        var historialDto =
-            await ServicioClienteService.ObtenerHistorialFechasAsync(
-                actividad.IdHorasProgramaTrabajo
-            );
-
-        actividad.HistorialFechas = historialDto
-            .Select(h => new CambioFecha
-            {
-                FechaMovimiento = h.FechaModificacion,
-                FechaAnterior = h.FechaAnterior,
-                FechaNueva = h.FechaNueva,
-                Motivo = h.Motivo
-            })
-            .ToList();
+            FechaMovimiento = h.FechaModificacion,
+            FechaAnterior = h.FechaAnterior,
+            FechaNueva = h.FechaNueva,
+            Motivo = h.Motivo
+        }).ToList();
 
         ShowSubModal = true;
     }
+    catch (Exception ex)
+    {
+        // Esto evita el error "Unhandled" si la API falla
+        await JS.InvokeVoidAsync("Swal.fire", "Error", "No se pudo cargar el historial: " + ex.Message, "error");
+    }
+}
 
     void CerrarSubModal()
     {
@@ -441,83 +455,80 @@ void MostrarAlertaSinFecha()
         MostrarAlerta = true;
     }
 
-    private async Task GuardarCambioFecha()
+private async Task GuardarCambioFecha()
+{
+    // 1. Limpieza inicial
+    MostrarErrorFecha = false;
+    MostrarErrorMotivo = false;
+    ErrorServidor = null;
+
+    // 2. Validaciones básicas de campos vacíos
+    if (NuevaFecha == null) { MostrarErrorFecha = true; }
+    if (string.IsNullOrWhiteSpace(MotivoCambio)) { MostrarErrorMotivo = true; }
+    if (MostrarErrorFecha || MostrarErrorMotivo || ActividadSeleccionada == null) return;
+
+    try
     {
-        // 1. Limpiar errores previos y mostrar que estamos trabajando
-        MostrarErrorFecha = false;
-        MostrarErrorMotivo = false;
-        ErrorServidor = null;
+        Procesando = true;
 
-        // 2. Validaciones locales (Para que el usuario no envíe campos vacíos)
-        if (NuevaFecha == null) MostrarErrorFecha = true;
-        if (string.IsNullOrWhiteSpace(MotivoCambio)) MostrarErrorMotivo = true;
+        // --- SOLUCIÓN AL DÍA ANTERIOR ---
+        // Extraemos solo año, mes y día para crear una fecha sin zona horaria (Unspecified)
+        var f = NuevaFecha.Value;
+        DateTime fechaNeutral = new DateTime(f.Year, f.Month, f.Day, 0, 0, 0, DateTimeKind.Unspecified);
 
-        // Si algo falta, no seguimos
-        if (MostrarErrorFecha || MostrarErrorMotivo || ActividadSeleccionada == null)
-            return;
-
-        try
+        var dto = new HistorialFechaCreateDTO
         {
-            Procesando = true;
+            IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
+            FechaNueva = fechaNeutral, 
+            Motivo = MotivoCambio
+        };
 
-            var dto = new HistorialFechaCreateDTO
+        var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // --- ÉXITO: Recargamos historial y actualizamos UI ---
+            var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(
+                ActividadSeleccionada.IdHorasProgramaTrabajo);
+
+            ActividadSeleccionada.HistorialFechas = historialDto.Select(h => new CambioFecha
             {
-                IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
-                FechaNueva = NuevaFecha.Value,
-                Motivo = MotivoCambio
-            };
+                FechaMovimiento = h.FechaModificacion,
+                FechaAnterior = h.FechaAnterior,
+                FechaNueva = h.FechaNueva,
+                Motivo = h.Motivo
+            }).ToList();
 
-            // 3. Intentar guardar en la API
-            var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+            // Usamos la misma fecha neutral para la UI
+            ActividadSeleccionada.Fecha = fechaNeutral;
+            ActividadSeleccionada.FechaOriginalDesdeDB = true; 
 
-            if (response.IsSuccessStatusCode)
+            ShowSubModal = false;
+            MotivoCambio = ""; 
+            StateHasChanged();
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(errorContent))
             {
-                // --- CASO ÉXITO ---
-                var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(
-                    ActividadSeleccionada.IdHorasProgramaTrabajo);
-
-                ActividadSeleccionada.HistorialFechas = historialDto.Select(h => new CambioFecha
-                {
-                    FechaMovimiento = h.FechaModificacion,
-                    FechaAnterior = h.FechaAnterior,
-                    FechaNueva = h.FechaNueva,
-                    Motivo = h.Motivo
-                }).ToList();
-
-                ActividadSeleccionada.Fecha = NuevaFecha;
-
-                // Solo aquí cerramos el modal
-                ShowSubModal = false;
-                ErrorServidor = null;
-                MotivoCambio = ""; // Limpiamos para la próxima
+                ErrorServidor = $"El servidor rechazó el cambio (Código: {(int)response.StatusCode}). Verifica que la fecha sea mayor a la actual.";
             }
             else
             {
-                // --- CASO ERROR DE VALIDACIÓN SQL ---
-                // Leemos el contenido del error 500 que mandaste antes
-                var errorContent = await response.Content.ReadAsStringAsync();
-
-                // Si el error contiene el mensaje del SQL, lo mostramos
-                if (errorContent.Contains("La nueva fecha debe ser mayor"))
-                {
-                    ErrorServidor = "La nueva fecha debe ser mayor a la última fecha registrada en el historial.";
-                }
-                else
-                {
-                    ErrorServidor = "Error del servidor: No se pudo validar la fecha. Intente con una fecha posterior.";
-                }
+                ErrorServidor = errorContent;
             }
         }
-        catch (Exception ex)
-        {
-            // Error de red o crash inesperado
-            ErrorServidor = "Error de conexión o del sistema: " + ex.Message;
-        }
-        finally
-        {
-            Procesando = false;
-        }
     }
+    catch (Exception ex)
+    {
+        ErrorServidor = "Error crítico de conexión: " + ex.Message;
+    }
+    finally
+    {
+        Procesando = false;
+    }
+}
 
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {
@@ -536,23 +547,107 @@ void MostrarAlertaSinFecha()
     );
 }
 
-    private async Task OnFechaChanged(Actividad actividad, DateTime? fecha)
+private async Task OnFechaChanged(Actividad actividad, DateTime? nuevaFecha)
+{
+    if (nuevaFecha == null) return;
+
+    // NO bloqueamos el campo, dejamos que la fecha se asigne en memoria
+    actividad.Fecha = DateTime.SpecifyKind(nuevaFecha.Value.Date, DateTimeKind.Unspecified);
+}
+
+private async Task GuardarCambiosActividad(Actividad actividad)
+{
+    if (actividad.Fecha == null) return;
+
+    try 
     {
-        actividad.Fecha = fecha;
+        // Eliminamos la validación de 'menor a hoy' aquí, porque OnFechaChanged 
+        // ya se encargó de filtrar cambios inválidos. 
+        // Así permitimos guardar registros históricos si el usuario solo cambió la Minuta u Observaciones.
 
-        if (fecha == null)
-            return;
+        await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO {
+            IdAsignacion = actividad.IdCheckListAsignacion,
+            Fecha = actividad.Fecha.Value,
+            Minuta = actividad.Minuta
+        });
 
-        await ServicioClienteService.GuardarFechaYMinutaAsync(
-            new HorasProgramaTrabajoUpsertDTO
-            {
-                IdAsignacion = actividad.IdCheckListAsignacion,
-                Fecha = fecha.Value,
-                Minuta = actividad.Minuta
-            }
-        );
+        await JS.InvokeVoidAsync("Swal.fire", new {
+            title = "¡Guardado!",
+            text = "La actividad se actualizó correctamente.",
+            icon = "success",
+            timer = 1500,
+            showConfirmButton = false,
+            backdrop = false,
+            customClass = new { container = "swal-ontop" }
+        });
     }
+    catch (Exception ex)
+    {
+        await JS.InvokeVoidAsync("Swal.fire", new { title = "Error", text = ex.Message, icon = "error" });
+    }
+}
 
+private async Task GuardarTodo()
+{
+    try 
+    {
+        // 1. VALIDACIÓN
+        foreach (var servicio in ServiciosModal)
+        {
+            foreach (var actividad in servicio.Actividades)
+            {
+                if (!actividad.FechaOriginalDesdeDB && 
+                     actividad.Fecha.HasValue && 
+                     actividad.Fecha.Value.Date < DateTime.Today)
+                {
+                    await JS.InvokeVoidAsync("Swal.fire", new {
+                        title = "Fecha no válida",
+                        text = $"La fecha de '{actividad.Nombre}' no puede ser anterior a hoy.",
+                        icon = "error"
+                    });
+                    return;
+                }
+            }
+        }
+
+        // 2. PROCESO DE GUARDADO
+        foreach (var servicio in ServiciosModal)
+        {
+            foreach (var actividad in servicio.Actividades)
+            {
+                if (actividad.Fecha.HasValue)
+                {
+                    await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO 
+                    {
+                        IdAsignacion = actividad.IdCheckListAsignacion,
+                        Fecha = actividad.Fecha.Value,
+                        Minuta = actividad.Minuta
+                    });
+
+                    // 🔥 ESTA LÍNEA ES LA QUE SOLUCIONA TU ERROR:
+                    // Al marcarlo como true, el sistema ya sabe que existe en la DB
+                    // y permitirá abrir el historial sin tronar.
+                    actividad.FechaOriginalDesdeDB = true;
+                }
+            }
+        }
+
+        // 3. ÉXITO Y CIERRE
+        await JS.InvokeVoidAsync("Swal.fire", new {
+            title = "¡Guardado!",
+            text = "Todos los cambios han sido procesados correctamente.",
+            icon = "success",
+            timer = 2000,
+            showConfirmButton = false
+        });
+
+        CloseModal(); 
+    }
+    catch (Exception ex)
+    {
+        await JS.InvokeVoidAsync("Swal.fire", new { title = "Error crítico", text = ex.Message, icon = "error" });
+    }
+}
     private async Task OnObservacionesChanged(Actividad actividad, ChangeEventArgs e)
         {
             actividad.Observaciones = e.Value?.ToString();
