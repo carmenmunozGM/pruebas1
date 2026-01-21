@@ -24,6 +24,6 @@ public class EditAgendaItemModel
 
 public class EditableSubtask
 {
-    public int Index { get; set; }
-    public string Titulo { get; set; } = string.Empty;
+    public int? Id { get; set; } // Cambiar de Index a Id y que sea int?
+    public string Titulo { get; set; } = "";
 }

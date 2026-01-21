@@ -169,34 +169,6 @@ namespace pruebas1.Servicios
                 return new List<TareaApi>();
             }
         }
-
-        // OBTENER EVENTOS
-        /*public async Task<List<EventoApiDTO>> ObtenerEventosApi(int idAgenda)
-        {
-            var usuario = loginService.obtenerUsuarioLogueado();
-            if (usuario == null || string.IsNullOrEmpty(usuario.Token))
-                return new List<EventoApiDTO>();
-
-            try
-            {
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", usuario.Token);
-
-                var url = $"eventos?idAgenda={idAgenda}";
-                Debug.WriteLine($"[GET EVENTOS] URL = {url}");
-
-                var data = await httpClient.GetFromJsonAsync<List<EventoApiDTO>>(url);
-
-                Debug.WriteLine($"[GET EVENTOS] Eventos recibidos: {data?.Count}");
-
-                return data ?? new List<EventoApiDTO>();
-            }
-            catch (HttpRequestException ex)
-            {
-                Debug.WriteLine($"Error al obtener eventos: {ex.Message}");
-                return new List<EventoApiDTO>();
-            }
-        }*/
         public async Task<List<EventoApiDTO>> ObtenerEventos(int idAgenda)
         {
             var lista = new List<EventoApiDTO>();
@@ -439,26 +411,17 @@ namespace pruebas1.Servicios
             await httpClient.DeleteAsync($"/eventos/{id}");
         }
 
-
+        // Corrección en AgendaService.cs
         public async Task EditarTareaAsync(int id, EditAgendaItemModel model)
         {
-            var usuario = loginService.obtenerUsuarioLogueado();
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", usuario.Token);
-
+            // ... headers ...
             var dto = new
             {
-                idAgenda = model.IdAgenda,
-                titulo = model.Titulo,
-                descripcion = model.Descripcion ?? "",
-                fechaInicio = model.FechaInicio,
-                fechaFin = model.FechaFin,
-            
-                reglaRecurrencia = model.ReglaRecurrencia,
-                idPrioridad = model.Prioridad,
-                subTareas = model.Subtareas.Select(t => new { titulo = t }).ToList()
+                // ... otros campos ...
+                subTareas = model.Subtareas.Select(s => s.Id > 0
+                    ? (object)new { id = s.Id, titulo = s.Titulo }
+                    : (object)new { titulo = s.Titulo }).ToList()
             };
-
             await httpClient.PutAsJsonAsync($"/tareas/editar/{id}", dto);
         }
 

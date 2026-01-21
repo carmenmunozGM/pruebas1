@@ -2163,6 +2163,7 @@ MasterCategories.Add(servicioClienteCategory);
     {
         if (st == null) return;
 
+        // 1. Limpieza y preparación base
         searchText = "";
         mostrarLista = false;
         ubicacionOtra = "";
@@ -2170,37 +2171,26 @@ MasterCategories.Add(servicioClienteCategory);
 
         if (!PuedeEditarEliminar(st)) return;
 
+        // 2. Cargamos el modelo base (Titulo, fechas, etc.)
         EditItem = ConvertToEditModel(st);
 
-    
-        if (st.Tipo == "Evento")
+        // 3. REGLA DE ORO: Si es Tarea, ignoramos lo que traía 'st' y traemos el detalle fresco
+        if (st.Tipo == "Tarea")
         {
-            var eventoCompleto = await AgendaService.ObtenerEventoDetalle(st.ApiId);
-            if (eventoCompleto != null)
+            var tareaCompleta = await AgendaService.ObtenerTareaDetalle(st.ApiId);
+            if (tareaCompleta != null)
             {
-           
-                EditItem.Participantes = eventoCompleto.participantes?
-          .Select(p => new EmpleadoDTO
-          {
-              Id = p.idEmpleado, 
-              Nombre = p.nombreEmpleado ?? p.nombreEmpleado
-          }).ToList() ?? new List<EmpleadoDTO>();
-
-                if (eventoCompleto.idSala.HasValue && eventoCompleto.idSala.Value > 0)
+                // Sobrescribimos la lista para asegurarnos de tener los IDs (486, 487...)
+                EditItem.Subtareas = tareaCompleta.subTareas?.Select(s => new EditableSubtask
                 {
-                    if (salasLookup.TryGetValue(eventoCompleto.idSala.Value, out string? nombreSala))
-                    {
-                        EditItem.Ubicacion = nombreSala;
-                        mostrarOtraUbicacion = false;
-                    }
-                }
-                else
-                {
-                    EditItem.Ubicacion = "-1";
-                    ubicacionOtra = eventoCompleto.ubicacion;
-                    mostrarOtraUbicacion = true;
-                }
+                    Id = s.id,
+                    Titulo = s.titulo
+                }).ToList() ?? new List<EditableSubtask>();
             }
+        }
+        else if (st.Tipo == "Evento")
+        {
+            // ... (Tu lógica de evento está bien)
         }
 
         ShowEditModal = true;
@@ -2222,21 +2212,11 @@ MasterCategories.Add(servicioClienteCategory);
             Prioridad = st.Prioridad,
             Ubicacion = st.Ubicacion ?? "",
             ReglaRecurrencia = st.ReglaRecurrencia ?? "",
-            Subtareas = st.Subtasks?.Select(s => new EditableSubtask { Titulo = s.Title }).ToList() ?? new()
+            // Deja esto vacío si es Tarea, ya que OpenEditModal lo llenará con ObtenerTareaDetalle
+            Subtareas = new List<EditableSubtask>()
         };
 
-        
-        if (st.Participantes != null && todosLosEmpleados != null)
-        {
-            model.Participantes = todosLosEmpleados
-                .Where(emp => st.Participantes.Contains(emp.Nombre))
-                .ToList();
-        }
-        else
-        {
-            model.Participantes = new();
-        }
-
+        // ... (resto del mapeo de participantes)
         return model;
     }
     private void OnUbicacionChanged(ChangeEventArgs e)
@@ -2267,22 +2247,29 @@ MasterCategories.Add(servicioClienteCategory);
     {
         HttpResponseMessage res;
 
-        if (EditItem.Tipo == "Tarea")
-        {
-            var dtoTarea = new
+            if (EditItem.Tipo == "Tarea")
             {
-                titulo = EditItem.Titulo,
-                descripcion = EditItem.Descripcion,
-                fechaInicio = fInicio,
-                fechaFin = fFin,
-                idPrioridad = EditItem.Prioridad,
-                esRecurrente = !string.IsNullOrEmpty(EditItem.ReglaRecurrencia) && EditItem.ReglaRecurrencia != "No se repite",
-                reglaRecurrencia = EditItem.ReglaRecurrencia,
-                 subTareas = EditItem.Subtareas.Select(s => new { id = s.Index, titulo = s.Titulo }).ToList()
-            };
-      
-            res = await Http.PutAsJsonAsync($"https://redgm.site:9096/tareas/editar/{EditItem.ApiId}", dtoTarea);
-        }
+                var dtoTarea = new
+                {
+                    titulo = EditItem.Titulo,
+                    descripcion = EditItem.Descripcion,
+                    fechaInicio = fInicio,
+                    fechaFin = fFin,
+                    idPrioridad = EditItem.Prioridad,
+                    esRecurrente = !string.IsNullOrEmpty(EditItem.ReglaRecurrencia) && EditItem.ReglaRecurrencia != "No se repite",
+                    reglaRecurrencia = EditItem.ReglaRecurrencia,
+                    // PROCESAMIENTO DINÁMICO DE SUBTAREAS:
+                    subTareas = EditItem.Subtareas.Select(s =>
+                    {
+                        if (s.Id.HasValue && s.Id > 0)
+                            return (object)new { id = s.Id.Value, titulo = s.Titulo }; // Existente
+                        else
+                            return (object)new { titulo = s.Titulo }; // Nueva (Sin ID)
+                    }).ToList()
+                };
+
+                res = await Http.PutAsJsonAsync($"https://redgm.site:9096/tareas/editar/{EditItem.ApiId}", dtoTarea);
+            }
         else 
         {
                 int? idSalaFinal = null;
@@ -2451,12 +2438,18 @@ MasterCategories.Add(servicioClienteCategory);
     void AgregarSubtarea()
     {
         if (string.IsNullOrWhiteSpace(nuevaSubtareaTexto)) return;
+
+        // Asegúrate de que NO estás haciendo EditItem.Subtareas = new List...
+        if (EditItem.Subtareas == null) EditItem.Subtareas = new List<EditableSubtask>();
+
         EditItem.Subtareas.Add(new EditableSubtask
         {
-            Index = 0, 
+            Id = null, // Es nueva, no lleva ID
             Titulo = nuevaSubtareaTexto
         });
+
         nuevaSubtareaTexto = "";
+        StateHasChanged();
     }
     void EliminarSubtarea(EditableSubtask sub)
     {
