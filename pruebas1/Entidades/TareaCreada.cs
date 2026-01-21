@@ -24,6 +24,7 @@ namespace pruebas1.Entidades
         // 🔥 Fechas reales
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
+        public DateTime? FechaCompletada { get; set; }
 
         // 🔥 Horas reales
         public TimeOnly? HoraInicio { get; set; }
@@ -89,6 +90,8 @@ namespace pruebas1.Entidades
         [JsonPropertyName("fechaCompletada")]
         public DateTime? FechaCompletada { get; set; } // Terminando en 'a'
     }
+
+
     public class OrdenTrabajoModel
     {
         public int Id { get; set; }              

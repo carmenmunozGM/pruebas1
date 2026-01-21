@@ -86,73 +86,69 @@
                                                 {
 
                                                     case ClientServiceTask cs:
-{
-    bool esEmpresa = string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
-    bool esServicio = !string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
-    bool esActividad = cs.ApiId > 0;
+                                                    {
+                                                        bool esEmpresa = string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
+                                                        bool esServicio = !string.IsNullOrEmpty(cs.Servicio) && string.IsNullOrEmpty(cs.Actividad);
+                                                        bool esActividad = cs.ApiId > 0;
 
-    var empresaNode = cs.ParentBlock.SubTasks
-        .OfType<ClientServiceTask>()
-        .First(e => e.Empresa == cs.Empresa && string.IsNullOrEmpty(e.Servicio));
+                                                        var empresaNode = cs.ParentBlock.SubTasks
+                                                            .OfType<ClientServiceTask>()
+                                                            .First(e => e.Empresa == cs.Empresa && string.IsNullOrEmpty(e.Servicio));
 
-    if (!empresaNode.IsExpanded && !esEmpresa)
-        break;
+                                                        if (!empresaNode.IsExpanded && !esEmpresa)
+                                                            break;
 
-    if (esActividad)
-    {
-        var servicioNode = cs.ParentBlock.SubTasks
-            .OfType<ClientServiceTask>()
-            .First(s =>
-                s.Empresa == cs.Empresa &&
-                s.Servicio == cs.Servicio &&
-                string.IsNullOrEmpty(s.Actividad));
+                                                        if (esActividad)
+                                                        {
+                                                            var servicioNode = cs.ParentBlock.SubTasks
+                                                                .OfType<ClientServiceTask>()
+                                                                .First(s =>
+                                                                    s.Empresa == cs.Empresa &&
+                                                                    s.Servicio == cs.Servicio &&
+                                                                    string.IsNullOrEmpty(s.Actividad));
 
-        if (!servicioNode.IsExpanded)
-            break;
-    }
+                                                            if (!servicioNode.IsExpanded)
+                                                                break;
+                                                        }
 
-    <li class="task-item">
-        <div class="client-row
-            @(esEmpresa ? "lvl-empresa" :
-              esServicio ? "lvl-servicio" :
-              "lvl-actividad")">
+                                                        <li class="task-item">
+                                                            <div class="client-row
+                                                                @(esEmpresa ? "lvl-empresa" :
+                                                                  esServicio ? "lvl-servicio" :
+                                                                  "lvl-actividad")">
 
-            @if (esActividad)
-            {
-                <input type="checkbox"
-                       checked="@cs.IsCompleted"
-                       disabled="@(day.Date.Date != DateTime.Today)"
-                       @onchange="(e) => ToggleServicioClienteAsync(cs, e)"
-                       @onclick:stopPropagation />
-            }
-            else
-            {
-                <span class="toggle-icon"
-                      @onclick="() => cs.IsExpanded = !cs.IsExpanded">
-                    @(cs.IsExpanded ? "▾" : "▸")
-                </span>
-            }
+                                                                @if (esActividad)
+                                                                {
+                                                                    <input type="checkbox"
+                                                                           checked="@cs.IsCompleted"
+                                                                           disabled="@(day.Date.Date != DateTime.Today)"
+                                                                           @onchange="(e) => ToggleServicioClienteAsync(cs, e)"
+                                                                           @onclick:stopPropagation />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="toggle-icon"
+                                                                          @onclick="() => cs.IsExpanded = !cs.IsExpanded">
+                                                                        @(cs.IsExpanded ? "▾" : "▸")
+                                                                    </span>
+                                                                }
 
-            <span class="task-name @(esActividad && cs.IsCompleted ? "completed" : "")"
-                  @onclick="() =>
-                  {
-                      if (esActividad)
-                          OpenClientModal(cs);
-                      else
-                          cs.IsExpanded = !cs.IsExpanded;
-                  }">
-                @(esActividad ? cs.Actividad :
-                  esServicio ? cs.Servicio :
-                  cs.Empresa)
-            </span>
-        </div>
-    </li>
-    break;
-}
-
-
-
-
+                                                                <span class="task-name @(esActividad && cs.IsCompleted ? "completed" : "")"
+                                                                      @onclick="() =>
+                                                                      {
+                                                                          if (esActividad)
+                                                                              OpenClientModal(cs);
+                                                                          else
+                                                                              cs.IsExpanded = !cs.IsExpanded;
+                                                                      }">
+                                                                    @(esActividad ? cs.Actividad :
+                                                                      esServicio ? cs.Servicio :
+                                                                      cs.Empresa)
+                                                                </span>
+                                                            </div>
+                                                        </li>
+                                                        break;
+                                                    }
                                                     case SelfAssessment sa:
                                                         {
                                                             <li class="task-item">
@@ -169,8 +165,6 @@
                                                             </li>
                                                             break;
                                                         }
-
-
                                                     case BaseTask bt:
                                                     {
                                                         <li class="task-item">
@@ -209,8 +203,6 @@
                                                         </li>
                                                         break;
                                                     }
-
-
                                                     default:
                                                         <span>Desconocido</span>
                                                         ;
@@ -996,6 +988,7 @@
         // Fechas (ya existentes)
         public DateTime StartDate { get; set; }
         public DateTime DueDate { get; set; }
+        public DateTime? FinishDate { get; set; }
 
         // Recurrencia real
         public bool EsRecurrente { get; set; }
@@ -1338,6 +1331,7 @@
 
                     FechaInicio = t.fechaInicio.Date,
                     FechaFin = t.fechaFin.Date,
+                    FechaCompletada = t.fechaCompletada,
 
                     HoraInicio = TimeOnly.FromDateTime(t.fechaInicio),
                     HoraFin = TimeOnly.FromDateTime(t.fechaFin),
@@ -1371,6 +1365,7 @@
 
                     FechaInicio = e.fechaInicio.Date,
                     FechaFin = e.fechaFin.Date,
+                    FechaCompletada = e.fechaCompletada,
 
                     HoraInicio = TimeOnly.FromDateTime(e.fechaInicio),
                     HoraFin = TimeOnly.FromDateTime(e.fechaFin),
@@ -1400,11 +1395,24 @@
 
             foreach (var item in agendaItems)
             {
-                if (item.FechaFin == null) continue;
-                if (item.FechaFin.Value.Date < startOfWeek || item.FechaFin.Value.Date > endOfWeek) continue;
+                if (item.FechaInicio == null && item.FechaFin == null && item.FechaCompletada == null)
+                    continue;
 
-                var day = Days.FirstOrDefault(d => d.Date.Date == item.FechaFin.Value.Date);
-                if (day == null) continue;
+                var fechas = new List<DateTime>();
+
+                var usarFechaCompletada = item.IsCompleted && item.FechaCompletada != null;
+
+                if (usarFechaCompletada)
+                {
+                    fechas.Add(item.FechaCompletada!.Value.Date);
+                }
+                else
+                {
+                    if (item.FechaFin != null)
+                        fechas.Add(item.FechaFin.Value.Date);
+                }
+
+                fechas = fechas.Distinct().ToList();
 
                 string ubicacionFinal;
                 if (item.IdSala > 0)
@@ -1417,50 +1425,59 @@
                     ubicacionFinal = item.Ubicacion;
                 }
 
-                var mapped = new BaseTask
+                foreach (var fecha in fechas)
                 {
-                    ApiId = item.Id,
-                    IdAgenda = item.IdAgenda,
-                    Name = item.Titulo,
-                    Description = item.Descripcion,
+                    if (fecha < startOfWeek || fecha > endOfWeek)
+                        continue;
 
-                    StartDate = item.FechaInicio ?? item.FechaFin ?? DateTime.Today,
-                    DueDate = item.FechaFin ?? item.FechaInicio ?? DateTime.Today,
+                    var day = Days.FirstOrDefault(d => d.Date.Date == fecha);
+                    if (day == null) continue;
 
-                    IsCompleted = item.IsCompleted,
-                    Tipo = item.Tipo,
-                    ParentBlock = day.Blocks[0],
+                    var mapped = new BaseTask
+                    {
+                        ApiId = item.Id,
+                        IdAgenda = item.IdAgenda,
+                        Name = item.Titulo,
+                        Description = item.Descripcion,
 
-                    // Prioridad
-                    IdPrioridad = item.Prioridad,
+                        StartDate = item.FechaInicio ?? item.FechaFin ?? DateTime.Today,
+                        DueDate = item.FechaFin ?? item.FechaInicio ?? DateTime.Today,
+                        FinishDate = item.FechaCompletada,
 
-                    // Recurrencia
-                    Recurrence = item.EsRecurrente
-                        ? item.ReglaRecurrencia
-                        : "No repetir",
+                        IsCompleted = item.IsCompleted,
+                        Tipo = item.Tipo,
+                        ParentBlock = day.Blocks[0],
 
-                    // Evento
-                    Ubicacion = ubicacionFinal,
-                    IdSala = item.IdSala,
-                    HoraInicio = item.HoraInicio,
-                    HoraFin = item.HoraFin,
+                        // Prioridad
+                        IdPrioridad = item.Prioridad,
 
-                    // Auditoría
-                    CreadorId = item.IdCreador,
-                    nombreCreador = item.NombreCreador ?? "",
+                        // Recurrencia
+                        Recurrence = item.EsRecurrente
+                            ? item.ReglaRecurrencia
+                            : "No repetir",
 
-                    // Subtareas (solo texto)
-                    SubTasks = item.Subtareas
-                    .Select(st => new BaseSubTask { Name = st })
-                    .ToList() ?? new(),
+                        // Evento
+                        Ubicacion = ubicacionFinal,
+                        IdSala = item.IdSala,
+                        HoraInicio = item.HoraInicio,
+                        HoraFin = item.HoraFin,
 
-                    // Participantes
-                    Participantes = item.ParticipantesLista
-                    .Select(p => p.Nombre)
-                    .ToList() ?? new()
-                };
+                        // Auditoría
+                        CreadorId = item.IdCreador,
+                        nombreCreador = item.NombreCreador ?? "",
 
-                day.Blocks[0].SubTasks.Add(mapped);
+                        // Subtareas
+                        SubTasks = item.Subtareas?
+                            .Select(st => new BaseSubTask { Name = st })
+                            .ToList() ?? new(),
+
+                        // Participantes
+                        Participantes = item.ParticipantesLista?
+                            .Select(p => p.Nombre)
+                            .ToList() ?? new()
+                    };
+                    day.Blocks[0].SubTasks.Add(mapped);
+                }
             }
         }
 
