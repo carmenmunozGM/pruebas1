@@ -273,20 +273,6 @@
 
                         </div>
 
-                        <!-- Recurrencia -->
-                        <div class="form-group">
-                            <label>🔄 Recurrencia:</label>
-
-                            <select @bind="bt.Recurrence" disabled="@(!IsEditMode)">
-                                @foreach (var f in frecuenciasList)
-                                {
-                                    <option value="@f.Nombre">@f.Nombre</option>
-                                }
-                                <option value="No repetir">No repetir</option>
-                            </select>
-                        </div>
-
-
                         <!-- Fechas y horas -->
                         <div class="form-group inline">
                             <label>📅 Fecha inicio:</label>
