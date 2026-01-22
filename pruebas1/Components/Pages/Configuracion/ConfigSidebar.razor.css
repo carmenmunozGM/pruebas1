@@ -1,0 +1,99 @@
+.config-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 256px;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    z-index: 40;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.dark-mode .config-sidebar {
+    background: #1a1a1a;
+    border-right-color: #333;
+}
+
+.config-sidebar.closed {
+    width: 0;
+}
+
+.sidebar-content {
+    padding-top: 80px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.dark-mode .nav-item {
+    color: #d1d5db;
+}
+
+.nav-item:hover {
+    background: #f3f4f6;
+}
+
+.dark-mode .nav-item:hover {
+    background: #262626;
+}
+
+.nav-item.active {
+    background: linear-gradient(to right, #fce7f3, #e9d5ff);
+    color: #7c3aed;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .nav-item.active {
+    background: linear-gradient(to right, rgba(219, 39, 119, 0.3), rgba(168, 85, 247, 0.3));
+    color: #c084fc;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: #6b7280;
+}
+
+.dark-mode .nav-icon {
+    color: #9ca3af;
+}
+
+.nav-item.active .nav-icon {
+    color: #9333ea;
+}
+
+.dark-mode .nav-item.active .nav-icon {
+    color: #c084fc;
+}
+
+@media (max-width: 768px) {
+    .config-sidebar {
+        z-index: 60;
+    }
+}

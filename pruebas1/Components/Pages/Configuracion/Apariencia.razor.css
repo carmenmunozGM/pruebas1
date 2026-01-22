@@ -1,0 +1,268 @@
+.apariencia-section {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.theme-control {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dark-mode .theme-control {
+    background: #262626;
+    border-color: #404040;
+}
+
+.theme-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.theme-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-icon.light {
+    background: #f5f5f5;
+}
+
+.dark-mode .theme-icon.light {
+    background: #1a1a1a;
+}
+
+.theme-icon.dark {
+    background: #e9d5ff;
+}
+
+.dark-mode .theme-icon.dark {
+    background: rgba(168, 85, 247, 0.3);
+}
+
+.theme-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.theme-icon.light svg {
+    color: #f97316;
+}
+
+.theme-icon.dark svg {
+    color: #9333ea;
+}
+
+.dark-mode .theme-icon.dark svg {
+    color: #c084fc;
+}
+
+.theme-text h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.dark-mode .theme-text h3 {
+    color: #f5f5f5;
+}
+
+.theme-text p {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark-mode .theme-text p {
+    color: #9ca3af;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background: linear-gradient(to right, #db2777, #9333ea);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Color Modes Section */
+.color-modes {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .color-modes {
+    background: #262626;
+    border-color: #404040;
+}
+
+.color-modes h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+}
+
+.dark-mode .color-modes h3 {
+    color: #f5f5f5;
+}
+
+.color-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.color-option {
+    cursor: pointer;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .color-option {
+    border-color: #404040;
+}
+
+.color-option:hover {
+    border-color: #c084fc;
+}
+
+.color-option.active {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .color-option.active {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.color-option span {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dark-mode .color-option span {
+    color: #f5f5f5;
+}
+
+.color-preview {
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.color-bar {
+    flex: 1;
+}
+
+/* Normal Colors */
+.color-bar.pink {
+    background: #fbcfe8;
+}
+
+.color-bar.orange {
+    background: #fed7aa;
+}
+
+.color-bar.green {
+    background: #bbf7d0;
+}
+
+.color-bar.gray {
+    background: #d1d5db;
+}
+
+/* Rainbow Colors - LGBTQ+ Flag */
+.color-bar.rainbow-red {
+    background: #e40303;
+}
+
+.color-bar.rainbow-orange {
+    background: #ff8c00;
+}
+
+.color-bar.rainbow-green {
+    background: #008026;
+}
+
+.color-bar.rainbow-blue {
+    background: #004dff;
+}
+
+@media (max-width: 768px) {
+    .theme-control {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .theme-info {
+        flex-direction: column;
+    }
+
+    .color-options {
+        grid-template-columns: 1fr;
+    }
+}

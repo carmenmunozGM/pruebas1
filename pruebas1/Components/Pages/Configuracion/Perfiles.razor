@@ -1,0 +1,108 @@
+<div class="perfiles-section">
+    <div class="section-header">
+        <h2>Perfiles</h2>
+        <p>Gestiona los permisos y roles de los empleados</p>
+    </div>
+
+    <div class="perfiles-container">
+        <table class="perfiles-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Puesto</th>
+                    <th>Tipo de Usuario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (employee, index) in employees.Select((emp, idx) => (emp, idx)))
+                {
+                    <tr>
+                        <td>
+                            <div class="employee-info">
+                                <div class="employee-avatar" style="background: @GetAvatarColor(index)">
+                                    @GetInitials(employee.Name)
+                                </div>
+                                <span>@employee.Name</span>
+                            </div>
+                        </td>
+                        <td>@employee.Position</td>
+                        <td>
+                            <select class="user-type-select" @bind="employee.UserType">
+                                <option value="Usuario">Usuario</option>
+                                <option value="Administrador">Administrador</option>
+                                <option value="Super Administrador">Super Administrador</option>
+                            </select>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="save-section">
+            <button class="save-button" @onclick="HandleSave">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Guardar Cambios</span>
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="message-toast">
+            @message
+        </div>
+    }
+</div>
+
+@code {
+    private string message = "";
+
+    private class EmployeeProfile
+    {
+        public string Name { get; set; }
+        public string Position { get; set; }
+        public string UserType { get; set; }
+    }
+
+    private List<EmployeeProfile> employees = new List<EmployeeProfile>
+    {
+        new EmployeeProfile { Name = "Karim Negrete", Position = "Developer", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Carmen Muñoz", Position = "Designer", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Gustavo Betanzos", Position = "Manager", UserType = "Administrador" },
+        new EmployeeProfile { Name = "Ana Torres", Position = "Sales Representative", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Roberto Silva", Position = "Support Specialist", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Laura Martínez", Position = "Marketing Manager", UserType = "Administrador" },
+        new EmployeeProfile { Name = "Diego Ramírez", Position = "HR Manager", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Patricia Gómez", Position = "Accountant", UserType = "Usuario" },
+        new EmployeeProfile { Name = "Carlos Hernández", Position = "IT Manager", UserType = "Super Administrador" },
+        new EmployeeProfile { Name = "María López", Position = "Customer Service", UserType = "Usuario" }
+    };
+
+    private string[] colors = new string[] 
+    { 
+        "#ec4899", "#9333ea", "#3b82f6", "#10b981", "#f97316", 
+        "#14b8a6", "#8b5cf6", "#f59e0b", "#06b6d4", "#84cc16" 
+    };
+
+    private string GetAvatarColor(int index)
+    {
+        return colors[index % colors.Length];
+    }
+
+    private string GetInitials(string name)
+    {
+        var parts = name.Split(' ');
+        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
+    }
+
+    private async Task HandleSave()
+    {
+        message = "Cambios guardados exitosamente";
+        await Task.Delay(3000);
+        message = "";
+    }
+}

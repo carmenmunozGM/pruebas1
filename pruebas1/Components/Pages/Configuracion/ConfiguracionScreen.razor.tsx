@@ -1,0 +1,111 @@
+@page "/configuracion"
+
+<div class="config-screen @(isDarkMode ? "dark-mode" : "")">
+    <!-- Header with gear icon -->
+    <header class="config-header">
+        <div class="header-content">
+            <button class="gear-button @(isSidebarOpen ? "rotate" : "")" @onclick="ToggleSidebar">
+                <svg class="gear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </button>
+            <h1 class="header-title">Configuración</h1>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <ConfigSidebar IsOpen="@isSidebarOpen" 
+                   CurrentSection="@currentSection" 
+                   OnSectionChange="@HandleSectionChange" />
+
+    <!-- Main Content -->
+    <main class="main-content @(isSidebarOpen ? "sidebar-open" : "")">
+        <div class="content-container">
+            @switch (currentSection)
+            {
+                case "personalizacion":
+                    <Personalizacion ViewMode="@viewMode" OnViewModeChange="@HandleViewModeChange" />
+                    break;
+                case "apariencia":
+                    <Apariencia IsDarkMode="@isDarkMode" OnToggleDarkMode="@ToggleDarkMode" />
+                    break;
+                case "directorio":
+                    <Directorio />
+                    break;
+                case "administrar":
+                    <AdministrarAgendas />
+                    break;
+                case "asignar":
+                    <AsignarClientes />
+                    break;
+                case "ver":
+                    <VerAgendas />
+                    break;
+                case "reportes":
+                    <Reportes />
+                    break;
+                case "dias":
+                    <DiasInhabiles />
+                    break;
+            }
+
+            @* Preview Section for Personalizacion *@
+            @if (currentSection == "personalizacion")
+            {
+                <div class="preview-section">
+                    <h3>Vista Previa</h3>
+                    @if (viewMode == "list")
+                    {
+                        <div class="preview-container">
+                            <div class="blocks-list">
+                                <div class="block block-pink">Pink Block</div>
+                                <div class="block block-orange">Orange Block</div>
+                                <div class="block block-green">Green Block</div>
+                                <div class="block block-gray">Gray Block</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="preview-container">
+                            <div class="blocks-grid">
+                                <div class="block block-pink">Pink Block</div>
+                                <div class="block block-orange">Orange Block</div>
+                                <div class="block block-green">Green Block</div>
+                                <div class="block block-gray">Gray Block</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </main>
+</div>
+
+@code {
+    private bool isSidebarOpen = true;
+    private string currentSection = "personalizacion";
+    private bool isDarkMode = false;
+    private string viewMode = "list";
+
+    private void ToggleSidebar()
+    {
+        isSidebarOpen = !isSidebarOpen;
+    }
+
+    private void HandleSectionChange(string section)
+    {
+        currentSection = section;
+    }
+
+    private void ToggleDarkMode()
+    {
+        isDarkMode = !isDarkMode;
+    }
+
+    private void HandleViewModeChange(string mode)
+    {
+        viewMode = mode;
+    }
+}

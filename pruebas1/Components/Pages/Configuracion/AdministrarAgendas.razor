@@ -1,0 +1,248 @@
+<div class="administrar-section">
+    <div class="section-header">
+        <h2>Administrar Agendas</h2>
+        <p>Gestiona las agendas de trabajo del equipo</p>
+    </div>
+
+    <div class="action-buttons">
+        <button class="mode-button @(mode == "registrar" ? "active" : "")" 
+                @onclick='() => SetMode("registrar")'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>Registrar Agenda</span>
+        </button>
+
+        <button class="mode-button @(mode == "desvincular" ? "active" : "")" 
+                @onclick='() => SetMode("desvincular")'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>Desvincular Agenda</span>
+        </button>
+    </div>
+
+    @if (mode == "registrar")
+    {
+        <div class="form-section">
+            <div class="form-card">
+                <h3>Registrar Nueva Agenda</h3>
+
+                <div class="form-step">
+                    <label>Número de Empleado</label>
+                    <input type="text" @bind="employeeNumber" placeholder="Ej: EMP001" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(employeeNumber))
+                {
+                    <div class="form-step">
+                        <label>Puesto</label>
+                        <select @bind="selectedPosition">
+                            <option value="">Seleccionar puesto...</option>
+                            @foreach (var pos in positions)
+                            {
+                                <option value="@pos">@pos</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(selectedPosition))
+                {
+                    <div class="form-step">
+                        <label>Acción</label>
+                        <div class="action-options">
+                            <div class="action-option @(agendaAction == "crear" ? "selected" : "")" 
+                                 @onclick='() => agendaAction = "crear"'>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="12" y1="11" x2="12" y2="17"></line>
+                                    <line x1="9" y1="14" x2="15" y2="14"></line>
+                                </svg>
+                                <span>Crear Agenda</span>
+                            </div>
+
+                            <div class="action-option @(agendaAction == "asignar" ? "selected" : "")" 
+                                 @onclick='() => agendaAction = "asignar"'>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <polyline points="9 15 11 17 15 13"></polyline>
+                                </svg>
+                                <span>Asignar Agenda Existente</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (agendaAction == "asignar" && !string.IsNullOrEmpty(selectedPosition))
+                {
+                    <div class="form-step">
+                        <label>Seleccionar Agenda Existente</label>
+                        <div class="agenda-cards">
+                            @foreach (var agenda in GetAgendasByPosition(selectedPosition))
+                            {
+                                <div class="agenda-card @(selectedAgenda == agenda.Id ? "selected" : "")" 
+                                     @onclick="() => selectedAgenda = agenda.Id">
+                                    <div class="agenda-card-header">
+                                        <strong>@agenda.Name</strong>
+                                        <span class="badge">@agenda.Position</span>
+                                    </div>
+                                    <p>Pertenece a: @agenda.Owner</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <button class="submit-button" @onclick="HandleRegistrar" 
+                        disabled="@(!CanSubmitRegistrar())">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    }
+    else if (mode == "desvincular")
+    {
+        <div class="form-section">
+            <div class="form-card">
+                <h3>Desvincular Agenda</h3>
+
+                <div class="form-step">
+                    <label>Puesto</label>
+                    <select @bind="selectedPosition">
+                        <option value="">Seleccionar puesto...</option>
+                        @foreach (var pos in positions)
+                        {
+                            <option value="@pos">@pos</option>
+                        }
+                    </select>
+                </div>
+
+                @if (!string.IsNullOrEmpty(selectedPosition))
+                {
+                    <div class="form-step">
+                        <label>Seleccionar Agenda a Desvincular</label>
+                        <div class="agenda-list">
+                            @foreach (var agenda in GetAgendasByPosition(selectedPosition))
+                            {
+                                <div class="agenda-list-item @(selectedAgenda == agenda.Id ? "selected" : "")" 
+                                     @onclick="() => selectedAgenda = agenda.Id">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <div class="agenda-info">
+                                        <strong>@agenda.Name</strong>
+                                        <span>@agenda.Owner</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <button class="submit-button desvincular-btn" @onclick="HandleDesvincular" 
+                        disabled="@(string.IsNullOrEmpty(selectedAgenda))">
+                    Desvincular
+                </button>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="message-toast">
+            @message
+        </div>
+    }
+</div>
+
+@code {
+    private string mode = "registrar";
+    private string employeeNumber = "";
+    private string selectedPosition = "";
+    private string agendaAction = "";
+    private string selectedAgenda = "";
+    private string message = "";
+
+    private List<string> positions = new List<string>
+    {
+        "Developer", "Designer", "Manager", "Sales", "Support", "Marketing"
+    };
+
+    private class AgendaInfo
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Position { get; set; }
+        public string Owner { get; set; }
+    }
+
+    private List<AgendaInfo> agendas = new List<AgendaInfo>
+    {
+        new AgendaInfo { Id = "1", Name = "Agenda Desarrollo Full Stack", Position = "Developer", Owner = "Karim Negrete" },
+        new AgendaInfo { Id = "2", Name = "Agenda Desarrollo Frontend", Position = "Developer", Owner = "Carmen Muñoz" },
+        new AgendaInfo { Id = "3", Name = "Agenda Gestión Proyectos", Position = "Manager", Owner = "Gustavo Betanzos" },
+        new AgendaInfo { Id = "4", Name = "Agenda Ventas B2B", Position = "Sales", Owner = "Ana Torres" },
+        new AgendaInfo { Id = "5", Name = "Agenda Diseño UX/UI", Position = "Designer", Owner = "Roberto Silva" }
+    };
+
+    private void SetMode(string newMode)
+    {
+        mode = newMode;
+        employeeNumber = "";
+        selectedPosition = "";
+        agendaAction = "";
+        selectedAgenda = "";
+    }
+
+    private List<AgendaInfo> GetAgendasByPosition(string position)
+    {
+        return agendas.Where(a => a.Position == position).ToList();
+    }
+
+    private bool CanSubmitRegistrar()
+    {
+        if (string.IsNullOrEmpty(employeeNumber) || string.IsNullOrEmpty(selectedPosition))
+            return false;
+
+        if (agendaAction == "crear")
+            return true;
+
+        if (agendaAction == "asignar" && !string.IsNullOrEmpty(selectedAgenda))
+            return true;
+
+        return false;
+    }
+
+    private async Task HandleRegistrar()
+    {
+        if (agendaAction == "crear")
+            message = "Agenda creada exitosamente";
+        else
+            message = "Agenda asignada exitosamente";
+
+        employeeNumber = "";
+        selectedPosition = "";
+        agendaAction = "";
+        selectedAgenda = "";
+
+        await Task.Delay(3000);
+        message = "";
+    }
+
+    private async Task HandleDesvincular()
+    {
+        message = "Agenda desvinculada exitosamente";
+        selectedPosition = "";
+        selectedAgenda = "";
+
+        await Task.Delay(3000);
+        message = "";
+    }
+}

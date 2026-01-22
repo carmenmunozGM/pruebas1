@@ -1,0 +1,399 @@
+.administrar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 24px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 16px;
+    color: #374151;
+}
+
+.dark-mode .mode-button {
+    background: #262626;
+    border-color: #404040;
+    color: #d1d5db;
+}
+
+.mode-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mode-button:hover {
+    border-color: #9333ea;
+}
+
+.mode-button.active {
+    background: linear-gradient(to right, #fce7f3, #e9d5ff);
+    border-color: #9333ea;
+    color: #7c3aed;
+}
+
+.dark-mode .mode-button.active {
+    background: linear-gradient(to right, rgba(219, 39, 119, 0.3), rgba(168, 85, 247, 0.3));
+    border-color: #a855f7;
+    color: #c084fc;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .form-card {
+    background: #262626;
+    border-color: #404040;
+}
+
+.form-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 24px;
+}
+
+.dark-mode .form-card h3 {
+    color: #f5f5f5;
+}
+
+.form-step {
+    margin-bottom: 24px;
+}
+
+.form-step label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.dark-mode .form-step label {
+    color: #d1d5db;
+}
+
+.form-step input,
+.form-step select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #1f2937;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.dark-mode .form-step input,
+.dark-mode .form-step select {
+    background: #1a1a1a;
+    border-color: #404040;
+    color: #f5f5f5;
+}
+
+.form-step input:focus,
+.form-step select:focus {
+    border-color: #9333ea;
+}
+
+.action-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-option {
+    cursor: pointer;
+    padding: 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .action-option {
+    border-color: #404040;
+}
+
+.action-option:hover {
+    border-color: #c084fc;
+}
+
+.action-option.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .action-option.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.action-option svg {
+    width: 32px;
+    height: 32px;
+    color: #9333ea;
+}
+
+.dark-mode .action-option svg {
+    color: #c084fc;
+}
+
+.action-option span {
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+.dark-mode .action-option span {
+    color: #f5f5f5;
+}
+
+/* Agenda Cards */
+.agenda-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.agenda-card {
+    cursor: pointer;
+    padding: 16px;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .agenda-card {
+    background: #1a1a1a;
+    border-color: #404040;
+}
+
+.agenda-card:hover {
+    border-color: #c084fc;
+}
+
+.agenda-card.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .agenda-card.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.agenda-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.agenda-card strong {
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.dark-mode .agenda-card strong {
+    color: #f5f5f5;
+}
+
+.agenda-card p {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.dark-mode .agenda-card p {
+    color: #9ca3af;
+}
+
+.badge {
+    padding: 4px 8px;
+    background: #e9d5ff;
+    color: #7c3aed;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dark-mode .badge {
+    background: rgba(168, 85, 247, 0.3);
+    color: #c084fc;
+}
+
+/* Agenda List */
+.agenda-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agenda-list-item {
+    cursor: pointer;
+    padding: 16px;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .agenda-list-item {
+    background: #1a1a1a;
+    border-color: #404040;
+}
+
+.agenda-list-item:hover {
+    border-color: #c084fc;
+}
+
+.agenda-list-item.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .agenda-list-item.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.agenda-list-item svg {
+    width: 24px;
+    height: 24px;
+    color: #9333ea;
+    flex-shrink: 0;
+}
+
+.dark-mode .agenda-list-item svg {
+    color: #c084fc;
+}
+
+.agenda-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.agenda-info strong {
+    color: #1f2937;
+}
+
+.dark-mode .agenda-info strong {
+    color: #f5f5f5;
+}
+
+.agenda-info span {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark-mode .agenda-info span {
+    color: #9ca3af;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(to right, #ec4899, #9333ea);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 24px;
+}
+
+.submit-button:hover:not(:disabled) {
+    background: linear-gradient(to right, #db2777, #7c3aed);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.submit-button.desvincular-btn {
+    background: linear-gradient(to right, #f97316, #dc2626);
+}
+
+.submit-button.desvincular-btn:hover:not(:disabled) {
+    background: linear-gradient(to right, #ea580c, #b91c1c);
+}
+
+.message-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #10b981;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+    z-index: 100;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .action-options {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda-cards {
+        grid-template-columns: 1fr;
+    }
+}

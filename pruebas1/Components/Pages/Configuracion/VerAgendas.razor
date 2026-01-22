@@ -1,0 +1,180 @@
+
+<div class="ver-agendas-section">
+    <div class="section-header">
+        <h2>Ver Agendas</h2>
+        <p>Consulta las agendas de otros empleados</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" 
+                   @bind="searchName" 
+                   @bind:event="oninput"
+                   placeholder="Buscar por nombre..." />
+        </div>
+        <select class="area-filter" @bind="selectedArea">
+            <option value="">Todas las áreas</option>
+            @foreach (var area in areas)
+            {
+                <option value="@area">@area</option>
+            }
+        </select>
+    </div>
+
+    <div class="agendas-grid">
+        @foreach (var (employee, index) in filteredEmployees.Select((emp, idx) => (emp, idx)))
+        {
+            <div class="agenda-card">
+                <div class="employee-info">
+                    <div class="employee-avatar" style="background: @GetAvatarColor(index)">
+                        @GetInitials(employee.Name)
+                    </div>
+                    <div class="employee-details">
+                        <h4>@employee.Name</h4>
+                        <p>@employee.Role</p>
+                    </div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-box pending-stat">
+                        <span class="stat-label">Pendientes</span>
+                        <span class="stat-value">@employee.UpcomingTasks</span>
+                    </div>
+                    <div class="stat-box completed-stat">
+                        <span class="stat-label">Completadas hoy</span>
+                        <span class="stat-value">@employee.CompletedToday</span>
+                    </div>
+                </div>
+
+                <button class="ver-button" @onclick="() => ShowAgenda(employee)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>Ver Agenda</span>
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (selectedEmployee != null)
+    {
+        <div class="modal-overlay" @onclick="CloseModal">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <h3>Agenda de @selectedEmployee.Name</h3>
+                    </div>
+                    <button class="close-button" @onclick="CloseModal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="employee-summary">
+                        <p class="summary-label">Información del empleado</p>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="summary-key">Nombre</span>
+                                <span class="summary-value">@selectedEmployee.Name</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-key">Rol</span>
+                                <span class="summary-value">@selectedEmployee.Role</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tasks-section">
+                        <p class="tasks-label">Tareas pendientes:</p>
+                        @for (int i = 1; i <= 3; i++)
+                        {
+                            <div class="task-item">
+                                <p class="task-title">Tarea @i</p>
+                                <p class="task-description">Descripción de la tarea asignada</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private EmployeeInfo selectedEmployee = null;
+    private string searchName = "";
+    private string selectedArea = "";
+
+    private class EmployeeInfo
+    {
+        public string Name { get; set; }
+        public string Role { get; set; }
+        public int UpcomingTasks { get; set; }
+        public int CompletedToday { get; set; }
+    }
+
+    private List<EmployeeInfo> employees = new List<EmployeeInfo>
+    {
+        new EmployeeInfo { Name = "Karim Negrete", Role = "Developer", UpcomingTasks = 5, CompletedToday = 3 },
+        new EmployeeInfo { Name = "Carmen Muñoz", Role = "Designer", UpcomingTasks = 8, CompletedToday = 6 },
+        new EmployeeInfo { Name = "Gustavo Betanzos", Role = "Manager", UpcomingTasks = 12, CompletedToday = 4 },
+        new EmployeeInfo { Name = "Ana Torres", Role = "Sales", UpcomingTasks = 6, CompletedToday = 5 },
+        new EmployeeInfo { Name = "Roberto Silva", Role = "Support", UpcomingTasks = 9, CompletedToday = 7 },
+        new EmployeeInfo { Name = "Laura Martínez", Role = "Marketing", UpcomingTasks = 4, CompletedToday = 2 }
+    };
+
+    private string[] colors = new string[] 
+    { 
+        "#ec4899", "#9333ea", "#3b82f6", 
+        "#10b981", "#f97316", "#14b8a6" 
+    };
+
+    private string GetAvatarColor(int index)
+    {
+        return colors[index % colors.Length];
+    }
+
+    private string GetInitials(string name)
+    {
+        var parts = name.Split(' ');
+        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
+    }
+
+    private void ShowAgenda(EmployeeInfo employee)
+    {
+        selectedEmployee = employee;
+    }
+
+    private void CloseModal()
+    {
+        selectedEmployee = null;
+    }
+
+    private List<string> areas = new List<string> { "Developer", "Designer", "Manager", "Sales", "Support", "Marketing" };
+
+    private List<EmployeeInfo> filteredEmployees
+    {
+        get
+        {
+            return employees
+                .Where(e => e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                .Where(e => string.IsNullOrEmpty(selectedArea) || e.Role == selectedArea)
+                .ToList();
+        }
+    }
+}

@@ -29,7 +29,7 @@
 <br />
 <br />
 <br />
-   
+  
 
 <div class="agenda-container">
     <div class="top-bar-container">
@@ -662,20 +662,7 @@
 
     }
 </div>
-<div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; margin-bottom: 20px;">
-    <strong>Debug Info:</strong><br />
-    Fecha en Calendario: @FechaSeleccionada.ToString("dd/MM/yyyy") <br />
-    Total Categorías: @MasterCategories?.Count <br />
-    @foreach (var cat in MasterCategories ?? new())
-    {
-        foreach (var st in cat.Subtasks.Where(s => s.IsDone))
-        {
-            <span>Tarea: @st.Title | Hecha el: @(st.FechaCompletada?.ToString() ?? "SIN FECHA")</span>
-    
-            <br />
-        }
-    }
-</div>
+
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS -->
 @if (ShowModificarFechaModal)
 {

@@ -1,0 +1,181 @@
+<div class="dias-inhabiles-section">
+    <div class="section-header">
+        <h2>Días Inhábiles</h2>
+        <p>Registra días no laborables en el sistema</p>
+    </div>
+
+    <div class="dias-grid">
+        <!-- Form Section -->
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <line x1="8" y1="14" x2="16" y2="14"></line>
+                        <line x1="12" y1="14" x2="12" y2="18"></line>
+                    </svg>
+                </div>
+                <h3>Registrar Día Inhábil</h3>
+            </div>
+
+            <form @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+                <div class="date-inputs">
+                    <div class="input-group">
+                        <label for="dia">Día</label>
+                        <input 
+                            type="number" 
+                            id="dia" 
+                            @bind="formData.Dia"
+                            min="1" 
+                            max="31" 
+                            placeholder="1-31" 
+                            required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="mes">Mes</label>
+                        <input 
+                            type="number" 
+                            id="mes" 
+                            @bind="formData.Mes"
+                            min="1" 
+                            max="12" 
+                            placeholder="1-12" 
+                            required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="año">Año</label>
+                        <input 
+                            type="number" 
+                            id="año" 
+                            @bind="formData.Año"
+                            min="2026" 
+                            placeholder="2026" 
+                            required />
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="titulo">Título del día inhábil</label>
+                    <input 
+                        type="text" 
+                        id="titulo" 
+                        @bind="formData.Titulo"
+                        placeholder="Ej: Día de la Independencia" 
+                        required />
+                </div>
+
+                <button type="submit" class="submit-button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Crear día inhábil</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Saved Days List -->
+        <div class="saved-days-card">
+            <h3>Días Registrados</h3>
+            
+            <div class="days-list">
+                @if (savedDays.Count == 0)
+                {
+                    <p class="empty-message">No hay días inhábiles registrados</p>
+                }
+                else
+                {
+                    @foreach (var day in savedDays)
+                    {
+                        <div class="day-item">
+                            <div class="day-calendar">
+                                <span class="day-number">@day.Dia</span>
+                                <span class="day-month">@GetMonthName(int.Parse(day.Mes))</span>
+                            </div>
+                            <div class="day-info">
+                                <h4>@day.Titulo</h4>
+                                <p>@day.Dia de @GetMonthName(int.Parse(day.Mes)), @day.Año</p>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="message-toast">
+            @message
+        </div>
+    }
+</div>
+
+@code {
+    private string message = "";
+
+    private class DiaInhabilForm
+    {
+        public string Dia { get; set; } = "";
+        public string Mes { get; set; } = "";
+        public string Año { get; set; } = "";
+        public string Titulo { get; set; } = "";
+    }
+
+    private DiaInhabilForm formData = new DiaInhabilForm();
+
+    private List<DiaInhabilForm> savedDays = new List<DiaInhabilForm>
+    {
+        new DiaInhabilForm { Dia = "1", Mes = "1", Año = "2026", Titulo = "Año Nuevo" },
+        new DiaInhabilForm { Dia = "5", Mes = "2", Año = "2026", Titulo = "Día de la Constitución" },
+        new DiaInhabilForm { Dia = "21", Mes = "3", Año = "2026", Titulo = "Natalicio de Benito Juárez" }
+    };
+
+    private string[] monthNames = new string[]
+    {
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    };
+
+    private string GetMonthName(int month)
+    {
+        if (month >= 1 && month <= 12)
+            return monthNames[month - 1];
+        return "";
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrEmpty(formData.Dia) || 
+            string.IsNullOrEmpty(formData.Mes) || 
+            string.IsNullOrEmpty(formData.Año) || 
+            string.IsNullOrEmpty(formData.Titulo))
+        {
+            message = "Por favor completa todos los campos";
+            await Task.Delay(3000);
+            message = "";
+            return;
+        }
+
+        savedDays.Add(new DiaInhabilForm 
+        { 
+            Dia = formData.Dia, 
+            Mes = formData.Mes, 
+            Año = formData.Año, 
+            Titulo = formData.Titulo 
+        });
+
+        message = "Día inhábil registrado exitosamente";
+        
+        // Reset form
+        formData = new DiaInhabilForm();
+        
+        await Task.Delay(3000);
+        message = "";
+    }
+}

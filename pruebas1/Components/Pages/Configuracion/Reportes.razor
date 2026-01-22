@@ -1,0 +1,200 @@
+<div class="reportes-section">
+    <div class="section-header">
+        <h2>Reportes</h2>
+        <p>Genera y descarga reportes de actividad</p>
+    </div>
+
+    <!-- Report Type Selection -->
+    <div class="report-type-selector">
+        <button class="type-button @(reportType == "autoevaluacion" ? "active" : "")" 
+                @onclick='() => reportType = "autoevaluacion"'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            <span>Autoevaluación</span>
+        </button>
+
+        <button class="type-button @(reportType == "programa" ? "active" : "")" 
+                @onclick='() => reportType = "programa"'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Programa de Trabajo</span>
+        </button>
+
+        <button class="type-button @(reportType == "clientes" ? "active" : "")" 
+                @onclick='() => reportType = "clientes"'>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Clientes Asignados</span>
+        </button>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" 
+                   @bind="searchName" 
+                   @bind:event="oninput"
+                   placeholder="Buscar por nombre..." />
+        </div>
+        <select class="area-filter" @bind="selectedArea">
+            <option value="">Todas las áreas</option>
+            @foreach (var area in areas)
+            {
+                <option value="@area">@area</option>
+            }
+        </select>
+    </div>
+
+    <!-- Report Content -->
+    <div class="reportes-table-container">
+        <table class="reportes-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Área</th>
+                    <th>@GetReportColumnName()</th>
+                    <th class="text-right">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in filteredUsers)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    @GetInitials(user.Name)
+                                </div>
+                                <span class="user-name">@user.Name</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="area-badge">@user.Area</span>
+                        </td>
+                        <td>
+                            <span class="activity-badge">@GetReportValue(user)</span>
+                        </td>
+                        <td class="text-right">
+                            <button class="download-button" @onclick="() => HandleDownload(user.Name)">
+                                <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                                <span>Descargar Excel</span>
+                                <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="message-toast">
+            <div class="toast-content">
+                <strong>@message</strong>
+                <p>El archivo Excel se descargará en breve</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string message = "";
+    private string reportType = "autoevaluacion";
+    private string searchName = "";
+    private string selectedArea = "";
+
+    private class UserInfo
+    {
+        public string Name { get; set; }
+        public string Area { get; set; }
+        public int Autoevaluaciones { get; set; }
+        public int ProgramasTrabajo { get; set; }
+        public int ClientesAsignados { get; set; }
+    }
+
+    private List<UserInfo> users = new List<UserInfo>
+    {
+        new UserInfo { Name = "Karim Negrete", Area = "Developer", Autoevaluaciones = 12, ProgramasTrabajo = 8, ClientesAsignados = 5 },
+        new UserInfo { Name = "Carmen Muñoz", Area = "Designer", Autoevaluaciones = 15, ProgramasTrabajo = 10, ClientesAsignados = 7 },
+        new UserInfo { Name = "Gustavo Betanzos", Area = "Manager", Autoevaluaciones = 20, ProgramasTrabajo = 15, ClientesAsignados = 12 },
+        new UserInfo { Name = "Ana Torres", Area = "Sales", Autoevaluaciones = 18, ProgramasTrabajo = 12, ClientesAsignados = 9 },
+        new UserInfo { Name = "Roberto Silva", Area = "Support", Autoevaluaciones = 14, ProgramasTrabajo = 9, ClientesAsignados = 6 },
+        new UserInfo { Name = "Laura Martínez", Area = "Marketing", Autoevaluaciones = 16, ProgramasTrabajo = 11, ClientesAsignados = 8 },
+        new UserInfo { Name = "Diego Ramírez", Area = "Developer", Autoevaluaciones = 13, ProgramasTrabajo = 7, ClientesAsignados = 4 },
+        new UserInfo { Name = "Patricia Gómez", Area = "Sales", Autoevaluaciones = 17, ProgramasTrabajo = 13, ClientesAsignados = 10 }
+    };
+
+    private List<string> areas = new List<string> { "Developer", "Designer", "Manager", "Sales", "Support", "Marketing" };
+
+    private string GetInitials(string name)
+    {
+        var parts = name.Split(' ');
+        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
+    }
+
+    private string GetReportColumnName()
+    {
+        return reportType switch
+        {
+            "autoevaluacion" => "Autoevaluaciones",
+            "programa" => "Programas",
+            "clientes" => "Clientes",
+            _ => "Actividades"
+        };
+    }
+
+    private string GetReportValue(UserInfo user)
+    {
+        var value = reportType switch
+        {
+            "autoevaluacion" => user.Autoevaluaciones,
+            "programa" => user.ProgramasTrabajo,
+            "clientes" => user.ClientesAsignados,
+            _ => 0
+        };
+
+        return $"{value} registros";
+    }
+
+    private async Task HandleDownload(string userName)
+    {
+        message = $"Descargando reporte de {reportType} de {userName}";
+        await Task.Delay(3000);
+        message = "";
+    }
+
+    private List<UserInfo> filteredUsers
+    {
+        get
+        {
+            return users
+                .Where(u => u.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                .Where(u => string.IsNullOrEmpty(selectedArea) || u.Area == selectedArea)
+                .ToList();
+        }
+    }
+}

@@ -1,0 +1,124 @@
+<div class="directorio-section">
+    <div class="section-header">
+        <h2>Directorio Telefónico</h2>
+        <p>Extensiones telefónicas organizadas por área</p>
+    </div>
+
+    <div class="departments-grid">
+        @foreach (var dept in departments)
+        {
+            <div class="department-card">
+                <div class="department-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <h3>@dept.Name</h3>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rol</th>
+                                <th>Ext.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var role in dept.Roles)
+                            {
+                                <tr>
+                                    <td>@role.Role</td>
+                                    <td class="extension">@role.Extension</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private class DepartmentInfo
+    {
+        public string Name { get; set; }
+        public List<RoleInfo> Roles { get; set; }
+    }
+
+    private class RoleInfo
+    {
+        public string Role { get; set; }
+        public string Extension { get; set; }
+    }
+
+    private List<DepartmentInfo> departments = new List<DepartmentInfo>
+    {
+        new DepartmentInfo
+        {
+            Name = "IT",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "1001" },
+                new RoleInfo { Role = "Developers", Extension = "1002" },
+                new RoleInfo { Role = "Maintenance", Extension = "1003" },
+                new RoleInfo { Role = "Assistant", Extension = "1004" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Recursos Humanos",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "2001" },
+                new RoleInfo { Role = "Recruitment", Extension = "2002" },
+                new RoleInfo { Role = "Benefits", Extension = "2003" },
+                new RoleInfo { Role = "Assistant", Extension = "2004" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Ventas",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "3001" },
+                new RoleInfo { Role = "Representatives", Extension = "3002" },
+                new RoleInfo { Role = "Customer Service", Extension = "3003" },
+                new RoleInfo { Role = "Assistant", Extension = "3004" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Administración",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "4001" },
+                new RoleInfo { Role = "Accounting", Extension = "4002" },
+                new RoleInfo { Role = "Finance", Extension = "4003" },
+                new RoleInfo { Role = "Assistant", Extension = "4004" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Marketing",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "5001" },
+                new RoleInfo { Role = "Digital Marketing", Extension = "5002" },
+                new RoleInfo { Role = "Content Creator", Extension = "5003" },
+                new RoleInfo { Role = "Assistant", Extension = "5004" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Soporte",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Manager", Extension = "6001" },
+                new RoleInfo { Role = "Tech Support", Extension = "6002" },
+                new RoleInfo { Role = "Help Desk", Extension = "6003" },
+                new RoleInfo { Role = "Assistant", Extension = "6004" }
+            }
+        }
+    };
+}

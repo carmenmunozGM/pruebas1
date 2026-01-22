@@ -1,0 +1,108 @@
+<div class="personalizacion-section">
+    <div class="section-header">
+        <h2>Personalización</h2>
+        <p>Define cómo se muestran los bloques en la vista principal</p>
+    </div>
+
+    <div class="view-options">
+        <!-- Vertical View Option -->
+        <div class="view-option @(ViewMode == "vertical" ? "active" : "")" 
+             @onclick='() => OnViewModeChange.InvokeAsync("vertical")'>
+            <div class="option-header">
+                <div class="option-title">
+                    <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="18"></rect>
+                        <rect x="14" y="3" width="7" height="18"></rect>
+                    </svg>
+                    <h3>Vertical</h3>
+                </div>
+                @if (ViewMode == "vertical")
+                {
+                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                }
+            </div>
+
+            <div class="option-preview @(ColorMode)">
+                <div class="preview-vertical">
+                    <div class="mini-block mini-pink">Pink</div>
+                    <div class="mini-block mini-orange">Orange</div>
+                    <div class="mini-block mini-green">Green</div>
+                    <div class="mini-block mini-gray">Gray</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Horizontal View Option -->
+        <div class="view-option @(ViewMode == "horizontal" ? "active" : "")" 
+             @onclick='() => OnViewModeChange.InvokeAsync("horizontal")'>
+            <div class="option-header">
+                <div class="option-title">
+                    <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <h3>Horizontal</h3>
+                </div>
+                @if (ViewMode == "horizontal")
+                {
+                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                }
+            </div>
+
+            <div class="option-preview @(ColorMode)">
+                <div class="preview-horizontal">
+                    <div class="mini-block mini-pink">Pink</div>
+                    <div class="mini-block mini-orange">Orange</div>
+                    <div class="mini-block mini-green">Green</div>
+                    <div class="mini-block mini-gray">Gray</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid View Option -->
+        <div class="view-option @(ViewMode == "grid" ? "active" : "")" 
+             @onclick='() => OnViewModeChange.InvokeAsync("grid")'>
+            <div class="option-header">
+                <div class="option-title">
+                    <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <h3>Cuadrícula</h3>
+                </div>
+                @if (ViewMode == "grid")
+                {
+                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                }
+            </div>
+
+            <div class="option-preview @(ColorMode)">
+                <div class="preview-grid">
+                    <div class="mini-block mini-pink">Pink</div>
+                    <div class="mini-block mini-orange">Orange</div>
+                    <div class="mini-block mini-green">Green</div>
+                    <div class="mini-block mini-gray">Gray</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ViewMode { get; set; } = "horizontal";
+    [Parameter] public string ColorMode { get; set; } = "normal";
+    [Parameter] public EventCallback<string> OnViewModeChange { get; set; }
+    [Parameter] public EventCallback<string> OnColorModeChange { get; set; }
+}
