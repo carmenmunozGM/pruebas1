@@ -60,18 +60,19 @@
                                     <input type="checkbox"
                                            checked="@tarea.Realizado"
                                            @onchange="(e) => OnCheckChanged(tarea, e.Value is bool b && b)"
-                                           disabled="@IsLocked" />
+                                           disabled="@EstaTareaBloqueada(tarea)" />
+
 
                                     @if (tarea.Periodicidad == "Eventual"
-                                                                && !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado)
                                                                 && tarea.Realizado
-                                                                && !IsLocked)
+                                                                && !EstaTareaBloqueada(tarea))
                                     {
                                         <button class="btn-confirm" style="padding:4px 8px; font-size:12px;"
                                                 @onclick="() => EditarEventual(tarea)">
                                             ✏️
                                         </button>
                                     }
+
                                 </div>
                             </td>
 
@@ -140,8 +141,9 @@
                                 <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 
                                     <DatePicker Value="FechasEventuales[localIndex]"
-                                                ValueChanged="@(v => OnFechaEventualChange(localIndex, v))"
-                                                CssClass="form-control" />
+                                        ValueChanged="@(v => OnFechaEventualChange(localIndex, v))"
+                                        CssClass="form-control" />
+
 
                                     @if (FechasEventuales.Count > 1)
                                     {
@@ -287,11 +289,21 @@
         await CargarAutoevaluacionAsync();
     }
 
+
+    private bool EsMesActual =>
+    FechaConsulta.Year == DateTime.Today.Year &&
+    FechaConsulta.Month == DateTime.Today.Month;
+
+    private DateTime? MinFechaEventual =>
+    EsMesActual
+        ? DateTime.Today
+        : new DateTime(FechaConsulta.Year, FechaConsulta.Month, 1);
+
     // Fecha actual para comparar
     private DateTime FechaActual = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
     private DateTime FechaConsulta = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
-    public bool IsLocked => FechaConsulta <= new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    public bool IsLocked =>FechaConsulta < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
     private int GetIdFromTareaObject(Tarea tarea)
     {
@@ -475,8 +487,13 @@
         if (IsQuincenal) fechasAValidar.AddRange(FechasQuincenales);
         if (IsEventual) fechasAValidar.AddRange(FechasEventuales.Cast<DateTime?>());
 
-        bool fueraDeRango = fechasAValidar.Any(f => f.HasValue &&
-            (f.Value.Month != FechaConsulta.Month || f.Value.Year != FechaConsulta.Year));
+        // ---------------------------------------------
+        // 1️⃣ Validar que todas las fechas sean del mes consultado
+        // ---------------------------------------------
+        bool fueraDeRango = fechasAValidar.Any(f =>
+            f.HasValue &&
+            (f.Value.Month != FechaConsulta.Month ||
+             f.Value.Year != FechaConsulta.Year));
 
         if (fueraDeRango)
         {
@@ -491,16 +508,48 @@
             return;
         }
 
+        // ---------------------------------------------
+        // 2️⃣ EVENTUAL en mes actual: no permitir fechas pasadas
+        // ---------------------------------------------
+        if (IsEventual &&
+            FechaConsulta.Year == DateTime.Today.Year &&
+            FechaConsulta.Month == DateTime.Today.Month)
+        {
+            var hoy = DateTime.Today;
+
+            bool hayFechasInvalidas = fechasAValidar.Any(f =>
+                f.HasValue && f.Value.Date < hoy);
+
+            if (hayFechasInvalidas)
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    title = "Fecha no válida",
+                    text = "No puede seleccionar fechas anteriores al día de hoy en el mes en curso.",
+                    icon = "warning",
+                    backdrop = false,
+                    customClass = new { container = "swal-ontop" }
+                });
+                return;
+            }
+        }
+
+        // ---------------------------------------------
+        // 3️⃣ Validaciones específicas
+        // ---------------------------------------------
         if (IsQuincenal)
         {
             if (FechasQuincenales[0] == null || FechasQuincenales[1] == null)
             {
-                await JS.InvokeVoidAsync("Swal.fire", "Faltan fechas", "Debe seleccionar ambas fechas quincenales", "warning");
+                await JS.InvokeVoidAsync("Swal.fire", "Faltan fechas",
+                    "Debe seleccionar ambas fechas quincenales", "warning");
                 return;
             }
+
             if (FechasQuincenales[0]?.Day > 15 || FechasQuincenales[1]?.Day < 16)
             {
-                await JS.InvokeVoidAsync("Swal.fire", "Error Quincena", "La primera fecha debe ser del 1-15 y la segunda del 16-31.", "warning");
+                await JS.InvokeVoidAsync("Swal.fire", "Error Quincena",
+                    "La primera fecha debe ser del 1–15 y la segunda del 16–31.", "warning");
                 return;
             }
         }
@@ -509,20 +558,33 @@
         {
             if (SelectedWeekIndex < 0)
             {
-                await JS.InvokeVoidAsync("Swal.fire", "Cuidado", "Seleccione un día", "warning");
+                await JS.InvokeVoidAsync("Swal.fire", "Cuidado",
+                    "Seleccione un día", "warning");
                 return;
             }
+
             CurrentTask.RegistradoProgramado = WeekDays[SelectedWeekIndex];
         }
-        else if (IsMonthly) CurrentTask.RegistradoProgramado = CurrentTask.FechaMensualSeleccionada?.ToString("dd/MM/yyyy") ?? "";
-        else if (IsQuincenal) CurrentTask.RegistradoProgramado = string.Join("\n", FechasQuincenales.Where(f => f.HasValue).Select(f => f.Value.ToString("dd/MM/yyyy")));
-        else if (IsEventual) CurrentTask.RegistradoProgramado = string.Join("\n", FechasEventuales.Select(f => f.ToString("dd/MM/yyyy")));
-        else if (IsAnnual) CurrentTask.RegistradoProgramado = SelectedDate?.ToString("dd/MM/yyyy") ?? "";
+        else if (IsMonthly)
+            CurrentTask.RegistradoProgramado =
+                CurrentTask.FechaMensualSeleccionada?.ToString("dd/MM/yyyy") ?? "";
+        else if (IsQuincenal)
+            CurrentTask.RegistradoProgramado =
+                string.Join("\n", FechasQuincenales
+                    .Where(f => f.HasValue)
+                    .Select(f => f.Value.ToString("dd/MM/yyyy")));
+        else if (IsEventual)
+            CurrentTask.RegistradoProgramado =
+                string.Join("\n", FechasEventuales.Select(f => f.ToString("dd/MM/yyyy")));
+        else if (IsAnnual)
+            CurrentTask.RegistradoProgramado =
+                SelectedDate?.ToString("dd/MM/yyyy") ?? "";
 
         CurrentTask.Realizado = true;
         CurrentTask.EditadoManualmente = true;
         ShowModal = false;
     }
+
 
     private async Task GuardarAutoevaluacionFinal()
     {
@@ -625,6 +687,24 @@
         finally { IsSaving = false; }
     }
 
+    private bool EstaTareaBloqueada(Tarea tarea)
+    {
+        // Mes pasado → todo bloqueado
+        if (FechaConsulta < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1))
+            return true;
+
+        // Mes actual → SOLO Eventual se permite
+        if (FechaConsulta.Year == DateTime.Today.Year &&
+            FechaConsulta.Month == DateTime.Today.Month)
+        {
+            return tarea.Periodicidad != "Eventual";
+        }
+
+        // Mes futuro → nada bloqueado
+        return false;
+    }
+
+
     private int ConvertirDiaSemana(string diaTexto)
     {
         if (string.IsNullOrWhiteSpace(diaTexto)) return 0;
@@ -644,7 +724,8 @@
 
     private void OnCheckChanged(Tarea tarea, bool value)
     {
-        if (IsLocked) return;
+        if (EstaTareaBloqueada(tarea))return;
+
         if (!value)
         {
             tarea.Realizado = false;
