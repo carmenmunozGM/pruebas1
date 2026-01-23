@@ -107,14 +107,22 @@
 }
 
 /* Dark mode colors */
-[data-theme="dark"] {
-    --bg-primary: var(--color-gray-900);
-    --bg-secondary: var(--color-gray-800);
-    --bg-tertiary: var(--color-gray-700);
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --border-color: var(--color-gray-700);
+/* Dark mode colors - Versión Suave / Charcoal */
+[data-theme="dark"], .dark-mode {
+    /* Un fondo gris azulado profundo, no negro */
+    --bg-primary: #1a1c23;
+    /* Superficies de tarjetas y secciones (un poco más claras) */
+    --bg-secondary: #242731;
+    /* Elementos de entrada o resaltados */
+    --bg-tertiary: #2d313d;
+    /* Textos: Blanco hueso y gris seda (menos contraste que el blanco puro) */
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    /* Bordes más sutiles */
+    --border-color: #334155;
+    /* Sombras más densas pero suaves */
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 /* Light mode colors */
@@ -126,17 +134,6 @@
     --text-secondary: var(--color-gray-700);
     --text-muted: var(--color-gray-600);
     --border-color: var(--color-gray-200);
-}
-
-/* Rainbow mode colors */
-[data-theme="rainbow"] {
-    --bg-primary: #ffffff;
-    --bg-secondary: #fff5f5;
-    --bg-tertiary: #ffefef;
-    --text-primary: var(--color-gray-900);
-    --text-secondary: var(--color-gray-700);
-    --text-muted: var(--color-gray-600);
-    --border-color: var(--rainbow-purple);
 }
 
 /* ========================================

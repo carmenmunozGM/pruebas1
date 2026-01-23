@@ -5,9 +5,10 @@
     transition: background 0.3s ease;
 }
 
-.config-screen.dark-mode {
-    background: linear-gradient(to bottom right, #0a0a0a, #1a1a1a);
-}
+    .config-screen.dark-mode {
+        /* Un tono azulado muy oscuro que se siente más "Premium" */
+        background: linear-gradient(to bottom right, #1a1c23, #111318);
+    }
 
 /* Header Styles */
 .config-header {
@@ -23,8 +24,9 @@
 }
 
 .dark-mode .config-header {
-    background: #1a1a1a;
-    border-bottom-color: #333;
+    background: #242731; /* Un poco más claro que el fondo */
+    border-bottom-color: #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .header-content {
@@ -45,7 +47,9 @@
 }
 
 .dark-mode .gear-button {
-    background: linear-gradient(to bottom right, rgba(219, 39, 119, 0.3), rgba(168, 85, 247, 0.3));
+    background: linear-gradient(to bottom right, rgba(219, 39, 119, 0.2), rgba(147, 51, 234, 0.2));
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    box-shadow: 0 0 15px rgba(147, 51, 234, 0.1);
 }
 
 .gear-button:hover {
@@ -116,8 +120,9 @@
 }
 
 .dark-mode .preview-section {
-    background: #262626;
-    border-color: #404040;
+    background: #242731;
+    border-color: #334155;
+    box-shadow: var(--shadow-lg);
 }
 
 .preview-section h3 {
@@ -139,7 +144,7 @@
 }
 
 .dark-mode .preview-container {
-    background: #1a1a1a;
+    background: #1a1c23; /* Mismo color que el fondo para dar profundidad */
 }
 
 /* Blocks - Vertical View */
@@ -237,25 +242,11 @@
     color: #4b5563;
 }
 
-/* Rainbow Mode - LGBTQ+ Flag Colors */
-.rainbow .block-pink {
-    background: #e40303;
-    color: white;
-}
-
-.rainbow .block-orange {
-    background: #ff8c00;
-    color: white;
-}
-
-.rainbow .block-green {
-    background: #008026;
-    color: white;
-}
-
-.rainbow .block-gray {
-    background: #004dff;
-    color: white;
+/* Opcional: Si sientes que los bloques brillan demasiado, 
+   puedes aplicarles un ligero filtro cuando estés en dark-mode */
+.dark-mode .block {
+    filter: brightness(0.9);
+    color: #1f2937; /* Un gris muy oscuro para el texto en lugar de gris medio */
 }
 
 /* Responsive */
