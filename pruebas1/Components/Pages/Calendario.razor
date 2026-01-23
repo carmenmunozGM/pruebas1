@@ -47,9 +47,9 @@
                         @day.Date.ToString("dd")
                         @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
                         {
-                           
+
                         }
-                       
+
                     </div>
 
 
@@ -88,8 +88,8 @@
                                                                         )
                                     </span>
 
+                                    </div>
                                 </div>
-                            </div>
                                 }
                         </div>
                     }
@@ -132,7 +132,7 @@
                         </ul>
                     }
                 }
-                else if (SelectedBlock.Title == "Órdenes de Trabajo")
+                else if (SelectedBlock.Title == "Órdenes de Trabajoadfasaffff")
                 {
                     var ots = SelectedBlock.SubTasks.OfType<OrdenTrabajoDTO>().ToList();
                     var tramites = SelectedBlock.SubTasks.OfType<OrdenTramiteDTO>().ToList();
@@ -143,7 +143,7 @@
                     }
                     else
                     {
-        
+
                         @foreach (var ot in ots)
                         {
                             <div class="ot-card">
@@ -328,8 +328,22 @@
                                                 <p><strong>Fecha Inicio:</strong> @ev.FechaInicio.ToShortDateString()</p>
                                                 <p><strong>Fecha Fin:</strong> @ev.FechaFin.ToShortDateString()</p>
                                                 <p><strong>Horario:</strong> @ev.HoraInicio - @ev.HoraFin</p>
-                                                <p><strong>Organizado por:</strong> @ev.HoraInicio - @ev.HoraFin</p>
-                                                <p><strong>Participantes:</strong> @ev.HoraInicio - @ev.HoraFin</p>
+                                                <p><strong>Organizado por:</strong> @ev.Creador</p>
+                                                <p><strong>Participantes:</strong></p>
+                                                @if (ev.Participantes != null && ev.Participantes.Any())
+                                                {
+                                                    <ul class="actividad-list">
+                                                        @foreach (var p in ev.Participantes)
+                                                        {
+                                                            <li class="actividad-item">👤 @p</li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                else
+                                                {
+                                                    <p class="text-muted">Sin participantes</p>
+                                                }
+
                                             </div>
                                         }
                                     </li>
@@ -377,6 +391,9 @@
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan HoraFin { get; set; }
         public bool Completada { get; set; }
+        public string Creador { get; set; }
+        public List<string> Participantes { get; set; } = new();
+
     }
     private HashSet<string> ServiciosExpandidos = new();
 
@@ -562,7 +579,7 @@
     .Cast<object>();
 
         var eventosDelDia = EventosApi
-            .Where(e => e.fechaInicio.Date <= date.Date && e.fechaFin.Date >= date.Date)
+        .Where(e => e.fechaInicio.Date <= date.Date && e.fechaFin.Date >= date.Date)
             .Select(e => new EventItem
             {
                 Nombre = e.titulo,
@@ -570,7 +587,12 @@
                 FechaInicio = e.fechaInicio,
                 FechaFin = e.fechaFin,
                 HoraInicio = e.fechaInicio.TimeOfDay,
-                HoraFin = e.fechaFin.TimeOfDay
+                HoraFin = e.fechaFin.TimeOfDay,
+                Creador = e.nombreCreador, 
+                Completada = e.completada,
+                Participantes = e.participantes
+            .Select(p => p.nombreEmpleado)
+            .ToList()
             })
             .Cast<object>();
 

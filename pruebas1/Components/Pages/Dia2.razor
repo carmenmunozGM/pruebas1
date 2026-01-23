@@ -198,78 +198,74 @@
                             {
                                 <li class="subtask-item" @key="st.Id">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
+
+                                        @* --- 1. CHECKBOX (SIEMPRE VISIBLE PARA TAREAS Y EVENTOS PROPIOS) --- *@
                                         @if (st.Tipo == "Tarea" || st.EsEventoMio)
-                                                {
-                                                         <input type="checkbox"
-                                               @bind="st.IsDone"
-                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" /> 
-                                                }
-                                        <!-- Icono y tipo -->
+                                        {
+                                            <input type="checkbox"
+                                                   @bind="st.IsDone"
+                                                   @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
+                                        }
+
+                                        @* --- 2. ICONO, TÍTULO Y BADGE DE INVITADO --- *@
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "🗒️"))</span>
-                                        <span style="color:@(st.Tipo == "Evento" ? "red" : "blue");"></span>
-                                        <!-- Título -->
                                         <span class="subtask-text">@st.Title</span>
-                                        <!-- Estado hecho -->
+
                                         @if (st.IsDone)
                                         {
                                             <small class="done-text">Hecho</small>
                                         }
-                                        <!-- Fechas y hora (solo para eventos) -->
-                                        @if (st.Tipo == "Evento")
-                                        {
-                                            <span class="evento-fecha">
-                                                @if (st.FechaInicio.HasValue)
-                                                {
-                                                    @($"{st.FechaInicio.Value:dd/MM/yyyy}")
-                                                }
-                                                @if (st.HoraInicio.HasValue)
-                                                {
-                                                    @($" {st.HoraInicio.Value:HH\\:mm}")
-                                                }
-                                            </span>
-                                        }
 
                                         @if (st.EsInvitado)
                                         {
-                                            <span class="badge-compartido" title="Evento al que fuiste invitado">
-                                                👥
+                                            <span class="badge-compartido" title="Evento al que fuiste invitado">👥</span>
+                                        }
+
+                                        @* --- 3. FECHAS Y PRIORIDAD --- *@
+                                        @if (st.Tipo == "Evento" && st.FechaInicio.HasValue)
+                                        {
+                                            <span class="evento-fecha">
+                                                @($"{st.FechaInicio.Value:dd/MM/yyyy}")
+                                                @(st.HoraInicio.HasValue ? $" {st.HoraInicio.Value:HH\\:mm}" : "")
                                             </span>
                                         }
+
                                         @if (st.Tipo == "Tarea")
                                         {
                                             <span class="tarea-prioridad prioridad-@st.Prioridad">
                                                 <span class="prioridad-dot"></span>
-                                                @(st.Prioridad switch
-                                                {
-                                                    1 => "Alta",
-                                                    2 => "Media",
-                                                    3 => "Baja",
-                                                    _ => ""
-                                                })
-                        </span>
-                                                }
-                                        <!-- Botones acciones solo si categoría es Tareas -->
+                                                @(st.Prioridad switch { 1 => "Alta", 2 => "Media", 3 => "Baja", _ => "" })
+                                            </span>
+                                        }
+
+                                        @* --- 4. ACCIONES (LÓGICA DE OCULTAMIENTO DINÁMICO) --- *@
                                         @if (tareasCat.Name.Trim() == "Tareas")
                                         {
                                             <div class="subtask-actions">
+                                                @* "Ver" siempre disponible *@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
-                                                @if (st.Tipo == "Tarea" || st.EsEventoMio)
+
+                                                @* SOLO se muestran Editar y Eliminar si NO está marcado como IsDone *@
+                                                @if (!st.IsDone)
                                                 {
-                                                    <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(st)">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button class="icon-btn delete" title="Eliminar" @onclick="() => EliminarSubtask(st)">
-                                                        <i class="bi bi-trash3"></i>
-                                                    </button>
+                                                    @if (st.Tipo == "Tarea" || st.EsEventoMio)
+                                                    {
+                                                        <button class="icon-btn edit" title="Editar" @onclick="() => OpenEditModal(st)">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="icon-btn delete" title="Eliminar" @onclick="() => EliminarSubtask(st)">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    }
                                                 }
-
                                             </div>
-
                                         }
                                     </div>
-                                    @if (st.Subtasks.Any())
+
+                                    @* --- 5. SUBTAREAS / EVENTOS RELACIONADOS (RESTAURADO) --- *@
+                                    @if (st.Subtasks != null && st.Subtasks.Any())
                                     {
                                         <div class="table-wrapper block-scroll">
                                             <ul class="subtask-list">
@@ -280,9 +276,7 @@
                                                             <input type="checkbox"
                                                                    @bind="s2.IsDone"
                                                                    @bind:after="() => ToggleInnerSubtask(tareasCat, st, s2)" />
-                                                            <span class="subtask-text">@($"{s2.Title}")</span>
-                                                            <div class="subtask-actions">
-                                                            </div>
+                                                            <span class="subtask-text">@s2.Title</span>
                                                         </div>
                                                     </li>
                                                 }
