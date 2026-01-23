@@ -185,22 +185,22 @@
 /* Dark Mode - Blocks stay the same color */
 .dark-mode .mini-pink {
     background: #fbcfe8;
-    color: #4b5563;
+    color: #FFD1DC;
 }
 
 .dark-mode .mini-orange {
     background: #fed7aa;
-    color: #4b5563;
+    color: #FFDAC1;
 }
 
 .dark-mode .mini-green {
     background: #bbf7d0;
-    color: #4b5563;
+    color: #E2F0CB;
 }
 
 .dark-mode .mini-gray {
     background: #d1d5db;
-    color: #4b5563;
+    color: #D7D1DD;
 }
 
 /* Rainbow Mode - LGBTQ+ Flag Colors */
