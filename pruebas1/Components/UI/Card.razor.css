@@ -1,0 +1,82 @@
+.card {
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--color-gray-800);
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+/* Variantes de color */
+.card-default {
+    border: 2px solid var(--border-color);
+}
+
+.card-purple {
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    background-color: rgba(168, 85, 247, 0.02);
+}
+
+[data-theme="dark"] .card-purple {
+    border-color: rgba(168, 85, 247, 0.5);
+    background-color: rgba(168, 85, 247, 0.1);
+}
+
+.card-blue {
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    background-color: rgba(59, 130, 246, 0.02);
+}
+
+[data-theme="dark"] .card-blue {
+    border-color: rgba(59, 130, 246, 0.5);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.card-emerald {
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    background-color: rgba(16, 185, 129, 0.02);
+}
+
+[data-theme="dark"] .card-emerald {
+    border-color: rgba(16, 185, 129, 0.5);
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.card-rose {
+    border: 2px solid rgba(244, 63, 94, 0.3);
+    background-color: rgba(244, 63, 94, 0.02);
+}
+
+[data-theme="dark"] .card-rose {
+    border-color: rgba(244, 63, 94, 0.5);
+    background-color: rgba(244, 63, 94, 0.1);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}

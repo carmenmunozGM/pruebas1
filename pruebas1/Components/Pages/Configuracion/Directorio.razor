@@ -19,8 +19,8 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Rol</th>
-                                <th>Ext.</th>
+                                <th>Asignada</th>
+                                <th>Ext</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -56,35 +56,15 @@
     {
         new DepartmentInfo
         {
-            Name = "IT",
+            Name = "Socios",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Manager", Extension = "1001" },
-                new RoleInfo { Role = "Developers", Extension = "1002" },
-                new RoleInfo { Role = "Maintenance", Extension = "1003" },
-                new RoleInfo { Role = "Assistant", Extension = "1004" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Recursos Humanos",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Manager", Extension = "2001" },
-                new RoleInfo { Role = "Recruitment", Extension = "2002" },
-                new RoleInfo { Role = "Benefits", Extension = "2003" },
-                new RoleInfo { Role = "Assistant", Extension = "2004" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Ventas",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Manager", Extension = "3001" },
-                new RoleInfo { Role = "Representatives", Extension = "3002" },
-                new RoleInfo { Role = "Customer Service", Extension = "3003" },
-                new RoleInfo { Role = "Assistant", Extension = "3004" }
+                new RoleInfo { Role = "CPC.Alberto Méndez", Extension = "601" },
+                new RoleInfo { Role = "CPC. Rosalía López", Extension = "602" },
+                new RoleInfo { Role = "CPC. Rosalía Ortega", Extension = "605" },
+                new RoleInfo { Role = "CPC. Tere Rodríguez Limón", Extension = "603" },
+                new RoleInfo { Role = "LCC. Rosalía Méndez", Extension = "604" },
+                new RoleInfo { Role = "LIC. Xavier González", Extension = "606" }
             }
         },
         new DepartmentInfo
@@ -92,32 +72,144 @@
             Name = "Administración",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Manager", Extension = "4001" },
-                new RoleInfo { Role = "Accounting", Extension = "4002" },
-                new RoleInfo { Role = "Finance", Extension = "4003" },
-                new RoleInfo { Role = "Assistant", Extension = "4004" }
+                new RoleInfo { Role = "Asistente RLA", Extension = "710" },
+                new RoleInfo { Role = "Asistente RLA 2", Extension = "709" },
+                new RoleInfo { Role = "Aux. CxC", Extension = "517" },
+                new RoleInfo { Role = "Aux. Contabilidad", Extension = "501" },
+                new RoleInfo { Role = "Cobranza", Extension = "511" },
+                new RoleInfo { Role = "Contabilidad", Extension = "513" },
+                new RoleInfo { Role = "Control de nóminas", Extension = "512" },
+                new RoleInfo { Role = "Servicios de oficina", Extension = "514" },
+                new RoleInfo { Role = "Recepción 1", Extension = "701" },
+                new RoleInfo { Role = "Recepción 2", Extension = "702" },
+                new RoleInfo { Role = "Aux. Servicios de oficina", Extension = "723" },
             }
         },
         new DepartmentInfo
         {
-            Name = "Marketing",
+            Name = "Auditoria Fiscal e IMSS (AUFF y AUSS)",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Manager", Extension = "5001" },
-                new RoleInfo { Role = "Digital Marketing", Extension = "5002" },
-                new RoleInfo { Role = "Content Creator", Extension = "5003" },
-                new RoleInfo { Role = "Assistant", Extension = "5004" }
+                new RoleInfo { Role = "Asistente AU", Extension = "201" },
+                new RoleInfo { Role = "Auditores AUFF 3", Extension = "217" },
+                new RoleInfo { Role = "Auditores AUFF 2", Extension = "216" },
+                new RoleInfo { Role = "Auditores IMSS", Extension = "212" },
+                new RoleInfo { Role = "Auditores AUFF 1", Extension = "213" },
+                new RoleInfo { Role = "Aux. AU", Extension = "202" },
+                new RoleInfo { Role = "M Nom", Extension = "219" },
+                new RoleInfo { Role = "Encargado M Nom", Extension = "218" },
+                new RoleInfo { Role = "Encargado Jr. AUFF", Extension = "214" },
+                new RoleInfo { Role = "Encargado Sr. AUFF", Extension = "215" },
+                new RoleInfo { Role = "Encargado Sr. AUSS", Extension = "211" },
+                new RoleInfo { Role = "Gerente AU", Extension = "201" }
             }
         },
         new DepartmentInfo
         {
-            Name = "Soporte",
+            Name = "Asesoría Contable (AC)",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Manager", Extension = "6001" },
-                new RoleInfo { Role = "Tech Support", Extension = "6002" },
-                new RoleInfo { Role = "Help Desk", Extension = "6003" },
-                new RoleInfo { Role = "Assistant", Extension = "6004" }
+                new RoleInfo { Role = "Asesoría AC", Extension = "112" },
+                new RoleInfo { Role = "Asesoría AC", Extension = "114" },
+                new RoleInfo { Role = "Asesoría AC", Extension = "115" },
+                new RoleInfo { Role = "Asesoría AC", Extension = "116" },
+                new RoleInfo { Role = "Asistente AC", Extension = "101" },
+                new RoleInfo { Role = "Aux. AC", Extension = "102" },
+                new RoleInfo { Role = "Gerente de AC", Extension = "111" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Tecnologías de la Información (TI)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Gerente TI", Extension = "711" },
+                new RoleInfo { Role = "Asistente TI", Extension = "722" },
+                new RoleInfo { Role = "Soporte técnico (MTTO)", Extension = "716" },
+                new RoleInfo { Role = "Captura AUFF", Extension = "717" },
+                new RoleInfo { Role = "Captura AC", Extension = "113" },
+                new RoleInfo { Role = "Programadores ⭐", Extension = "718" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Asesoria Fiscal y Gestoría (AF y GE)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente AF", Extension = "401" },
+                new RoleInfo { Role = "Asesor Fiscal Jr.", Extension = "412" },
+                new RoleInfo { Role = "Gerente AF", Extension = "411" },
+                new RoleInfo { Role = "Gestoría", Extension = "413" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Recursos Humanos (RH)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente RH", Extension = "713" },
+                new RoleInfo { Role = "Aux. RH 1", Extension = "712" },
+                new RoleInfo { Role = "Aux. RH 2", Extension = "714" },
+                new RoleInfo { Role = "Anfitrión RH", Extension = "707" },
+                new RoleInfo { Role = "Gerente RH", Extension = "715" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Consultoría Organizacional (CO)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente CO", Extension = "301" },
+                new RoleInfo { Role = "Consultores", Extension = "311" },
+                new RoleInfo { Role = "Consultores", Extension = "312" },
+                new RoleInfo { Role = "Gerente CO", Extension = "313" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Legal",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente Legal", Extension = "901" },
+                new RoleInfo { Role = "Legal", Extension = "912" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Capacitación UNICA",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Auxiliar de UNICA", Extension = "801" },
+                new RoleInfo { Role = "Gerente de UNICA", Extension = "811" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Dirección",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Auditoría de Gestión", Extension = "721" },
+                new RoleInfo { Role = "Asistente AMS", Extension = "708" },
+                new RoleInfo { Role = "Asistente Tec Dir", Extension = "117" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Sala de Juntas",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Meeting", Extension = "705" },
+                new RoleInfo { Role = "Sala Deverona", Extension = "703" },
+                new RoleInfo { Role = "Sala El Reloj", Extension = "704" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Otros",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Comedor", Extension = "812" },
+                new RoleInfo { Role = "Vigilancia", Extension = "720" }
             }
         }
     };

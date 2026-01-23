@@ -1,0 +1,46 @@
+@* Componente de Card Reutilizable *@
+
+<div class="card @VariantClass @Class">
+    @if (!string.IsNullOrEmpty(Title) || HeaderContent != null)
+    {
+        <div class="card-header">
+            @if (HeaderContent != null)
+            {
+                @HeaderContent
+            }
+            else
+            {
+                <h3 class="card-title">@Title</h3>
+            }
+        </div>
+    }
+    
+    <div class="card-body">
+        @ChildContent
+    </div>
+
+    @if (FooterContent != null)
+    {
+        <div class="card-footer">
+            @FooterContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Variant { get; set; } = "default"; // default, purple, blue, emerald
+    [Parameter] public string Class { get; set; } = "";
+
+    private string VariantClass => Variant switch
+    {
+        "purple" => "card-purple",
+        "blue" => "card-blue",
+        "emerald" => "card-emerald",
+        "rose" => "card-rose",
+        _ => "card-default"
+    };
+}

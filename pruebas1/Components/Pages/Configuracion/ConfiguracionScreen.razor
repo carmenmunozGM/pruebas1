@@ -31,10 +31,8 @@
                                    OnColorModeChange="@HandleColorModeChange" />
                     break;
                 case "apariencia":
-                    <Apariencia IsDarkMode="@isDarkMode" 
-                              ColorMode="@colorMode"
-                              OnToggleDarkMode="@ToggleDarkMode"
-                              OnColorModeChange="@HandleColorModeChange" />
+                    <Apariencia CurrentTheme="@colorMode" 
+                                OnThemeChange="@HandleColorModeChange" />
                     break;
                 case "directorio":
                     <Directorio />
@@ -68,28 +66,28 @@
                         @if (viewMode == "vertical")
                         {
                             <div class="blocks-vertical">
-                                <div class="block block-pink">Pink Block</div>
-                                <div class="block block-orange">Orange Block</div>
-                                <div class="block block-green">Green Block</div>
-                                <div class="block block-gray">Gray Block</div>
+                                <div class="block block-pink">Tareas</div>
+                                <div class="block block-orange">Ordenes de Trabajo</div>
+                                <div class="block block-green">Autoevaluación</div>
+                                <div class="block block-gray">Servicio al Cliente</div>
                             </div>
                         }
                         else if (viewMode == "horizontal")
                         {
                             <div class="blocks-horizontal">
-                                <div class="block block-pink">Pink Block</div>
-                                <div class="block block-orange">Orange Block</div>
-                                <div class="block block-green">Green Block</div>
-                                <div class="block block-gray">Gray Block</div>
+                                <div class="block block-pink">Tareas</div>
+                                <div class="block block-orange">Ordenes de Trabajo</div>
+                                <div class="block block-green">Autoevaluación</div>
+                                <div class="block block-gray">Servicio al Cliente</div>
                             </div>
                         }
                         else
                         {
                             <div class="blocks-grid">
-                                <div class="block block-pink">Pink Block</div>
-                                <div class="block block-orange">Orange Block</div>
-                                <div class="block block-green">Green Block</div>
-                                <div class="block block-gray">Gray Block</div>
+                                <div class="block block-pink">Tareas</div>
+                                <div class="block block-orange">Ordenes de Trabajo</div>
+                                <div class="block block-green">Autoevaluación</div>
+                                <div class="block block-gray">Servicio al Cliente</div>
                             </div>
                         }
                     </div>
@@ -128,7 +126,17 @@
 
     private void HandleColorModeChange(string mode)
     {
-        colorMode = mode;
+        colorMode = mode; // Guarda el string ("dark", "light", "rainbow")
+
+        // Actualizamos el booleano que controla las clases CSS
+        if (mode == "dark")
+        {
+            isDarkMode = true;
+        }
+        else
+        {
+            isDarkMode = false;
+        }
     }
 }
 

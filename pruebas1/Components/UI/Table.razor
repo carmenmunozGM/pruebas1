@@ -1,0 +1,19 @@
+@* Table Component *@
+<div class="table-container">
+    <table class="table">
+        <thead class="table-header">
+            @HeaderContent
+        </thead>
+        <tbody class="table-body">
+            @BodyContent
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public RenderFragment HeaderContent { get; set; }
+
+    [Parameter]
+    public RenderFragment BodyContent { get; set; }
+}

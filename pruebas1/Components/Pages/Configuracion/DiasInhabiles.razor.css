@@ -285,3 +285,14 @@ form {
         grid-template-columns: 1fr;
     }
 }
+
+/* MODIFICACIÓN EXCLUSIVA PARA MODO OSCURO */
+.dark-mode h2,
+.dark-mode .section-header h2 {
+    color: #f5f5f5;
+}
+
+.dark-mode p,
+.dark-mode .section-header p {
+    color: #9ca3af;
+}
