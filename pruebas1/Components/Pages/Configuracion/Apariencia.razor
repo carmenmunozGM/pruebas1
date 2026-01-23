@@ -1,83 +1,75 @@
-<div class="apariencia-section">
+@* Componente de Apariencia - Selector de Tema *@
+@using pruebas1.Components.UI
+
+<div class="apariencia-container">
     <div class="section-header">
-        <h2>Apariencia</h2>
-        <p>Controla el tema visual de la aplicación</p>
+        <h2 class="section-title">Apariencia</h2>
+        <p class="section-description">Selecciona el tema de la aplicación</p>
     </div>
 
-    <!-- Dark Mode Toggle -->
-    <div class="theme-control">
-        <div class="theme-info">
-            <div class="theme-icon @(IsDarkMode ? "dark" : "light")">
-                @if (IsDarkMode)
-                {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                }
-                else
-                {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                    </svg>
-                }
+    <div class="theme-options">
+        <!-- Tema Claro -->
+        <button 
+            class="theme-option @(currentTheme == "light" ? "theme-option-active" : "")"
+            @onclick="@(() => ChangeTheme("light"))">
+            <div class="theme-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
             </div>
-            <div class="theme-text">
-                <h3>@(IsDarkMode ? "Modo Oscuro" : "Modo Claro")</h3>
-                <p>@(IsDarkMode ? "La interfaz usa colores oscuros para reducir el brillo" : "La interfaz usa colores claros para mejor visibilidad")</p>
-            </div>
-        </div>
+            <h3 class="theme-title">Modo Claro</h3>
+            <p class="theme-description">Tema con fondo blanco</p>
+        </button>
 
-        <label class="switch">
-            <input type="checkbox" checked="@IsDarkMode" @onchange="HandleToggle" />
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <!-- Color Mode Selection -->
-    <div class="color-modes">
-        <h3>Modo de Color</h3>
-        <div class="color-options">
-            <div class="color-option @(ColorMode == "normal" ? "active" : "")" 
-                 @onclick='() => OnColorModeChange.InvokeAsync("normal")'>
-                <div class="color-preview normal-preview">
-                    <div class="color-bar pink"></div>
-                    <div class="color-bar orange"></div>
-                    <div class="color-bar green"></div>
-                    <div class="color-bar gray"></div>
-                </div>
-                <span>Normal</span>
+        <!-- Tema Oscuro -->
+        <button 
+            class="theme-option @(currentTheme == "dark" ? "theme-option-active" : "")"
+            @onclick="@(() => ChangeTheme("dark"))">
+            <div class="theme-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
             </div>
+            <h3 class="theme-title">Modo Oscuro</h3>
+            <p class="theme-description">Tema con fondo oscuro</p>
+        </button>
 
-            <div class="color-option @(ColorMode == "rainbow" ? "active" : "")" 
-                 @onclick='() => OnColorModeChange.InvokeAsync("rainbow")'>
-                <div class="color-preview rainbow-preview">
-                    <div class="color-bar rainbow-red"></div>
-                    <div class="color-bar rainbow-orange"></div>
-                    <div class="color-bar rainbow-green"></div>
-                    <div class="color-bar rainbow-blue"></div>
-                </div>
-                <span>Arcoíris</span>
-            </div>
-        </div>
+   
     </div>
 </div>
 
 @code {
-    [Parameter] public bool IsDarkMode { get; set; }
-    [Parameter] public string ColorMode { get; set; } = "normal";
-    [Parameter] public EventCallback OnToggleDarkMode { get; set; }
-    [Parameter] public EventCallback<string> OnColorModeChange { get; set; }
+    [Parameter]
+    public string CurrentTheme { get; set; } = "light";
 
-    private async Task HandleToggle(ChangeEventArgs e)
+    [Parameter]
+    public EventCallback<string> OnThemeChange { get; set; }
+
+    private string currentTheme = "light";
+
+    protected override void OnInitialized()
     {
-        await OnToggleDarkMode.InvokeAsync();
+        currentTheme = CurrentTheme;
+    }
+
+    private async Task ChangeTheme(string theme)
+    {
+        currentTheme = theme;
+        await OnThemeChange.InvokeAsync(theme);
+    }
+
+
+    protected override void OnParametersSet()
+    {
+
+        currentTheme = CurrentTheme;
     }
 }
