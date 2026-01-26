@@ -163,50 +163,50 @@
 
 /* Normal Colors - Always the same */
 .mini-pink {
-    background: #fbcfe8;
+    background: #FFD1DC;
     color: #4b5563;
 }
 
 .mini-orange {
-    background: #fed7aa;
+    background: #FFDAC1;
     color: #4b5563;
 }
 
 .mini-green {
-    background: #bbf7d0;
+    background: #E2F0CB;
     color: #4b5563;
 }
 
 .mini-gray {
-    background: #d1d5db;
+    background: #D7D1DD;
     color: #4b5563;
 }
 
 /* Dark Mode - Blocks stay the same color */
 .dark-mode .mini-pink {
     background: #fbcfe8;
-    color: #FFD1DC;
+    color: #4b5563;
 }
 
 .dark-mode .mini-orange {
     background: #fed7aa;
-    color: #FFDAC1;
+    color: #4b5563;
 }
 
 .dark-mode .mini-green {
     background: #bbf7d0;
-    color: #E2F0CB;
+    color: #4b5563;
 }
 
 .dark-mode .mini-gray {
     background: #d1d5db;
-    color: #D7D1DD;
+    color: #4b5563;
 }
 
-/* Rainbow Mode - LGBTQ+ Flag Colors */
+/* Gay Mode -   LGTV+ Flag Colors */
 .rainbow .mini-pink {
     background: #e40303;
-    color: white;
+    color: #4b5563;
 }
 
 .rainbow .mini-orange {

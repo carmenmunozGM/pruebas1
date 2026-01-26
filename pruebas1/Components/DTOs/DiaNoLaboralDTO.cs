@@ -8,10 +8,11 @@ namespace pruebas1.Components.DTOs
 {
     public class DiaNoLaboralDto
     {
+        public int Id { get; set; }
         public DateTime DiaInhabil { get; set; }
-        public string Descripcion { get; set; }
+        public string? Descripcion { get; set; }
         public string Tipo { get; set; }
-        public DateTime Fecha { get; set; }  // <-- probablemente esta sea
+        public DateTime Fecha { get; set; }
         public string Nombre { get; set; }
 
     }
