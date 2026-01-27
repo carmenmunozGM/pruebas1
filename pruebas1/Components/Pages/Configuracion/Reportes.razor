@@ -1,3 +1,10 @@
+@using System.Diagnostics
+@using pruebas1.Servicios
+@using pruebas1.Components.DTOs
+@using static System.Net.WebRequestMethods
+@inject AreasService AreasService
+@inject HttpClient Http
+
 <div class="reportes-section">
     <div class="section-header">
         <h2>Reportes</h2>
@@ -45,16 +52,16 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" 
-                   @bind="searchName" 
+            <input type="text"
+                   @bind="searchName"
                    @bind:event="oninput"
                    placeholder="Buscar por nombre..." />
         </div>
         <select class="area-filter" @bind="selectedArea">
             <option value="">Todas las áreas</option>
-            @foreach (var area in areas)
+            @foreach (var area in areaList)
             {
-                <option value="@area">@area</option>
+                <option value="@area.Area">@area.Area</option>
             }
         </select>
     </div>
@@ -77,7 +84,7 @@
                         <td>
                             <div class="user-cell">
                                 <div class="user-avatar">
-                                    @GetInitials(user.Name)
+                                    @GetInitials(user.NetName)
                                 </div>
                                 <span class="user-name">@user.Name</span>
                             </div>
@@ -122,33 +129,76 @@
 </div>
 
 @code {
+    List<AreaDTO> areaList = new();
+    List<EmpleadoDTO> empleadoList = new();
+    private List<UserInfo> employees = new();
+
+    string? selectedArea;
+
+    private UserInfo selectedEmployee = null;
+    private string searchName = "";
+
     private string message = "";
     private string reportType = "autoevaluacion";
-    private string searchName = "";
-    private string selectedArea = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        areaList = await AreasService.GetAreas();
+        await CargarEmpleados();
+    }
+
+    private async Task CargarEmpleados()
+    {
+        var empleadosDto = await Http
+            .GetFromJsonAsync<List<EmpleadoDTO>>(
+                //"https://redgm.site:9096/empleado"
+                "http://localhost:5231/empleado"
+            )
+            ?? new();
+
+        employees = empleadosDto
+        .OrderBy(e => e.ClavePersonal)
+        .Select(e => new UserInfo
+        {
+            Id = e.Id,
+            ClavePersonal = e.ClavePersonal,
+            Name = e.Nombre,
+            NetName = e.NombreRed,
+            Area = e.Area,
+            Puesto = e.Puesto,
+            Autoevaluaciones = 0,
+            ProgramasTrabajo = 0,
+            ClientesAsignados = 0
+        }).ToList();
+    }
+
+    private int ObtenerClaveArea(string area)
+    {
+        return area switch
+        {
+            "TECNOLOGIAS DE INFORMACION" => 7,
+            _ => 0
+        };
+    }
 
     private class UserInfo
     {
-        public string Name { get; set; }
-        public string Area { get; set; }
+        public int Id { get; set; }
+        public int ClavePersonal { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+        public string NetName { get; set; } = string.Empty;
+
+        public string Area { get; set; } = string.Empty;
+        public string Puesto { get; set; } = string.Empty;
+
         public int Autoevaluaciones { get; set; }
         public int ProgramasTrabajo { get; set; }
         public int ClientesAsignados { get; set; }
     }
 
-    private List<UserInfo> users = new List<UserInfo>
-    {
-        new UserInfo { Name = "Karim Negrete", Area = "Developer", Autoevaluaciones = 12, ProgramasTrabajo = 8, ClientesAsignados = 5 },
-        new UserInfo { Name = "Carmen Muñoz", Area = "Designer", Autoevaluaciones = 15, ProgramasTrabajo = 10, ClientesAsignados = 7 },
-        new UserInfo { Name = "Gustavo Betanzos", Area = "Manager", Autoevaluaciones = 20, ProgramasTrabajo = 15, ClientesAsignados = 12 },
-        new UserInfo { Name = "Ana Torres", Area = "Sales", Autoevaluaciones = 18, ProgramasTrabajo = 12, ClientesAsignados = 9 },
-        new UserInfo { Name = "Roberto Silva", Area = "Support", Autoevaluaciones = 14, ProgramasTrabajo = 9, ClientesAsignados = 6 },
-        new UserInfo { Name = "Laura Martínez", Area = "Marketing", Autoevaluaciones = 16, ProgramasTrabajo = 11, ClientesAsignados = 8 },
-        new UserInfo { Name = "Diego Ramírez", Area = "Developer", Autoevaluaciones = 13, ProgramasTrabajo = 7, ClientesAsignados = 4 },
-        new UserInfo { Name = "Patricia Gómez", Area = "Sales", Autoevaluaciones = 17, ProgramasTrabajo = 13, ClientesAsignados = 10 }
-    };
-
-    private List<string> areas = new List<string> { "Developer", "Designer", "Manager", "Sales", "Support", "Marketing" };
+    private List<UserInfo> users = new();
 
     private string GetInitials(string name)
     {
@@ -191,9 +241,13 @@
     {
         get
         {
-            return users
-                .Where(u => u.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
-                .Where(u => string.IsNullOrEmpty(selectedArea) || u.Area == selectedArea)
+            return employees
+                .Where(e =>
+                    string.IsNullOrWhiteSpace(searchName) ||
+                    e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                .Where(e =>
+                    string.IsNullOrEmpty(selectedArea) ||
+                    e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
     }

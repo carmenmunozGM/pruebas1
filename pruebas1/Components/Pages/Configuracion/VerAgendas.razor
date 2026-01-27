@@ -1,6 +1,9 @@
+@using System.Diagnostics
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
+@using static System.Net.WebRequestMethods
 @inject AreasService AreasService
+@inject HttpClient Http
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -24,7 +27,7 @@
             <option value="">Todas las áreas</option>
             @foreach (var area in areaList)
             {
-                <option value="@area.Clave">@area.Area</option>
+                <option value="@area.Area">@area.Area</option>
             }
         </select>
 
@@ -36,11 +39,12 @@
             <div class="agenda-card">
                 <div class="employee-info">
                     <div class="employee-avatar" style="background: @GetAvatarColor(index)">
-                        @GetInitials(employee.Name)
+                        @GetInitials(employee.NetName)
                     </div>
                     <div class="employee-details">
-                        <h4>@employee.Name</h4>
-                        <p>@employee.ClaveArea</p>
+                        <h4>@employee.NetName - @employee.ClavePersonal</h4>
+                        <p>@employee.Area - @employee.Puesto</p>
+
                     </div>
                 </div>
 
@@ -98,7 +102,7 @@
                             </div>
                             <div class="summary-item">
                                 <span class="summary-key">Rol</span>
-                                <span class="summary-value">@selectedEmployee.ClaveArea</span>
+                                <span class="summary-value">@selectedEmployee.Area</span>
                             </div>
                         </div>
                     </div>
@@ -121,7 +125,10 @@
 
 @code {
     List<AreaDTO> areaList = new();
-    int? selectedArea;
+    List<EmpleadoDTO> empleadoList = new();
+    private List<EmployeeInfo> employees = new();
+
+    string? selectedArea;
 
     private EmployeeInfo selectedEmployee = null;
     private string searchName = "";
@@ -129,32 +136,61 @@
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
+        await CargarEmpleados();
     }
 
+    private async Task CargarEmpleados()
+    {
+        var empleadosDto = await Http
+            .GetFromJsonAsync<List<EmpleadoDTO>>(
+                //"https://redgm.site:9096/empleado"
+                "http://localhost:5231/empleado"
+            )
+            ?? new();
+
+        employees = empleadosDto
+        .OrderBy(e => e.ClavePersonal)
+        .Select(e => new EmployeeInfo
+        {
+            Id = e.Id,
+            ClavePersonal = e.ClavePersonal,
+            Name = e.Nombre,
+            NetName = e.NombreRed,
+            Area = e.Area,
+            Puesto = e.Puesto,
+            UpcomingTasks = 0,
+            CompletedToday = 0
+        }).ToList();
+    }
+
+    private int ObtenerClaveArea(string area)
+    {
+        return area switch
+        {
+            "TECNOLOGIAS DE INFORMACION" => 7,
+            _ => 0
+        };
+    }
 
     private class EmployeeInfo
     {
-        public string Name { get; set; }
-        public int ClaveArea { get; set; }
-        public string Area { get; set; }
+        public int Id { get; set; }
+        public int ClavePersonal { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+        public string NetName { get; set; } = string.Empty;
+
+        public string Area { get; set; } = string.Empty;
+        public string Puesto { get; set; } = string.Empty;
+
         public int UpcomingTasks { get; set; }
         public int CompletedToday { get; set; }
     }
 
-    private List<EmployeeInfo> employees = new List<EmployeeInfo>
-    {
-        new EmployeeInfo { Name = "Karim Negrete", ClaveArea = 7, UpcomingTasks = 5, CompletedToday = 3 },
-        new EmployeeInfo { Name = "Carmen Muñoz", ClaveArea = 6, UpcomingTasks = 8, CompletedToday = 6 },
-        new EmployeeInfo { Name = "Gustavo Betanzos", ClaveArea = 8, UpcomingTasks = 12, CompletedToday = 4 },
-        new EmployeeInfo { Name = "Ana Torres", ClaveArea = 2, UpcomingTasks = 6, CompletedToday = 5 },
-        new EmployeeInfo { Name = "Roberto Silva", ClaveArea = 7, UpcomingTasks = 9, CompletedToday = 7 },
-        new EmployeeInfo { Name = "Laura Martínez", ClaveArea = 3, UpcomingTasks = 4, CompletedToday = 2 }
-    };
-
     private string[] colors = new string[] 
     { 
-        "#ec4899", "#9333ea", "#3b82f6", 
-        "#10b981", "#f97316", "#14b8a6" 
+        "#dd0203", "#f78701", "#f7e801", 
+        "#2da549", "#4543ec", "#85119a" 
     };
 
     private string GetAvatarColor(int index)
@@ -162,10 +198,10 @@
         return colors[index % colors.Length];
     }
 
-    private string GetInitials(string name)
-    {
-        var parts = name.Split(' ');
-        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
+    private string GetInitials(string name) 
+    { 
+        var parts = name.Split(' '); 
+        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper())); 
     }
 
     private void ShowAgenda(EmployeeInfo employee)
@@ -189,10 +225,12 @@
                     string.IsNullOrWhiteSpace(searchName) ||
                     e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
                 .Where(e =>
-                    selectedArea == null ||
-                    e.ClaveArea == selectedArea)
+                    string.IsNullOrEmpty(selectedArea) ||
+                    e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
     }
+
+
 
 }

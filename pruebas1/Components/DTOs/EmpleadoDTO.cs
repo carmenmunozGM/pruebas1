@@ -11,6 +11,7 @@ namespace pruebas1.Components.DTOs
         public int Id { get; set; }
         public int ClavePersonal { get; set; }
         public string Nombre { get; set; }
+        public string NombreRed { get; set; }
         public string Area { get; set; }
         public string Puesto { get; set; }
     }

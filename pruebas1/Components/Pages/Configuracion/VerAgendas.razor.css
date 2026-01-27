@@ -130,7 +130,7 @@
 }
 
 .employee-details h4 {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #1f2937;
     margin-bottom: 4px;
@@ -141,7 +141,7 @@
 }
 
 .employee-details p {
-    font-size: 14px;
+    font-size: 12px;
     color: #6b7280;
 }
 
@@ -217,7 +217,7 @@
     justify-content: center;
     gap: 8px;
     padding: 12px;
-    background: linear-gradient(to right, #ec4899, #9333ea);
+    background: #9333ea;
     color: white;
     border: none;
     border-radius: 8px;
@@ -228,7 +228,7 @@
 }
 
 .ver-button:hover {
-    background: linear-gradient(to right, #db2777, #7c3aed);
+    background: #7c3aed;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
