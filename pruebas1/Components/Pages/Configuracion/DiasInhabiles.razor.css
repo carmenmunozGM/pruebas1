@@ -12,7 +12,7 @@
 
 .form-card,
 .saved-days-card {
-    background: white;
+    background: #f5f5f5;
     border-radius: 16px;
     padding: 32px;
     border: 1px solid #e5e7eb;
@@ -53,7 +53,7 @@
 }
 
 .dark-mode .form-icon svg {
-    color: #fb923c;
+    color: white;
 }
 
 .form-header h3 {
@@ -136,7 +136,7 @@ form {
     justify-content: center;
     gap: 8px;
     padding: 12px 24px;
-    background: #f97316;
+    background: #f79863;
     color: white;
     border: none;
     border-radius: 8px;
@@ -147,7 +147,7 @@ form {
 }
 
     .submit-button:hover {
-        background: #b91c1c;
+        background: #e2504c;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 
