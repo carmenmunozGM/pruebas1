@@ -136,7 +136,7 @@ form {
     justify-content: center;
     gap: 8px;
     padding: 12px 24px;
-    background: linear-gradient(to right, #f97316, #dc2626);
+    background: #f97316;
     color: white;
     border: none;
     border-radius: 8px;
@@ -146,15 +146,47 @@ form {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.submit-button:hover {
-    background: linear-gradient(to right, #ea580c, #b91c1c);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
+    .submit-button:hover {
+        background: #b91c1c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
 
 .submit-button svg {
     width: 20px;
     height: 20px;
 }
+
+.delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: oklch(0.95 0.02 30);
+    color: oklch(0.55 0.22 30);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .delete-button:hover {
+        background: oklch(0.85 0.25 30);
+        color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .delete-button:active {
+        transform: scale(0.95);
+    }
+    .delete-button svg {
+        width: 18px;
+        height: 18px;
+    }
+    .delete-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 
 .days-list {
     display: flex;
@@ -179,13 +211,20 @@ form {
     align-items: center;
     gap: 16px;
     padding: 16px;
-    background: linear-gradient(to right, #fed7aa, #fecaca);
+    background: #fed7aa; 
     border: 1px solid #fdba74;
     border-radius: 12px;
 }
+.day-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
 
 .dark-mode .day-item {
-    background: linear-gradient(to right, rgba(249, 115, 22, 0.2), rgba(220, 38, 38, 0.2));
+    background: rgba(220, 38, 38, 0.2);
     border-color: #c2410c;
 }
 
