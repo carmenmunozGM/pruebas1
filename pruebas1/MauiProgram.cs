@@ -33,6 +33,7 @@ namespace pruebas1
             builder.Services.AddScoped<OrdenTramiteService>();
             builder.Services.AddScoped<CalendarioService>();
             builder.Services.AddScoped<ServicioClienteService>();
+            builder.Services.AddScoped<AreasService>();
             builder.Services.AddMauiBlazorWebView();
 
             // HttpClient compartido
@@ -40,8 +41,8 @@ namespace pruebas1
             {
                 return new HttpClient
                 {
-               //BaseAddress = new Uri("https://redgm.site:9096/")
-               BaseAddress = new Uri("http://localhost:5231/")
+                //BaseAddress = new Uri("https://redgm.site:9096/")
+                BaseAddress = new Uri("http://localhost:5231/")
                 };
             });
 

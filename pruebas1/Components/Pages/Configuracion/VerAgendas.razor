@@ -1,3 +1,6 @@
+@using pruebas1.Servicios
+@using pruebas1.Components.DTOs
+@inject AreasService AreasService
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -19,11 +22,12 @@
         </div>
         <select class="area-filter" @bind="selectedArea">
             <option value="">Todas las áreas</option>
-            @foreach (var area in areas)
+            @foreach (var area in areaList)
             {
-                <option value="@area">@area</option>
+                <option value="@area.Clave">@area.Area</option>
             }
         </select>
+
     </div>
 
     <div class="agendas-grid">
@@ -36,7 +40,7 @@
                     </div>
                     <div class="employee-details">
                         <h4>@employee.Name</h4>
-                        <p>@employee.Role</p>
+                        <p>@employee.ClaveArea</p>
                     </div>
                 </div>
 
@@ -94,7 +98,7 @@
                             </div>
                             <div class="summary-item">
                                 <span class="summary-key">Rol</span>
-                                <span class="summary-value">@selectedEmployee.Role</span>
+                                <span class="summary-value">@selectedEmployee.ClaveArea</span>
                             </div>
                         </div>
                     </div>
@@ -116,26 +120,35 @@
 </div>
 
 @code {
+    List<AreaDTO> areaList = new();
+    int? selectedArea;
+
     private EmployeeInfo selectedEmployee = null;
     private string searchName = "";
-    private string selectedArea = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        areaList = await AreasService.GetAreas();
+    }
+
 
     private class EmployeeInfo
     {
         public string Name { get; set; }
-        public string Role { get; set; }
+        public int ClaveArea { get; set; }
+        public string Area { get; set; }
         public int UpcomingTasks { get; set; }
         public int CompletedToday { get; set; }
     }
 
     private List<EmployeeInfo> employees = new List<EmployeeInfo>
     {
-        new EmployeeInfo { Name = "Karim Negrete", Role = "Developer", UpcomingTasks = 5, CompletedToday = 3 },
-        new EmployeeInfo { Name = "Carmen Muñoz", Role = "Designer", UpcomingTasks = 8, CompletedToday = 6 },
-        new EmployeeInfo { Name = "Gustavo Betanzos", Role = "Manager", UpcomingTasks = 12, CompletedToday = 4 },
-        new EmployeeInfo { Name = "Ana Torres", Role = "Sales", UpcomingTasks = 6, CompletedToday = 5 },
-        new EmployeeInfo { Name = "Roberto Silva", Role = "Support", UpcomingTasks = 9, CompletedToday = 7 },
-        new EmployeeInfo { Name = "Laura Martínez", Role = "Marketing", UpcomingTasks = 4, CompletedToday = 2 }
+        new EmployeeInfo { Name = "Karim Negrete", ClaveArea = 7, UpcomingTasks = 5, CompletedToday = 3 },
+        new EmployeeInfo { Name = "Carmen Muñoz", ClaveArea = 6, UpcomingTasks = 8, CompletedToday = 6 },
+        new EmployeeInfo { Name = "Gustavo Betanzos", ClaveArea = 8, UpcomingTasks = 12, CompletedToday = 4 },
+        new EmployeeInfo { Name = "Ana Torres", ClaveArea = 2, UpcomingTasks = 6, CompletedToday = 5 },
+        new EmployeeInfo { Name = "Roberto Silva", ClaveArea = 7, UpcomingTasks = 9, CompletedToday = 7 },
+        new EmployeeInfo { Name = "Laura Martínez", ClaveArea = 3, UpcomingTasks = 4, CompletedToday = 2 }
     };
 
     private string[] colors = new string[] 
@@ -172,9 +185,14 @@
         get
         {
             return employees
-                .Where(e => e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
-                .Where(e => string.IsNullOrEmpty(selectedArea) || e.Role == selectedArea)
+                .Where(e =>
+                    string.IsNullOrWhiteSpace(searchName) ||
+                    e.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                .Where(e =>
+                    selectedArea == null ||
+                    e.ClaveArea == selectedArea)
                 .ToList();
         }
     }
+
 }

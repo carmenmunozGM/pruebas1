@@ -1300,7 +1300,6 @@
                         .ToList()
                 });
             }
-
             foreach (var item in agendaItems)
             {
                 if (item.FechaInicio == null && item.FechaFin == null && item.FechaCompletada == null)
@@ -1308,15 +1307,18 @@
 
                 var fechas = new List<DateTime>();
 
-                var usarFechaCompletada = item.IsCompleted && item.FechaCompletada != null;
-
-                if (usarFechaCompletada)
+                if (item.IsCompleted == false && DateTime.Today > item.FechaFin)
+                {
+                    DateTime fechaHoy = DateTime.Today;
+                    fechas.Add(fechaHoy);
+                }
+                if (item.IsCompleted && item.FechaCompletada != null)
                 {
                     fechas.Add(item.FechaCompletada!.Value.Date);
                 }
                 else
                 {
-                    if (item.FechaFin != null)
+                    if (item.FechaFin != null && item.FechaFin >= DateTime.Today && item.IsCompleted == false)
                         fechas.Add(item.FechaFin.Value.Date);
                 }
 
@@ -1858,8 +1860,6 @@
 
 
     }
-
-
 
     private async Task ToggleServicioClienteAsync(
     ClientServiceTask cs,
