@@ -1,6 +1,12 @@
-@* Componente de Asignación de Clientes con flujo guiado *@
 @using Models
+@using System.Diagnostics
+@using pruebas1.Components.DTOs
 @using pruebas1.Components.UI
+@using pruebas1.Servicios
+@inject HttpClient Http
+@using pruebas1.Entidades
+@using System.Globalization
+@inject LoginService LoginService
 
 <div class="asignar-container">
     <div class="section-header">
@@ -31,18 +37,16 @@
                 </div>
                 <div class="step-content">
                     <div class="assignment-type-buttons">
-                        <button 
-                            class="type-button @(assignmentType == "client" ? "type-button-active" : "")"
-                            @onclick="@(() => SetAssignmentType("client"))">
+                        <button class="type-button @(assignmentType == "client" ? "type-button-active" : "")"
+                                @onclick="@(() => SetAssignmentType("client"))">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
                             Asignar por Cliente
                         </button>
-                        <button 
-                            class="type-button @(assignmentType == "group" ? "type-button-active" : "")"
-                            @onclick="@(() => SetAssignmentType("group"))">
+                        <button class="type-button @(assignmentType == "group" ? "type-button-active" : "")"
+                                @onclick="@(() => SetAssignmentType("group"))">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
@@ -62,16 +66,30 @@
                     <label class="step-label">Seleccionar Empleado</label>
                 </div>
                 <div class="step-content">
-                    <select 
-                        class="form-select" 
-                        @bind="selectedEmployee" 
-                        disabled="@(assignmentType == null)">
-                        <option value="">Selecciona un empleado...</option>
-                        @foreach (var emp in employees)
+                    <div class="autocomplete-container">
+                        <input class="form-select"
+                               placeholder="Buscar empleado..."
+                               value="@searchText"
+                               @onfocus="MostrarEmpleados"
+                               @oninput="FiltrarEmpleados"
+                               disabled="@(assignmentType == null)" />
+
+
+                        @if (mostrarLista)
                         {
-                            <option value="@emp.Id">@emp.Name</option>
+                            <ul class="autocomplete-list">
+                                @foreach (var emp in empleadosFiltrados)
+                                {
+                                    <li @onclick="() => SeleccionarEmpleado(emp)">
+                                        <strong>@emp.Nombre</strong> — @emp.ClavePersonal
+                                        <br />
+                                        <small>@emp.Puesto — @emp.Area</small>
+                                    </li>
+                                }
+                            </ul>
                         }
-                    </select>
+                    </div>
+
                 </div>
             </div>
 
@@ -79,42 +97,44 @@
             <div class="form-step">
                 <div class="step-header">
                     <div class="step-number @(selectedClient != null ? "step-completed" : "") @(selectedEmployee == null ? "step-disabled" : "")">3</div>
-                    <label class="step-label">@(assignmentType == "client" ? "Seleccionar Cliente" : "Seleccionar Grupo")</label>
+                    <label class="step-label">
+                        @(assignmentType == "client" ? "Seleccionar Cliente" : "Seleccionar Grupo")
+                    </label>
                 </div>
+
                 <div class="step-content">
-                    <select 
-                        class="form-select" 
-                        @bind="selectedClient"
-                        @bind:after="OnClientChanged"
-                        disabled="@(selectedEmployee == null)">
-                        <option value="">@(assignmentType == "client" ? "Selecciona un cliente..." : "Selecciona un grupo...")</option>
-                        @if (assignmentType == "client")
+                    <div class="autocomplete-container">
+                        <input class="form-select"
+                               placeholder="@(assignmentType == "client" ? "Buscar cliente..." : "Buscar grupo...")"
+                               value="@searchTextCliente"
+                               @onfocus="MostrarClientes"
+                               @oninput="FiltrarClientes"
+                               disabled="@(selectedEmployee == null)" />
+
+                        @if (mostrarClientes && clientesFiltrados.Any())
                         {
-                            @foreach (var company in companies)
-                            {
-                                <option value="@company.Id">@company.Name</option>
-                            }
+                            <ul class="autocomplete-list">
+                                @foreach (var item in clientesFiltrados)
+                                {
+                                    <li @onclick="() => SeleccionarCliente(item)">
+                                        @item.Nombre
+                                    </li>
+                                }
+                            </ul>
                         }
-                        else if (assignmentType == "group")
-                        {
-                            @foreach (var group in clientGroups)
-                            {
-                                <option value="@group.Id">@group.Name</option>
-                            }
-                        }
-                    </select>
+                    </div>
 
                     @if (assignmentType == "group" && selectedClient != null)
                     {
-                        var group = clientGroups.FirstOrDefault(g => g.Id == selectedClient);
-                        if (group != null)
+                        var grupo = gruposClientes.FirstOrDefault(g => g.Id == int.Parse(selectedClient));
+                        if (grupo != null)
                         {
                             <div class="group-companies">
                                 <p class="group-label">Empresas en este grupo:</p>
                                 <div class="company-tags">
-                                    @foreach (var company in group.Companies)
+                                    @foreach (var cli in grupo.Clientes)
                                     {
-                                        <span class="company-tag">@company</span>
+                                        <span class="company-tag">@cli.RazonSocial</span>
                                     }
                                 </div>
                             </div>
@@ -122,6 +142,12 @@
                     }
                 </div>
             </div>
+            @if (serviciosCargados && sinServiciosOActividades)
+            {
+                <div class="alert-warning">
+                    El área a la que pertenece esta persona no tiene servicios y/o actividades
+                </div>
+            }
 
             <!-- Paso 4: Seleccionar Servicios -->
             @if (selectedClient != null && currentEntity != null)
@@ -137,10 +163,9 @@
                             {
                                 <div class="service-item">
                                     <label class="checkbox-wrapper">
-                                        <input 
-                                            type="checkbox"
-                                            checked="@selectedServices.Contains(service.Id)"
-                                            @onchange="() => ToggleService(service.Id)" />
+                                        <input type="checkbox"
+                                               checked="@selectedServices.Contains(service.Id)"
+                                               @onchange="() => ToggleService(service.Id)" />
                                         <span class="checkbox-custom"></span>
                                         <span class="service-name">@service.Name</span>
                                     </label>
@@ -177,10 +202,9 @@
                                             {
                                                 <div class="activity-item">
                                                     <label class="checkbox-wrapper">
-                                                        <input 
-                                                            type="checkbox"
-                                                            checked="@selectedActivities.Contains(activity.Id)"
-                                                            @onchange="() => ToggleActivity(activity.Id)" />
+                                                        <input type="checkbox"
+                                                               checked="@selectedActivities.Contains(activity.Id)"
+                                                               @onchange="() => ToggleActivity(activity.Id)" />
                                                         <span class="checkbox-custom"></span>
                                                         <span class="activity-name">@activity.Name</span>
                                                     </label>
@@ -198,10 +222,9 @@
 
         <!-- Botones de acción -->
         <div class="form-actions">
-            <button 
-                class="btn-save @(!IsFormComplete() ? "btn-disabled" : "")"
-                @onclick="SaveAssignment"
-                disabled="@(!IsFormComplete())">
+            <button class="btn-save @(!IsFormComplete() ? "btn-disabled" : "")"
+                    @onclick="SaveAssignment"
+                    disabled="@(!IsFormComplete())">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
@@ -299,120 +322,6 @@
 </div>
 
 @code {
-    // Mock data (igual que en el componente React)
-    private List<Employee> employees = new()
-    {
-        new Employee { Id = "emp1", Name = "Karim Negrete" },
-        new Employee { Id = "emp2", Name = "Carmen Muñoz" },
-        new Employee { Id = "emp3", Name = "Gustavo Betanzos" },
-        new Employee { Id = "emp4", Name = "María González" }
-    };
-
-    private List<Company> companies = new()
-    {
-        new Company 
-        { 
-            Id = "comp1", 
-            Name = "Empresa ABC S.A.",
-            Services = new List<Service>
-            {
-                new Service 
-                { 
-                    Id = "serv1", 
-                    Name = "Auditoría Fiscal",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "act1", Name = "Revisión de estados financieros" },
-                        new Activity { Id = "act2", Name = "Análisis de declaraciones" },
-                        new Activity { Id = "act3", Name = "Emisión de informe final" }
-                    }
-                },
-                new Service 
-                { 
-                    Id = "serv2", 
-                    Name = "Consultoría Legal",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "act4", Name = "Revisión de contratos" },
-                        new Activity { Id = "act5", Name = "Asesoría corporativa" }
-                    }
-                },
-                new Service 
-                { 
-                    Id = "serv3", 
-                    Name = "Gestión de Nómina",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "act6", Name = "Cálculo de nómina mensual" },
-                        new Activity { Id = "act7", Name = "Declaraciones de IMSS" },
-                        new Activity { Id = "act8", Name = "Reporte de impuestos sobre nómina" }
-                    }
-                }
-            }
-        },
-        new Company 
-        { 
-            Id = "comp2", 
-            Name = "Industrias XYZ",
-            Services = new List<Service>
-            {
-                new Service 
-                { 
-                    Id = "serv4", 
-                    Name = "Auditoría Operativa",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "act9", Name = "Evaluación de procesos" },
-                        new Activity { Id = "act10", Name = "Identificación de riesgos" }
-                    }
-                },
-                new Service 
-                { 
-                    Id = "serv5", 
-                    Name = "Control Interno",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "act11", Name = "Diseño de políticas" },
-                        new Activity { Id = "act12", Name = "Implementación de controles" },
-                        new Activity { Id = "act13", Name = "Capacitación de personal" }
-                    }
-                }
-            }
-        }
-    };
-
-    private List<ClientGroup> clientGroups = new()
-    {
-        new ClientGroup
-        {
-            Id = "group1",
-            Name = "Grupo Empresarial Norte",
-            Companies = new List<string> { "Empresa Norte A", "Empresa Norte B", "Empresa Norte C" },
-            Services = new List<Service>
-            {
-                new Service 
-                { 
-                    Id = "gserv1", 
-                    Name = "Seguimiento Trimestral",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "gact1", Name = "Revisión de KPIs" },
-                        new Activity { Id = "gact2", Name = "Informe trimestral" }
-                    }
-                },
-                new Service 
-                { 
-                    Id = "gserv2", 
-                    Name = "Asesoría Estratégica",
-                    Activities = new List<Activity>
-                    {
-                        new Activity { Id = "gact3", Name = "Planificación anual" },
-                        new Activity { Id = "gact4", Name = "Reuniones ejecutivas" }
-                    }
-                }
-            }
-        }
-    };
 
     private string? assignmentType = null;
     private string? selectedEmployee = null;
@@ -420,17 +329,198 @@
     private List<string> selectedServices = new();
     private List<string> selectedActivities = new();
     private List<SavedAssignment> savedAssignments = new();
+    private List<ClientesDTO> clientes = new();
+    private List<GrupoClientesDTO> gruposClientes = new();
+    private List<EmpleadoDTO> empleados = new();
+    private List<EmpleadoDTO> empleadosFiltrados = new();
+    private EmpleadoDTO? empleadoSeleccionado;
+    private string searchText = "";
+    private bool mostrarLista = false;
+    private string searchTextCliente = "";
+    private bool mostrarClientes = false;
+    private List<(int Id, string Nombre)> clientesFiltrados = new();
+    private List<Service> servicios = new();
+    private bool cargandoServicios = false;
+    private List<ServicioConActividadesDTO> serviciosPorArea = new();
+    private bool sinServiciosOActividades = false;
+    private bool serviciosCargados = false;
 
-    private IEntityWithServices? currentEntity => assignmentType == "client"
-        ? companies.FirstOrDefault(c => c.Id == selectedClient)
-        : clientGroups.FirstOrDefault(g => g.Id == selectedClient) as IEntityWithServices;
+    protected override async Task OnInitializedAsync()
+    {
+        var cultura = new CultureInfo("es-MX");
+        CultureInfo.CurrentCulture = cultura;
+        CultureInfo.CurrentUICulture = cultura;
 
-    private void SetAssignmentType(string type)
+        await CargarEmpleados();
+    }
+
+
+    private async Task SetAssignmentType(string type)
     {
         assignmentType = type;
-        selectedClient = null;
+        LimpiarEmpleado();
+        LimpiarCliente();
+
         selectedServices.Clear();
         selectedActivities.Clear();
+
+        Debug.WriteLine("===== TIPO DE ASIGNACIÓN =====");
+        Debug.WriteLine($"assignmentType = [{assignmentType}]");
+        Debug.WriteLine("=============================");
+
+        if (type == "client")
+            await CargarClientes();
+        else
+            await CargarGruposClientes();
+         sinServiciosOActividades = false;
+            serviciosCargados = false;
+    }
+
+
+    private void LimpiarEmpleado()
+    {
+        empleadoSeleccionado = null;
+        selectedEmployee = null;
+        searchText = "";
+        mostrarLista = false;
+    }
+
+    private void LimpiarCliente()
+    {
+        selectedClient = null;
+        searchTextCliente = "";
+        mostrarClientes = false;
+    }
+
+
+    private async Task CargarClientes()
+    {
+        clientes = await Http
+            .GetFromJsonAsync<List<ClientesDTO>>(
+                "/api/servicio-cliente/admin/clientes")
+            ?? new();
+    }
+
+    private async Task CargarGruposClientes()
+    {
+        gruposClientes = await Http
+            .GetFromJsonAsync<List<GrupoClientesDTO>>(
+                "/api/servicio-cliente/admin/grupos-clientes")
+            ?? new();
+    }
+
+    private async Task CargarEmpleados()
+    {
+        empleados = await Http
+            .GetFromJsonAsync<List<EmpleadoDTO>>(
+                "https://redgm.site:9096/empleado")
+            ?? new();
+    }
+
+    private void MostrarEmpleados()
+    {
+        if (empleadoSeleccionado != null)
+            return;
+
+        empleadosFiltrados = empleados
+            .Where(e =>
+                string.IsNullOrEmpty(searchText) ||
+                e.Nombre.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                e.ClavePersonal.ToString().Contains(searchText))
+            .ToList();
+
+        mostrarLista = true;
+
+    }
+
+    private void FiltrarEmpleados(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+
+        empleadosFiltrados = empleados
+            .Where(e =>
+                e.Nombre.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                e.ClavePersonal.ToString().Contains(searchText))
+            .ToList();
+
+        mostrarLista = empleadosFiltrados.Any();
+    }
+
+    private async Task SeleccionarEmpleado(EmpleadoDTO emp)
+    {
+        empleadoSeleccionado = emp;
+        selectedEmployee = emp.Id.ToString();
+        searchText = emp.Nombre;
+        mostrarLista = false;
+
+        Debug.WriteLine("===== EMPLEADO SELECCIONADO =====");
+        Debug.WriteLine($"ID: {emp.Id}");
+        Debug.WriteLine($"NOMBRE: {emp.Nombre}");
+        Debug.WriteLine($"AREA: [{emp.Area}]");
+        Debug.WriteLine("================================");
+
+        await CargarServiciosPorArea();
+    }
+
+
+    private void MostrarClientes()
+    {
+        if (!string.IsNullOrEmpty(selectedClient))
+            return;
+
+        clientesFiltrados = assignmentType == "client"
+            ? clientes
+                .Where(c =>
+                    string.IsNullOrEmpty(searchTextCliente) ||
+                    (c.RazonSocial != null &&
+                     c.RazonSocial.Contains(searchTextCliente, StringComparison.OrdinalIgnoreCase)))
+                .Select(c => (c.Id, c.RazonSocial ?? ""))
+                .ToList()
+            : gruposClientes
+                .Where(g =>
+                    string.IsNullOrEmpty(searchTextCliente) ||
+                    g.Nombre.Contains(searchTextCliente, StringComparison.OrdinalIgnoreCase))
+                .Select(g => (g.Id, g.Nombre))
+                .ToList();
+
+        mostrarClientes = clientesFiltrados.Any();
+    }
+
+
+    private void FiltrarClientes(ChangeEventArgs e)
+    {
+        searchTextCliente = e.Value?.ToString() ?? "";
+
+        clientesFiltrados = assignmentType == "client"
+            ? clientes
+                .Where(c => c.RazonSocial != null &&
+                            c.RazonSocial.Contains(searchTextCliente, StringComparison.OrdinalIgnoreCase))
+                .Select(c => (c.Id, c.RazonSocial ?? ""))
+                .ToList()
+            : gruposClientes
+                .Where(g => g.Nombre.Contains(searchTextCliente, StringComparison.OrdinalIgnoreCase))
+                .Select(g => (g.Id, g.Nombre))
+                .ToList();
+
+        mostrarClientes = true;
+    }
+
+    private async Task SeleccionarCliente((int Id, string Nombre) item)
+
+    {
+        selectedClient = item.Id.ToString();
+        searchTextCliente = item.Nombre;
+        mostrarClientes = false;
+
+        Debug.WriteLine("===== CLIENTE / GRUPO =====");
+        Debug.WriteLine($"ID SELECCIONADO: {selectedClient}");
+        Debug.WriteLine($"NOMBRE: {item.Nombre}");
+        Debug.WriteLine("===========================");
+
+        selectedServices.Clear();
+        selectedActivities.Clear();
+
+        await CargarServiciosPorArea();
     }
 
     private void OnClientChanged()
@@ -441,6 +531,9 @@
 
     private void ToggleService(string serviceId)
     {
+
+        Debug.WriteLine($"SERVICE TOGGLE: {serviceId}");
+
         if (selectedServices.Contains(serviceId))
         {
             selectedServices.Remove(serviceId);
@@ -458,10 +551,14 @@
         {
             selectedServices.Add(serviceId);
         }
+
+        Debug.WriteLine($"SERVICIOS SELECCIONADOS: {string.Join(", ", selectedServices)}");
     }
 
     private void ToggleActivity(string activityId)
     {
+
+        Debug.WriteLine($"ACTIVITY TOGGLE: {activityId}");
         if (selectedActivities.Contains(activityId))
         {
             selectedActivities.Remove(activityId);
@@ -470,6 +567,8 @@
         {
             selectedActivities.Add(activityId);
         }
+
+        Debug.WriteLine($"ACTIVIDADES SELECCIONADAS: {string.Join(", ", selectedActivities)}");
     }
 
     private bool IsFormComplete()
@@ -480,46 +579,96 @@
                selectedActivities.Any();
     }
 
-    private void SaveAssignment()
+    private async Task SaveAssignment()
     {
-        if (!IsFormComplete()) return;
 
-        var employee = employees.FirstOrDefault(e => e.Id == selectedEmployee);
-        var entity = currentEntity;
+        var usuario = LoginService.obtenerUsuarioLogueado();
 
-        var serviceNames = entity?.Services
-            .Where(s => selectedServices.Contains(s.Id))
-            .Select(s => s.Name)
-            .ToList() ?? new List<string>();
-
-        var activityNames = new List<string>();
-        if (entity != null)
+        if (usuario == null || !usuario.IdAgendasAsignadas.Any())
         {
-            foreach (var service in entity.Services)
-            {
-                foreach (var activity in service.Activities)
-                {
-                    if (selectedActivities.Contains(activity.Id))
-                    {
-                        activityNames.Add(activity.Name);
-                    }
-                }
-            }
+            Debug.WriteLine("❌ Usuario sin agendas asignadas");
+            return;
         }
 
+        int idAgenda = usuario.IdAgendasAsignadas.First();
+
+
+        Debug.WriteLine("===== BACKEND CREAR ASIGNACION =====");
+        Debug.WriteLine($"IdAgenda recibido: {idAgenda}");
+        Debug.WriteLine($"Empleado: {selectedEmployee}");
+        Debug.WriteLine($"Cliente/Grupo: {selectedClient}");
+        Debug.WriteLine($"Tipo: {assignmentType}");
+
+        Debug.WriteLine($"Servicios: {string.Join(", ", selectedServices)}");
+        Debug.WriteLine($"Actividades: {string.Join(", ", selectedActivities)}");
+        if (!IsFormComplete() || empleadoSeleccionado == null)
+            return;
+
+        // 1️⃣ Determinar IDs de clientes
+        List<int> entidadesIds;
+
+        if (assignmentType == "client")
+        {
+            entidadesIds = new List<int>
+        {
+            int.Parse(selectedClient!)
+        };
+        }
+        else // group
+        {
+            entidadesIds = gruposClientes
+                .First(g => g.Id == int.Parse(selectedClient!))
+                .Clientes
+                .Select(c => c.Id)
+                .ToList();
+        }
+
+        // 2️⃣ Construir DTO
+        var dto = new AsignacionClienteActividadesDTO
+        {
+            IdAgenda = idAgenda,
+            TipoEntidad = assignmentType == "client" ? "Cliente" : "Grupo",
+            IdEmpleado = empleadoSeleccionado.Id,
+            ClientesIds = entidadesIds,
+            ActividadesIds = selectedActivities.Select(int.Parse).ToList()
+        };
+
+        // 3️⃣ POST al backend
+        var response = await Http.PostAsJsonAsync(
+            "/api/servicio-cliente/admin/asignar",
+            dto
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Debug.WriteLine($"❌ Error al guardar asignación: {error}");
+            return;
+        }
+
+
+        // 4️⃣ (Opcional) feedback visual local
         savedAssignments.Insert(0, new SavedAssignment
         {
             Id = Guid.NewGuid().ToString(),
-            Employee = employee?.Name ?? "",
-            ClientOrGroup = entity?.Name ?? "",
-            Type = assignmentType ?? "",
-            Services = serviceNames,
-            Activities = activityNames,
+            Employee = empleadoSeleccionado.Nombre,
+            ClientOrGroup = currentEntity?.Name ?? "",
+            Type = assignmentType!,
+            Services = servicios
+                .Where(s => selectedServices.Contains(s.Id))
+                .Select(s => s.Name)
+                .ToList(),
+            Activities = servicios
+                .SelectMany(s => s.Activities)
+                .Where(a => selectedActivities.Contains(a.Id))
+                .Select(a => a.Name)
+                .ToList(),
             Date = DateTime.Now.ToString("dd/MM/yyyy")
         });
 
         ResetForm();
     }
+
 
     private void DeleteAssignment(string id)
     {
@@ -529,40 +678,90 @@
     private void ResetForm()
     {
         assignmentType = null;
-        selectedEmployee = null;
-        selectedClient = null;
         selectedServices.Clear();
         selectedActivities.Clear();
+
+
+
+        LimpiarCliente();
+        LimpiarEmpleado();
     }
+
 
     // Models
     public class Employee { public string Id { get; set; } = ""; public string Name { get; set; } = ""; }
     public class Activity { public string Id { get; set; } = ""; public string Name { get; set; } = ""; }
-    public class Service 
-    { 
-        public string Id { get; set; } = ""; 
-        public string Name { get; set; } = ""; 
+    public class Service
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
         public List<Activity> Activities { get; set; } = new();
     }
-    
-    public interface IEntityWithServices 
-    { 
+
+    public interface IEntityWithServices
+    {
         string Id { get; set; }
         string Name { get; set; }
-        List<Service> Services { get; set; } 
+        List<Service> Services { get; set; }
     }
-    
-    public class Company : IEntityWithServices 
-    { 
-        public string Id { get; set; } = ""; 
-        public string Name { get; set; } = ""; 
+
+    private IEntityWithServices? currentEntity
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(selectedClient))
+                return null;
+
+            if (assignmentType == "client")
+            {
+                var cli = clientes.FirstOrDefault(c => c.Id == int.Parse(selectedClient));
+                if (cli == null) return null;
+
+                return new EntityWithServices
+                {
+                    Id = cli.Id.ToString(),
+                    Name = cli.RazonSocial ?? "",
+                    Services = servicios
+                };
+            }
+
+            if (assignmentType == "group")
+            {
+                var grp = gruposClientes.FirstOrDefault(g => g.Id == int.Parse(selectedClient));
+                if (grp == null) return null;
+
+                return new EntityWithServices
+                {
+                    Id = grp.Id.ToString(),
+                    Name = grp.Nombre,
+                    Services = servicios
+                };
+            }
+
+            return null;
+        }
+    }
+
+    private class EntityWithServices : IEntityWithServices
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
         public List<Service> Services { get; set; } = new();
     }
-    
-    public class ClientGroup : IEntityWithServices 
-    { 
-        public string Id { get; set; } = ""; 
-        public string Name { get; set; } = ""; 
+
+
+
+    public class Company : IEntityWithServices
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public List<Service> Services { get; set; } = new();
+    }
+
+    public class ClientGroup : IEntityWithServices
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
         public List<string> Companies { get; set; } = new();
         public List<Service> Services { get; set; } = new();
     }
@@ -577,4 +776,78 @@
         public List<string> Activities { get; set; } = new();
         public string Date { get; set; } = "";
     }
+
+    private async Task CargarServiciosPorArea()
+    {
+        if (empleadoSeleccionado == null)
+        {
+            Debug.WriteLine("❌ CargarServiciosPorArea: empleadoSeleccionado es NULL");
+            return;
+        }
+
+        cargandoServicios = true;
+        sinServiciosOActividades = false;
+        serviciosCargados = false;
+
+        var area = empleadoSeleccionado.Area?.Trim() ?? "";
+
+        // 🔎 DEBUG 1: Área usada para la consulta
+        Debug.WriteLine("===== CARGAR SERVICIOS POR ÁREA =====");
+        Debug.WriteLine($"Empleado ID: {empleadoSeleccionado.Id}");
+        Debug.WriteLine($"Empleado Nombre: {empleadoSeleccionado.Nombre}");
+        Debug.WriteLine($"Área enviada: [{area}]");
+
+        serviciosPorArea = await Http.GetFromJsonAsync<List<ServicioConActividadesDTO>>(
+            $"/api/servicio-cliente/admin/servicios-actividades?area={Uri.EscapeDataString(area)}"
+        ) ?? new();
+
+        serviciosCargados = true;
+
+        // 🔎 DEBUG 2: Resultado crudo del backend
+        Debug.WriteLine($"Servicios recibidos: {serviciosPorArea.Count}");
+
+        foreach (var s in serviciosPorArea)
+        {
+            Debug.WriteLine(
+                $"Servicio -> ID: {s.IdServicio}, Nombre: {s.Servicio}, " +
+                $"Actividades: {(s.Actividades == null ? "NULL" : s.Actividades.Count.ToString())}"
+            );
+        }
+
+        sinServiciosOActividades =
+            !serviciosPorArea.Any() ||
+            serviciosPorArea.All(s => s.Actividades == null || !s.Actividades.Any());
+
+        // 🔎 DEBUG 3: Evaluación de bandera
+        Debug.WriteLine($"sinServiciosOActividades = {sinServiciosOActividades}");
+
+        // Mapear a la estructura que usa la UI
+        servicios = serviciosPorArea.Select(s => new Service
+        {
+            Id = s.IdServicio.ToString(),
+            Name = s.Servicio,
+            Activities = s.Actividades.Select(a => new Activity
+            {
+                Id = a.IdActividad.ToString(),
+                Name = a.Actividad
+            }).ToList()
+        }).ToList();
+
+        // 🔎 DEBUG 4: Resultado final que usa la UI
+        Debug.WriteLine($"Servicios mapeados a UI: {servicios.Count}");
+
+        foreach (var srv in servicios)
+        {
+            Debug.WriteLine(
+                $"UI Servicio -> ID: {srv.Id}, Nombre: {srv.Name}, Actividades: {srv.Activities.Count}"
+            );
+        }
+
+        Debug.WriteLine("===== FIN CARGAR SERVICIOS =====");
+
+        cargandoServicios = false;
+    }
+
+
+
 }
