@@ -1,3 +1,10 @@
+@using System.Diagnostics
+@using pruebas1.Entidades
+@using pruebas1.Servicios
+@inject CalendarioService CalendarioService
+@inject IJSRuntime JS
+
+
 <div class="dias-inhabiles-section">
     <div class="section-header">
         <h2>Días Inhábiles</h2>
@@ -69,13 +76,23 @@
                         required />
                 </div>
 
-                <button type="submit" class="submit-button">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    <span>Crear día inhábil</span>
+                <button type="submit"
+                        class="submit-button"
+                        disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span>Guardando...</span>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Crear día inhábil</span>
+                    }
                 </button>
+
             </form>
         </div>
 
@@ -93,16 +110,37 @@
                     @foreach (var day in savedDays)
                     {
                         <div class="day-item">
-                            <div class="day-calendar">
-                                <span class="day-number">@day.Dia</span>
-                                <span class="day-month">@GetMonthName(int.Parse(day.Mes))</span>
+                            <div class="day-left">
+                                <div class="day-calendar">
+                                    <span class="day-number">@day.Dia</span>
+                                    <span class="day-month">@GetMonthName(int.Parse(day.Mes))</span>
+                                </div>
+
+                                <div class="day-info">
+                                    <h4>@day.Titulo</h4>
+                                    <p>@day.Dia de @GetMonthName(int.Parse(day.Mes)), @day.Año</p>
+                                </div>
                             </div>
-                            <div class="day-info">
-                                <h4>@day.Titulo</h4>
-                                <p>@day.Dia de @GetMonthName(int.Parse(day.Mes)), @day.Año</p>
-                            </div>
+                            @if (day.Tipo == "InternoVariable")
+                            {
+                                <button class="delete-button"
+                                title="Eliminar día"
+                                disabled="@isDeleting"
+                                @onclick="() => EliminarDia(day.Id)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M10 11v6" />
+                                        <path d="M14 11v6" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                        <path d="M3 6h18" />
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                </button>
+                            }
                         </div>
                     }
+
                 }
             </div>
         </div>
@@ -119,22 +157,49 @@
 @code {
     private string message = "";
 
+    private bool isSaving = false;
+
+    private bool isDeleting = false;
+
+    private List<DiaNoLaboral> dias = new();
+
     private class DiaInhabilForm
     {
-        public string Dia { get; set; } = "";
-        public string Mes { get; set; } = "";
-        public string Año { get; set; } = "";
-        public string Titulo { get; set; } = "";
+        public int Id { get; set; }
+        public string Dia { get; set; } = string.Empty;
+        public string Mes { get; set; } = string.Empty;
+        public string Año { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+    }
+
+    private List<DiaInhabilForm> savedDays = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var anioActual = DateTime.Now.Year;
+        await CargarDias(anioActual);
+    }
+
+    private async Task CargarDias(int anio)
+    {
+        var diasApi = await CalendarioService.ObtenerPorAnio(anio);
+
+        savedDays = diasApi
+            .OrderBy(d => d.DiaInhabil)
+            .Select(d => new DiaInhabilForm
+                {
+                    Id = d.Id,
+                    Dia = d.DiaInhabil.Day.ToString(),
+                    Mes = d.DiaInhabil.Month.ToString(),
+                    Año = d.DiaInhabil.Year.ToString(),
+                    Titulo = d.Descripcion ?? string.Empty,
+                    Tipo = d.Tipo
+                })
+            .ToList();
     }
 
     private DiaInhabilForm formData = new DiaInhabilForm();
-
-    private List<DiaInhabilForm> savedDays = new List<DiaInhabilForm>
-    {
-        new DiaInhabilForm { Dia = "1", Mes = "1", Año = "2026", Titulo = "Año Nuevo" },
-        new DiaInhabilForm { Dia = "5", Mes = "2", Año = "2026", Titulo = "Día de la Constitución" },
-        new DiaInhabilForm { Dia = "21", Mes = "3", Año = "2026", Titulo = "Natalicio de Benito Juárez" }
-    };
 
     private string[] monthNames = new string[]
     {
@@ -151,31 +216,113 @@
 
     private async Task HandleSubmit()
     {
-        if (string.IsNullOrEmpty(formData.Dia) || 
-            string.IsNullOrEmpty(formData.Mes) || 
-            string.IsNullOrEmpty(formData.Año) || 
-            string.IsNullOrEmpty(formData.Titulo))
+        if (isSaving)
+            return;
+
+        if (string.IsNullOrWhiteSpace(formData.Dia) ||
+            string.IsNullOrWhiteSpace(formData.Mes) ||
+            string.IsNullOrWhiteSpace(formData.Año) ||
+            string.IsNullOrWhiteSpace(formData.Titulo))
         {
-            message = "Por favor completa todos los campos";
+            message = "Por favor completa todos los campos.";
             await Task.Delay(3000);
             message = "";
             return;
         }
 
-        savedDays.Add(new DiaInhabilForm 
-        { 
-            Dia = formData.Dia, 
-            Mes = formData.Mes, 
-            Año = formData.Año, 
-            Titulo = formData.Titulo 
-        });
+        if (!int.TryParse(formData.Dia, out var dia) ||
+            !int.TryParse(formData.Mes, out var mes) ||
+            !int.TryParse(formData.Año, out var anio))
+        {
+            message = "La fecha ingresada no es válida.";
+            return;
+        }
 
-        message = "Día inhábil registrado exitosamente";
-        
-        // Reset form
-        formData = new DiaInhabilForm();
-        
-        await Task.Delay(3000);
-        message = "";
+        var yaExiste = savedDays.Any(d =>
+            int.Parse(d.Dia) == dia &&
+            int.Parse(d.Mes) == mes &&
+            int.Parse(d.Año) == anio
+        );
+
+        if (yaExiste)
+        {
+            message = "Ya existe un día inhábil registrado para esa fecha.";
+            await Task.Delay(3000);
+            message = "";
+            return;
+        }
+
+        isSaving = true;
+
+        var nuevoDia = new DiaNoLaboral
+        {
+            Dia = dia,
+            Mes = mes,
+            Anio = anio,
+            Descripcion = formData.Titulo
+        };
+
+        try
+        {
+            var creado = await CalendarioService.Crear(nuevoDia);
+
+            if (creado == null)
+            {
+                message = "No se pudo registrar el día inhábil.";
+                return;
+            }
+
+            await CargarDias(anio);
+
+            message = "Día inhábil registrado exitosamente.";
+            formData = new DiaInhabilForm();
+
+            await Task.Delay(3000);
+            message = "";
+        }
+        catch
+        {
+            message = "Ocurrió un error al registrar el día inhábil.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
+
+    private async Task EliminarDia(int id)
+    {
+        if (isDeleting)
+            return;
+
+        var confirmar = await JS.InvokeAsync<bool>(
+            "confirm",
+            "¿Estás seguro de eliminar este día inhábil?"
+        );
+
+        if (!confirmar)
+            return;
+
+        try
+        {
+            isDeleting = true;
+
+            await CalendarioService.Eliminar(id);
+
+            await CargarDias(DateTime.Now.Year);
+
+            message = "Día inhábil eliminado correctamente.";
+            await Task.Delay(3000);
+            message = "";
+        }
+        catch
+        {
+            message = "Ocurrió un error al eliminar el día inhábil.";
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
 }

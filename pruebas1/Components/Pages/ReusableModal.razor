@@ -60,10 +60,7 @@
                                         CssClass="form-control" />
                         </div>
                     </div>
-                    <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>🕒Hora Inicio</label>
-                        <TimePickerList @bind-Value="HoraInicio" />
-                    </div>
+                   
                     <div class="date-time-group">
                         <div class="form-control-group">
                             <label>🗓️ Fecha Término</label>
@@ -71,6 +68,10 @@
                                         ValueChanged="OnFechaFinChanged"
                                         CssClass="form-control" />
                         </div>
+                    </div>
+                    <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
+                        <label>🕒Hora Inicio</label>
+                        <TimePickerList @bind-Value="HoraInicio" />
                     </div>
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
                         <label>🕒Hora Término</label>

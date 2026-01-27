@@ -163,22 +163,22 @@
 
 /* Normal Colors - Always the same */
 .mini-pink {
-    background: #fbcfe8;
+    background: #FFD1DC;
     color: #4b5563;
 }
 
 .mini-orange {
-    background: #fed7aa;
+    background: #FFDAC1;
     color: #4b5563;
 }
 
 .mini-green {
-    background: #bbf7d0;
+    background: #E2F0CB;
     color: #4b5563;
 }
 
 .mini-gray {
-    background: #d1d5db;
+    background: #D7D1DD;
     color: #4b5563;
 }
 
@@ -203,10 +203,10 @@
     color: #4b5563;
 }
 
-/* Rainbow Mode - LGBTQ+ Flag Colors */
+/* Gay Mode -   LGTV+ Flag Colors */
 .rainbow .mini-pink {
     background: #e40303;
-    color: white;
+    color: #4b5563;
 }
 
 .rainbow .mini-orange {

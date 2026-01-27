@@ -1,0 +1,29 @@
+﻿/* Colores por defecto (Claro) */
+:root {
+    --app-bg: #f8f9fa;
+    --nav-bg: #e0f2f1;
+    --card-tasks: #fce4ec; /* El rosa de tus tareas */
+    --card-orders: #fff3e0; /* El naranja de tus órdenes */
+    --card-eval: #f1f8e9; /* El verde de autoevaluación */
+    --text-main: #333333;
+}
+
+/* Modo Oscuro */
+[data-theme='dark'] {
+    --app-bg: #121212;
+    --nav-bg: #1e1e1e;
+    --card-tasks: #4a148c; /* Rosa oscuro / Morado */
+    --card-orders: #e65100; /* Naranja oscuro */
+    --card-eval: #1b5e20; /* Verde oscuro */
+    --text-main: #ffffff;
+}
+
+/* Modo Rosa Extremo (Opcional) */
+[data-theme='pink'] {
+    --app-bg: #fff0f5;
+    --nav-bg: #ffc0cb;
+    --card-tasks: #ff69b4;
+    --card-orders: #ff85a2;
+    --card-eval: #ffb6c1;
+    --text-main: #880e4f;
+}

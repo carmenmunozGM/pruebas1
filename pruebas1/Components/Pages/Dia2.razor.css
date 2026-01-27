@@ -1023,7 +1023,7 @@
         font-size: 3rem; /* un poco más elegante */
         margin-bottom: 0.3rem;
     }
-
+   
     /* TÍTULO */
     .dia-inhabil-card h2 {
         font-weight: 700;
@@ -1126,6 +1126,29 @@
         width: 130px;
         margin-left: 8px;
     }
+}
+/* Aseguramos que la etiqueta principal use flexbox */
+.subtask-label {
+    display: flex;
+    align-items: center; /* Alineación vertical perfecta */
+    gap: 10px; /* Espacio entre el check, el icono y el texto */
+}
+
+/* El "hueco" que siempre medirá lo mismo */
+.checkbox-container {
+    width: 25px; /* Un poco más que los 20px del check para dar aire */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0; /* Evita que el contenedor se aplaste */
+}
+
+.subtask-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--suceso-color);
+    cursor: pointer;
+    margin: 0; /* Quitamos márgenes por defecto para control total */
 }
 
 .subtask-label input[type="checkbox"] {
@@ -1241,36 +1264,50 @@
     }
 
 /* ======== OVERLAY ========= */
+/* ================= OVERLAY ================= */
 .view-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 20px;
 }
 
+/* ================= HELPERS ================= */
+.mb-3 {
+    margin-bottom: 12px;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+
+/* ================= MODAL ================= */
 .bento-modal {
     background: #ffffff;
-    width: 90%;
-    max-width: 750px;
-    border-radius: 28px;
-    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25);
+    width: 100%;
+    max-width: 850px;
+    max-height: 75vh;
+    border-radius: 32px;
     padding: 30px;
-    font-family: 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
 }
 
-/* Header */
+/* ================= HEADER ================= */
 .bento-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding: 0 5px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .type-tag {
@@ -1280,113 +1317,172 @@
     border-radius: 8px;
     font-size: 11px;
     font-weight: 800;
-    text-transform: uppercase;
+}
+
+.title-row {
+    margin-top: 8px;
+}
+
+.title-input {
+    width: 100%;
+    border: none;
+    background: #f8fafc;
+    padding: 6px 12px;
+    font-size: 24px;
+    font-weight: 800;
+    border-radius: 10px;
+    outline: none;
 }
 
 .bento-header h3 {
-    margin: 8px 0 0;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
+    margin: 6px 0 0;
     color: #1e293b;
 }
 
 .bento-close {
-    background: none;
+    background: #f1f5f9;
     border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     font-size: 20px;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
 }
 
-/* Grid de Cajas (Bento) */
+    .bento-close:hover {
+        background: #e2e8f0;
+    }
+
+/* ================= GRID ================= */
 .bento-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 15px;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 20px;
 }
+
+    .bento-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .bento-grid::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
 
 .bento-item {
     background: #f8fafc;
     border: 1px solid #f1f5f9;
     border-radius: 20px;
     padding: 20px;
-    transition: 0.3s;
+    position: relative;
 }
 
-    .bento-item label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 11px;
-        font-weight: 800;
-        color: #111; /* <--- ANTES: #94a3b8 (Cambiado a negro para mejor lectura) */
-        text-transform: uppercase;
-        margin-bottom: 12px;
-    }
-
-/* Ajustes de celdas */
 .full-width {
     grid-column: span 2;
 }
 
-.description p {
-    font-size: 15px;
-    color: #475569;
-    line-height: 1.6;
-    margin: 0;
+.bento-item label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 12px;
+    display: block;
 }
 
-/* Prioridad y Tiempo */
-.status-box {
+/* ================= INPUTS ================= */
+.bento-input-style,
+textarea,
+select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+    background: #ffffff;
+}
+
+    .bento-input-style:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #3b82f6;
+    }
+
+/* ================= PLANIFICACIÓN ================= */
+.plan-row {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    background: #f1f5f9;
+    gap: 12px;
 }
 
-.prio-label {
-    font-weight: 800;
+.plan-item span {
     font-size: 14px;
+    font-weight: 600;
 }
 
-    .prio-label.Alta {
-        color: #e11d48;
-    }
-
-    .prio-label.Media {
-        color: #d97706;
-    }
-
-    .prio-label.Baja {
-        color: #059669;
-    }
-
-.time-row {
+.edit-date-row {
     display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    color: #334155;
-    margin-bottom: 5px;
+    gap: 10px;
+    margin-top: 6px;
 }
 
-/* Listas de Nombres Full */
+    .edit-date-row > * {
+        flex: 1;
+        min-width: 120px;
+    }
+
+/* ================= TAGS ================= */
 .names-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
 .full-name-tag {
-    background: white;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    padding: 6px 14px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Subtareas */
+.remove-tag,
+.remove-sub {
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+    .remove-tag:hover,
+    .remove-sub:hover {
+        background: #fecaca;
+        transform: scale(1.1);
+    }
+
+/* ================= SUBTAREAS ================= */
 .subtasks-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1394,42 +1490,155 @@
 }
 
 .subtask-card {
-    background: white;
-    padding: 10px;
+    background: #ffffff;
+    padding: 12px;
     border-radius: 12px;
-    font-size: 13px;
     border-left: 4px solid #3b82f6;
-    /* MODIFICA ESTO */
-    font-size: 16px; /* Tamaño del texto */
-    font-weight: 600; /* Grosor de la letra para que resalte más */
-    color: #1a1a1a; /* Color negro para mejor legibilidad */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-/* Footer */
-.bento-footer {
-    margin-top: 25px;
-    text-align: right;
+.add-subtask-box {
+    grid-column: span 2;
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
 }
 
-.bento-btn {
-    background: #FF4D4D;
+.add-btn-circle {
+    background: #3b82f6;
     color: white;
     border: none;
-    padding: 12px 35px;
-    border-radius: 14px;
-    font-weight: 700;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 20px;
     cursor: pointer;
 }
 
-/* OVERLAY */
-.tramite-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.55);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* ================= AUTOCOMPLETE ================= */
+.autocomplete-list {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     z-index: 9999;
+    list-style: none;
+    padding: 5px 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+    .autocomplete-list li {
+        padding: 10px 15px;
+        cursor: pointer;
+    }
+
+        .autocomplete-list li:hover {
+            background: #f1f5f9;
+        }
+
+/* ================= FOOTER ================= */
+.bento-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+
+.bento-btn {
+    padding: 12px 26px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+}
+
+.save {
+    background: #10b981;
+    color: white;
+}
+
+.cancel {
+    background: #FF4D4D;
+    color: white;
+}
+
+.bento-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+/* ===== EQUIPO DE TRABAJO – LAYOUT CORRECTO ===== */
+
+.equipo-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Buscador siempre visible */
+.participant-search {
+    position: sticky;
+    top: 0;
+    background: inherit;
+    z-index: 5;
+    padding-bottom: 8px;
+}
+
+    /* Autocomplete flotante */
+    .participant-search .autocomplete-list {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 10;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+/* SOLO esta zona scrollea */
+.participants-scroll {
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 6px;
+}
+
+    /* Scroll discreto */
+    .participants-scroll::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .participants-scroll::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 10px;
+    }
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 600px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subtasks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .add-subtask-box {
+        grid-column: span 1;
+    }
 }
 
 /* MODAL DE ORDENES DE TRAMITE */

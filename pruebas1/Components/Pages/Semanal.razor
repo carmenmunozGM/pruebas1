@@ -224,316 +224,238 @@
 <!-- Modal de Tarea (editar/ver) -->
 @if (IsModalOpen && SelectedTaskObject != null)
 {
-    <div class="modal-backdrop" @onclick="CloseTaskModal"></div>
-
-    <div class="modal-content" @onclick:stopPropagation>
-        <div class="modal-header">
-            <h2>@GetModalTitle()</h2>
-            <button class="close-btn" @onclick="CloseTaskModal">&times;</button>
-        </div>
-
-        <div class="modal-body">
-            @if (IsModalOpen && SelectedTask != null)
+    <div class="view-overlay" @onclick="CloseTaskModal">
+        <div class="bento-modal" @onclick:stopPropagation>
+            @if (SelectedTask != null)
             {
                 var bt = SelectedTask;
 
-                <div class="modal-backdrop" @onclick="CloseTaskModal"></div>
+                <div class="bento-header">
+                    <div>
+                        <span class="type-tag" style="background:#f0fdf4; color:#166534;">@(bt.EsEvento ? "EVENTO" : "TAREA")</span>
+                        <div class="title-row">
+                            <span class="emoji-icon">🏷️</span>
+                            @if (IsEditMode)
+                            {
+                                <input type="text" @bind="bt.Name" class="bento-input-style title-input" placeholder="Nombre de la actividad" />
+                            }
+                            else
+                            {
+                                <h3>@bt.Name</h3>
+                            }
+                        </div>
+                    </div>
+                    <button class="bento-close" @onclick="CloseTaskModal">&times;</button>
+                </div>
 
-                <div class="modal-content" @onclick:stopPropagation>
-                    <div class="modal-header">
-                        <h2>@(bt.EsEvento ? "📅 Detalles del Evento" : "📝 Detalles de la Tarea")</h2>
-                        <button class="close-btn" @onclick="CloseTaskModal">&times;</button>
+                <div class="bento-grid">
+                    <div class="bento-item">
+                        <label>📝 DESCRIPCIÓN</label>
+                        @if (IsEditMode)
+                        {
+                            <textarea @bind="bt.Description" class="bento-input-style" placeholder="Añade detalles..."></textarea>
+                        }
+                        else
+                        {
+                            <p class="content-text">@(string.IsNullOrWhiteSpace(bt.Description) ? "Sin descripción detallada." : bt.Description)</p>
+                        }
                     </div>
 
-                    <div class="modal-body">
-                        <!-- Nombre/Actividad -->
-                        <div class="form-group">
-                            <label>Título:</label>
-                            <input type="text" @bind="bt.Name" disabled="@(!IsEditMode)" />
-                        </div>
-
-                        <!-- Descripción -->
-                        <div class="form-group">
-                            <label>Descripción:</label>
-                            <textarea @bind="bt.Description" disabled="@(!IsEditMode)"></textarea>
-                        </div>
-
-                        <!-- Prioridad -->
-                        <div class="form-group">
-                            <label>⚡ Prioridad:</label>
-
-                            <select @bind="bt.IdPrioridad" disabled="@(!IsEditMode)">
+                    <div class="bento-item">
+                        <label>⚡ PRIORIDAD</label>
+                        @if (IsEditMode)
+                        {
+                            <select @bind="bt.IdPrioridad" class="bento-input-style">
                                 @foreach (var p in prioridadesList)
                                 {
-                                    <option value="@p.Id">
-                                        @($"{IconoPrioridad(p.Id)} {p.Titulo}")
-                                    </option>
+                                    <option value="@p.Id">@p.Titulo</option>
                                 }
                             </select>
-
-                        </div>
-
-                        <!-- Fechas y horas -->
-                        <div class="form-group inline">
-                            <label>📅 Fecha inicio:</label>
-                            @if (IsEditMode)
-                            {
-                                <DatePicker Value="bt.StartDate"
-                                            ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
-                            }
-                            else
-                            {
-                                <input type="text" class="read-only-field"
-                                       value="@bt.StartDate.ToString("dd/MM/yyyy")" readonly />
-                            }
-                        </div>
-
-                        <div class="form-group inline">
-                            <label>📅 Fecha fin:</label>
-                            @if (IsEditMode)
-                            {
-                                <DatePicker Value="bt.DueDate"
-                                            ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
-                            }
-                            else
-                            {
-                                <input type="text" class="read-only-field"
-                                       value="@bt.DueDate.ToString("dd/MM/yyyy")" readonly />
-                            }
-                        </div>
-
-                        @if (bt.EsEvento)
+                        }
+                        else
                         {
-                            <div class="form-group inline">
-                                <label>🕒 Hora inicio:</label>
-
+                            <span class="prio-label @(bt.IdPrioridad == 1 ? "Alta" : bt.IdPrioridad == 2 ? "Media" : "Baja")">
+                                @(prioridadesList.FirstOrDefault(p => p.Id == bt.IdPrioridad)?.Titulo)
+                            </span>
+                        }
+                    
+                        <label class="mt-20">📅 PLANIFICACIÓN</label>
+                        <div class="plan-row">
+                            <div class="plan-item">
+                                <span class="plan-label">🗓️Inicia:</span>
                                 @if (IsEditMode)
                                 {
-                                    <TimePickerList @bind-Value="bt.HoraInicio" />
+                                    <div class="edit-date-row">
+                                      
+                                        <DatePicker Value="bt.StartDate" ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
+                                        @if (bt.EsEvento)
+                                        {
+
+                                            <TimePickerList @bind-Value="bt.HoraInicio" />
+                                        }
+                                    </div>
                                 }
                                 else
                                 {
-                                    <input type="text"
-                                           class="read-only-field"
-                                           value="@bt.HoraInicio?.ToString("HH:mm")"
-                                           readonly />
+                                    <strong>@bt.StartDate.ToString("dd/MM/yyyy")</strong>
+                                    @if (bt.EsEvento)
+                                    {
+                                        <span class="time-tag">🕒 @bt.HoraInicio?.ToString("HH:mm")</span>
+                                    }
                                 }
                             </div>
-                        }
-
-                        @if (bt.EsEvento)
-                        {
-                            <div class="form-group inline">
-                                <label>🕒 Hora fin:</label>
-
+                            <div class="plan-item">
+                                <span class="plan-label">🗓️ Termina:</span>
                                 @if (IsEditMode)
                                 {
-                                    <TimePickerList @bind-Value="bt.HoraFin" />
+                                    <div class="edit-date-row">
+                                        <DatePicker Value="bt.DueDate" ValueChanged="@(v => bt.DueDate = v ?? bt.DueDate)" />
+                                        @if (bt.EsEvento)
+                                        {
+                                            <TimePickerList @bind-Value="bt.HoraFin" />
+                                        }
+                                    </div>
                                 }
                                 else
                                 {
-                                    <input type="text"
-                                           class="read-only-field"
-                                           value="@bt.HoraFin?.ToString("HH:mm")"
-                                           readonly />
+                                    <strong>@bt.DueDate.ToString("dd/MM/yyyy")</strong>
+                                    @if (bt.EsEvento)
+                                    {
+                                        <span class="time-tag">🕒 @bt.HoraFin?.ToString("HH:mm")</span>
+                                    }
                                 }
                             </div>
-                        }
+                        </div>
+                    </div>
 
-                        <!-- Ubicación -->
-                        @if (bt.EsEvento)
-                        {
-                            <div class="form-group">
-                                <label>📍 Ubicación:</label>
-
-                                <select value="@salaSeleccionada"
-                                        @onchange="OnSalaChanged"
-                                        disabled="@(!IsEditMode)">
-                                    <option value="">-- Selecciona una ubicación --</option>
-
+                    @if (bt.EsEvento)
+                    {
+                        <div class="bento-item">
+                            <label>📍 UBICACIÓN</label>
+                            @if (IsEditMode)
+                            {
+                                <select value="@salaSeleccionada" @onchange="OnSalaChanged" class="bento-input-style">
+                                    <option value="">-- Selecciona --</option>
                                     @foreach (var s in salasList)
                                     {
                                         <option value="@s.Id">@s.Salas</option>
                                     }
-
-                                    <option value="0">Otra ubicación...</option>
+                                    <option value="0">Otra...</option>
                                 </select>
-
                                 @if (EsOtraSala)
                                 {
-                                    <input type="text"
-                                           placeholder="Escribe la ubicación"
-                                           @bind="bt.Ubicacion"
-                                           disabled="@(!IsEditMode)" />
+                                    <input type="text" @bind="bt.Ubicacion" class="bento-input-style mt-10" placeholder="Lugar específico" />
                                 }
-                            </div>
-                        }
+                            }
+                            else
+                            {
+                                <p class="content-text uppercase">@bt.Ubicacion</p>
+                            }
+                        </div>
 
-                        <!-- Creador (solo eventos) -->
-                        @if (bt.EsEvento && !IsEditMode)
-                        {
-                            <div class="form-group">
-                                <label>👑 Creador del evento:</label>
-                                <input type="text" value="@bt.nombreCreador" readonly />
-                            </div>
-                        }
+                        <div class="bento-item">
+                            <label>👑 ORGANIZADO POR</label>
+                            <p class="content-text uppercase">@bt.nombreCreador</p>
+                        </div>
+                    }
 
-                        <!-- Participantes (solo eventos) -->
+                    <div class="bento-item full-width">
                         @if (bt.EsEvento)
                         {
-                            <div class="form-group">
-                                <label>👥 Participantes</label>
-
-                                @if (!IsEditMode)
-                                {
-                                    <ul>
-                                        @foreach (var p in bt.Participantes)
-                                        {
-                                            <li>@p</li>
-                                        }
-                                    </ul>
-                                }
-
+                            <label>👥 EQUIPO DE TRABAJO</label>
+                            <div class="names-grid">
                                 @if (IsEditMode)
                                 {
-                                    <ul class="participant-list">
-                                        @foreach (var p in ParticipantesEdit)
+                                    <div class="search-container">
+                                        <input type="text" placeholder="Buscar empleado..." @bind="BusquedaEmpleado" @bind:event="oninput" class="bento-input-style search-input" />
+                                        @if (!string.IsNullOrEmpty(BusquedaEmpleado))
                                         {
-                                            <li>
-                                                <span>@p.nombreEmpleado</span>
-
-                                                <button class="remove-btn"
-                                                        @onclick="() => QuitarParticipante(p)">
-                                                    ❌
-                                                </button>
-                                            </li>
+                                            <ul class="bento-search-results">
+                                                @foreach (var emp in EmpleadosFiltrados)
+                                                {
+                                                    <li @onclick="() => AgregarParticipante(emp)">➕ @emp.Nombre</li>
+                                                }
+                                            </ul>
                                         }
-                                    </ul>
-
-                                    <input type="text"
-                                           placeholder="Buscar empleado por nombre o ID"
-                                           @bind="BusquedaEmpleado"
-                                           @bind:event="oninput" />
-
-                                    <ul class="search-results">
-                                        @foreach (var emp in EmpleadosFiltrados)
-                                        {
-                                            <li @onclick="() => AgregarParticipante(emp)">
-                                                ➕ <strong>@emp.ClavePersonal</strong> – @emp.Nombre
-                                            </li>
-                                        }
-                                    </ul>
+                                    </div>
+                                    @foreach (var p in ParticipantesEdit)
+                                    {
+                                        <div class="full-name-tag editable-tag">
+                                            <span class="pin">📌</span> @p.nombreEmpleado
+                                            <button class="remove-tag" @onclick="() => QuitarParticipante(p)">&times;</button>
+                                        </div>
+                                    }
+                                  
+                                }
+                                else
+                                {
+                                    @foreach (var p in bt.Participantes)
+                                    {
+                                        <div class="full-name-tag">
+                                            <span class="pin">📌</span> @p
+                                        </div>
+                                    }
                                 }
                             </div>
                         }
-
-
-                        <!-- Subtareas (solo tareas) -->
-                        @if (!bt.EsEvento)
+                        else
                         {
-                            <div class="form-group">
-                                <label>✔️ Subtareas</label>
-
-                                @* Modo lectura *@
-                                @if (!IsEditMode)
+                            <label>✅ SUBTAREAS ASOCIADAS</label>
+                            <div class="subtasks-grid">
+                                @foreach (var st in bt.SubTasks)
                                 {
-                                    <ul class="subtask-list">
-                                        @foreach (var st in SelectedTask.SubTasks)
+                                    <div class="subtask-card @(IsEditMode ? "editable-card" : "")">
+                                        @st.Name
+                                        @if (IsEditMode)
                                         {
-                                            <li @key="st.TempId">
-                                                @st.Name
-                                                @if (st.IsCompleted)
-                                                {
-                                                    <span class="subtask-done">✔️</span>
-                                                }
-                                            </li>
+                                            <button class="remove-sub" @onclick="() => RemoveSubTask(st)">🗑️</button>
                                         }
-                                    </ul>
+                                    </div>
                                 }
-
                                 @if (IsEditMode)
                                 {
-                                    <ul class="subtask-list">
-                                        @foreach (var st in SelectedTask.SubTasks)
-                                        {
-                                            <li @key="st.TempId">
-                                                <span>@st.Name</span>
-                                                <button class="remove-subtask-btn"
-                                                        @onclick="() => RemoveSubTask(st)">
-                                                    🗑️
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-
-                                    <div class="add-subtask">
-                                        <input type="text"
-                                               placeholder="Nueva subtarea"
-                                               @bind="NuevaSubtarea" />
-                                        <button @onclick="AddSubTask">➕ Agregar</button>
+                                    <div class="add-subtask-box">
+                                        <input type="text" @bind="NuevaSubtarea" placeholder="Nueva subtarea..." class="bento-input-style" />
+                                        <button @onclick="AddSubTask" class="add-btn-circle">+</button>
                                     </div>
                                 }
                             </div>
                         }
+                    </div>
                 </div>
 
-                    <div class="modal-footer">
-                        @if (IsEditMode)
-                        {
-                            <button class="action-btn save"
-                                    @onclick="SaveTask">
-                                💾 Guardar
-                            </button>
-
-                            <button class="action-btn cancel"
-                                    @onclick="CancelEdit">
-                                ❌ Cancelar
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="action-btn save"
-                                    @onclick="() => IsModalOpen = false">
-                                ✔️ Cerrar
-                            </button>
-                        }
-                    </div>
-            </div>
-        }
-
-        else if (SelectedTaskObject is SelfAssessment sa)
-        {
-            <div class="form-group">
-                <label>Actividad:</label>
-                <p class="read-only-field">@sa.ActivityName</p>
-            </div>
-        }
-    </div>
-
-        <div class="modal-footer">
-            @if (IsEditMode)
-            {
-                <button class="action-btn save"
-                        @onclick="SaveTask">
-                    💾 Guardar
-                </button>
-
-                <button class="action-btn cancel"
-                        @onclick="CancelEdit">
-                    ❌ Cancelar
-                </button>
+                <div class="bento-footer">
+                    @if (IsEditMode)
+                    {
+                        <button class="bento-btn save" @onclick="SaveTask">Guardar Cambios</button>
+                        <button class="bento-btn cancel" @onclick="CancelEdit">Cancelar</button>
+                    }
+                    else
+                    {
+                        <button class="bento-btn close-red" @onclick="() => IsModalOpen = false">Cerrar</button>
+                    }
+                </div>
             }
-            else
+            @* --- CASO 2: ES UNA AUTOEVALUACIÓN (Ahora dentro del modal) --- *@
+            else if (SelectedTaskObject is SelfAssessment sa)
             {
-                <button class="action-btn save"
-                        @onclick="() => IsModalOpen = false">
-                    ✔️ Cerrar
-                </button>
+                <div class="bento-header">
+                    <div>
+                        <span class="type-tag" style="background:#f0fdf4; color:#166534;">AUTOEVALUACIÓN</span>
+                        <div class="title-row">
+                            <span class="emoji-icon">🧠</span>
+                            <h3>@sa.ActivityName</h3>
+                        </div>
+                    </div>
+                    <button class="bento-close" @onclick="CloseTaskModal">&times;</button>
+                </div>
+                <div class="bento-footer">
+                    <button class="bento-btn close-red" @onclick="CloseTaskModal">Cerrar</button>
+                </div>
             }
         </div>
-</div>
+    </div>
 }
-
 
 @if (IsClientModalOpen && SelectedClientTask != null)
 {
@@ -2329,6 +2251,381 @@
 }
 
 <style>
+    /* ======== OVERLAY Y MODAL CENTRAL ======== */
+   .view-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+    .bento-modal {
+        background: #ffffff;
+        width: 100%;
+        max-width: 850px;
+        /* 1. ALTURA FIJA MÁXIMA: Esto impide que el modal crezca más que la pantalla */
+        max-height: 75vh;
+        border-radius: 32px;
+        padding: 30px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        /* 2. FLEX COLUMN: Obliga a que Header, Grid y Footer se alineen verticalmente */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* ======== HEADER ======== */
+   .bento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    flex-shrink: 0; 
+}
+    .type-tag {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+    }
+
+        .title-row h3 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+        }
+
+    .title-input {
+        border: none !important;
+        background: #f8fafc !important;
+        padding: 5px 10px !important;
+        font-size: 24px !important;
+        font-weight: 800 !important;
+        border-radius: 8px;
+        width: 100%;
+    }
+
+    .bento-close {
+        background: #f1f5f9;
+        border: none;
+        font-size: 22px;
+        color: #94a3b8;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+        .bento-close:hover {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+    /* ======== GRID SCROLLABLE (Cuerpo del modal) ======== */
+    .bento-grid {
+       display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    overflow-y: auto;
+    padding-right: 10px; 
+    margin-bottom: 20px;
+    flex-grow: 1;
+    }
+
+        /* Personalización del scrollbar */
+        .bento-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .bento-grid::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+    .bento-item {
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 20px;
+        padding: 20px;
+    }
+
+    .full-width {
+        grid-column: span 2;
+    }
+
+    
+    .bento-item label {
+        font-size: 11px;
+        font-weight: 800;
+        color: #64748b;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    /* ======== INPUTS Y SELECTS ======== */
+    .bento-input-style {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: 0.2s;
+        outline: none;
+    }
+
+        .bento-input-style:focus {
+            border-color: #3b82f6;
+            background: #fff;
+        }
+
+    /* ======== PLANIFICACIÓN (FECHAS Y HORAS) ======== */
+    .plan-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .plan-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+    }
+
+    .edit-date-row {
+        display: flex;
+        flex-wrap: wrap; /* Permite que bajen si no caben */
+        gap: 8px;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+        /* Ajuste específico para tus componentes de Fecha/Hora */
+        .edit-date-row > * {
+            flex: 1;
+            min-width: 120px; /* Evita que se aplasten */
+        }
+
+    /* ======== TAGS DE PARTICIPANTES ======== */
+    .names-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 180px; /* Límite para que no crezca el modal */
+        overflow-y: auto;
+        padding: 5px;
+    }
+
+    .full-name-tag {
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .remove-tag {
+        background: #fee2e2;
+        color: #ef4444;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 5px;
+        line-height: 1;
+    }
+
+    /* ======== SUBTAREAS ======== */
+    .subtasks-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .subtask-card {
+        background: white;
+        padding: 12px;
+        border-radius: 12px;
+        border-left: 4px solid #3b82f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .add-subtask-box {
+        grid-column: span 2;
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .add-btn-circle {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    /* ======== FOOTER ======== */
+    .bento-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        /* CAMBIO: Antes tenías padding-top: 20px y heredaba el padding del modal */
+        padding: 10px 10px; /* 10px arriba y abajo, 30px a los lados */
+        border-top: 1px solid #f1f5f9;
+        flex-shrink: 0;
+        background: #ffffff;
+    }
+
+    .bento-btn {
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+    }
+
+    .close-red {
+        background: #ff5a5f;
+        color: white;
+    }
+
+    .save {
+        background: #10b981;
+        color: white;
+    }
+
+    .cancel {
+        background: #ff5a5f;
+        color: white;
+    }
+
+    .bento-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+    /* ======== ESTILOS PARA INPUTS DE HORA (TimePicker) ======== */
+
+    /* Contenedor de la fila de edición para que no se amontonen */
+    .edit-date-row {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Espacio entre calendario y hora */
+        margin-top: 8px;
+        width: 100%;
+    }
+
+        /* Estilo para el input de hora específico */
+        input[type="time"],
+        .edit-date-row select,
+        .edit-date-row input {
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px; /* Redondeado tipo Bento */
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #1e293b;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            -webkit-appearance: none; /* Quita estilos nativos de iOS/Chrome si estorban */
+        }
+
+            /* Efecto Focus para las horas */
+            input[type="time"]:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+        /* Ajuste para que el DatePicker y el TimePicker compartan espacio equitativo */
+        .edit-date-row > * {
+            flex: 1;
+            min-width: 0; /* Evita que los inputs se desborden */
+        }
+
+    /* Estilo para el icono del reloj dentro del input (en navegadores compatibles) */
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(48%) sepia(13%) saturate(3207%) hue-rotate(185deg) brightness(95%) contrast(80%); /* Color azulado sutil */
+    }
+
+    /* ======== MEJORA DE LAS X Y BOTONES DE ELIMINAR ======== */
+    .remove-tag, .remove-sub {
+        background: #fee2e2 !important;
+        color: #ef4444 !important;
+        border: none;
+        border-radius: 6px;
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-left: 5px;
+    }
+
+        .remove-tag:hover {
+            background: #fecaca !important;
+            transform: scale(1.1);
+        }
+
+    /* ======== RESPONSIVIDAD ======== */
+    @@media (max-width: 600px) {
+        .bento-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .subtasks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .add-subtask-box {
+        grid-column: span 1;
+    }
+
+    }
     /*ESTILOS DE LOS DIAS NO LABORALES*/
     /* ===============================
            DÍA NO LABORAL – ESTILO SUAVE
