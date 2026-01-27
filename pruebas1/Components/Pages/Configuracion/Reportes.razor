@@ -152,8 +152,8 @@
     {
         var empleadosDto = await Http
             .GetFromJsonAsync<List<EmpleadoDTO>>(
-                //"https://redgm.site:9096/empleado"
-                "http://localhost:5231/empleado"
+                "https://redgm.site:9096/empleado"
+                //"http://localhost:5231/empleado"
             )
             ?? new();
 
