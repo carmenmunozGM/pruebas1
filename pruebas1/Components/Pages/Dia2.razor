@@ -198,16 +198,14 @@
                             {
                                 <li class="subtask-item" @key="st.Id">
                                     <div class="subtask-label @(st.IsDone && tareasCat.Name != "Autoevaluación" ? "done" : "")">
-
-                                        @* --- 1. CHECKBOX (SIEMPRE VISIBLE PARA TAREAS Y EVENTOS PROPIOS) --- *@
-                                        @if (st.Tipo == "Tarea" || st.EsEventoMio)
-                                        {
-                                            <input type="checkbox"
-                                                   @bind="st.IsDone"
-                                                   @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
-                                        }
-
-                                        @* --- 2. ICONO, TÍTULO Y BADGE DE INVITADO --- *@
+                                        <div class="checkbox-container">
+                                            @if (st.Tipo == "Tarea" || st.EsEventoMio)
+                                            {
+                                                <input type="checkbox"
+                                                       @bind="st.IsDone"
+                                                       @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
+                                            }
+                                        </div>
                                         <span>@(!string.IsNullOrEmpty(st.Icon) ? st.Icon : (st.Tipo == "Evento" ? "📅" : "🗒️"))</span>
                                         <span class="subtask-text">@st.Title</span>
 
@@ -220,8 +218,6 @@
                                         {
                                             <span class="badge-compartido" title="Evento al que fuiste invitado">👥</span>
                                         }
-
-                                        @* --- 3. FECHAS Y PRIORIDAD --- *@
                                         @if (st.Tipo == "Evento" && st.FechaInicio.HasValue)
                                         {
                                             <span class="evento-fecha">
@@ -237,17 +233,13 @@
                                                 @(st.Prioridad switch { 1 => "Alta", 2 => "Media", 3 => "Baja", _ => "" })
                                             </span>
                                         }
-
-                                        @* --- 4. ACCIONES (LÓGICA DE OCULTAMIENTO DINÁMICO) --- *@
                                         @if (tareasCat.Name.Trim() == "Tareas")
                                         {
                                             <div class="subtask-actions">
-                                                @* "Ver" siempre disponible *@
                                                 <button class="icon-btn view" title="Ver detalles" @onclick="() => OpenViewModal(st)">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
 
-                                                @* SOLO se muestran Editar y Eliminar si NO está marcado como IsDone *@
                                                 @if (!st.IsDone)
                                                 {
                                                     @if (st.Tipo == "Tarea" || st.EsEventoMio)
@@ -263,8 +255,6 @@
                                             </div>
                                         }
                                     </div>
-
-                                    @* --- 5. SUBTAREAS / EVENTOS RELACIONADOS (RESTAURADO) --- *@
                                     @if (st.Subtasks != null && st.Subtasks.Any())
                                     {
                                         <div class="table-wrapper block-scroll">
@@ -656,6 +646,8 @@
 
     }
 </div>
+
+
 
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS -->
 @if (ShowModificarFechaModal)
@@ -1165,208 +1157,203 @@
 <!--MODAAL PARA EDITAR-->
 @if (ShowEditModal && EditItem != null)
 {
-    <div class="modern-modal-overlay">
-        <div class="modern-modal-container shadow-lg">
+    <div class="view-overlay">
+        <div class="bento-modal">
 
-            <div class="modern-modal-header @(EditItem.Tipo == "Evento" ? "header-evento" : "header-tarea")">
-                <div class="header-info">
-                    <span class="type-badge">@EditItem.Tipo.ToUpper()</span>
-                    <h3 class="modal-title">Editar Registro</h3>
+            <!-- HEADER -->
+            <div class="bento-header">
+                <div>
+                    <span class="type-tag" style="background:#f0fdf4; color:#166534;">
+                        @EditItem.Tipo.ToUpper()
+                    </span>
+                    
+                    <div class="title-row">
+
+                        <span class="emoji-icon">🏷️</span> <input class="title-input"
+                               @bind="EditItem.Titulo" 
+                               placeholder="Título del @EditItem.Tipo" />
+                    </div>
                 </div>
-                <button type="button" class="modern-close-btn" @onclick="() => ShowEditModal = false">
-                    <i class="bi bi-x-lg"></i>
+
+                <button class="bento-close"
+                        @onclick="() => ShowEditModal = false">
+                    ×
                 </button>
             </div>
-            <div class="modern-modal-content">
-                <div class="modern-form-grid">
 
-                    <div class="form-main-column">
-                        <div class="modern-field">
-                            <label><i class="bi bi-fonts"></i> Título del @EditItem.Tipo</label>
-                            <input @bind="EditItem.Titulo" placeholder="Ej: Reunión de presupuesto" class="modern-input" />
-                        </div>
+            <!-- BODY -->
+            <div class="bento-grid">
 
-                        <div class="modern-field">
-                            <label><i class="bi bi-justify-left"></i> Descripción detallada</label>
-                            <textarea @bind="EditItem.Descripcion" rows="3" placeholder="Añade notas adicionales..." class="modern-input"></textarea>
-                        </div>
+                <!-- DESCRIPCIÓN -->
+                <div class="bento-item">
+                    <label>📝DESCRIPCIÓN</label>
+                    <textarea class="bento-input-style"
+                              rows="4"
+                              placeholder="Añade notas adicionales..."
+                              @bind="EditItem.Descripcion"></textarea>
+                </div>
 
-                        @if (EditItem.Tipo == "Tarea")
+                <!-- PRIORIDAD + PLANIFICACIÓN -->
+                <div class="bento-item">
+                    <label>⚡PRIORIDAD</label>
+                    <select class="bento-input-style mb-3"
+                            @bind="EditItem.Prioridad">
+                        @foreach (var p in prioridadesLookup)
                         {
-                            <div class="modern-field">
-                                <label><i class="bi bi-list-check"></i> Checklist de Subtareas</label>
-                                <div class="modern-input-group">
-                                    <input @bind="nuevaSubtareaTexto" placeholder="¿Qué sigue?" class="modern-input" />
-                                    <button type="button" class="add-inner-btn" @onclick="AgregarSubtarea">
-                                        <i class="bi bi-plus-lg"></i>
+                            <option value="@p.Key">@p.Value</option>
+                        }
+                    </select>
+
+                    <label>📅 PLANIFICACIÓN</label>
+
+                    <div class="plan-row">
+                        <div class="plan-item">
+                            <span>🗓️ Inicia:</span>
+                            <div class="edit-date-row">
+                                <DatePicker Value="EditItem.FechaInicio"
+                                            ValueChanged="OnFechaInicioChanged"
+                                            CssClass="bento-input-style" />
+
+                                @if (EditItem.Tipo == "Evento")
+                                {
+                                    <TimePickerList Value="EditItem.HoraInicio"
+                                                    ValueChanged="OnHoraInicioChanged" />
+                                }
+                            </div>
+                        </div>
+
+                        <div class="plan-item">
+                            <span>🗓️ Termina:</span>
+                            <div class="edit-date-row">
+                                <DatePicker Value="EditItem.FechaFin"
+                                            ValueChanged="OnFechaFinChanged"
+                                            CssClass="bento-input-style" />
+
+                                @if (EditItem.Tipo == "Evento")
+                                {
+
+                                    <TimePickerList Value="EditItem.HoraFin"
+                                                    ValueChanged="OnHoraFinChanged" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTAREAS -->
+                @if (EditItem.Tipo == "Tarea")
+                {
+                    <div class="bento-item full-width">
+                        <label>✅ SUBTAREAS ASOCIADAS</label>
+
+                        <div class="subtasks-grid">
+                            @foreach (var sub in EditItem.Subtareas)
+                            {
+                                <div class="subtask-card">
+                                    <span>@sub.Titulo</span>
+                                    <button class="remove-sub"
+                                            @onclick="() => EliminarSubtarea(sub)">
+                                        ×
                                     </button>
                                 </div>
-                                <div class="modern-subtask-list">
-                                    @foreach (var sub in EditItem.Subtareas)
-                                    {
-                                        <div class="modern-subtask-item" @key="sub">
-                                            <span>@sub.Titulo</span>
-                                            <button type="button" @onclick="() => EliminarSubtarea(sub)" class="btn-basura">🗑️</button>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
+                            }
 
-                        @if (EditItem.Tipo == "Evento")
+                            <div class="add-subtask-box">
+                                <input class="bento-input-style"
+                                       placeholder="Nueva subtarea..."
+                                       @bind="nuevaSubtareaTexto" />
+                                <button class="add-btn-circle"
+                                        @onclick="AgregarSubtarea">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- UBICACIÓN -->
+                @if (EditItem.Tipo == "Evento")
+                {
+                    <div class="bento-item">
+                        <label>📍 UBICACIÓN</label>
+                        <select class="bento-input-style"
+                                value="@EditItem.Ubicacion"
+                                @onchange="OnUbicacionChanged">
+                            <option value="">Seleccione...</option>
+                            @foreach (var s in salasLookup)
+                            {
+                                <option value="@s.Value">@s.Value</option>
+                            }
+                            <option value="-1">Otra...</option>
+                        </select>
+
+                        @if (mostrarOtraUbicacion)
                         {
-                            <div class="modern-field">
-                                <label>📍 Ubicación / Sala</label>
-                                <select class="form-select"
-                                        value="@EditItem.Ubicacion"
-                                        @onchange="OnUbicacionChanged">
-                                    <option value="">Seleccione...</option>
-                                    @foreach (var s in salasLookup)
+                            <input class="bento-input-style mt-2"
+                                   placeholder="Ubicación personalizada"
+                                   @bind="ubicacionOtra" />
+                        }
+                    </div>
+                    <div class="bento-item equipo-wrapper">
+                        <label>👥 EQUIPO DE TRABAJO</label>
+
+                        <!-- BUSCADOR (FIJO) -->
+                        <div class="participant-search">
+                            <input class="bento-input-style"
+                                   placeholder="Buscar empleado..."
+                                   value="@searchText"
+                                   @oninput="FiltrarEmpleados" />
+
+                            @if (mostrarLista && empleadosFiltrados?.Count > 0)
+                            {
+                                <ul class="autocomplete-list">
+                                    @foreach (var emp in empleadosFiltrados)
                                     {
-                                        <option value="@s.Value">@s.Value</option>
+                                        <li @onclick="() => SeleccionarParticipante(emp)">
+                                            <span class="pin">📌</span> @emp.Nombre
+                                            <small>@emp.Puesto — @emp.Area</small>
+                                        </li>
                                     }
-                                    <option value="-1">Otro...</option>
-                                </select>
+                                </ul>
+                            }
+                        </div>
 
-                                @if (mostrarOtraUbicacion)
+                            <div class="participants-scroll">
+                                @foreach (var p in EditItem.Participantes)
                                 {
-                                    <input class="form-control mt-2"
-                                           placeholder="Escribe la ubicación personalizada"
-                                           @bind="ubicacionOtra" />
-                                }
-                            </div>
-                            <div class="modern-field">
-                                <label><i class="bi bi-people"></i> Invitados / Participantes</label>
-                                <div class="autocomplete-container" style="position: relative;">
-
-                                    <div class="chips-container">
-                                        @if (EditItem?.Participantes != null)
-                                        {
-                                            @foreach (var p in EditItem.Participantes)
-                                            {
-                                                <div class="chip">
-                                                    @p.Nombre @(p.ClavePersonal > 0 ? $"({p.ClavePersonal})" : "")
-                                                    <span class="chip-remove" @onclick="() => QuitarParticipante(p)">×</span>
-                                                </div>
-                                            }
-                                        }
-
-                                        <input type="text"
-                                               class="chip-input"
-                                               placeholder="Escribe nombre o número..."
-                                               value="@searchText"
-                                               @oninput="FiltrarEmpleados" />
+                                    <div class="full-name-tag">
+                                        <span>
+                                            <span class="pin">📌</span> @p.Nombre
+                                            @(p.ClavePersonal > 0 ? $"({p.ClavePersonal})" : "")
+                                        </span>
+                                        <button class="remove-tag"
+                                                @onclick="() => QuitarParticipante(p)">
+                                            ×
+                                        </button>
                                     </div>
-
-                                    @if (mostrarLista && empleadosFiltrados?.Count > 0)
-                                    {
-                                        <ul class="autocomplete-list shadow-lg"
-                                            style="position: absolute;
-                                   top: 100%;
-                                   left: 0;
-                                   width: 100%;
-                                   z-index: 9999;
-                                   background-color: white;
-                                   border: 1px solid #dee2e6;
-                                   border-radius: 8px;
-                                   margin-top: 5px;
-                                   max-height: 250px;
-                                   overflow-y: auto;
-                                   box-shadow: 0px 8px 16px rgba(0,0,0,0.15);
-                                   list-style: none;
-                                   padding: 0;">
-
-                                            @foreach (var emp in empleadosFiltrados)
-                                            {
-                                                <li @onclick="() => SeleccionarParticipante(emp)"
-                                                    style="padding: 10px 15px;
-                                               border-bottom: 1px solid #f8f9fa;
-                                               cursor: pointer;
-                                               transition: background 0.2s;">
-
-                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                        <strong>@emp.Nombre</strong>
-                                                        <span class="badge bg-light text-dark">@emp.ClavePersonal</span>
-                                                    </div>
-                                                    <small class="text-muted" style="display: block;">@emp.Puesto — @emp.Area</small>
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="form-side-column">
-                        <div class="modern-field">
-                            <label>⚡ Prioridad</label>
-                            <select class="form-select" @bind="EditItem.Prioridad">
-                                @foreach (var p in prioridadesLookup)
-                                {
-                                    <option value="@p.Key">@p.Value</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="modern-field">
-                            <label>📅 Fecha Inicio</label>
-                            <DatePicker Value="EditItem.FechaInicio"
-                                        ValueChanged="OnFechaInicioChanged"
-                                        CssClass="modern-input" />
-
-                        </div>
-                        <div class="modern-field">
-                            <label>🏁 Fecha Fin</label>
-                            <DatePicker Value="EditItem.FechaFin"
-                                        ValueChanged="OnFechaFinChanged"
-                                        CssClass="modern-input" />
-                        </div>
-
-                        @if (EditItem.Tipo == "Evento")
-                        {
-                            <div class="modern-row">
-                                <div class="modern-field">
-                                    <label>⏰ Inicio</label>
-                                    <TimePickerList Value="EditItem.HoraInicio"
-                                                    ValueChanged="@(v => OnHoraInicioChanged(v))" />
-                                </div>
-                                <div class="modern-field">
-                                    <label>⏰ Fin</label>
-                                    <TimePickerList Value="EditItem.HoraFin"
-                                                    ValueChanged="@(v => OnHoraFinChanged(v))" />
-                                </div>
-                            </div>
-                        }
-
-                        <div class="modern-field">
-                            <label>🔄 Recurrencia</label>
-                            <select class="modern-input"
-                                    @bind-value="EditItem.ReglaRecurrencia"
-                                    @bind-value:event="onchange">
-                                <option value="">No se repite</option>
-                                @foreach (var f in frecuenciaLookup)
-                                {
-                                    <option value="@f.Value">@f.Value</option>
-                                }
-                            </select>
+                                
+                            }
                         </div>
                     </div>
-                </div>
+                }
+
             </div>
-
-            <div class="modern-modal-footer">
-                <button class="m-btn btn-primary" @onclick="HandleSave">
-
-
-                    <i class="bi bi-cloud-check"></i> Guardar Información
+            <div class="bento-footer">
+                <button class="bento-btn save"
+                        @onclick="HandleSave">
+                    Guardar Información
                 </button>
-                <button class="m-btn btn-ghost" @onclick="() => ShowEditModal = false">Cancelar</button>
+
+                <button class="bento-btn cancel"
+                        @onclick="() => ShowEditModal = false">
+                    Cancelar
+                </button>
             </div>
+
         </div>
     </div>
-}
 
+    }
 
 @code {
 
@@ -2171,8 +2158,32 @@ MasterCategories.Add(servicioClienteCategory);
         }
         else if (st.Tipo == "Evento")
         {
-            // ... (Tu lógica de evento está bien)
+            var eventoCompleto = await AgendaService.ObtenerEventoDetalle(st.ApiId);
+            if (eventoCompleto != null)
+            {
+                // UBICACIÓN
+                if (eventoCompleto.idSala.HasValue && salasLookup.ContainsKey(eventoCompleto.idSala.Value))
+                {
+                    EditItem.Ubicacion = salasLookup[eventoCompleto.idSala.Value];
+                    mostrarOtraUbicacion = false;
+                }
+                else if (!string.IsNullOrWhiteSpace(eventoCompleto.ubicacion))
+                {
+                    EditItem.Ubicacion = "-1";
+                    ubicacionOtra = eventoCompleto.ubicacion;
+                    mostrarOtraUbicacion = true;
+                }
+
+                // PARTICIPANTES
+                EditItem.Participantes = eventoCompleto.participantes?
+                    .Select(p => new EmpleadoDTO
+                    {
+                        Id = p.idEmpleado,
+                        Nombre = p.nombreEmpleado
+                    }).ToList() ?? new();
+            }
         }
+
 
         ShowEditModal = true;
         StateHasChanged();
@@ -2890,6 +2901,7 @@ MasterCategories.Add(servicioClienteCategory);
 
 
 <style>
+  
     :root {
         --modal-bg: #ffffff;
         --primary-color: #1E7E34;
