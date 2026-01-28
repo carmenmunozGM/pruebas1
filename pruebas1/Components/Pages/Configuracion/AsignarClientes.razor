@@ -192,10 +192,19 @@
                                 {
                                     <div class="service-activities">
                                         <p class="service-header">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="9 18 15 12 9 6"></polyline>
-                                            </svg>
-                                            @service.Name
+                                            <label class="checkbox-wrapper service-checkbox">
+                                                <input type="checkbox"
+                                                       checked="@IsServiceFullySelected(service)"
+                                                       @onchange="() => ToggleAllActivitiesForService(service)" />
+                                                <span class="checkbox-custom"></span>
+
+                                                <svg width="16" height="16" viewBox="0 0 24 24"
+                                                     fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                                </svg>
+
+                                                <strong>@service.Name</strong>
+                                            </label>
                                         </p>
                                         <div class="activities-list">
                                             @foreach (var activity in service.Activities)
@@ -239,15 +248,15 @@
     </div>
 
     <!-- Tabla de asignaciones realizadas -->
-    @if (savedAssignments.Any())
+    @if (cargandoHistorial)
+    {
+        <p>Cargando historial...</p>
+    }
+    else if (historialAsignaciones.Any())
     {
         <div class="assignments-table">
             <h3 class="table-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                Asignaciones Realizadas (@savedAssignments.Count)
+                Historial de Asignaciones (@historialAsignaciones.Count)
             </h3>
 
             <div class="table-wrapper">
@@ -255,62 +264,32 @@
                     <thead>
                         <tr>
                             <th>Empleado</th>
-                            <th>Cliente/Grupo</th>
+                            <th>Cliente / Grupo</th>
                             <th>Tipo</th>
                             <th>Servicios</th>
                             <th>Actividades</th>
                             <th>Fecha</th>
-                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var assignment in savedAssignments)
+                        @foreach (var item in historialAsignaciones)
                         {
                             <tr>
-                                <td class="td-bold">@assignment.Employee</td>
-                                <td>@assignment.ClientOrGroup</td>
+                                <td class="td-bold">@item.Empleado</td>
+                                <td>@item.Entidad</td>
                                 <td>
-                                    <span class="type-badge type-badge-@assignment.Type">
-                                        @if (assignment.Type == "client")
-                                        {
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                                <circle cx="12" cy="7" r="4"></circle>
-                                            </svg>
-                                            <text>Cliente</text>
-                                        }
-                                        else
-                                        {
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                                <circle cx="9" cy="7" r="4"></circle>
-                                            </svg>
-                                            <text>Grupo</text>
-                                        }
+                                    <span class="type-badge type-badge-@item.TipoEntidad.ToLower()">
+                                        @item.TipoEntidad
                                     </span>
                                 </td>
                                 <td class="td-services">
-                                    @{
-                                        var displayServices = string.Join(", ", assignment.Services.Take(2));
-                                        if (assignment.Services.Count > 2)
-                                        {
-                                            <span>@displayServices <span class="services-more">+@(assignment.Services.Count - 2) más</span></span>
-                                        }
-                                        else
-                                        {
-                                            <span>@displayServices</span>
-                                        }
-                                    }
+                                    @item.Servicios
                                 </td>
-                                <td>@assignment.Activities.Count actividad@(assignment.Activities.Count != 1 ? "es" : "")</td>
-                                <td>@assignment.Date</td>
                                 <td>
-                                    <button class="btn-delete" @onclick="() => DeleteAssignment(assignment.Id)" title="Eliminar asignación">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                    </button>
+                                    @item.TotalActividades actividad@(item.TotalActividades != 1 ? "es" : "")
+                                </td>
+                                <td>
+                                    @item.FechaAsignacion.ToString("dd/MM/yyyy")
                                 </td>
                             </tr>
                         }
@@ -319,6 +298,12 @@
             </div>
         </div>
     }
+    else
+    {
+        <p>No hay asignaciones registradas.</p>
+    }
+
+  
 </div>
 
 @code {
@@ -328,7 +313,6 @@
     private string? selectedClient = null;
     private List<string> selectedServices = new();
     private List<string> selectedActivities = new();
-    private List<SavedAssignment> savedAssignments = new();
     private List<ClientesDTO> clientes = new();
     private List<GrupoClientesDTO> gruposClientes = new();
     private List<EmpleadoDTO> empleados = new();
@@ -344,6 +328,8 @@
     private List<ServicioConActividadesDTO> serviciosPorArea = new();
     private bool sinServiciosOActividades = false;
     private bool serviciosCargados = false;
+    private List<HistorialAsignacionDTO> historialAsignaciones = new();
+    private bool cargandoHistorial = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -352,6 +338,7 @@
         CultureInfo.CurrentUICulture = cultura;
 
         await CargarEmpleados();
+        await CargarHistorialAsignaciones();
     }
 
 
@@ -416,6 +403,27 @@
                 "https://redgm.site:9096/empleado")
             ?? new();
     }
+
+    private async Task CargarHistorialAsignaciones()
+    {
+        cargandoHistorial = true;
+
+        try
+        {
+            historialAsignaciones =
+                await Http.GetFromJsonAsync<List<HistorialAsignacionDTO>>(
+                    "/api/servicio-cliente/admin/historial-asignaciones"
+                ) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Error cargando historial: {ex.Message}");
+            historialAsignaciones = new();
+        }
+
+        cargandoHistorial = false;
+    }
+
 
     private void MostrarEmpleados()
     {
@@ -647,32 +655,11 @@
         }
 
 
-        // 4️⃣ (Opcional) feedback visual local
-        savedAssignments.Insert(0, new SavedAssignment
-        {
-            Id = Guid.NewGuid().ToString(),
-            Employee = empleadoSeleccionado.Nombre,
-            ClientOrGroup = currentEntity?.Name ?? "",
-            Type = assignmentType!,
-            Services = servicios
-                .Where(s => selectedServices.Contains(s.Id))
-                .Select(s => s.Name)
-                .ToList(),
-            Activities = servicios
-                .SelectMany(s => s.Activities)
-                .Where(a => selectedActivities.Contains(a.Id))
-                .Select(a => a.Name)
-                .ToList(),
-            Date = DateTime.Now.ToString("dd/MM/yyyy")
-        });
+
+
+        await CargarHistorialAsignaciones();
 
         ResetForm();
-    }
-
-
-    private void DeleteAssignment(string id)
-    {
-        savedAssignments.RemoveAll(a => a.Id == id);
     }
 
     private void ResetForm()
@@ -848,6 +835,29 @@
         cargandoServicios = false;
     }
 
+    private bool IsServiceFullySelected(Service service)
+    {
+        return service.Activities.Any() &&
+               service.Activities.All(a => selectedActivities.Contains(a.Id));
+    }
+
+    private void ToggleAllActivitiesForService(Service service)
+    {
+        var allSelected = IsServiceFullySelected(service);
+
+        foreach (var activity in service.Activities)
+        {
+            if (allSelected)
+            {
+                selectedActivities.Remove(activity.Id);
+            }
+            else
+            {
+                if (!selectedActivities.Contains(activity.Id))
+                    selectedActivities.Add(activity.Id);
+            }
+        }
+    }
 
 
 }
