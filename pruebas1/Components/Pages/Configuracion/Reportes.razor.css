@@ -49,7 +49,7 @@
 }
 
 .dark-mode .type-button.active {
-    background: rgba(16, 185, 129, 0.3);
+    background: rgba(20, 184, 166, 0.3);
     border-color: #059669;
     color: #6ee7b7;
 }
@@ -145,7 +145,7 @@
 }
 
 .reportes-table thead {
-    background: #9ae4be;
+    background: #d1fae5;
 }
 
 .dark-mode .reportes-table thead {
@@ -215,7 +215,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #2caa77;
+    background: #10b981;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -268,7 +268,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: #34998e;
+    background: #14b8a6;
     color: white;
     border: none;
     border-radius: 8px;
@@ -279,7 +279,7 @@
 }
 
 .download-button:hover {
-    background: #34998e;
+    background: #0f766e;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
