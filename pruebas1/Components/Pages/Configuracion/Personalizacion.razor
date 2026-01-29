@@ -1,3 +1,5 @@
+@inject AppSettingsService Settings
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 <div class="personalizacion-section">
     <div class="section-header">
         <h2>Personalización</h2>
@@ -6,8 +8,8 @@
 
     <div class="view-options">
         <!-- Vertical View Option -->
-        <div class="view-option @(ViewMode == "vertical" ? "active" : "")" 
-             @onclick='() => OnViewModeChange.InvokeAsync("vertical")'>
+        <div class="view-option @(Settings.ViewMode == "vertical" ? "active" : "")"
+             @onclick='() => CambiarModo("vertical")'>
             <div class="option-header">
                 <div class="option-title">
                     <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,8 +37,8 @@
         </div>
 
         <!-- Horizontal View Option -->
-        <div class="view-option @(ViewMode == "horizontal" ? "active" : "")" 
-             @onclick='() => OnViewModeChange.InvokeAsync("horizontal")'>
+        <div class="view-option @(Settings.ViewMode == "horizontal" ? "active" : "")"
+             @onclick='() => CambiarModo("horizontal")'>
             <div class="option-header">
                 <div class="option-title">
                     <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -68,8 +70,8 @@
         </div>
 
         <!-- Grid View Option -->
-        <div class="view-option @(ViewMode == "grid" ? "active" : "")" 
-             @onclick='() => OnViewModeChange.InvokeAsync("grid")'>
+        <div class="view-option @(Settings.ViewMode == "grid" ? "active" : "")"
+             @onclick='() => CambiarModo("grid")'>
             <div class="option-header">
                 <div class="option-title">
                     <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -101,8 +103,31 @@
 </div>
 
 @code {
-    [Parameter] public string ViewMode { get; set; } = "horizontal";
+    // [Parameter] public string ViewMode { get; set; } = "horizontal";
+    // [Parameter] public string ColorMode { get; set; } = "normal";
+    // private string ViewMode => Settings.ViewMode;
+    [Parameter] public string ViewMode { get; set; }
     [Parameter] public string ColorMode { get; set; } = "normal";
     [Parameter] public EventCallback<string> OnViewModeChange { get; set; }
     [Parameter] public EventCallback<string> OnColorModeChange { get; set; }
+    private async Task CambiarModo(string nuevoModo)
+    {
+        // Aseguramos que sea "vertical", "horizontal" o "grid"
+        string modoLimpio = nuevoModo.ToLower();
+
+        Settings.SetViewMode(modoLimpio);
+        await LocalStorage.SetItemAsync("userViewMode", modoLimpio);
+        await OnViewModeChange.InvokeAsync(modoLimpio);
+
+        StateHasChanged();
+    }
+    protected override void OnInitialized()
+    {
+        // Si el parámetro viene vacío, tomamos el del servicio
+        if (string.IsNullOrEmpty(ViewMode))
+        {
+            ViewMode = Settings.ViewMode;
+        }
+        Settings.OnChange += StateHasChanged;
+    }
 }

@@ -1,5 +1,7 @@
 @page "/configuracion"
-
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject AppSettingsService Settings
 <div class="config-screen @(isDarkMode ? "dark-mode" : "") @(colorMode == "rainbow" ? "rainbow-mode" : "")">
     <!-- Header with gear icon -->
     <header class="config-header">
@@ -25,10 +27,10 @@
             @switch (currentSection)
             {
                 case "personalizacion":
-                    <Personalizacion ViewMode="@viewMode" 
-                                   ColorMode="@colorMode"
-                                   OnViewModeChange="@HandleViewModeChange"
-                                   OnColorModeChange="@HandleColorModeChange" />
+                    <Personalizacion ViewMode="@viewMode"
+                                     ColorMode="@colorMode"
+                                     OnViewModeChange="@HandleViewModeChange"
+                                     OnColorModeChange="@HandleColorModeChange" />
                     break;
                 case "apariencia":
                     <Apariencia CurrentTheme="@colorMode" 
@@ -101,43 +103,39 @@
     private bool isSidebarOpen = true;
     private string currentSection = "personalizacion";
     private bool isDarkMode = false;
-    private string viewMode = "horizontal";
+    private string viewMode = "horizontal"; // Solo una vez
     private string colorMode = "normal";
 
-    private void ToggleSidebar()
+    protected override async Task OnInitializedAsync()
     {
-        isSidebarOpen = !isSidebarOpen;
+        try
+        {
+            var saved = await LocalStorage.GetItemAsync<string>("userViewMode");
+            if (!string.IsNullOrEmpty(saved))
+            {
+                viewMode = saved;
+                Settings.ViewMode = saved; // Ahora funcionará porque agregamos el 'set'
+            }
+        }
+        catch { }
     }
 
-    private void HandleSectionChange(string section)
-    {
-        currentSection = section;
-    }
+    private void ToggleSidebar() => isSidebarOpen = !isSidebarOpen;
 
-    private void ToggleDarkMode()
-    {
-        isDarkMode = !isDarkMode;
-    }
-
-    private void HandleViewModeChange(string mode)
+    private void HandleSectionChange(string section) => currentSection = section;
+    private async Task HandleViewModeChange(string mode)
     {
         viewMode = mode;
-    }
+        Settings.ViewMode = mode;
 
+        // Ahora este método existe y es público en el servicio
+        Settings.NotifyStateChanged();
+
+        await LocalStorage.SetItemAsync("userViewMode", mode);
+    }
     private void HandleColorModeChange(string mode)
     {
-        colorMode = mode; // Guarda el string ("dark", "light", "rainbow")
-
-        // Actualizamos el booleano que controla las clases CSS
-        if (mode == "dark")
-        {
-            isDarkMode = true;
-        }
-        else
-        {
-            isDarkMode = false;
-        }
+        colorMode = mode;
+        isDarkMode = (mode == "dark");
     }
 }
-
-

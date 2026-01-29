@@ -39,7 +39,7 @@ namespace pruebas1.Servicios
                 return null;
             }
         }
-
+      
         // 🟣 TRÁMITE INDIVIDUAL (DETALLE + TAREAS)
         public async Task<TramiteIndividualDTO?> GetTramiteDetalle(int idTramite)
         {

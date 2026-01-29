@@ -1932,3 +1932,58 @@ select {
     background:#16a34a;
 }
 
+/* Contenedor principal que envuelve todos los bloques */
+/* Contenedor base */
+.layout-wrapper {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+/* 1. MODO VERTICAL: Una tarjeta debajo de otra ocupando todo el ancho */
+.dashboard-layout-vertical {
+    flex-direction: column !important;
+}
+
+    .dashboard-layout-vertical .block-card {
+        width: 100% !important;
+        max-width: none !important;
+    }
+/* 1. MODO VERTICAL: Uno debajo de otro ocupando todo el ancho */
+.dashboard-layout-vertical {
+    display: flex !important;
+    flex-direction: column !important; /* Esto los pone en vertical */
+    gap: 20px;
+    width: 100%;
+}
+
+    .dashboard-layout-vertical .block-card {
+        width: 100% !important; /* Que ocupen todo el ancho */
+        min-height: 200px;
+    }
+
+/* 2. MODO HORIZONTAL: (El que tú tenías como horizontal ahora es correcto) */
+.dashboard-layout-horizontal {
+    display: flex !important;
+    flex-direction: row !important; /* Lado a lado */
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 20px;
+    align-items: stretch; /* Esto hace que todos tengan la misma altura */
+}
+/* 3. MODO CUADRICULADO: Ajustado para que midan lo mismo */
+.dashboard-layout-grid {
+    display: grid !important;
+    /* Esto crea columnas de al menos 450px, pero si no caben, se bajan */
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)) !important;
+    /* Esto obliga a que todas las filas de la misma hilera tengan la misma altura */
+    grid-auto-rows: 1fr;
+    gap: 24px;
+    align-items: stretch;
+}
+
+    .dashboard-layout-grid .block-card {
+        height: 100% !important; /* Obliga a la tarjeta a llenar el espacio del grid */
+        display: flex;
+        flex-direction: column;
+    }
