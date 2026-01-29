@@ -2,8 +2,10 @@
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
 @using static System.Net.WebRequestMethods
+@using System.Globalization
 @inject AreasService AreasService
 @inject HttpClient Http
+@inject VerAgendasService VerAgendasService
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -59,7 +61,7 @@
                     </div>
                 </div>
 
-                <button class="ver-button" @onclick="() => ShowAgenda(employee)">
+                <button class="ver-button" @onclick:stopPropagation="true"  @onclick="async () => await ShowAgenda(employee)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
@@ -74,56 +76,191 @@
     {
         <div class="modal-overlay" @onclick="CloseModal">
             <div class="modal-content" @onclick:stopPropagation="true">
+
+                <!-- HEADER -->
                 <div class="modal-header">
                     <div class="modal-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-icon lucide-calendar">
+                            <path d="M8 2v4" />  <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" />
                         </svg>
                         <h3>Agenda de @selectedEmployee.Name</h3>
                     </div>
-                    <button class="close-button" @onclick="CloseModal">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
+
+                    <button class="close-button" @onclick="CloseModal" title="Cerrar">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-icon">
+                            <path d="M18 6 6 18" /> <path d="M6 6 18 18" />
                         </svg>
                     </button>
                 </div>
 
+                <!-- DATE BAR -->
+                <div class="agenda-toolbar">
+                    <div class="date-controls">
+                        <button class="nav-btn"
+                                title="Día anterior"
+                                @onclick="PreviousDay">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon">
+                                <circle cx="12" cy="12" r="10" /><path d="m12 8-4 4 4 4" /><path d="M16 12H8" />
+                            </svg>
+                        </button>
+
+                        <span class="current-date">
+                            @SelectedDate.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-MX"))
+                        </span>
+
+                        <button class="nav-btn"
+                                title="Día siguiente"
+                                @onclick="NextDay">
+                            <svg xmlns="http://www.w3.org/2000/svg"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon">
+                                <circle cx="12" cy="12" r="10" /> <path d="m12 16 4-4-4-4" /> <path d="M8 12h8" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button class="refresh-btn" @onclick="RefreshAgenda">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /> <path d="M16 16h5v5" />
+                        </svg>
+                        Actualizar
+                    </button>
+                </div>
+
+                <!-- BODY -->
                 <div class="modal-body">
-                    <div class="employee-summary">
-                        <p class="summary-label">Información del empleado</p>
-                        <div class="summary-grid">
-                            <div class="summary-item">
-                                <span class="summary-key">Nombre</span>
-                                <span class="summary-value">@selectedEmployee.Name</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-key">Rol</span>
-                                <span class="summary-value">@selectedEmployee.Area</span>
-                            </div>
+
+                    <!-- EMPLOYEE INFO -->
+                    <div class="employee-card">
+                        <div>
+                            <span>Nombre</span>
+                            <strong>@selectedEmployee.Name</strong>
+                        </div>
+                        <div>
+                            <span>Puesto</span>
+                            <strong>@selectedEmployee.Puesto</strong>
                         </div>
                     </div>
 
-                    <div class="tasks-section">
-                        <p class="tasks-label">Tareas pendientes:</p>
-                        @for (int i = 1; i <= 3; i++)
+                    <!-- TAREAS -->
+                    <div class="block pink">
+                        <div class="block-header" @onclick="ToggleTasks">
+                            <span>✔ Tareas</span>
+                            <span>@Tasks.Count pendiente(s)</span>
+                        </div>
+
+                        @if (!TasksCollapsed)
                         {
-                            <div class="task-item">
-                                <p class="task-title">Tarea @i</p>
-                                <p class="task-description">Descripción de la tarea asignada</p>
+                            <div class="block-content">
+                                @foreach (var task in Tasks)
+                                {
+                                    <div class="item">
+                                        <div>
+                                            <strong>@task.Title</strong>
+                                            <p>@task.Description</p>
+                                        </div>
+                                        <button>👁</button>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
+
+                    <!-- ORDENES DE TRABAJO -->
+                    <div class="block orange">
+                        <div class="block-header" @onclick="ToggleOrders">
+                            <span>📋 Órdenes de trabajo</span>
+                            <span>@WorkOrders.Count orden(es)</span>
+                        </div>
+
+                        @if (!OrdersCollapsed)
+                        {
+                            <div class="orders-grid">
+                                <div>
+                                    @foreach (var o in WorkOrders.Where(x => x.Status == "vencida"))
+                                    {
+                                        <div class="order red">
+                                            <strong>@o.Number</strong>
+                                            <span>Vencida</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div>
+                                    @foreach (var o in WorkOrders.Where(x => x.Status == "proxima"))
+                                    {
+                                        <div class="order yellow">
+                                            <strong>@o.Number</strong>
+                                            <span>Próx.</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div>
+                                    @foreach (var o in WorkOrders.Where(x => x.Status == "hoy"))
+                                    {
+                                        <div class="order green">
+                                            <strong>@o.Number</strong>
+                                            <span>Hoy</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!--  AUTOEVALUACIÓN -->
+                    <div class="block green">
+                        <div class="block-header" @onclick="() => SelfEvalCollapsed = !SelfEvalCollapsed">
+                            <span>⭐ Autoevaluación</span>
+                            <span>@SelfEvaluations.Count pendiente(s)</span>
+                        </div>
+
+                        @if (!SelfEvalCollapsed)
+                        {
+                            <div class="block-content">
+                                @foreach (var item in SelfEvaluations)
+                                {
+                                    <div class="item">
+                                        <span>⭐</span>
+                                        <p>@item.Description</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- SERVICIO A CLIENTE -->
+                    <div class="block purple">
+                        <div class="block-header" @onclick="() => ServiceCollapsed = !ServiceCollapsed">
+                            <span>👥 Servicio a Cliente</span>
+                            <span>@Services.Count pendiente(s)</span>
+                        </div>
+
+                        @if (!ServiceCollapsed)
+                        {
+                            <div class="block-content">
+                                @foreach (var item in Services)
+                                {
+                                    <div class="item">
+                                        <p>@item.Description</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+
                 </div>
             </div>
         </div>
     }
+
 </div>
 
 @code {
+    AgendaCompletaDTO? agendaSeleccionada;
+    bool cargandoAgenda = false;
+    string? errorAgenda;
+
     List<AreaDTO> areaList = new();
     List<EmpleadoDTO> empleadoList = new();
     private List<EmployeeInfo> employees = new();
@@ -138,6 +275,13 @@
         areaList = await AreasService.GetAreas();
         await CargarEmpleados();
     }
+
+    async Task RefreshAgenda()
+    {
+        // Aquí luego filtras tareas, eventos u órdenes
+        await InvokeAsync(StateHasChanged);
+    }
+
 
     private async Task CargarEmpleados()
     {
@@ -161,15 +305,6 @@
             UpcomingTasks = 0,
             CompletedToday = 0
         }).ToList();
-    }
-
-    private int ObtenerClaveArea(string area)
-    {
-        return area switch
-        {
-            "TECNOLOGIAS DE INFORMACION" => 7,
-            _ => 0
-        };
     }
 
     private class EmployeeInfo
@@ -204,17 +339,36 @@
         return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper())); 
     }
 
-    private void ShowAgenda(EmployeeInfo employee)
+    private async Task ShowAgenda(EmployeeInfo employee)
     {
         selectedEmployee = employee;
+        cargandoAgenda = true;
+        errorAgenda = null;
+
+        try
+        {
+            agendaSeleccionada =
+                await VerAgendasService.GetAgendaCompleta(employee.Id);
+        }
+        catch (Exception ex)
+        {
+            errorAgenda = ex.Message;
+            Debug.WriteLine(ex.ToString());
+            agendaSeleccionada = null;
+        }
+        finally
+        {
+            cargandoAgenda = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
+
 
     private void CloseModal()
     {
+        Debug.WriteLine("CERRANDO MODAL");
         selectedEmployee = null;
     }
-
-    private List<string> areas = new List<string> { "Developer", "Designer", "Manager", "Sales", "Support", "Marketing" };
 
     private List<EmployeeInfo> filteredEmployees
     {
@@ -232,5 +386,88 @@
     }
 
 
+    <!-- DATE BAR -->
+    DateTime SelectedDate = DateTime.Today;
 
+    void PreviousDay()
+    {
+        SelectedDate = SelectedDate.AddDays(-1);
+        RefreshAgenda();
+    }
+    void NextDay()
+    {
+        SelectedDate = SelectedDate.AddDays(1);
+        RefreshAgenda();
+    }
+
+    <!-- TAREAS -->
+    bool TasksCollapsed = false;
+
+    class AgendaTask
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    List<AgendaTask> Tasks = new()
+    {
+        new AgendaTask
+        {
+            Title = "Revisar reporte semanal",
+            Description = "Validar cifras y enviar observaciones"
+        },
+        new AgendaTask
+        {
+            Title = "Actualizar agenda",
+            Description = "Ajustar eventos conforme a cambios del cliente"
+        }
+    };
+
+    void ToggleTasks()
+    {
+        TasksCollapsed = !TasksCollapsed;
+    }
+    <!-- ORDENES DE TRABAJO -->
+    bool OrdersCollapsed = false;
+
+    class WorkOrder
+    {
+        public string Number { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        // valores esperados: "vencida" | "proxima" | "hoy"
+    }
+    List<WorkOrder> WorkOrders = new()
+    {
+        new WorkOrder { Number = "OT-1023", Status = "vencida" },
+        new WorkOrder { Number = "OT-1041", Status = "proxima" },
+        new WorkOrder { Number = "OT-1042", Status = "hoy" },
+        new WorkOrder { Number = "OT-1050", Status = "proxima" },
+        new WorkOrder { Number = "OT-0999", Status = "vencida" }
+    };
+
+    void ToggleOrders()
+    {
+        OrdersCollapsed = !OrdersCollapsed;
+    }
+
+    <!-- AUTOEVALUACION -->
+    bool SelfEvalCollapsed = false;
+    record EvaluationItem(string Id, string Description);
+
+    List<EvaluationItem> SelfEvaluations = new()
+    {
+        new("1", "Brindé soluciones inteligentes a los problemas/necesidades de los usuarios finales"),
+        new("2", "Realicé una planeación adecuada para ejecutar el proyecto."),
+        new("3", "Desarrollé los sistemas informáticos, tomando en cuenta las políticas y lineamientos establecidos."),
+        new("4", "Realicé las pruebas de funcionalidad para asegurar la calidad de los sistemas informáticos y hace las correcciones necesarias."),
+        new("5", "Di seguimiento a mi programa de trabajo y mantuve actualizado.")
+    };
+
+    <!-- SERVICIO A CLIENTE -->
+    bool ServiceCollapsed = false;
+    record ServiceItem(string Id, string Description);
+    List<ServiceItem> Services = new()
+    {
+        new("1", "2366 ARKE SMO SA DE CV – Servicios Contables – Entrega de Informe Mensual")
+    };
 }

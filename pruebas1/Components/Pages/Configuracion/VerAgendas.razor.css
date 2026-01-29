@@ -238,44 +238,65 @@
 }
 
 /* Modal Styles */
+/* ===============================
+   Modal Styles (Adaptado a Theme)
+   =============================== */
+:root {
+}
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 1000;
-    padding: 20px;
+    padding: 80px;
+    animation: fadeIn 0.2s ease-out;
 }
-
 .modal-content {
-    background: white;
-    border-radius: 16px;
-    max-width: 600px;
+    --card: #ffffff;
+    --card-foreground: #1f2937;
+    --radius-xl: 16px;
+    background: var(--card);
+    color: var(--card-foreground);
+    border-radius: var(--radius-xl);
+    max-width: 900px;
     width: 100%;
-    max-height: 90vh;
+    max-height: calc(100vh - 120px);
     overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease-out;
 }
 
-.dark-mode .modal-content {
-    background: #262626;
-}
+    /* Scrollbar */
+    .modal-content::-webkit-scrollbar {
+        width: 8px;
+    }
 
+    .modal-content::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+/* HEADER */
 .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 24px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.dark-mode .modal-header {
-    border-bottom-color: #404040;
+    background: #7c3aed;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
 }
 
 .modal-title {
@@ -284,61 +305,120 @@
     gap: 12px;
 }
 
-.modal-title svg {
-    width: 24px;
-    height: 24px;
-    color: #9333ea;
-}
+    .modal-title svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+        opacity: 0.95;
+    }
 
-.dark-mode .modal-title svg {
-    color: #c084fc;
-}
+    .modal-title h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: white;
+        letter-spacing: 0.2px;
+    }
 
-.modal-title h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1f2937;
-}
-
-.dark-mode .modal-title h3 {
-    color: #f5f5f5;
-}
-
+/* CLOSE BUTTON */
 .close-button {
     width: 32px;
     height: 32px;
     border: none;
-    background: #f3f4f6;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease;
 }
+    .close-button:hover {
+        background: background: rgba(255, 255, 255, 0.25);
+    }
+    ..close-button .close-icon {
+        width: 18px;
+        height: 18px;
+        color: var(--muted-foreground);
+        transition: transform 0.35s ease, color 0.2s ease;
+    }
+    .close-button:hover .close-icon {
+        transform: rotate(90deg);
+        color: white;
+    }
+    .close-button:active {
+        transform: scale(0.95);
+    }
 
-.dark-mode .close-button {
-    background: #404040;
+/* DATE BAR */
+.agenda-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    background: oklch(0.25 0.02 300);
+    border-radius: 12px;
 }
-
-.close-button:hover {
-    background: #e5e7eb;
+/* Controles de fecha */
+.date-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-
-.dark-mode .close-button:hover {
-    background: #525252;
+/* Botones circulares (prev / next) */
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #9333ea;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
-
-.close-button svg {
-    width: 20px;
-    height: 20px;
-    color: #6b7280;
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .icon-btn:hover {
+        background: #7c3aed;
+        transform: scale(1.05);
+    }
+/* Fecha actual */
+.current-date {
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
 }
-
-.dark-mode .close-button svg {
-    color: #9ca3af;
+/* Botón actualizar */
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #9333ea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
+    .refresh-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    .refresh-btn:hover {
+        background: #7c3aed;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
 
+
+/* BODY */
 .modal-body {
     padding: 24px;
     display: flex;
@@ -346,24 +426,22 @@
     gap: 24px;
 }
 
+
+/* EMPLOYEE SUMMARY */
 .employee-summary {
-    background: #f3e8ff;
+    background: oklch(0.97 0.04 280);
     padding: 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
-.dark-mode .employee-summary {
-    background: rgba(168, 85, 247, 0.2);
+.dark .employee-summary {
+    background: oklch(0.269 0 0);
 }
 
 .summary-label {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--muted-foreground);
     margin-bottom: 12px;
-}
-
-.dark-mode .summary-label {
-    color: #9ca3af;
 }
 
 .summary-grid {
@@ -380,22 +458,15 @@
 
 .summary-key {
     font-size: 12px;
-    color: #6b7280;
-}
-
-.dark-mode .summary-key {
-    color: #9ca3af;
+    color: var(--muted-foreground);
 }
 
 .summary-value {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--foreground);
 }
 
-.dark-mode .summary-value {
-    color: #f5f5f5;
-}
-
+/* TASKS */
 .tasks-section {
     display: flex;
     flex-direction: column;
@@ -404,53 +475,42 @@
 
 .tasks-label {
     font-weight: 600;
-    color: #374151;
-}
-
-.dark-mode .tasks-label {
-    color: #d1d5db;
+    color: var(--foreground);
 }
 
 .task-item {
     padding: 12px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
 }
 
-.dark-mode .task-item {
-    background: #1a1a1a;
-    border-color: #404040;
+.dark .task-item {
+    background: var(--accent);
 }
 
 .task-title {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--foreground);
     margin-bottom: 4px;
-}
-
-.dark-mode .task-title {
-    color: #f5f5f5;
 }
 
 .task-description {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--muted-foreground);
 }
 
-.dark-mode .task-description {
-    color: #9ca3af;
-}
-
+/* RESPONSIVE */
 @media (max-width: 640px) {
-    .agendas-grid {
-        grid-template-columns: 1fr;
-    }
-
     .summary-grid {
         grid-template-columns: 1fr;
     }
+
+    .modal-content {
+        max-height: 95vh;
+    }
 }
+
 
 /* MODIFICACIÓN EXCLUSIVA PARA MODO OSCURO */
 .dark-mode h2,
