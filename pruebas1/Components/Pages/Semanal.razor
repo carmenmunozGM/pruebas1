@@ -1307,7 +1307,7 @@
 
                 var fechas = new List<DateTime>();
 
-                if (item.IsCompleted == false && DateTime.Today > item.FechaFin)
+                if (item.IsCompleted == false && DateTime.Today > item.FechaFin && item.Tipo == "Tarea")
                 {
                     DateTime fechaHoy = DateTime.Today;
                     fechas.Add(fechaHoy);
@@ -1318,7 +1318,10 @@
                 }
                 else
                 {
-                    if (item.FechaFin != null && item.FechaFin >= DateTime.Today && item.IsCompleted == false)
+                    if (item.FechaFin != null && item.FechaFin >= DateTime.Today && item.IsCompleted == false && item.Tipo == "Tarea")
+                        fechas.Add(item.FechaFin.Value.Date);
+
+                    if (item.FechaFin != null && item.IsCompleted == false && item.Tipo == "Evento")
                         fechas.Add(item.FechaFin.Value.Date);
                 }
 
