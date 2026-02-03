@@ -4,6 +4,8 @@
 @using static System.Net.WebRequestMethods
 @inject AreasService AreasService
 @inject HttpClient Http
+@inject IJSRuntime JS
+
 
 <div class="reportes-section">
     <div class="section-header">
@@ -13,7 +15,7 @@
 
     <!-- Report Type Selection -->
     <div class="report-type-selector">
-        <button class="type-button @(reportType == "autoevaluacion" ? "active" : "")" 
+        <button class="type-button @(reportType == "autoevaluacion" ? "active" : "")"
                 @onclick='() => reportType = "autoevaluacion"'>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 11l3 3L22 4"></path>
@@ -22,18 +24,7 @@
             <span>Autoevaluación</span>
         </button>
 
-  @*       <button class="type-button @(reportType == "programa" ? "active" : "")" 
-                @onclick='() => reportType = "programa"'>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span>Programa de Trabajo</span>
-        </button> *@
-
-        <button class="type-button @(reportType == "clientes" ? "active" : "")" 
+        <button class="type-button @(reportType == "clientes" ? "active" : "")"
                 @onclick='() => reportType = "clientes"'>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -57,6 +48,15 @@
                    @bind:event="oninput"
                    placeholder="Buscar por nombre..." />
         </div>
+
+        <!-- SELECT MES - AÑO (NUEVO) -->
+        <select class="area-filter" @bind="selectedMonth">
+            @foreach (var m in monthOptions)
+            {
+                <option value="@m.Value">@m.Text</option>
+            }
+        </select>
+
         <select class="area-filter" @bind="selectedArea">
             <option value="">Todas las áreas</option>
             @foreach (var area in areaList)
@@ -73,8 +73,8 @@
                 <tr>
                     <th>Usuario</th>
                     <th>Área</th>
-                    <th>@GetReportColumnName()</th>
-                    <th class="text-right">Acción</th>
+@*                     <th>@GetReportColumnName()</th> *@
+                    <th class="text-right">Descargar</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,11 +92,12 @@
                         <td>
                             <span class="area-badge">@user.Area</span>
                         </td>
-                        <td>
+                   @*      <td>
                             <span class="activity-badge">@GetReportValue(user)</span>
-                        </td>
+                        </td> *@
                         <td class="text-right">
-                            <button class="download-button" @onclick="() => HandleDownload(user.Name)">
+                            <button class="download-button" @onclick="() => HandleDownload(user)">
+
                                 <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -134,6 +135,7 @@
     private List<UserInfo> employees = new();
 
     string? selectedArea;
+    private string selectedMonth = "";
 
     private UserInfo selectedEmployee = null;
     private string searchName = "";
@@ -141,11 +143,34 @@
     private string message = "";
     private string reportType = "autoevaluacion";
 
+    private List<MonthOption> monthOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
+        GenerarMeses();
         await CargarEmpleados();
+    }
+
+    private void GenerarMeses()
+    {
+        var cultura = new System.Globalization.CultureInfo("es-MX");
+        var fechaBase = DateTime.Now;
+
+        monthOptions = Enumerable.Range(0, 12)
+            .Select(i =>
+            {
+                var fecha = fechaBase.AddMonths(-i);
+                return new MonthOption
+                {
+                    Value = fecha.ToString("yyyy-MM"),
+                    Text = cultura.TextInfo.ToTitleCase(
+                        fecha.ToString("MMMM yyyy", cultura))
+                };
+            })
+            .ToList();
+
+        selectedMonth = monthOptions.First().Value;
     }
 
     private async Task CargarEmpleados()
@@ -153,24 +178,23 @@
         var empleadosDto = await Http
             .GetFromJsonAsync<List<EmpleadoDTO>>(
                 "https://redgm.site:9096/empleado"
-                //"http://localhost:5231/empleado"
             )
             ?? new();
 
         employees = empleadosDto
-        .OrderBy(e => e.ClavePersonal)
-        .Select(e => new UserInfo
-        {
-            Id = e.Id,
-            ClavePersonal = e.ClavePersonal,
-            Name = e.Nombre,
-            NetName = e.NombreRed,
-            Area = e.Area,
-            Puesto = e.Puesto,
-            Autoevaluaciones = 0,
-            ProgramasTrabajo = 0,
-            ClientesAsignados = 0
-        }).ToList();
+            .OrderBy(e => e.ClavePersonal)
+            .Select(e => new UserInfo
+            {
+                Id = e.Id,
+                ClavePersonal = e.ClavePersonal,
+                Name = e.Nombre,
+                NetName = e.NombreRed,
+                Area = e.Area,
+                Puesto = e.Puesto,
+                Autoevaluaciones = 0,
+                ProgramasTrabajo = 0,
+                ClientesAsignados = 0
+            }).ToList();
     }
 
     private int ObtenerClaveArea(string area)
@@ -186,19 +210,20 @@
     {
         public int Id { get; set; }
         public int ClavePersonal { get; set; }
-
         public string Name { get; set; } = string.Empty;
         public string NetName { get; set; } = string.Empty;
-
         public string Area { get; set; } = string.Empty;
         public string Puesto { get; set; } = string.Empty;
-
         public int Autoevaluaciones { get; set; }
         public int ProgramasTrabajo { get; set; }
         public int ClientesAsignados { get; set; }
     }
 
-    private List<UserInfo> users = new();
+    private class MonthOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
 
     private string GetInitials(string name)
     {
@@ -217,25 +242,79 @@
         };
     }
 
-    private string GetReportValue(UserInfo user)
+    // private string GetReportValue(UserInfo user)
+    // {
+    //     var value = reportType switch
+    //     {
+    //         "autoevaluacion" => user.Autoevaluaciones,
+    //         "programa" => user.ProgramasTrabajo,
+    //         "clientes" => user.ClientesAsignados,
+    //         _ => 0
+    //     };
+
+    //     return $"{value} registros";
+    // }
+    private async Task ShowMessage(string text)
     {
-        var value = reportType switch
+        message = text;
+        StateHasChanged();
+
+        await Task.Delay(2000);
+
+        message = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task HandleDownload(UserInfo user)
+    {
+        try
         {
-            "autoevaluacion" => user.Autoevaluaciones,
-            "programa" => user.ProgramasTrabajo,
-            "clientes" => user.ClientesAsignados,
-            _ => 0
-        };
+            // 🚫 Bloqueo si NO es autoevaluación
+            if (reportType != "autoevaluacion")
+            {
+                await ShowMessage("Este usuario no cuenta con reportes de clientes asignados");
+                return;
+            }
 
-        return $"{value} registros";
+            // 1️⃣ Extraer año y mes desde "yyyy-MM"
+            var partes = selectedMonth.Split('-');
+            int anio = int.Parse(partes[0]);
+            int mes = int.Parse(partes[1]);
+
+            // 2️⃣ Construir URL del endpoint (solo autoevaluación)
+            var url = $"api/Reportes/Autoevaluacion/{user.Id}/{anio}/{mes}";
+
+            // 3️⃣ Llamada HTTP
+            var response = await Http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await ShowMessage("Este usuario no cuenta con reportes de autoevaluación");
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+
+            // 4️⃣ Descargar archivo usando JS
+            var fileName = $"AE_{user.Name}_{anio}_{mes}.xlsx"
+                .Replace(" ", "_");
+
+            await JS.InvokeVoidAsync(
+                "downloadFile",
+                fileName,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                bytes
+            );
+
+            await ShowMessage($"Descargando reporte de {user.Name}");
+        }
+        catch (Exception ex)
+        {
+            await ShowMessage("Error inesperado al descargar el reporte");
+            Console.WriteLine(ex);
+        }
     }
 
-    private async Task HandleDownload(string userName)
-    {
-        message = $"Descargando reporte de {reportType} de {userName}";
-        await Task.Delay(3000);
-        message = "";
-    }
 
     private List<UserInfo> filteredUsers
     {
