@@ -825,6 +825,126 @@
 }
 
 /* VER TAREAS Y EVENTOS */
+.vermodal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+/* CONTAINER */
+.vermodal-container {
+    position: relative;
+    z-index: 10000;
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.vermodal-lg {
+    max-width: 900px;
+}
+/* HEADER */
+.vermodal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.vermodal-type {
+    font-size: 12px;
+    color: #6b7280;
+}
+.vermodal-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.vermodal-close {
+    border: none;
+    background: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #6b7280;
+}
+.vermodal-body {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    overflow-y: auto;
+}
+.vermodal-left,
+.vermodal-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.vermodal-card {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 16px;
+}
+    .vermodal-card h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .vermodal-card p {
+        font-size: 14px;
+        color: #111827;
+    }
+.vermodal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+    .vermodal-list li {
+        padding: 6px 0;
+        font-size: 14px;
+    }
+.verpriority {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.verpriority-alta {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+.verpriority-media {
+    background: #fef3c7;
+    color: #92400e;
+}
+.verpriority-baja {
+    background: #dcfce7;
+    color: #166534;
+}
+.vermodal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+.verbtn-secondary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #e5e7eb;
+    cursor: pointer;
+}
 
 /* VER OT Y TRA */
 
