@@ -770,6 +770,9 @@
     gap: 20px;
     padding: 0 24px; /* Espacio lateral para que no se pegue a los bordes */
     box-sizing: border-box;
+    /* ESTO ES LA CLAVE: Permite que el cuerpo de la página crezca */
+    overflow-y: visible;
+    min-height: 100vh;
 }
 
 /* 🔹 Cada bloque individual (card de categoría) */
@@ -1884,6 +1887,11 @@ select {
     .modal-content {
         width: 95%;
     }
+    .card-body {
+        max-height: 400px; /* Altura máxima para no deformar la vista */
+        overflow-y: auto; /* Activa scroll vertical interno */
+        overflow-x: hidden; /* Evita scroll horizontal */
+    }
 }
 /* Fecha de evento  para TAREAS EL BLOQUE*/
 .evento-fecha {
@@ -1932,58 +1940,150 @@ select {
     background:#16a34a;
 }
 
-/* Contenedor principal que envuelve todos los bloques */
-/* Contenedor base */
-.layout-wrapper {
+/* ================================================= */
+/* 1. ESTILOS BASE (Tus colores y formas)           */
+/* ================================================= */
+.block-header {
+    padding: 10px 15px !important;
     display: flex;
-    gap: 20px;
-    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px;
 }
 
-/* 1. MODO VERTICAL: Una tarjeta debajo de otra ocupando todo el ancho */
-.dashboard-layout-vertical {
-    flex-direction: column !important;
-}
-
-    .dashboard-layout-vertical .block-card {
-        width: 100% !important;
-        max-width: none !important;
-    }
-/* 1. MODO VERTICAL: Uno debajo de otro ocupando todo el ancho */
-.dashboard-layout-vertical {
+.block-item {
     display: flex !important;
-    flex-direction: column !important; /* Esto los pone en vertical */
-    gap: 20px;
-    width: 100%;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 4px 8px !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    min-height: 35px !important;
 }
 
-    .dashboard-layout-vertical .block-card {
-        width: 100% !important; /* Que ocupen todo el ancho */
-        min-height: 200px;
+.item-text {
+    font-size: 0.8rem !important;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #444;
+}
+
+.subtareas-acciones {
+    display: flex !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    margin-left: 10px;
+}
+
+.icon-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 2px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .icon-btn i {
+        font-size: 0.9rem !important;
     }
 
-/* 2. MODO HORIZONTAL: (El que tú tenías como horizontal ahora es correcto) */
-.dashboard-layout-horizontal {
+    .icon-btn.view i {
+        color: #6f42c1;
+    }
+
+    .icon-btn.edit i {
+        color: #198754;
+    }
+
+    .icon-btn.delete i {
+        color: #dc3545;
+    }
+
+/* ================================================= */
+/* 2. MODO VERTICAL (BLOQUES LADO A LADO)            */
+/* ================================================= */
+.dashboard-container.vertical {
     display: flex !important;
-    flex-direction: row !important; /* Lado a lado */
-    flex-wrap: nowrap !important;
+    flex-direction: row !important;
+    gap: 15px !important;
     overflow-x: auto !important;
-    gap: 20px;
-    align-items: stretch; /* Esto hace que todos tengan la misma altura */
-}
-/* 3. MODO CUADRICULADO: Ajustado para que midan lo mismo */
-.dashboard-layout-grid {
-    display: grid !important;
-    /* Esto crea columnas de al menos 450px, pero si no caben, se bajan */
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)) !important;
-    /* Esto obliga a que todas las filas de la misma hilera tengan la misma altura */
-    grid-auto-rows: 1fr;
-    gap: 24px;
-    align-items: stretch;
+    align-items: flex-start !important;
+    padding: 20px;
 }
 
-    .dashboard-layout-grid .block-card {
-        height: 100% !important; /* Obliga a la tarjeta a llenar el espacio del grid */
+    .dashboard-container.vertical .block-card {
+        flex: 0 0 350px !important;
+        min-width: 350px !important;
+        height: 550px !important; /* Altura fija para activar scroll */
         display: flex;
         flex-direction: column;
+    }
+
+    .dashboard-container.vertical .card-body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        flex: 1;
+        padding: 10px !important;
+    }
+
+    /* --- FIX ORDENES (Vuelven los colores y se hacen filas) --- */
+    .dashboard-container.vertical .column {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* Mantenemos tus colores originales de las órdenes aquí */
+    .dashboard-container.vertical .ot-card {
+        display: flex !important;
+        flex-direction: row !important; /* Ahora se estiran a lo ancho */
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 12px !important;
+        border-radius: 8px !important;
+        /* Esto asegura que herede el color de fondo que ya tienen tus cards */
+        min-height: 50px !important;
+    }
+
+    /* --- FIX TAREAS (Bajamos tamaño de letra para que entren botones) --- */
+    .dashboard-container.vertical .block-item .item-text {
+        font-size: 0.7rem !important; /* Letra más pequeña solo en vertical */
+        white-space: normal !important; /* El texto baja si es largo */
+        max-width: 170px !important; /* Deja espacio a los botones */
+    }
+
+/* ================================================= */
+/* 3. MODOS HORIZONTAL Y GRID (Se quedan igual)      */
+/* ================================================= */
+.dashboard-container.horizontal {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+.dashboard-container.grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 25px !important;
+    align-items: start !important;
+}
+
+    .dashboard-container.grid .block-card,
+    .dashboard-container.horizontal .block-card {
+        height: auto !important;
+    }
+
+/* --- COLAPSO EN VERTICAL --- */
+.dashboard-container.vertical .block-card.collapsed {
+    flex: 0 0 60px !important;
+    width: 60px !important;
+    min-width: 60px !important;
+}
+
+    .dashboard-container.vertical .block-card.collapsed .block-header {
+        writing-mode: vertical-lr;
+        padding: 15px 5px;
     }

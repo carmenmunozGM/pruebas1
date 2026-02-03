@@ -223,7 +223,33 @@
     background: #004dff;
     color: white;
 }
+/* Contenedor base */
+.display-container {
+    display: flex;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
 
+/* Cuando está en horizontal (uno debajo de otro) */
+.modo-horizontal {
+    flex-direction: column;
+}
+
+/* Cuando está en modo grid (dos por fila) */
+.modo-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+    .modo-grid .block {
+        width: calc(50% - 10px); /* Esto hace que quepan 2 por fila */
+    }
+
+/* La clase que marca el selector morado */
+.view-option.active {
+    border: 2px solid #8A2BE2; /* Asegúrate de que se llame .active */
+    background-color: #F8F0FF;
+}
 @media (max-width: 768px) {
     .view-options {
         grid-template-columns: 1fr;

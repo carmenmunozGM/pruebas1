@@ -27,7 +27,7 @@
 @using Blazored.LocalStorage
 @inject ILocalStorageService LocalStorage
 @inject AppSettingsService Settings
-
+@implements IDisposable
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <br />
@@ -138,12 +138,7 @@
 
         </div>
     }
-    @* <div class="dashboard-layout-@Settings.ViewMode"> *@
-        <div class="dashboard-container @(ViewMode == "vertical" ? "dashboard-layout-vertical" :
-                                               ViewMode == "horizontal" ? "dashboard-layout-horizontal" :
-                                               "dashboard-layout-grid")">
-  
-  
+    <div class="dashboard-container @Settings.ViewMode">
     @if (EsDiaNoLaboral)
     {
         <div class="dia-inhabil-container">
@@ -173,9 +168,6 @@
          
     else
     {
-          
-   
-
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas") is CategoryModel tareasCat)
         {
             <div class="card block-card @tareasCat.ColorClass">
@@ -287,10 +279,7 @@
                     </div>
                 }
             </div>
-            <br />
         }
-
-
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Órdenes de Trabajo") is CategoryModel otCat)
         {
             <div class="card block-card naranja-melocoton">
@@ -305,7 +294,6 @@
                         </button>
                     </div>
                 </div>
-
                 @if (!otCat.IsCollapsed)
                 {
                     <div class="card-body block-body block-scroll">
@@ -354,7 +342,6 @@
                                             </div>
                                         }
                                     </div>
-
                                     <!-- 🟢 Columna 3: Normales -->
                                     <div class="column column-normal block-scroll">
                                         @foreach (var ot in OrdenesParaMostrar.Where(o => o.Status == OrdenStatus.Hoy).OrderBy(o => o.FechaProgramada))
@@ -387,7 +374,6 @@
                     </div>
                 }
             </div>
-            <br />
         }
         @foreach (var cat in Categories.Where(c =>
             c.Name.Trim() != "Órdenes de Trabajo" &&
@@ -518,20 +504,11 @@
             </div>
             <br />
         }
-
-        // 1. Filtramos las actividades que corresponden al día seleccionado
         var autoevalDia = AutoevaluacionesDelDia
         .Where(a => a.Fecha.Date == FechaSeleccionada.Date)
         .ToList();
-
-        // 2. Determinamos si el bloque está vacío para el día seleccionado
-        // Si no hay ninguna actividad programada para esa fecha específica, mostramos el mensaje.
         var mostrarMensajeRegistro = !autoevalDia.Any();
-
-        // 3. (Opcional) Saber si todas las del día están listas
         var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
-
-
         var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
 
         @if (true)
@@ -604,14 +581,9 @@
                         }
 
                     </div>
-
-
                 }
             </div>
-
-            <br />
         }
-
         @foreach (var cat in Categories.Where(c =>
             c.Name.Trim() == "Servicio a Cliente"))
         {
@@ -627,7 +599,6 @@
                         </button>
                     </div>
                 </div>
-
                 @if (!cat.IsCollapsed)
                 {
                     <div class="card-body block-body block-scroll">
@@ -648,10 +619,7 @@
                     </div>
                 }
             </div>
-            <br />
         }
-
-
     }
     </div> 
 </div>
@@ -1037,25 +1005,35 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var ti in SelectedOrdenTramite.tramitesIndividuales)
+                                @if (SelectedOrdenTramite?.tramitesIndividuales == null)
                                 {
-                                    <tr style="border-bottom:1px solid #ddd;">
-                                        <td>@ti.clave</td>
-                                        <td>@ti.tramiteIndividual</td>
-                                        <td>@ti.personalEncargado</td>
-                                        <td style="text-align:center;">
-                                            <button class="btn-eye" @onclick="() => AbrirModalTareas(ti.idTramite)">
-                                                <i class="fa fa-eye"></i>
-                                            </button>
-                                        </td>
-                                        <td style="text-align:center;">
-                                            <button class="btn-eye" @onclick="() => AbrirModalDetalle(ti.idTramite)">
-                                                <i class="fa fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <tr><td colspan="5">Esperando respuesta del servidor...</td></tr>
                                 }
-                               
+                                else if (!SelectedOrdenTramite.tramitesIndividuales.Any())
+                                {
+                                    <tr><td colspan="5">La API devolvió la lista vacía para el ID @SelectedOrdenTramite.idOrden</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var tr in SelectedOrdenTramite.tramitesIndividuales)
+                                    {
+                                        <tr>
+                                            <td>@tr.clave</td>
+                                            <td>@tr.tramiteIndividual</td>
+                                            <td>@tr.personalEncargado</td>
+                                            <td style="text-align:center;">
+                                                <button class="btn-eye" @onclick="() => AbrirModalTareas(tr.idTramite)">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                            </td>
+                                            <td style="text-align:center;">
+                                                <button class="btn-eye" @onclick="() => AbrirModalDetalle(tr.idTramite)">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -1069,7 +1047,6 @@
         </div>
     </div>
 }
-
 
 @if (ShowTareasModal && TramiteSeleccionado != null)
 {
@@ -1162,8 +1139,6 @@
         </div>
     </div>
 }
-
-
 
 <!--MODAAL PARA EDITAR-->
 @if (ShowEditModal && EditItem != null)
@@ -1366,6 +1341,9 @@
 
     }
 
+
+
+
 @code {
     string DebugMsg = "";
 
@@ -1431,8 +1409,9 @@
    
     public void Dispose()
     {
-        Settings.OnChange -= StateHasChanged; // Evita fugas de memoria
+        Settings.OnChange -= StateHasChanged;
     }
+
     private async Task VerificarDiaNoLaboralAsync()
     {
         DiaNoLaboralActual = null;
@@ -1758,17 +1737,12 @@
     }
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
-        // 1. Llamada a la API según el tipo
         bool ok = st.Tipo == "Evento"
             ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
             : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
-
         if (ok)
         {
-            // 2. Sincronizamos la fecha en el objeto actual para que el filtro no lo oculte
             st.FechaCompletada = st.IsDone ? DateTime.Now : null;
-
-            // 3. Sincronizar con MasterCategories (para que persista al cambiar de día)
             foreach (var cat in MasterCategories)
             {
                 var task = cat.Subtasks.FirstOrDefault(x => x.ApiId == st.ApiId);
@@ -1782,11 +1756,8 @@
         }
         else
         {
-            // Si la API falla, regresamos el checkbox a su estado anterior
             st.IsDone = !st.IsDone;
         }
-
-        // 4. Una sola llamada para refrescar lo que se ve en pantalla
         await CargarTareasPorFecha();
     }
     private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
@@ -1797,8 +1768,6 @@
         {
             sub.IsDone = parent.IsDone;
             await AgendaService.CambiarEstadoSubtareaAsync(sub.ApiId, sub.IsDone);
-
-            // 🔹 Registrar FechaCompletado solo si es tarea y se marcó como completa
             if (sub.Tipo == "Tarea")
                 sub.FechaCompletada = sub.IsDone ? FechaSeleccionada.Date : null;
         }
@@ -1823,8 +1792,6 @@
     private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
     {
         await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, subtask.IsDone);
-
-        // 🔹 Registrar FechaCompletado
         if (subtask.Tipo == "Tarea")
             subtask.FechaCompletada= subtask.IsDone ? FechaSeleccionada.Date : null;
 
@@ -1948,22 +1915,30 @@
             Console.WriteLine($"Error cargando empleados: {ex.Message}");
         }
     
-        // 2. Nos suscribimos para que la pantalla cambie si el usuario mueve el switch
-        var savedMode = await LocalStorage.GetItemAsync<string>("userViewMode");
-        if (!string.IsNullOrEmpty(savedMode))
+  
+       
+        var usuarioLogueado = LoginService.obtenerUsuarioLogueado();
+        if (usuarioLogueado != null)
         {
-            ViewMode = savedMode;
+            // Nota: Si tu DTO no tiene .Id, usa .NombreUsuario o la propiedad que identifique al usuario
+            string userKey = $"userViewMode_{usuarioLogueado.NombreUsuario}";
+            string modoGuardado = Microsoft.Maui.Storage.Preferences.Get(userKey, "horizontal");
+            Settings.SetViewMode(modoGuardado);
         }
-        Settings.OnChange += StateHasChanged;
-        await VerificarDiaNoLaboralAsync();
 
+        Settings.OnChange += StateHasChanged;
+
+
+        await VerificarDiaNoLaboralAsync();
         await InitializeMasterCategoriesAsync();
         await CargarTareasPorFecha();
         await PrepararOrdenesVisuales();
 
         GenerarDiasCalendario();
     }
-    private string ViewMode { get; set; } = "grid";
+    [CascadingParameter] public string ViewMode { get; set; } = "grid";
+
+  
    
     async Task RecargarVista()
     {
@@ -2189,25 +2164,18 @@ MasterCategories.Add(servicioClienteCategory);
     private async Task OpenEditModal(SubtaskModel st)
     {
         if (st == null) return;
-
-        // 1. Limpieza y preparación base
         searchText = "";
         mostrarLista = false;
         ubicacionOtra = "";
         mostrarOtraUbicacion = false;
 
         if (!PuedeEditarEliminar(st)) return;
-
-        // 2. Cargamos el modelo base (Titulo, fechas, etc.)
         EditItem = ConvertToEditModel(st);
-
-        // 3. REGLA DE ORO: Si es Tarea, ignoramos lo que traía 'st' y traemos el detalle fresco
         if (st.Tipo == "Tarea")
         {
             var tareaCompleta = await AgendaService.ObtenerTareaDetalle(st.ApiId);
             if (tareaCompleta != null)
             {
-                // Sobrescribimos la lista para asegurarnos de tener los IDs (486, 487...)
                 EditItem.Subtareas = tareaCompleta.subTareas?.Select(s => new EditableSubtask
                 {
                     Id = s.id,
@@ -2220,7 +2188,6 @@ MasterCategories.Add(servicioClienteCategory);
             var eventoCompleto = await AgendaService.ObtenerEventoDetalle(st.ApiId);
             if (eventoCompleto != null)
             {
-                // UBICACIÓN
                 if (eventoCompleto.idSala.HasValue && salasLookup.ContainsKey(eventoCompleto.idSala.Value))
                 {
                     EditItem.Ubicacion = salasLookup[eventoCompleto.idSala.Value];
@@ -2232,8 +2199,6 @@ MasterCategories.Add(servicioClienteCategory);
                     ubicacionOtra = eventoCompleto.ubicacion;
                     mostrarOtraUbicacion = true;
                 }
-
-                // PARTICIPANTES
                 EditItem.Participantes = eventoCompleto.participantes?
                     .Select(p => new EmpleadoDTO
                     {
@@ -2263,7 +2228,6 @@ MasterCategories.Add(servicioClienteCategory);
             Prioridad = st.Prioridad,
             Ubicacion = st.Ubicacion ?? "",
             ReglaRecurrencia = st.ReglaRecurrencia ?? "",
-            // Deja esto vacío si es Tarea, ya que OpenEditModal lo llenará con ObtenerTareaDetalle
             Subtareas = new List<EditableSubtask>()
         };
 
@@ -2309,13 +2273,12 @@ MasterCategories.Add(servicioClienteCategory);
                     idPrioridad = EditItem.Prioridad,
                     esRecurrente = !string.IsNullOrEmpty(EditItem.ReglaRecurrencia) && EditItem.ReglaRecurrencia != "No se repite",
                     reglaRecurrencia = EditItem.ReglaRecurrencia,
-                    // PROCESAMIENTO DINÁMICO DE SUBTAREAS:
                     subTareas = EditItem.Subtareas.Select(s =>
                     {
                         if (s.Id.HasValue && s.Id > 0)
-                            return (object)new { id = s.Id.Value, titulo = s.Titulo }; // Existente
+                            return (object)new { id = s.Id.Value, titulo = s.Titulo }; 
                         else
-                            return (object)new { titulo = s.Titulo }; // Nueva (Sin ID)
+                            return (object)new { titulo = s.Titulo }; 
                     }).ToList()
                 };
 
@@ -2787,45 +2750,46 @@ MasterCategories.Add(servicioClienteCategory);
             await VerOrdenTrabajo(ot.Id);
         }
     }
-    private async Task VerOrdenTramiteSeguro(OrdenTrabajoModel ot)
+  private async Task VerOrdenTramiteSeguro(OrdenTrabajoModel ot)
     {
-        if (ot == null) return;
-
-        // 1. Cargamos el DTO con los datos que YA tenemos en el modelo de la vista de día
-        SelectedOrdenTramite = new OrdenTramiteDTO
+        try
         {
-            idOrden = ot.IdOrdenTramite ?? 0,
-            numeroOrden = ot.NumeroOrden,
-            cliente = ot.Cliente,
-            solicitanteInterno = ot.Autor,
-            nombreGlobal = ot.Objetivo,
-            // IMPORTANTE: Asegurar que las fechas pasen del modelo al DTO del modal
-            fechaSolicitud = ot.FechaSolicitud?.ToString("dd/MM/yyyy"),
-            fechaConclusionTramite = ot.FechaProgramada.ToString("dd/MM/yyyy"),
-            tramitesIndividuales = new List<TramiteIndividualDTO>()
-        };
+            if (ot == null) return;
 
-        ShowTramiteModal = true;
-        StateHasChanged(); // Abre el modal con las fechas ya visibles
-
-        // 2. Traer los trámites individuales (Tareas)
-        if (ot.IdOrdenTramite > 0)
-        {
-            var detalle = await OrdenTramiteService.GetDetalle(ot.IdOrdenTramite.Value);
-            if (detalle != null)
+            // Limpiamos datos previos para evitar confusión visual
+            SelectedOrdenTramite = new OrdenTramiteDTO
             {
-                // Actualizamos la lista de tareas
-                SelectedOrdenTramite.tramitesIndividuales = detalle.tramitesIndividuales;
+                idOrden = ot.IdOrdenTramite ?? 0,
+                numeroOrden = ot.NumeroOrden,
+                cliente = ot.Cliente,
+                solicitanteInterno = ot.Autor,
+                nombreGlobal = ot.Objetivo,
+                fechaSolicitud = ot.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "",
+                fechaConclusionTramite = ot.FechaProgramada.ToString("dd/MM/yyyy"),
+                tramitesIndividuales = new()
+            };
 
-                // Si por alguna razón las fechas no venían en 'ot', las tomamos del detalle
-                if (string.IsNullOrEmpty(SelectedOrdenTramite.fechaSolicitud))
-                    SelectedOrdenTramite.fechaSolicitud = detalle.fechaSolicitud;
+            // PASO CRÍTICO: Abrir el modal ANTES de la llamada a la API
+            ShowTramiteModal = true;
+            StateHasChanged();
 
-                if (string.IsNullOrEmpty(SelectedOrdenTramite.fechaConclusionTramite))
-                    SelectedOrdenTramite.fechaConclusionTramite = detalle.fechaConclusionTramite;
-
-                StateHasChanged();
+            // Ahora intentamos traer los trámites
+            if (ot.IdOrdenTramite > 0)
+            {
+                var detalle = await OrdenTramiteService.GetDetalle(ot.IdOrdenTramite.Value);
+                if (detalle != null)
+                {
+                    SelectedOrdenTramite.tramitesIndividuales = detalle.tramitesIndividuales ?? new();
+                    StateHasChanged();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al abrir modal: {ex.Message}");
+            // Forzamos la apertura aunque falle la API para que veas que el botón funciona
+            ShowTramiteModal = true;
+            StateHasChanged();
         }
     }
     private void CloseTramiteModal()

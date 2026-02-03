@@ -1,5 +1,8 @@
+@using pruebas1.Servicios
+@inject LoginService loginService
 @inject AppSettingsService Settings
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
 <div class="personalizacion-section">
     <div class="section-header">
         <h2>Personalización</h2>
@@ -8,7 +11,7 @@
 
     <div class="view-options">
         <!-- Vertical View Option -->
-        <div class="view-option @(Settings.ViewMode == "vertical" ? "active" : "")"
+      @*   <div class="view-option @(Settings.ViewMode == "vertical" ? "active" : "")"
              @onclick='() => CambiarModo("vertical")'>
             <div class="option-header">
                 <div class="option-title">
@@ -35,99 +38,107 @@
                 </div>
             </div>
         </div>
-
+ *@
         <!-- Horizontal View Option -->
-        <div class="view-option @(Settings.ViewMode == "horizontal" ? "active" : "")"
-             @onclick='() => CambiarModo("horizontal")'>
-            <div class="option-header">
-                <div class="option-title">
-                    <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="8" y1="6" x2="21" y2="6"></line>
-                        <line x1="8" y1="12" x2="21" y2="12"></line>
-                        <line x1="8" y1="18" x2="21" y2="18"></line>
-                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                    </svg>
-                    <h3>Horizontal</h3>
+        <div class="view-options">
+            <div class="view-option @(Settings.ViewMode == "horizontal" ? "active" : "")"
+                 @onclick='() => CambiarModo("horizontal")'>
+                <div class="option-header">
+                    <div class="option-title">
+                        <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        <h3>Horizontal</h3>
+                    </div>
+                    @if (Settings.ViewMode == "horizontal")
+                    {
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    }
                 </div>
-                @if (ViewMode == "horizontal")
-                {
-                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                }
+                <div class="option-preview">
+                    <div class="preview-horizontal">
+                        <div class="mini-block mini-pink">Tareas</div>
+                        <div class="mini-block mini-orange">Ordenes de Trabajo</div>
+                        <div class="mini-block mini-green">Autoevaluación</div>
+                        <div class="mini-block mini-gray">Servicio al Cliente</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="option-preview @(ColorMode)">
-                <div class="preview-horizontal">
-                    <div class="mini-block mini-pink">Tareas</div>
-                    <div class="mini-block mini-orange">Ordenes de Trabajo</div>
-                    <div class="mini-block mini-green">Autoevaluación</div>
-                    <div class="mini-block mini-gray">Servicio al Cliente</div>
+            <div class="view-option @(Settings.ViewMode == "grid" ? "active" : "")"
+                 @onclick='() => CambiarModo("grid")'>
+                <div class="option-header">
+                    <div class="option-title">
+                        <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <h3>Cuadrícula</h3>
+                    </div>
+                    @if (Settings.ViewMode == "grid")
+                    {
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    }
                 </div>
-            </div>
-        </div>
-
-        <!-- Grid View Option -->
-        <div class="view-option @(Settings.ViewMode == "grid" ? "active" : "")"
-             @onclick='() => CambiarModo("grid")'>
-            <div class="option-header">
-                <div class="option-title">
-                    <svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                    <h3>Cuadrícula</h3>
-                </div>
-                @if (ViewMode == "grid")
-                {
-                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                }
-            </div>
-
-            <div class="option-preview @(ColorMode)">
-                <div class="preview-grid">
-                    <div class="mini-block mini-pink">Tareas</div>
-                    <div class="mini-block mini-orange">Ordenes de Trabajo</div>
-                    <div class="mini-block mini-green">Autoevaluación</div>
-                    <div class="mini-block mini-gray">Servicio al Cliente</div>
+                <div class="option-preview">
+                    <div class="preview-grid">
+                        <div class="mini-block mini-pink">Tareas</div>
+                        <div class="mini-block mini-orange">Ordenes de Trabajo</div>
+                        <div class="mini-block mini-green">Autoevaluación</div>
+                        <div class="mini-block mini-gray">Servicio al Cliente</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 @code {
-    // [Parameter] public string ViewMode { get; set; } = "horizontal";
-    // [Parameter] public string ColorMode { get; set; } = "normal";
-    // private string ViewMode => Settings.ViewMode;
     [Parameter] public string ViewMode { get; set; }
     [Parameter] public string ColorMode { get; set; } = "normal";
     [Parameter] public EventCallback<string> OnViewModeChange { get; set; }
     [Parameter] public EventCallback<string> OnColorModeChange { get; set; }
-    private async Task CambiarModo(string nuevoModo)
+    private async Task CambiarModo(string nuevoModo) // Cambiado de 'private void' a 'async Task'
     {
-        // Aseguramos que sea "vertical", "horizontal" o "grid"
-        string modoLimpio = nuevoModo.ToLower();
+        var usuario = loginService.obtenerUsuarioLogueado();
 
-        Settings.SetViewMode(modoLimpio);
-        await LocalStorage.SetItemAsync("userViewMode", modoLimpio);
-        await OnViewModeChange.InvokeAsync(modoLimpio);
+        if (usuario != null && !string.IsNullOrEmpty(usuario.Token))
+        {
+            string userKey = $"userViewMode_{usuario.NombreUsuario}";
+            Microsoft.Maui.Storage.Preferences.Set(userKey, nuevoModo);
+        }
+
+        // Actualizamos el estado global
+        Settings.SetViewMode(nuevoModo);
+
+        // Notificamos al componente padre si es necesario
+        if (OnViewModeChange.HasDelegate)
+        {
+            await OnViewModeChange.InvokeAsync(nuevoModo); // Ahora el 'await' funcionará
+        }
 
         StateHasChanged();
     }
     protected override void OnInitialized()
     {
-        // Si el parámetro viene vacío, tomamos el del servicio
-        if (string.IsNullOrEmpty(ViewMode))
-        {
-            ViewMode = Settings.ViewMode;
-        }
+
+        // Suscribirse para reaccionar a cambios externos
         Settings.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        // Muy importante: desvincular el evento al cerrar el componente
+        Settings.OnChange -= StateHasChanged;
     }
 }
