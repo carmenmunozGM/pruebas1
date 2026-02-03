@@ -2087,3 +2087,83 @@ select {
         writing-mode: vertical-lr;
         padding: 15px 5px;
     }
+
+    /*tablaaa de servicioa*/
+/* Contenedores Generales */
+.empresa-seccion {
+    border-bottom: 1px solid #edf2f7;
+}
+
+/* Estilo Empresa (Nivel 1) */
+.n-empresa {
+    background: #f7fafc;
+    padding: 10px 15px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+}
+/* Estilo para el texto Hecho a la derecha */
+.indicador-hecho {
+    margin-left: auto; /* <--- ESTO LO EMPUJA A LA DERECHA */
+    margin-right: 20px;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 0.9rem;
+    font-style: normal; /* Aseguramos que no esté en curva */
+}
+/* Estilo Servicio (Nivel 2) */
+.n-servicio {
+    padding: 6px 15px 6px 35px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #4a5568;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Contenedor de Actividades (Nivel 3) */
+.actividades-contenedor {
+    padding: 4px 15px 10px 60px;
+}
+
+.actividad-fila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    width: 100%; /* Asegura que ocupe todo el ancho para mover el 'Hecho' */
+}
+
+.actividad-txt {
+    font-size: 1.3rem;
+    color: #1a202c;
+    transition: all 0.3s ease;
+}
+
+/* Estado Hecho / Completado */
+.es-completada .actividad-txt {
+    text-decoration: line-through; /* Mantiene el tachado */
+    color: #a0aec0;
+    font-style: normal; /* <--- ESTO QUITA LA CURVA (CURSIVA) */
+}
+
+/* Checkbox tamaño ajustado */
+.actividad-fila input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Iconos de flecha */
+.fa-caret-down, .fa-caret-right {
+    font-size: 0.9rem;
+    color: #718096;
+    width: 12px;
+}
