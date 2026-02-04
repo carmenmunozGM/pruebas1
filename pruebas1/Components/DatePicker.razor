@@ -149,4 +149,27 @@
         color: #f3f4f6 !important;
         border-radius: 12px !important;
     }
+
+    /* Asegurar que el contenedor de días tenga altura automática */
+    [data-theme="dark"] .flatpickr-calendar {
+        height: auto !important;
+        min-height: 300px; /* Altura mínima recomendada */
+        display: flex;
+        flex-direction: column;
+    }
+
+    [data-theme="dark"] .flatpickr-innerContainer {
+        overflow: visible !important;
+    }
+
+    [data-theme="dark"] .flatpickr-days {
+        width: auto !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    /* IMPORTANTE: Evitar que el modal corte el calendario */
+    .modal-body, .main-form-grid {
+        overflow: visible !important;
+    }
             </style>
