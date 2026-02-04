@@ -2,6 +2,7 @@
 @using pruebas1.Components.UI
 @using pruebas1.Servicios
 @inject ThemeService ThemeService
+@inject LoginService loginService
 
 <div class="apariencia-container">
     <div class="section-header">
@@ -57,16 +58,45 @@
 
     private string currentTheme = "light";
 
-    protected override void OnInitialized()
-    {
-        currentTheme = CurrentTheme;
-    }
-
     private async Task ChangeTheme(string theme)
     {
         currentTheme = theme;
+
+        // 1. Aplicar cambio visual inmediato en el estado de la app
         ThemeService.SetTheme(theme);
-        await OnThemeChange.InvokeAsync(theme);
+
+        // 2. Persistir la preferencia vinculada al usuario
+        var usuario = loginService.obtenerUsuarioLogueado();
+        if (usuario != null && !string.IsNullOrEmpty(usuario.NombreUsuario))
+        {
+            // Creamos una llave única: userThemeMode_NombreDeUsuario
+            string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
+            Microsoft.Maui.Storage.Preferences.Set(themeKey, theme);
+        }
+
+        // 3. Notificar al componente padre si existe un callback
+        if (OnThemeChange.HasDelegate)
+        {
+            await OnThemeChange.InvokeAsync(theme);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Cargar el tema guardado al entrar a la pantalla de configuración
+        var usuario = loginService.obtenerUsuarioLogueado();
+        if (usuario != null && !string.IsNullOrEmpty(usuario.NombreUsuario))
+        {
+            string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
+            currentTheme = Microsoft.Maui.Storage.Preferences.Get(themeKey, CurrentTheme);
+
+            // Sincronizar el servicio visual por si acaso
+            ThemeService.SetTheme(currentTheme);
+        }
+        else
+        {
+            currentTheme = CurrentTheme;
+        }
     }
 
 

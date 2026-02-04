@@ -2347,20 +2347,55 @@ MasterCategories.Add(servicioClienteCategory);
 }
     private async Task EliminarSubtask(SubtaskModel st)
     {
-        var result = await JS.InvokeAsync<object>("Swal.fire", new
+        // 1. Detectar tema
+        bool isDark = await JS.InvokeAsync<bool>("eval", "document.documentElement.getAttribute('data-theme') === 'dark'");
+
+        // 2. Configuración de estilos
+        string bgColor = isDark ? "#1e293b" : "#ffffff";
+        string txtColor = isDark ? "#f8fafc" : "#1e293b";
+
+        // 3. PRIMERA PREGUNTA
+        var firstResult = await JS.InvokeAsync<System.Text.Json.JsonElement>("Swal.fire", new
         {
             title = "¿Estás seguro?",
             text = $"Vas a eliminar la {st.Tipo}: '{st.Title}'",
             icon = "warning",
             showCancelButton = true,
-            confirmButtonColor = "#d33",
-            cancelButtonColor = "#3085d6",
+            confirmButtonColor = "#C42B1C",
+            cancelButtonColor = isDark ? "#334155" : "#6e7881",
             confirmButtonText = "Sí, eliminar",
-            cancelButtonText = "Cancelar"
+            cancelButtonText = "Cancelar",
+            // Forzar colores
+            background = bgColor,
+            color = txtColor,
+            customClass = new
+            {
+                popup = isDark ? "swal-dark-popup" : ""
+            }
         });
-        bool confirmado = await JS.InvokeAsync<bool>("eval", "Swal.fire({ title: '¿Eliminar?', text: 'No podrás revertir esto', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sí, borrar' }).then((result) => result.isConfirmed)");
 
-        if (confirmado)
+        if (!firstResult.GetProperty("isConfirmed").GetBoolean()) return;
+
+        // 4. SEGUNDA PREGUNTA (Solo si confirmó la primera)
+        var secondResult = await JS.InvokeAsync<System.Text.Json.JsonElement>("Swal.fire", new
+        {
+            title = "¿Eliminar?",
+            text = "No podrás revertir esto",
+            icon = "warning",
+            showCancelButton = true,
+            confirmButtonColor = "#C42B1C",
+            cancelButtonColor = isDark ? "#334155" : "#6e7881",
+            confirmButtonText = "Sí, borrar",
+            cancelButtonText = "Mejor no",
+            background = bgColor,
+            color = txtColor,
+            customClass = new
+            {
+                popup = isDark ? "swal-dark-popup" : ""
+            }
+        });
+
+        if (secondResult.GetProperty("isConfirmed").GetBoolean())
         {
             try
             {
@@ -2372,23 +2407,25 @@ MasterCategories.Add(servicioClienteCategory);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("Swal.fire", "¡Eliminado!", $"{st.Tipo} eliminada correctamente.", "success");
-
+                    await JS.InvokeVoidAsync("Swal.fire", new
+                    {
+                        title = "¡Eliminado!",
+                        icon = "success",
+                        background = bgColor,
+                        color = txtColor,
+                        customClass = new { popup = isDark ? "swal-dark-popup" : "" }
+                    });
                     await InitializeMasterCategoriesAsync();
                     StateHasChanged();
-                }
-                else
-                {
-               
-                    await JS.InvokeVoidAsync("Swal.fire", "Error", "No se pudo eliminar. Código: " + response.StatusCode, "error");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("Swal.fire", "Error de conexión", ex.Message, "error");
+                await JS.InvokeVoidAsync("Swal.fire", "Error", ex.Message, "error");
             }
         }
     }
+
     private string searchText = "";
     private bool mostrarLista = false;
     private List<EmpleadoDTO> empleadosFiltrados = new();
@@ -2947,255 +2984,3 @@ MasterCategories.Add(servicioClienteCategory);
     }
 }
 
-
-<style>
-  
-    :root {
-        --modal-bg: #ffffff;
-        --primary-color: #1E7E34;
-        --accent-evento: #8b5cf6;
-        --text-main: #1e293b;
-        --text-muted: #64748b;
-        --input-border: #e2e8f0;
-        --input-focus: #4f46e5;
-        --bg-soft: #f8fafc;
-        --primary-cancelar: #C42B1C;
-    }
-
-    /* Contenedor Principal con desenfoque de fondo */
-    .modern-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1050;
-        animation: fadeIn 0.2s ease-out;
-    }
-
-    .modern-modal-container {
-        background: var(--modal-bg);
-        width: 95%;
-        max-width: 850px;
-        max-height: 90vh;
-        border-radius: 20px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    /* Header Estilizado */
-    .modern-modal-header {
-        padding: 20px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
-    }
-
-    .header-tarea {
-        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
-    }
-
-    .header-evento {
-        background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
-    }
-
-    .type-badge {
-        background: rgba(255,255,255,0.2);
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-
-    .modal-title {
-        margin-top: 5px;
-        font-weight: 700;
-        font-size: 1.25rem;
-    }
-
-    .modern-close-btn {
-        background: rgba(255,255,255,0.1);
-        border: none;
-        color: white;
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-
-        .modern-close-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: rotate(90deg);
-        }
-
-    /* Cuerpo y Grid */
-    .modern-modal-content {
-        padding: 30px;
-        overflow-y: auto;
-        background: var(--bg-soft);
-    }
-
-    .modern-form-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 30px;
-    }
-
-    @@media (max-width: 768px) {
-        .modern-form-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Campos de Formulario */
-    .modern-field {
-        margin-bottom: 20px;
-    }
-
-        .modern-field label {
-            display: block;
-            font-weight: 600;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-        }
-
-    .modern-input {
-        width: 100%;
-        padding: 10px 14px;
-        border-radius: 10px;
-        border: 1px solid var(--input-border);
-        background: white;
-        font-size: 0.95rem;
-        transition: all 0.2s;
-    }
-
-        .modern-input:focus {
-            outline: none;
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-    /* Grupos de entrada (Tags y Subtareas) */
-    .modern-input-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    .add-inner-btn {
-        background: #FFECEC;
-        color: black;
-        border: none;
-        border-radius: 10px;
-        padding: 0 15px;
-        cursor: pointer;
-    }
-
-    /* Tags y Subtareas */
-    .modern-tag-cloud {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-    }
-
-    .modern-tag {
-        background: #e2e8f0;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-        .modern-tag i {
-            cursor: pointer;
-            color: #ef4444;
-        }
-
-    .modern-subtask-list {
-        margin-top: 12px;
-        background: white;
-        border-radius: 12px;
-        border: 1px solid var(--input-border);
-    }
-
-    .modern-subtask-item {
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-        .modern-subtask-item:last-child {
-            border-bottom: none;
-        }
-
-    /* Footer */
-    .modern-modal-footer {
-        padding: 20px 30px;
-        background: white;
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        border-top: 1px solid #f1f5f9;
-    }
-
-    .m-btn {
-        padding: 10px 24px;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-        border: none;
-    }
-
-    .btn-ghost {
-        background: var(--primary-cancelar);
-        color: white;
-        box-shadow: 0 4px 6px -1px rgba(255, 77, 77);
-    }
-
-    .btn-basura {
-        background: #ffff;
-    }
-
-    .btn-primary {
-        background: var(--primary-color);
-        color: white;
-        box-shadow: 0 4px 6px -1px rgba(19, 83, 48);
-    }
-
-
-    .modern-row {
-        display: flex;
-        gap: 15px;
-    }
-
-        .modern-row .modern-field {
-            flex: 1;
-        }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>

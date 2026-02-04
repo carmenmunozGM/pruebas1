@@ -1,16 +1,251 @@
 ﻿
 :root {
-    --primary-color: #5b5b9e;
-    --primary-dark-color: #4a4a81;
-    --secondary-color: #6c757d;
-    --success-color: #16a085;
-    --danger-color: #dc3545;
-    --background-color: #f4f7f6;
-    --text-color: #343a40;
-    --border-color: #ced4da;
-    --input-bg-color: #fff;
-    --sidebar-bg: #e9ecef;
-    --suceso-color: #000;
+    --modal-bg: #ffffff;
+    --primary-color: #1E7E34;
+    --accent-evento: #8b5cf6;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --input-border: #e2e8f0;
+    --input-focus: #4f46e5;
+    --bg-soft: #f8fafc;
+    --primary-cancelar: #C42B1C;
+}
+
+/* Contenedor Principal con desenfoque de fondo */
+.modern-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modern-modal-container {
+    background: var(--modal-bg);
+    width: 95%;
+    max-width: 850px;
+    max-height: 90vh;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Header Estilizado */
+.modern-modal-header {
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.header-tarea {
+    background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
+}
+
+.header-evento {
+    background: linear-gradient(135deg, #FFD1DC, #FFD1DC);
+}
+
+.type-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.modal-title {
+    margin-top: 5px;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.modern-close-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+    .modern-close-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: rotate(90deg);
+    }
+
+/* Cuerpo y Grid */
+.modern-modal-content {
+    padding: 30px;
+    overflow-y: auto;
+    background: var(--bg-soft);
+}
+
+.modern-form-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+}
+
+@@media (max-width: 768px) {
+    .modern-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Campos de Formulario */
+.modern-field {
+    margin-bottom: 20px;
+}
+
+    .modern-field label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+
+.modern-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--input-border);
+    background: white;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+    .modern-input:focus {
+        outline: none;
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+/* Grupos de entrada (Tags y Subtareas) */
+.modern-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.add-inner-btn {
+    background: #FFECEC;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+/* Tags y Subtareas */
+.modern-tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.modern-tag {
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .modern-tag i {
+        cursor: pointer;
+        color: #ef4444;
+    }
+
+.modern-subtask-list {
+    margin-top: 12px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+}
+
+.modern-subtask-item {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+    .modern-subtask-item:last-child {
+        border-bottom: none;
+    }
+
+/* Footer */
+.modern-modal-footer {
+    padding: 20px 30px;
+    background: white;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.m-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    border: none;
+}
+
+.btn-ghost {
+    background: var(--primary-cancelar);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(255, 77, 77);
+}
+
+.btn-basura {
+    background: #ffff;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(19, 83, 48);
+}
+
+
+.modern-row {
+    display: flex;
+    gap: 15px;
+}
+
+    .modern-row .modern-field {
+        flex: 1;
+    }
+
+@@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .auto-select {
@@ -691,8 +926,6 @@
         font-size: 1.1rem;
     }
 }
-
-
 
 /* ALERTAS */
 .alert-backdrop {
@@ -2087,3 +2320,652 @@ select {
         writing-mode: vertical-lr;
         padding: 15px 5px;
     }
+
+
+/* =================================================
+                         MODO OSCURO 
+   ================================================= */
+
+[data-theme="dark"] {
+    --background-color: #0f172a;
+    --text-color: #f8fafc;
+    --border-color: #334155;
+    --input-bg-color: #1e293b;
+    --sidebar-bg: #111827;
+    --suceso-color: #ffffff;
+}
+
+    /* 1. Ajustes Generales y Selects */
+    [data-theme="dark"] .auto-select {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: #475569 !important;
+    }
+
+    /* 2. Modales (Modificar Fecha y General) */
+    [data-theme="dark"] .modal-card,
+    [data-theme="dark"] .modal-content,
+    [data-theme="dark"] .modal-body-wrapper {
+        background-color: #111827 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .modal-header {
+        background: #1e293b !important;
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .modal-footer {
+        background: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .modal-title,
+    [data-theme="dark"] .fecha-title,
+    [data-theme="dark"] .section-label,
+    [data-theme="dark"] .historial h4 {
+        color: #ffffff !important;
+    }
+
+    /* 3. Formularios dentro de Modales */
+    [data-theme="dark"] .form-group label {
+        color: #cbd5e1 !important;
+    }
+
+    [data-theme="dark"] .form-control {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #475569 !important;
+    }
+
+    /* 4. Tablas e Historial */
+    [data-theme="dark"] .table th {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .table td,
+    [data-theme="dark"] .historial-scroll {
+        border-color: #334155 !important;
+        background-color: #111827 !important;
+        color: #cbd5e1 !important;
+    }
+
+    /* 5. Workboard y Órdenes de Trabajo (OT) */
+    [data-theme="dark"] .ot-card {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    [data-theme="dark"] .ot-number {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .ot-date,
+    [data-theme="dark"] .col-desc {
+        color: #94a3b8 !important;
+    }
+
+    /* Fondos degradados de las OT en Dark Mode */
+    [data-theme="dark"] .ot-normal {
+        background: linear-gradient(180deg, rgba(22, 101, 52, 0.2), #1e293b) !important;
+    }
+
+    [data-theme="dark"] .ot-soon {
+        background: linear-gradient(180deg, rgba(146, 64, 14, 0.2), #1e293b) !important;
+    }
+
+    [data-theme="dark"] .ot-expired {
+        background: linear-gradient(180deg, rgba(153, 27, 27, 0.2), #1e293b) !important;
+    }
+
+    /* 6. Tabla de Tareas Minimalista */
+    [data-theme="dark"] .tasks-header {
+        background: #0f172a !important;
+        color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] .tasks-row {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+        [data-theme="dark"] .tasks-row:hover {
+            background: #334155 !important;
+        }
+
+    [data-theme="dark"] .col-name,
+    [data-theme="dark"] .col-adv {
+        color: #ffffff !important;
+    }
+
+    /* 7. Botones e Iconos */
+    [data-theme="dark"] .icon-btn.view {
+        background: #1e293b !important;
+        color: #d8b4fe !important; /* Un purpura más claro para dark */
+        border-color: #d8b4fe !important;
+    }
+
+    [data-theme="dark"] .btn-cancelar,
+    [data-theme="dark"] .btn.small {
+        background-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .close-button {
+        color: #94a3b8 !important;
+    }
+
+    /* 1. Alertas Personalizadas */
+    [data-theme="dark"] .alert-container {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+    }
+
+        [data-theme="dark"] .alert-container h4 {
+            color: #818cf8 !important; /* Azul lavanda para destacar */
+        }
+
+    /* 2. Bloques de Agenda (Cards) */
+    [data-theme="dark"] .block-card {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    [data-theme="dark"] .card-body {
+        background: rgba(15, 23, 42, 0.5) !important; /* Fondo interior más oscuro */
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .block-title {
+        color: #111827 !important; /* Mantener oscuro para contraste con el fondo pastel del header */
+    }
+
+    [data-theme="dark"] .done-text {
+        color: #94a3b8 !important;
+    }
+
+    /* 3. Subtask Tables e Historial */
+    [data-theme="dark"] .subtask-table th {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .subtask-table td {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #cbd5e1 !important;
+    }
+
+    /* 4. Top Bar y Calendario */
+    [data-theme="dark"] .fecha-texto,
+    [data-theme="dark"] .calendar-btn {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .modal-popover {
+        background: #1e293b !important;
+        border-color: #475569 !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .calendar-day:hover {
+        background: #334155 !important;
+    }
+
+    [data-theme="dark"] .calendar-today {
+        background: #1e3a8a !important;
+        color: #3b82f6 !important;
+    }
+
+    /* 5. Día Inhábil (Ajuste de visibilidad) */
+    [data-theme="dark"] .dia-inhabil-card {
+        background: rgba(220, 38, 38, 0.4) !important; /* Rojo traslúcido oscuro */
+        color: #ffffff !important;
+        border: 1px solid #ef4444 !important;
+    }
+
+    [data-theme="dark"] .badge-inhabil {
+        background: #7f1d1d !important;
+        color: #fca5a5 !important;
+    }
+
+    /* 6. Modal Bento y Grid */
+    [data-theme="dark"] .bento-modal {
+        background: #111827 !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .bento-header h3 {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .type-tag,
+    [data-theme="dark"] .bento-close {
+        background: #1e293b !important;
+        color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] .title-input {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .bento-item {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .bento-grid::-webkit-scrollbar-thumb {
+        background: #334155 !important;
+    }
+
+    [data-theme="dark"] .block-card:nth-of-type(1) .block-header {
+        background-color: rgba(244, 114, 182, 0.2) !important;
+        color: #fce7f3 !important;
+    }
+
+    [data-theme="dark"] .block-card:nth-of-type(2) .block-header {
+        background-color: rgba(251, 146, 60, 0.2) !important;
+        color: #ffedd5 !important;
+    }
+
+    [data-theme="dark"] .block-card:nth-of-type(3) .block-header {
+        background-color: rgba(74, 222, 128, 0.2) !important;
+        color: #f0fdf4 !important;
+    }
+
+    [data-theme="dark"] .block-card:nth-of-type(4) .block-header {
+        background-color: rgba(168, 85, 247, 0.2) !important;
+        color: #f5f3ff !important;
+    }
+
+    /* 8. Scrollbar Universal Bloques */
+    [data-theme="dark"] .block-scroll::-webkit-scrollbar-track {
+        background: #0f172a !important;
+    }
+
+    [data-theme="dark"] .block-scroll::-webkit-scrollbar-thumb {
+        background: #334155 !important;
+    }
+
+[data-theme="dark"] {
+    --bento-input-border: #334155;
+    --bento-item-bg: #1e293b;
+}
+
+    /* 1. Inputs y Selects del sistema Bento */
+    [data-theme="dark"] .bento-input-style,
+    [data-theme="dark"] textarea,
+    [data-theme="dark"] select,
+    [data-theme="dark"] .autocomplete-list {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+
+        [data-theme="dark"] .bento-input-style:focus,
+        [data-theme="dark"] textarea:focus,
+        [data-theme="dark"] select:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+    /* 2. Etiquetas de Nombres y Equipo */
+    [data-theme="dark"] .full-name-tag {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .remove-tag,
+    [data-theme="dark"] .remove-sub {
+        background: #7f1d1d !important; /* Rojo oscuro profundo */
+        color: #fca5a5 !important;
+    }
+
+    /* 3. Subtareas (Cards dentro de Modales) */
+    [data-theme="dark"] .subtask-card {
+        background: #0f172a !important;
+        color: #f8fafc !important;
+        border-left-color: #3b82f6 !important;
+    }
+
+    /* 4. Autocompletado y Listas */
+    [data-theme="dark"] .autocomplete-list li:hover {
+        background: #1e293b !important;
+        color: #3b82f6 !important;
+    }
+
+    /* 5. Modales de Órdenes de Trámite */
+    [data-theme="dark"] .modal-header {
+        background: #1e293b !important;
+        border-bottom: 1px solid #334155 !important;
+    }
+
+        [data-theme="dark"] .modal-header h3,
+        [data-theme="dark"] .grid-2 b {
+            color: #ffffff !important;
+        }
+
+    [data-theme="dark"] .modal-body-wrapper {
+        background: #111827 !important;
+        color: #cbd5e1 !important;
+    }
+
+    [data-theme="dark"] .activities-table thead {
+        background: #1e293b !important;
+    }
+
+    [data-theme="dark"] .activities-table th {
+        color: #ffffff !important;
+        border-bottom-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .activities-table td {
+        border-bottom-color: #1e293b !important;
+        color: #cbd5e1 !important;
+    }
+
+    [data-theme="dark"] .activities-table tr:hover {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* 6. Prioridades y Badges de Bloque */
+    [data-theme="dark"] .tarea-prioridad,
+    [data-theme="dark"] .evento-fecha {
+        background: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .block-item {
+        border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    [data-theme="dark"] .item-text {
+        color: #cbd5e1 !important;
+    }
+
+    /* 7. DASHBOARD MODOS (Vertical / Grid) */
+    [data-theme="dark"] .dashboard-container.vertical .block-card {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .dashboard-container.vertical .card-body {
+        background: #111827 !important;
+    }
+
+    /* 8. Botones de Icono Específicos */
+    [data-theme="dark"] .icon-btn.edit {
+        background: transparent !important;
+        color: #4ade80 !important; /* Verde brillante para contraste */
+    }
+
+    [data-theme="dark"] .icon-btn.delete {
+        background: transparent !important;
+        color: #f87171 !important; /* Rojo suave para contraste */
+    }
+
+    /* 9. Scrollbars de Participantes y Bloques */
+    [data-theme="dark"] .participants-scroll::-webkit-scrollbar-thumb {
+        background: #475569 !important;
+    }
+
+    /* Forzar tema oscuro en el popover del calendario */
+    [data-theme="dark"] .calendar-popover,
+    [data-theme="dark"] .modal-popover {
+        background-color: #1e293b !important; /* Fondo azul marino profundo */
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+        color: #f8fafc !important;
+    }
+
+    /* Encabezado del calendario (Azul brillante de la captura) */
+    [data-theme="dark"] .calendar-header {
+        background-color: #214175 !important; /* Mantenemos el azul de identidad */
+        color: white !important;
+        border-radius: 8px 8px 0 0;
+    }
+
+    /* Días del calendario */
+    [data-theme="dark"] .calendar-day {
+        color: #cbd5e1 !important;
+    }
+
+        [data-theme="dark"] .calendar-day:hover {
+            background-color: #334155 !important;
+        }
+
+    /* Día seleccionado o actual */
+    [data-theme="dark"] .calendar-today {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        border: 1px solid #3b82f6 !important;
+        color: #ffffff !important;
+    }
+
+    /* Estilo general para los badges de conteo en modo oscuro */
+    [data-theme="dark"] .badge {
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        backdrop-filter: blur(4px);
+    }
+
+    /* Sincronización con los colores de bloque que definiste */
+    /* Bloque 1: Tareas (Rosa) */
+        [data-theme="dark"] .block-card:nth-of-type(1) .badge {
+            background-color: rgba(244, 114, 182, 0.25) !important;
+            color: #fce7f3 !important;
+        }
+
+    /* Bloque 2: OT (Naranja) */
+    [data-theme="dark"] .block-card:nth-of-type(2) .badge {
+        background-color: rgba(251, 146, 60, 0.25) !important;
+        color: #ffedd5 !important;
+    }
+
+    /* Bloque 3: Autoevaluación (Verde) */
+    [data-theme="dark"] .block-card:nth-of-type(3) .badge {
+        background-color: rgba(74, 222, 128, 0.25) !important; /* Verde con transparencia */
+        color: #f0fdf4 !important; /* Texto verde muy claro */
+    }
+
+    /* Bloque 4: Servicio al Cliente (Morado) */
+    [data-theme="dark"] .block-card:nth-of-type(4) .badge {
+        background: rgba(168, 85, 247, 0.25) !important;
+        color: #f5f3ff !important;
+    }
+
+    /* Botón Actualizar y Crear Nueva Actividad */
+    [data-theme="dark"] .btn,
+    [data-theme="dark"] .actualizar-btn,
+    [data-theme="dark"] .add-task-btn {
+        background-color: #334155 !important;
+        color: #f8fafc !important;
+        border: 1px solid #475569 !important;
+        transition: all 0.2s ease;
+    }
+
+        [data-theme="dark"] .btn:hover {
+            background-color: #475569 !important;
+            border-color: #3b82f6 !important;
+            transform: translateY(-1px);
+        }
+
+    /* Botones con iconos (flechas de fecha) */
+    [data-theme="dark"] .fecha-header button {
+        color: #94a3b8 !important;
+        background: transparent !important;
+    }
+
+        [data-theme="dark"] .fecha-header button:hover {
+            color: #ffffff !important;
+        }
+
+    /* Corregir el 'fogonazo' blanco del calendario en Dark Mode */
+    [data-theme="dark"] .calendar-popover,
+    [data-theme="dark"] .modal-popover,
+    [data-theme="dark"] .calendar-wrapper .modal-popover {
+        background-color: #1e293b !important; /* Azul marino profundo */
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* Forzar que los números de los días sean blancos/grises */
+    [data-theme="dark"] .calendar-day {
+        color: #cbd5e1 !important;
+    }
+
+    /* Días de otros meses (opacidad baja) */
+    [data-theme="dark"] .calendar-other-month {
+        color: #475569 !important;
+    }
+
+    /* Botón 'Actualizar' y 'Crear Nueva Actividad' */
+    [data-theme="dark"] .btn-floating,
+    [data-theme="dark"] .actualizar-btn,
+    [data-theme="dark"] .add-task-btn {
+        background-color: #334155 !important;
+        border: 1px solid #475569 !important;
+        color: #ffffff !important;
+    }
+
+        [data-theme="dark"] .btn-floating:hover {
+            background-color: #3b82f6 !important; /* Azul vibrante al pasar el mouse */
+            border-color: #60a5fa !important;
+        }
+
+    /* Flechas de navegación de fecha (Izquierda/Derecha) */
+    [data-theme="dark"] .fecha-header button {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+    }
+
+[data-theme="dark"] {
+    --modal-bg: #1e293b; /* Fondo del modal azul pizarra oscuro */
+    --text-main: #f1f5f9; /* Texto principal casi blanco */
+    --text-muted: #94a3b8; /* Texto secundario gris azulado */
+    --input-border: #334155; /* Bordes de input más oscuros */
+    --input-focus: #818cf8; /* Foco de input azul lavanda */
+    --bg-soft: #0f172a; /* Fondo del cuerpo del modal muy oscuro */
+}
+
+    /* Overlay con mayor profundidad */
+    [data-theme="dark"] .modern-modal-overlay {
+        background: rgba(2, 6, 17, 0.8);
+    }
+
+    /* Header: Reemplazamos el rosa pastel por tonos joya profundos */
+    [data-theme="dark"] .header-tarea,
+    [data-theme="dark"] .header-evento {
+        background: linear-gradient(135deg, #312e81, #1e1b4b) !important; /* Indigo profundo */
+    }
+
+    [data-theme="dark"] .modern-modal-container {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="dark"] .modern-close-btn {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Inputs oscuros */
+    [data-theme="dark"] .modern-input {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border-color: #334155 !important;
+    }
+
+        [data-theme="dark"] .modern-input:focus {
+            background-color: #0f172a !important;
+            border-color: var(--input-focus) !important;
+        }
+
+    /* Lista de Subtareas y Tags */
+    [data-theme="dark"] .modern-subtask-list {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .modern-subtask-item {
+        border-bottom-color: #1e293b !important;
+        color: #cbd5e1 !important;
+    }
+
+    [data-theme="dark"] .modern-tag {
+        background: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* Botón de añadir (dentro del input) */
+    [data-theme="dark"] .add-inner-btn {
+        background: #1e3a8a !important; /* Azul oscuro */
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .modern-modal-footer {
+        background: #1e293b  !important; /* Igual que el modal-bg */
+        border-top-color: #334155 !important;
+        
+    }
+
+    /* Botón Basura / Limpiar */
+    [data-theme="dark"] .btn-basura {
+        background: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* ================================================= */
+    /* BOTÓN ACTUALIZAR - ADAPTACIÓN MODO OSCURO         */
+    /* ================================================= */
+
+    [data-theme="dark"] .refresh-glow {
+        background: rgba(59, 130, 246, 0.1) !important; /* Fondo sutil azul */
+        color: #60a5fa !important; /* Texto azul claro */
+        border: 1px solid rgba(96, 165, 250, 0.3) !important;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        /* Efecto de brillo (Glow) */
+        [data-theme="dark"] .refresh-glow:not(:disabled) {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+            animation: pulse-glow 3s infinite;
+        }
+
+        [data-theme="dark"] .refresh-glow:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.25) !important;
+            color: #ffffff !important;
+            border-color: #60a5fa !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Estado Deshabilitado (Refreshing) */
+        [data-theme="dark"] .refresh-glow:disabled {
+            background: #1e293b !important;
+            color: #64748b !important;
+            border-color: #334155 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+
+/* Este selector es tan específico que SweetAlert no puede ignorarlo */
+div.swal2-container.swal2-shown .swal-dark-popup {
+    background-color: #1e293b !important; /* El fondo oscuro */
+    color: #f8fafc !important; /* El texto claro */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}

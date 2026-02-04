@@ -55,6 +55,21 @@
 
         window.URL.revokeObjectURL(url);
     };
+
+    // Agrega este script en tu HTML principal
+    window.setupSwalDark = () => {
+        const observer = new MutationObserver(() => {
+            const swalContainer = document.querySelector('.swal2-container');
+            if (swalContainer && document.documentElement.getAttribute('data-theme') === 'dark') {
+                const popup = swalContainer.querySelector('.swal2-popup');
+                if (popup) {
+                    popup.style.backgroundColor = '#1e293b';
+                    popup.style.color = '#f8fafc';
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true });
+    };
 </script>
 
 </html>
