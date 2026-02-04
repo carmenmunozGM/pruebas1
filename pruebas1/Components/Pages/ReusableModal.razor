@@ -626,7 +626,16 @@
         --color-text-dark: #343a40; /* Texto oscuro */
         --color-text-light: #6c757d; /* Texto secundario */
     }
-
+    /* === Variables Modo Oscuro === */
+    [data-theme="dark"] {
+        --color-secondary: #03324a; /* Azul vibrante para acentos en oscuro */
+        --color-background-light: #0f172a; /* Fondo profundo */
+        --color-modal-bg: #1e293b; /* Fondo de la tarjeta modal */
+        --color-border: #334155;
+        --color-text-dark: #f1f5f9;
+        --color-text-light: #94a3b8;
+        --color-input-bg: #0f172a;
+    }
     /* === Botón Flotante === */
     .action-button-wrapper {
         display: flex;
@@ -1073,4 +1082,185 @@
             font-weight: 600;
         }
 
+    /* === Adaptación de Componentes al Modo Oscuro === */
+
+    [data-theme="dark"] .task-modal-card {
+        background: var(--color-modal-bg);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Encabezado */
+    [data-theme="dark"] .task-modal-header {
+        background: #1e293b;
+        color: #f1f5f9;
+        border-bottom: 3px solid var(--color-secondary);
+    }
+
+    [data-theme="dark"] .close-btn {
+        color: #f1f5f9;
+    }
+
+    /* Cuerpo y Formulario */
+    [data-theme="dark"] .task-modal-body {
+        background: var(--color-background-light);
+    }
+
+    [data-theme="dark"] label {
+        color: var(--color-text-dark);
+    }
+
+    [data-theme="dark"] .form-input,
+    [data-theme="dark"] .timepicker-input {
+        background-color: var(--color-input-bg);
+        border-color: var(--color-border);
+        color: #fff;
+    }
+
+    /* Selector de Tipo (Botones Tarea/Evento) */
+    [data-theme="dark"] .activity-type-selector {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .type-btn {
+        color: #94a3b8;
+    }
+
+        [data-theme="dark"] .type-btn:hover {
+            background: #334155;
+        }
+
+    [data-theme="dark"] .active-type-btn {
+        background: var(--color-secondary);
+        color: #fff;
+        border: none;
+    }
+
+    /* Chips y Autocomplete */
+    [data-theme="dark"] .chips-container {
+        background: var(--color-input-bg);
+        border-color: var(--color-border);
+    }
+
+    [data-theme="dark"] .chip {
+        background: #334155;
+        color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .chip-input {
+        background: transparent;
+        color: #fff;
+    }
+
+    [data-theme="dark"] .autocomplete-list {
+        background: #1e293b;
+        border-color: var(--color-border);
+    }
+
+        [data-theme="dark"] .autocomplete-list li {
+            color: #f1f5f9;
+        }
+
+            [data-theme="dark"] .autocomplete-list li:hover {
+                background: #334155;
+            }
+
+    /* Checklist / Subtareas */
+    [data-theme="dark"] .checklist-list-wrapper {
+        background: var(--color-input-bg);
+        border-color: var(--color-border);
+    }
+
+    [data-theme="dark"] .checklist-item {
+        color: #f1f5f9;
+        border-bottom-color: #334155;
+    }
+
+    /* Footer */
+    [data-theme="dark"] .task-modal-footer {
+        background: #0F172A;
+        border-top-color: var(--color-border);
+    }
+
+    /* Timepicker Panel */
+    [data-theme="dark"] .timepicker-panel {
+        background: #1e293b;
+        border-color: var(--color-border);
+    }
+
+    [data-theme="dark"] .timepicker-item:hover {
+        background-color: #334155;
+    }
+
+    /* Botón Añadir (el azul clarito que tenías) */
+    [data-theme="dark"] .btn-add {
+        background-color: #334155;
+        color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .form-input,
+    [data-theme="dark"] input[type="text"],
+    [data-theme="dark"] input[type="date"],
+    [data-theme="dark"] textarea {
+        background-color: #0f172a !important; /* Fondo ultra oscuro para contraste */
+        color: #ffffff !important; /* Texto blanco */
+        border: 1px solid #334155 !important; /* Borde sutil */
+    }
+
+    /* El placeholder (texto de ayuda que sale cuando está vacío) */
+    [data-theme="dark"] ::placeholder {
+        color: #64748b !important;
+        opacity: 1;
+    }
+
+    /* Efecto al hacer clic en el campo */
+    [data-theme="dark"] .form-input:focus,
+    [data-theme="dark"] textarea:focus {
+        border-color: #0ea5e9 !important;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
+        outline: none;
+    }
+
+    [data-theme="dark"] select.form-input {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        appearance: none; /* Quita el estilo por defecto del sistema */
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+    /* === CORRECCIÓN PARA TÍTULO, UBICACIÓN Y SELECTS === */
+
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-input {
+        background-color: #0f172a !important; /* Fondo oscuro */
+        color: #ffffff !important; /* Texto blanco */
+        border: 1px solid #334155 !important; /* Borde sutil */
+    }
+
+    /* Para los selectores (dropdowns) */
+    [data-theme="dark"] select.form-control,
+    [data-theme="dark"] select.form-input {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+    }
+
+    /* Estilo para las opciones dentro del select */
+    [data-theme="dark"] select option {
+        background-color: #1e293b !important; /* Un poco más claro para que se vea la lista */
+        color: #ffffff !important;
+    }
+
+    /* Cuando el campo está deshabilitado (como en Ubicación si es Tarea) */
+    [data-theme="dark"] .disabled-field-if-tarea .form-control {
+        background-color: #1e293b !important;
+        opacity: 0.3;
+        border-color: transparent !important;
+    }
+
+    /* Placeholder para .form-control */
+    [data-theme="dark"] .form-control::placeholder {
+        color: #64748b !important;
+    }
 </style>

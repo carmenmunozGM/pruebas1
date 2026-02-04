@@ -584,42 +584,76 @@
                 }
             </div>
         }
-        @foreach (var cat in Categories.Where(c =>
-            c.Name.Trim() == "Servicio a Cliente"))
-        {
-            <div class="card block-card @cat.ColorClass">
-                <div class="block-header" @onclick="() => ToggleCollapse(cat)">
-                    <div class="header-left">
-                        <h3 class="categoria-titulo">@cat.Icon @cat.Name</h3>
+            @foreach (var cat in Categories.Where(c => c.Name.Trim() == "Servicio a Cliente"))
+            {
+                <div class="card block-card @cat.ColorClass">
+                    @* Header de la categoría *@
+                    <div class="block-header" @onclick="() => ToggleCollapse(cat)">
+                        <div class="header-left">
+                            <h3 class="categoria-titulo">@cat.Icon @cat.Name</h3>
+                        </div>
+                        <div class="header-right">
+                            <span class="badge pendiente">@RemainingCount(cat) pendiente(s)</span>
+                            <button class="btn btn-floating">@(cat.IsCollapsed ? "▼" : "▲")</button>
+                        </div>
                     </div>
-                    <div class="header-right">
-                        <span class="badge pendiente">@RemainingCount(cat) pendiente(s)</span>
-                        <button class="btn btn-floating" style="font-size:0.8rem;">
-                            @(cat.IsCollapsed ? "▼" : "▲")
-                        </button>
-                    </div>
-                </div>
-                @if (!cat.IsCollapsed)
-                {
-                    <div class="card-body block-body block-scroll">
-                        <ul class="subtask-list">
-                            @foreach (var st in cat.Subtasks)
-                            {
-                                <li class="subtask-item">
-                                    <div class="subtask-label @(st.IsDone ? "done" : "")">
 
-                                        <input type="checkbox"
-                                               @bind="st.IsDone"
-                                               @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
-                                        <span class="subtask-text">@st.Title</span>
+                    @if (!cat.IsCollapsed)
+                    {
+                        <div class="card-body block-body block-scroll p-0">
+                            @foreach (var grupoE in cat.Subtasks.GroupBy(s => s.Title.Contains(" – ") ? s.Title.Split(" – ")[0] : s.Title))
+                            {
+                                var nE = grupoE.Key;
+                                <div class="empresa-seccion">
+                                    @* NIVEL 1: EMPRESA *@
+                                    <div class="n-empresa" @onclick="() => AlternarE(nE)">
+                                        <i class="fas @(MenuE.Contains(nE) ? "fa-caret-down" : "fa-caret-right")"></i>
+                                        <span>@nE</span>
                                     </div>
-                                </li>
+
+                                    @if (MenuE.Contains(nE))
+                                    {
+                                        @foreach (var grupoS in grupoE.GroupBy(s => s.Title.Split(" – ").Length > 1 ? s.Title.Split(" – ")[1] : "General"))
+                                        {
+                                            var nS = $"{nE}-{grupoS.Key}";
+                                            <div class="servicio-seccion">
+                                                @* NIVEL 2: SERVICIO *@
+                                                <div class="n-servicio" @onclick="() => AlternarS(nS)">
+                                                    <i class="fas @(MenuS.Contains(nS) ? "fa-caret-down" : "fa-caret-right")"></i>
+                                                    <span>@grupoS.Key</span>
+                                                </div>
+
+                                                @if (MenuS.Contains(nS))
+                                                {
+                                                    <div class="actividades-contenedor">
+                                                        @foreach (var st in grupoS)
+                                                        {
+                                                            string[] p = st.Title.Split(new string[] { " – " }, StringSplitOptions.None);
+                                                            @* NIVEL 3: ACTIVIDAD (Checkbox + Texto Juntos) *@
+                                                            <div class="actividad-fila @(st.IsDone ? "es-completada" : "")">
+                                                                <input type="checkbox" @bind="st.IsDone"
+                                                                       @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
+                                                                <span class="actividad-txt">
+                                                                    @(p.Length > 2 ? p[2] : st.Title)
+                                                                   
+                                                                   @*  @if (st.IsDone)
+                                                                    {
+                                                                        <span class="indicador-hecho">Hecho</span>
+                                                                    } *@
+                                                                </span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
                             }
-                        </ul>
-                    </div>
-                }
-            </div>
-        }
+                        </div>
+                    }
+                </div>
+            }
     }
     </div> 
 </div>
@@ -1379,6 +1413,8 @@
     private Dictionary<int, string> salasLookup = new();
     private Dictionary<int, string> prioridadesLookup = new();
     private Dictionary<int, string> frecuenciaLookup = new();
+    private HashSet<string> EmpresasExpandidas = new HashSet<string>();
+    private HashSet<string> ServiciosExpandidos = new HashSet<string>();
     // ---- DÍAS INHÁBILES ----
     private List<DiaNoLaboralDto> DiasNoLaborales = new();
     private DiaNoLaboralDto? DiaNoLaboralActual;
@@ -1407,6 +1443,23 @@
     private string MensajeAlerta = string.Empty;
     private string TipoAlerta = "exito";
    
+    private HashSet<string> MenuE = new HashSet<string>();
+    private HashSet<string> MenuS = new HashSet<string>();
+
+    private void AlternarE(string nombre)
+    {
+        if (MenuE.Contains(nombre)) MenuE.Remove(nombre);
+        else MenuE.Add(nombre);
+    }
+
+    private void AlternarS(string nombre)
+    {
+        if (MenuS.Contains(nombre)) MenuS.Remove(nombre);
+        else MenuS.Add(nombre);
+    }
+
+
+
     public void Dispose()
     {
         Settings.OnChange -= StateHasChanged;
@@ -1735,22 +1788,57 @@
         catch { }
         return null;
     }
+    // private async Task ToggleSubtaskAsync(SubtaskModel st)
+    // {
+    //     bool ok = st.Tipo == "Evento"
+    //         ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
+    //         : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+    //     if (ok)
+    //     {
+    //         st.FechaCompletada = st.IsDone ? DateTime.Now : null;
+    //         foreach (var cat in MasterCategories)
+    //         {
+    //             var task = cat.Subtasks.FirstOrDefault(x => x.ApiId == st.ApiId);
+    //             if (task != null)
+    //             {
+    //                 task.IsDone = st.IsDone;
+    //                 task.FechaCompletada = st.FechaCompletada;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     else
+    //     {
+    //         st.IsDone = !st.IsDone;
+    //     }
+    //     await CargarTareasPorFecha();
+    // }
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
-        bool ok = st.Tipo == "Evento"
-            ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
-            : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+        bool ok = false;
+        if (st.Tipo == "Evento")
+        {
+            ok = await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone);
+        }
+        else if (st.Tipo == "ServicioCliente") 
+        {
+            ok = await ServicioClienteService.CambiarEstadoServicioClienteAsync(st.ApiId, st.IsDone);
+        }
+        else
+        {
+            ok = await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
+        }
         if (ok)
         {
             st.FechaCompletada = st.IsDone ? DateTime.Now : null;
             foreach (var cat in MasterCategories)
             {
-                var task = cat.Subtasks.FirstOrDefault(x => x.ApiId == st.ApiId);
+                var task = cat.Subtasks.FirstOrDefault(x => x.ApiId == st.ApiId && x.Tipo == st.Tipo);
                 if (task != null)
                 {
                     task.IsDone = st.IsDone;
                     task.FechaCompletada = st.FechaCompletada;
-                    break;
+                 
                 }
             }
         }

@@ -2410,15 +2410,15 @@ select {
 
     /* Fondos degradados de las OT en Dark Mode */
     [data-theme="dark"] .ot-normal {
-        background: linear-gradient(180deg, rgba(22, 101, 52, 0.2), #1e293b) !important;
+        background: linear-gradient(180deg, rgba(24, 120, 62, 0.2), #1e293b) !important;
     }
 
     [data-theme="dark"] .ot-soon {
-        background: linear-gradient(180deg, rgba(146, 64, 14, 0.2), #1e293b) !important;
+        background: linear-gradient(180deg, rgba(146, 130, 22, 0.2), #1e293b) !important;
     }
 
     [data-theme="dark"] .ot-expired {
-        background: linear-gradient(180deg, rgba(153, 27, 27, 0.2), #1e293b) !important;
+        background: linear-gradient(180deg, rgba(140, 25, 25, 0.2), #1e293b) !important;
     }
 
     /* 6. Tabla de Tareas Minimalista */
@@ -2928,7 +2928,7 @@ select {
     /* ================================================= */
 
     [data-theme="dark"] .refresh-glow {
-        background: rgba(59, 130, 246, 0.1) !important; /* Fondo sutil azul */
+        background: #03324a !important; /* Fondo sutil azul */
         color: #60a5fa !important; /* Texto azul claro */
         border: 1px solid rgba(96, 165, 250, 0.3) !important;
         padding: 6px 14px;
@@ -2963,9 +2963,160 @@ select {
         }
 
 
-/* Este selector es tan específico que SweetAlert no puede ignorarlo */
-div.swal2-container.swal2-shown .swal-dark-popup {
-    background-color: #1e293b !important; /* El fondo oscuro */
-    color: #f8fafc !important; /* El texto claro */
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    [data-theme="dark"] .bi-eye,
+    [data-theme="dark"] .bi-eye-fill,
+    [data-theme="dark"] .icon-btn i {
+        color: #ffffff !important; /* Blanco puro para contraste */
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)); /* Un pequeño brillo opcional */
+    }
+
+    /* Si es un botón específico dentro de la tabla */
+    [data-theme="dark"] .btn-detalle i,
+    [data-theme="dark"] .eye-icon {
+        color: #f8fafc !important;
+    }
+
+    /* Quitar el fondo blanco de los componentes del modal */
+    [data-theme="dark"] .modern-modal-content,
+    [data-theme="dark"] .modern-modal-footer,
+    [data-theme="dark"] .modern-subtask-list {
+        background-color: #1e293b !important; /* Fondo oscuro consistente */
+        border-color: #334155 !important; /* Bordes sutiles, no blancos */
+    }
+    /* Selector de ultra-especificidad para anular el estilo inline del thead */
+    [data-theme="dark"] table.tasks-table thead[style] {
+        background: #1e293b !important; /* El color oscuro de tu modal */
+        background-color: #1e293b !important;
+    }
+
+    /* También para las celdas TH por si heredan el color */
+    [data-theme="dark"] table.tasks-table thead tr th {
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    
+
+/*tablaaa de servicioa*/
+/* Contenedores Generales */
+.empresa-seccion {
+    border-bottom: 1px solid #edf2f7;
+}
+
+/* Estilo Empresa (Nivel 1) */
+.n-empresa {
+    background: #f7fafc;
+    padding: 10px 15px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+}
+/* Estilo para el texto Hecho a la derecha */
+.indicador-hecho {
+    margin-left: auto; /* <--- ESTO LO EMPUJA A LA DERECHA */
+    margin-right: 20px;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 0.9rem;
+    font-style: normal; /* Aseguramos que no esté en curva */
+}
+/* Estilo Servicio (Nivel 2) */
+.n-servicio {
+    padding: 6px 15px 6px 35px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #4a5568;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Contenedor de Actividades (Nivel 3) */
+.actividades-contenedor {
+    padding: 4px 15px 10px 60px;
+}
+
+.actividad-fila {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    width: 100%; /* Asegura que ocupe todo el ancho para mover el 'Hecho' */
+}
+
+.actividad-txt {
+    font-size: 1.3rem;
+    color: #1a202c;
+    transition: all 0.3s ease;
+}
+
+/* Estado Hecho / Completado */
+.es-completada .actividad-txt {
+    text-decoration: line-through; /* Mantiene el tachado */
+    color: #a0aec0;
+    font-style: normal; /* <--- ESTO QUITA LA CURVA (CURSIVA) */
+}
+
+/* Checkbox tamaño ajustado */
+.actividad-fila input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Iconos de flecha */
+.fa-caret-down, .fa-caret-right {
+    font-size: 0.9rem;
+    color: #718096;
+    width: 12px;
+}
+
+/* ================================================= */
+/* TABLA DE SERVICIOS - MODO OSCURO                  */
+/* ================================================= */
+
+/* Contenedor principal y bordes de separación */
+[data-theme="dark"] .empresa-seccion {
+    border-bottom: 1px solid #334155; /* Gris azulado oscuro */
+}
+
+/* Nivel 1: Empresa */
+[data-theme="dark"] .n-empresa {
+    background: #1e293b !important; /* Azul pizarra oscuro */
+    color: #f1f5f9 !important; /* Texto casi blanco */
+}
+
+/* Nivel 2: Servicio */
+[data-theme="dark"] .n-servicio {
+    background: #151d2e !important; /* Un tono más oscuro que la empresa */
+    color: #cbd5e1 !important; /* Texto gris claro */
+}
+
+/* Nivel 3: Actividades */
+[data-theme="dark"] .actividades-contenedor {
+    background: #0f172a !important; /* El tono más profundo (Deep Ocean) */
+}
+
+[data-theme="dark"] .actividad-txt {
+    color: #e2e8f0 !important; /* Texto blanco suave */
+}
+
+
+
+/* Estado Completado / Tachado */
+[data-theme="dark"] .es-completada .actividad-txt {
+    color: #64748b !important; /* Gris apagado */
+}
+
+/* Iconos de flecha (Caret) */
+[data-theme="dark"] .fa-caret-down,
+[data-theme="dark"] .fa-caret-right {
+    color: #94a3b8 !important; /* Flechas más visibles */
 }

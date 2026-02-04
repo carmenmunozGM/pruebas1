@@ -482,7 +482,7 @@ body {
 
 /* 1. Contenedor Principal y Header */
 [data-theme="dark"] .agenda-container {
-    background: #111827 !important;
+    background: #15171d !important;
     color: #f5f5f5 !important;
     box-shadow: none !important;
 }
@@ -569,7 +569,7 @@ body {
 /* 6. Colapsables y Detalles de Tarea dentro del Modal */
 [data-theme="dark"] .ot-card,
 [data-theme="dark"] .tramite-card {
-    background: #1f2937 !important;
+    background: 1f2937  !important;
     border-color: #374151 !important;
 }
 
