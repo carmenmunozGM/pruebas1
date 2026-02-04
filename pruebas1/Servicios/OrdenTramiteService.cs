@@ -1,5 +1,6 @@
 ﻿using pruebas1.Components.DTOs;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace pruebas1.Servicios
 {
@@ -26,20 +27,46 @@ namespace pruebas1.Servicios
         }
 
         // 🔵 ORDEN DE TRÁMITE (DATOS GENERALES + TABLA)
+        //public async Task<OrdenTramiteDTO?> GetDetalle(int idOrden)
+        //{
+        //    try
+        //    {
+        //        string url = $"{_baseApi}/ordenTramite/{idOrden}";
+        //        return await _http.GetFromJsonAsync<OrdenTramiteDTO>(url);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[OrdenTramiteService] GetDetalle: {ex.Message}");
+        //        return null;
+        //    }
+        //}
         public async Task<OrdenTramiteDTO?> GetDetalle(int idOrden)
         {
             try
             {
                 string url = $"{_baseApi}/ordenTramite/{idOrden}";
-                return await _http.GetFromJsonAsync<OrdenTramiteDTO>(url);
+                var response = await _http.GetAsync(url);
+
+                // LOG CRÍTICO: Mira esto en tu consola de navegador (F12)
+                Console.WriteLine($"PETICIÓN A: {url} | STATUS: {response.StatusCode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Usamos opciones para que no importe si es Mayúscula o Minúscula
+                    var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    return await response.Content.ReadFromJsonAsync<OrdenTramiteDTO>(opciones);
+                }
+
+                // Si sale 403, el problema es que el programador del Backend bloqueó el acceso por usuario
+                return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OrdenTramiteService] GetDetalle: {ex.Message}");
+                Console.WriteLine($"Error en servicio: {ex.Message}");
                 return null;
             }
         }
-      
+
         // 🟣 TRÁMITE INDIVIDUAL (DETALLE + TAREAS)
         public async Task<TramiteIndividualDTO?> GetTramiteDetalle(int idTramite)
         {

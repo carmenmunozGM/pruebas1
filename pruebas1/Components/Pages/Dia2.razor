@@ -2680,6 +2680,7 @@ MasterCategories.Add(servicioClienteCategory);
     {
         return new OrdenTrabajoModel
         {
+            Id = t.idOrden,
             IdOrdenTramite = t.idOrden,
             NumeroOrden = t.numeroOrden,
             // Guardamos los datos de una vez para que no salgan vacíos
@@ -2838,45 +2839,53 @@ MasterCategories.Add(servicioClienteCategory);
             await VerOrdenTrabajo(ot.Id);
         }
     }
-  private async Task VerOrdenTramiteSeguro(OrdenTrabajoModel ot)
+    
+
+    private async Task VerOrdenTramiteSeguro(OrdenTrabajoModel ot)
     {
         try
         {
             if (ot == null) return;
+            int idReal = ot.IdOrdenTramite ?? ot.Id;
 
-            // Limpiamos datos previos para evitar confusión visual
+            // 1. FORZAMOS la apertura del modal inmediatamente
+            ShowTramiteModal = true;
+
+            // Creamos un objeto temporal con los datos que ya tenemos de la Card
             SelectedOrdenTramite = new OrdenTramiteDTO
             {
-                idOrden = ot.IdOrdenTramite ?? 0,
+                idOrden = idReal,
                 numeroOrden = ot.NumeroOrden,
                 cliente = ot.Cliente,
                 solicitanteInterno = ot.Autor,
                 nombreGlobal = ot.Objetivo,
-                fechaSolicitud = ot.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "",
+                fechaSolicitud = ot.FechaSolicitud?.ToString("dd/MM/yyyy"),
                 fechaConclusionTramite = ot.FechaProgramada.ToString("dd/MM/yyyy"),
-                tramitesIndividuales = new()
+                tramitesIndividuales = null // Esto mostrará "Esperando respuesta..."
             };
 
-            // PASO CRÍTICO: Abrir el modal ANTES de la llamada a la API
-            ShowTramiteModal = true;
             StateHasChanged();
 
-            // Ahora intentamos traer los trámites
-            if (ot.IdOrdenTramite > 0)
+            // 2. Llamada a la API
+            var detalleApi = await OrdenTramiteService.GetDetalle(idReal);
+
+            if (detalleApi != null)
             {
-                var detalle = await OrdenTramiteService.GetDetalle(ot.IdOrdenTramite.Value);
-                if (detalle != null)
-                {
-                    SelectedOrdenTramite.tramitesIndividuales = detalle.tramitesIndividuales ?? new();
-                    StateHasChanged();
-                }
+                SelectedOrdenTramite = detalleApi;
+            }
+            else
+            {
+                // Si la API falla, inicializamos la lista vacía para que desaparezca el "Cargando"
+                SelectedOrdenTramite.tramitesIndividuales = new List<TramiteIndividualDTO>();
+                await JS.InvokeVoidAsync("console.warn", "La API no devolvió detalles para el ID:", idReal);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al abrir modal: {ex.Message}");
-            // Forzamos la apertura aunque falle la API para que veas que el botón funciona
-            ShowTramiteModal = true;
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
             StateHasChanged();
         }
     }
