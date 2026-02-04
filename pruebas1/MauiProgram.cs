@@ -37,6 +37,7 @@ namespace pruebas1
             builder.Services.AddScoped<VerAgendasService>();
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddScoped<AppSettingsService>();
+            builder.Services.AddScoped<ThemeService>();
             builder.Services.AddBlazoredLocalStorage();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>

@@ -1,6 +1,4 @@
-﻿
-window.flatpickrInit = (element, value, dotNetHelper) => {
-
+﻿window.flatpickrInit = (element, value, dotNetHelper) => {
     let fecha = null;
 
     if (value) {
@@ -19,7 +17,7 @@ window.flatpickrInit = (element, value, dotNetHelper) => {
         defaultDate: fecha,
         locale: "es",
         allowInput: true,
-
+        static: true, // <--- ESTO ES VITAL: Mantiene el calendario dentro de tu contenedor
         onChange: function (selectedDates) {
             if (selectedDates.length > 0) {
                 dotNetHelper.invokeMethodAsync(

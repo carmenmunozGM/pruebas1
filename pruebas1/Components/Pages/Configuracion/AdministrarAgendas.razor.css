@@ -409,3 +409,95 @@
 .dark-mode .section-header p {
     color: #9ca3af;
 }
+/* =================================================
+   SECCIÓN ADMINISTRAR (MODO OSCURO UNIFICADO)
+   ================================================= */
+
+/* 1. Botones de Modo (Cambio de Vista) */
+[data-theme="dark"] .mode-button {
+    background: #242731 !important;
+    border-color: #334155 !important;
+    color: #d1d5db !important;
+}
+
+    [data-theme="dark"] .mode-button.active {
+        background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2)) !important;
+        border-color: #a855f7 !important;
+        color: #c084fc !important;
+    }
+
+/* 2. Tarjetas de Formulario (Cards) */
+[data-theme="dark"] .form-card {
+    background: #242731 !important;
+    border-color: #334155 !important;
+}
+
+    [data-theme="dark"] .form-card h3 {
+        color: #f5f5f5 !important;
+    }
+
+/* 3. Inputs, Selects y Labels */
+[data-theme="dark"] .form-step label {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .form-step input,
+[data-theme="dark"] .form-step select {
+    background: #1a1c23 !important; /* Fondo más profundo para inputs */
+    border-color: #404040 !important;
+    color: #f5f5f5 !important;
+}
+
+    [data-theme="dark"] .form-step input:focus,
+    [data-theme="dark"] .form-step select:focus {
+        border-color: #a855f7 !important;
+    }
+
+/* 4. Opciones de Acción y Agendas (Grid/Lista) */
+[data-theme="dark"] .action-option,
+[data-theme="dark"] .agenda-card,
+[data-theme="dark"] .agenda-list-item {
+    background: #1a1c23 !important;
+    border-color: #334155 !important;
+}
+
+    [data-theme="dark"] .action-option.selected,
+    [data-theme="dark"] .agenda-card.selected,
+    [data-theme="dark"] .agenda-list-item.selected {
+        border-color: #a855f7 !important;
+        background: rgba(168, 85, 247, 0.1) !important;
+    }
+
+    /* 5. Textos dentro de Listas/Cards */
+    [data-theme="dark"] .action-option span,
+    [data-theme="dark"] .agenda-card strong,
+    [data-theme="dark"] .agenda-info strong {
+        color: #f5f5f5 !important;
+    }
+
+    [data-theme="dark"] .agenda-card p,
+    [data-theme="dark"] .agenda-info span {
+        color: #9ca3af !important;
+    }
+
+    /* 6. Iconos y Badges */
+    [data-theme="dark"] .action-option svg,
+    [data-theme="dark"] .agenda-list-item svg {
+        color: #c084fc !important;
+    }
+
+[data-theme="dark"] .badge {
+    background: rgba(168, 85, 247, 0.3) !important;
+    color: #c084fc !important;
+}
+
+/* 7. Textos Generales (H2 y P) */
+[data-theme="dark"] h2,
+[data-theme="dark"] .section-header h2 {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .section-header p {
+    color: #9ca3af !important;
+}

@@ -1,7 +1,73 @@
-﻿@inherits LayoutComponentBase
+﻿@using pruebas1.Servicios
+@inherits LayoutComponentBase
+@inject ThemeService ThemeService
+@inject LoginService loginService
+@implements IDisposable
 
-<NavMenu />
+@* Este div es la clave, ahora sí reaccionará *@
+<div class="app-container" data-theme="@ThemeService.CurrentTheme">
+    <NavMenu />
+    <main class="modal-fullscreen">
+        @Body
+    </main>
+</div>
 
-<main class="modal-fullscreen">
-    @Body
-</main>
+@code {
+    protected override void OnInitialized()
+    {
+        // Suscribirse al cambio de estado visual
+        ThemeService.OnChange += StateHasChanged;
+
+        // Recuperar tema guardado del usuario
+        var usuario = loginService.obtenerUsuarioLogueado();
+        if (usuario != null && !string.IsNullOrEmpty(usuario.NombreUsuario))
+        {
+            string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
+            // Recuperar "light" o "dark", por defecto "light"
+            var temaGuardado = Microsoft.Maui.Storage.Preferences.Get(themeKey, "light");
+
+            ThemeService.SetTheme(temaGuardado);
+        }
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= StateHasChanged;
+    }
+}
+
+<style>
+/* 1. Forzar que el contenedor principal ocupe TODA la pantalla */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease;
+}
+
+/* 2. Color de fondo para Modo Oscuro en el Layout */
+[data-theme="dark"].app-container,
+[data-theme="dark"] .app-container {
+        background-color: #15171d !important; /* Azul oscuro profundo */
+}
+
+[data-theme="dark"] main {
+    background-color: transparent !important;
+    color: #f8fafc;
+}
+
+
+/* 5. ELIMINAR EL BLANCO DE LOS MODALES Y FOOTERS (RESUMEN AGRESIVO) */
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer,
+[data-theme="dark"] .modal-body,
+[data-theme="dark"] .modal.large,
+[data-theme="dark"] .submodal {
+    background-color: #111827 !important;
+    background: #111827 !important;
+    color: #ffffff !important;
+    border-color: #374151 !important;
+}
+
+</style>

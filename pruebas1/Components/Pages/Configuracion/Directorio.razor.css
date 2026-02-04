@@ -230,3 +230,150 @@ td {
         grid-template-columns: 1fr;
     }
 }
+/* ========================================
+   VARIABLES GLOBALES UNIFICADAS
+   ======================================== */
+:root {
+    --color-rose-pastel: #ffc9d4;
+    --color-orange-pastel: #ffd9a6;
+    --color-green-pastel: #b8f0d4;
+    --color-gray-pastel: #d8dce6;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --transition-normal: 300ms ease-in-out;
+    /* Variables dinámicas (Light por defecto) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --border-color: #e5e7eb;
+    --header-bg: #ffffff;
+    --card-bg: #ffffff;
+    --accent-color: #9333ea;
+}
+
+/* --- MODO OSCURO (Variables Sobrescritas) --- */
+[data-theme="dark"] {
+    --bg-primary: #1a1c23;
+    --bg-secondary: #242731;
+    --bg-tertiary: #2d313d;
+    --text-primary: #f5f5f5;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-color: #334155;
+    --header-bg: #242731;
+    --card-bg: #242731;
+    --accent-color: #c084fc;
+}
+
+/* ========================================
+   RESET & BASE (USANDO VARIABLES)
+   ======================================== */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-primary);
+    background-color: var(--bg-primary) !important;
+    transition: background 0.3s ease;
+}
+
+.header-title {
+    margin-left: 24px;
+    font-size: 24px;
+    font-weight: 600;
+    background: linear-gradient(to right, #db2777, var(--accent-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+   DIRECTORIO (OPTIMIZADO)
+   ======================================== */
+.department-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease;
+}
+
+    .department-card:hover {
+        transform: translateY(-2px);
+    }
+
+.department-header {
+    background: rgba(168, 85, 247, 0.1); /* Fondo sutil para ambos modos */
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+[data-theme="dark"] .department-header {
+    background: rgba(168, 85, 247, 0.15);
+}
+
+.department-header svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent-color);
+}
+
+/* TABLAS DEL DIRECTORIO */
+thead {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] thead {
+    background: rgba(0, 0, 0, 0.2); /* Oscurece un poco más la cabecera */
+}
+
+th {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+    tbody tr:hover {
+        background: var(--bg-secondary);
+    }
+
+td.extension {
+    font-family: 'JetBrains Mono', 'Courier New', monospace; /* Fuente más moderna */
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* ========================================
+   CORRECCIÓN DIRECTORIO (MORADO VIBRANTE)
+   ======================================== */
+
+/* 1. Icono del encabezado de la tarjeta */
+[data-theme="dark"] .department-header svg {
+    color: #c084fc !important; /* Morado claro para que brille en oscuro */
+    filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.3)); /* Efecto glow sutil */
+}
+
+/* 2. Extensiones (La columna EXT) */
+[data-theme="dark"] td.extension {
+    color: #c084fc !important; /* El moradito bonito */
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+}
+
+/* 3. Asegurar que el texto del encabezado sea visible */
+[data-theme="dark"] .department-header h3 {
+    color: #ffffff !important;
+}
+
+/* 4. Ajuste del hover para no perder el contraste */
+[data-theme="dark"] tbody tr:hover td.extension {
+    color: #d8b4fe !important; /* Un tono aún más claro al pasar el mouse */
+}

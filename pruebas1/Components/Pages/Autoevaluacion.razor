@@ -810,6 +810,17 @@
         }
     }
     
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Esto lee el atributo data-theme que pusimos en el MainLayout
+            // y fuerza a la página a refrescar sus colores.
+            StateHasChanged();
+        }
+    }
+
     private void ResetModalFlags() { IsWeekly = IsMonthly = IsAnnual = IsEventual = IsQuincenal = false; }
     private void CloseModal() { if (CurrentTask != null) { CurrentTask.Realizado = BackupRealizado; CurrentTask.RegistradoProgramado = BackupRegistradoProgramado; } ShowModal = false; }
     private void ConfirmarGuardar() => ShowConfirm = true;
@@ -842,16 +853,102 @@
 }
 
 <style>
-    /* -------------------- ESTILOS -------------------- */
-    /* -------------------- ESTILOS -------------------- */
+
+    /* --- INTEGRACIÓN CON EL SISTEMA DE TEMAS (MODO OSCURO) --- */
+
+    /* ESTO ES LO MÁS IMPORTANTE:
+           Forzamos a que TODO el fondo de la página sea oscuro
+/* =================================================
+   SECCIÓN EVALUACIÓN Y MODALES (UNIFICACIÓN)
+   ================================================= */
+
+/* 1. Fondos Base de la Aplicación */
+[data-theme="dark"],
+[data-theme="dark"] body,
+[data-theme="dark"] #app,
+[data-theme="dark"] .main,
+[data-theme="dark"] .content,
+[data-theme="dark"] .evaluation-container {
+    background-color: #111827 !important;
+    color: #ffffff !important;
+}
+
+/* 2. Bloques de Contenido (Tarjetas) */
+[data-theme="dark"] .block {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .block-title {
+    color: #818cf8 !important; /* Azul índigo original */
+}
+
+/* 3. Sistema de Modales (Overlays y Ventanas) */
+[data-theme="dark"] .overlay,
+[data-theme="dark"] .confirm-overlay,
+[data-theme="dark"] .alert-overlay {
+    background: rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .modal,
+[data-theme="dark"] .confirm-modal,
+[data-theme="dark"] .alert-modal {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+    border: 1px solid #374151 !important;
+}
+
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .confirm-title,
+[data-theme="dark"] .alert-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .confirm-message,
+[data-theme="dark"] .alert-message {
+    color: #d1d5db !important;
+}
+
+/* 4. Elementos de Formulario dentro de Evaluación */
+[data-theme="dark"] .month-selector button,
+[data-theme="dark"] .input-date,
+[data-theme="dark"] .day-option,
+[data-theme="dark"] .btn-cancel {
+    background-color: #374151 !important;
+    color: #ffffff !important;
+    border: 1px solid #4b5563 !important;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+    background: #4b5563 !important;
+}
+
+/* 5. Tablas de Actividades */
+[data-theme="dark"] .activities-table th {
+    background: #374151 !important;
+    color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .activities-table td {
+    border-top: 1px solid #374151 !important;
+    color: #d1d5db !important;
+}
+
+/* 6. Textos Generales */
+[data-theme="dark"] .title {
+    color: #ffffff !important;
+}
+    /* -------------------- ESTILOS ORIGINALES (MODO CLARO) -------------------- */
+
     .title {
         text-align: center;
         font-size: 1.8rem;
         margin-bottom: 1.5rem;
         color: #333;
+        display: block;
+        width: 100%;
     }
-    /* ---- MODAL DE ALERTA ---- */
-
 
     .check-cell {
         text-align: center;
@@ -861,6 +958,8 @@
         text-align: center;
         margin-top: 30px;
         margin-bottom: 50px;
+        display: flex;
+        justify-content: center;
     }
 
     .btn-save {
@@ -883,118 +982,63 @@
             cursor: not-allowed;
         }
 
-    .confirm-overlay {
+    .confirm-overlay, .alert-overlay, .overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         background: rgba(0,0,0,0.5);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
-    }
-
-    .confirm-modal {
-        background: white;
-        padding: 25px;
-        border-radius: 10px;
-        text-align: center;
-        width: 90%;
-        max-width: 400px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-
-    .confirm-footer {
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .btn-confirm {
-        background: #004a99;
-        color: white;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    /* ------------ MODAL CONFIRMACIÓN / ALERTA (SweetAlert Style) ------------ */
-
-    .confirm-overlay,
-    .alert-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.45);
-        display: flex;
-        justify-content: center;
-        align-items: center;
         z-index: 2000;
     }
 
-    .confirm-modal,
-    .alert-modal {
-        background: #fff;
+    .confirm-modal, .alert-modal, .modal {
+        background: white;
         padding: 2.5rem 2rem;
         border-radius: 20px;
         width: 90%;
-        max-width: 520px; /* MÁS GRANDE */
+        max-width: 520px;
         box-shadow: 0 10px 35px rgba(0,0,0,0.35);
-        animation: pop 0.25s ease-out;
         text-align: center;
     }
 
-    .confirm-title,
-    .alert-title {
-        font-size: 2rem; /* ANTES 1.5rem */
+    .confirm-title, .alert-title {
+        font-size: 2rem;
         font-weight: 800;
         color: #000;
         margin-bottom: 1.2rem;
     }
 
-    .confirm-message,
-    .alert-message {
+    .confirm-message, .alert-message {
         color: #555;
         font-size: 0.95rem;
         margin-bottom: 1.3rem;
     }
 
-    .confirm-footer,
-    .alert-footer {
+    .confirm-footer, .alert-footer, .modal-footer {
         display: flex;
         justify-content: center;
         gap: 1rem;
+        margin-top: 20px;
     }
 
     .btn-confirm {
         background: #007bff;
-        border: none;
+        color: white;
         padding: 0.55rem 1rem;
-        color: #fff;
+        border: none;
         border-radius: 8px;
         cursor: pointer;
-        font-size: 0.95rem;
     }
-
-        .btn-confirm:hover {
-            background: #0056b3;
-        }
 
     .btn-cancel {
         background: #eee;
-        border: none;
-        padding: 0.55rem 1rem;
         color: #333;
+        padding: 0.55rem 1rem;
+        border: none;
         border-radius: 8px;
         cursor: pointer;
-        font-size: 0.95rem;
     }
-
-        .btn-cancel:hover {
-            background: #ddd;
-        }
 
     .evaluation-container {
         display: flex;
@@ -1069,51 +1113,12 @@
             background-color: #FF0080;
         }
 
-    .check-cell {
-        text-align: center;
-    }
-
-    /* Subrayado negro arriba del texto */
     .subrayado {
         border-top: 2px solid black;
         font-weight: 600;
         padding-top: 2px;
     }
 
-    /* Botón de guardar centrado */
-    .save-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 1.5rem;
-    }
-
-    .btn-save, .btn-cancel {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.95rem;
-    }
-
-    .btn-save {
-        background: #007bff;
-        color: white;
-    }
-
-        .btn-save:hover {
-            background: #0056b3;
-        }
-
-    .btn-cancel {
-        background: #f1f1f1;
-        color: #333;
-    }
-
-        .btn-cancel:hover {
-            background: #e0e0e0;
-        }
-
-    /* Radio semanal bloqueado */
     .day-option.locked {
         background: #e0e0e0;
         color: #555;
@@ -1124,40 +1129,11 @@
             opacity: 0.7;
         }
 
-    /* Modal centrado */
-    .overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.45);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .modal {
-        background: #fff;
-        border-radius: 14px;
-        padding: 1.5rem;
-        width: 90%;
-        max-width: 360px;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
     .modal-title {
         text-align: center;
         margin: 0;
         font-weight: 600;
         color: #333;
-    }
-
-    .modal-body {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
     }
 
     .weekdays {
@@ -1177,68 +1153,31 @@
         gap: 0.4rem;
     }
 
-        .day-option:hover {
-            background: #e2e8f0;
-        }
-
-        .day-option input[type="radio"] {
-            accent-color: #007bff;
-        }
-
     .input-date {
         padding: 0.5rem;
         border: 1px solid #ccc;
         border-radius: 8px;
-        font-size: 0.95rem;
         width: 100%;
     }
 
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.8rem;
-    }
-
-
-    /* Scroll para muchas fechas en el modal */
     .eventual-scroll {
-        max-height: 36vh; /* ~ 7 líneas en la mayoría de pantallas */
+        max-height: 36vh;
         overflow-y: auto;
         padding-right: 10px;
         scrollbar-gutter: stable;
     }
 
-
-
-    /*Muestra las fechas en formato de 3 */
     .fechas-multiline {
         display: flex;
         flex-direction: column;
         overflow-y: auto;
-        overflow-x: hidden;
-        max-height: calc(1.4em * 3); /* 3 líneas de cualquier tamaño automáticamente */
+        max-height: calc(1.4em * 3);
         padding-right: 4vh;
     }
 
     .fecha-linea {
         white-space: nowrap;
-        line-height: 1.4em; /* Altura relativa, totalmente responsiva */
-    }
-
-    .fechas-multiline::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .fechas-multiline::-webkit-scrollbar-thumb {
-        background: #bbb;
-        border-radius: 4px;
-    }
-
-
-    .annual-no-date-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 14px;
+        line-height: 1.4em;
     }
 
     .month-selector {

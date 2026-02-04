@@ -226,6 +226,13 @@
     </div>
 }
 @code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
 
     // Clase para historial de cambios
     public class CambioFecha

@@ -371,3 +371,88 @@
 .dark-mode .section-header p {
     color: #9ca3af;
 }
+/* =================================================
+   SECCIÓN REPORTES (UNIFICACIÓN TÉCNICA)
+   ================================================= */
+
+/* 1. Selector de Tipo de Reporte */
+[data-theme="dark"] .type-button {
+    background: #262626 !important;
+    border-color: #404040 !important;
+    color: #d1d5db !important;
+}
+
+    [data-theme="dark"] .type-button.active {
+        background: rgba(20, 184, 166, 0.3) !important;
+        border-color: #059669 !important;
+        color: #6ee7b7 !important;
+    }
+
+/* 2. Barra de Búsqueda y Filtros */
+[data-theme="dark"] .search-bar,
+[data-theme="dark"] .area-filter {
+    background: #262626 !important;
+    border-color: #404040 !important;
+    color: #f5f5f5 !important;
+}
+
+    [data-theme="dark"] .search-bar input {
+        color: #f5f5f5 !important;
+    }
+
+    [data-theme="dark"] .search-bar svg {
+        color: #6b7280 !important;
+    }
+
+/* 3. Contenedor de Tabla */
+[data-theme="dark"] .reportes-table-container {
+    background: #262626 !important;
+    border-color: #404040 !important;
+}
+
+/* 4. Cabecera y Filas de Tabla */
+[data-theme="dark"] .reportes-table thead {
+    background: rgba(16, 185, 129, 0.2) !important;
+}
+
+    [data-theme="dark"] .reportes-table thead tr {
+        border-bottom-color: #404040 !important;
+    }
+
+[data-theme="dark"] .reportes-table th {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .reportes-table tbody tr {
+    border-bottom-color: #404040 !important;
+}
+
+    [data-theme="dark"] .reportes-table tbody tr:hover {
+        background: rgba(26, 26, 26, 0.3) !important;
+    }
+
+/* 5. Células y Badges */
+[data-theme="dark"] .user-name {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] .area-badge {
+    background: rgba(168, 85, 247, 0.3) !important;
+    color: #c084fc !important;
+}
+
+[data-theme="dark"] .activity-badge {
+    background: rgba(16, 185, 129, 0.3) !important;
+    color: #6ee7b7 !important;
+}
+
+/* 6. Textos de Sección Globales */
+[data-theme="dark"] h2,
+[data-theme="dark"] .section-header h2 {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .section-header p {
+    color: #9ca3af !important;
+}

@@ -97,3 +97,44 @@
         z-index: 60;
     }
 }
+
+/* =================================================
+   SIDEBAR UNIFICADO (MODO OSCURO)
+   ================================================= */
+
+/* 1. Contenedor Principal del Sidebar */
+[data-theme="dark"] .config-sidebar {
+    background: #1a1c23 !important; /* Mismo tono que el fondo para integración total */
+    border-right-color: #334155 !important;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 2. Items de Navegación */
+[data-theme="dark"] .nav-item {
+    color: #9ca3af !important;
+}
+
+    [data-theme="dark"] .nav-item:hover {
+        background: #242731 !important;
+        color: #f3f4f6 !important;
+    }
+
+    /* 3. Item Activo (Morado/Rosa Neón suave) */
+    [data-theme="dark"] .nav-item.active {
+        background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2)) !important;
+        color: #c084fc !important;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.1);
+    }
+
+/* 4. Iconos */
+[data-theme="dark"] .nav-icon {
+    color: #6b7280 !important;
+}
+
+[data-theme="dark"] .nav-item.active .nav-icon {
+    color: #c084fc !important;
+}
+
+[data-theme="dark"] .nav-item:hover .nav-icon {
+    color: #e5e7eb !important;
+}

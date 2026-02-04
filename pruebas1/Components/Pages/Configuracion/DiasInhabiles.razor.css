@@ -335,3 +335,98 @@ form {
 .dark-mode .section-header p {
     color: #9ca3af;
 }
+
+
+/* =================================================
+   SECCIÓN DÍAS INHÁBILES (MODO OSCURO UNIFICADO)
+   ================================================= */
+
+/* 1. Tarjetas Principales */
+[data-theme="dark"] .form-card,
+[data-theme="dark"] .saved-days-card {
+    background: #242731 !important;
+    border-color: #334155 !important;
+}
+
+    /* 2. Encabezados e Iconos */
+    [data-theme="dark"] .form-header h3,
+    [data-theme="dark"] .saved-days-card h3 {
+        color: #f5f5f5 !important;
+    }
+
+[data-theme="dark"] .form-icon {
+    background: rgba(249, 115, 22, 0.2) !important;
+}
+
+    [data-theme="dark"] .form-icon svg {
+        color: #fb923c !important; /* Naranja más suave para contraste */
+    }
+
+/* 3. Formulario e Inputs */
+[data-theme="dark"] .input-group label {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .input-group input {
+    background: #1a1c23 !important;
+    border-color: #404040 !important;
+    color: #f5f5f5 !important;
+}
+
+    [data-theme="dark"] .input-group input:focus {
+        border-color: #f97316 !important;
+    }
+
+/* 4. Lista de Días Guardados */
+[data-theme="dark"] .day-item {
+    background: rgba(220, 38, 38, 0.1) !important; /* Rojo sutil para avisos/inhábiles */
+    border-color: #7f1d1d !important;
+}
+
+[data-theme="dark"] .day-calendar {
+    background: #1a1c23 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .day-number {
+    color: #fb923c !important;
+}
+
+[data-theme="dark"] .day-month {
+    color: #9ca3af !important;
+}
+
+/* 5. Textos Informativos del Día */
+[data-theme="dark"] .day-info h4 {
+    color: #fed7aa !important;
+}
+
+[data-theme="dark"] .day-info p {
+    color: #fdba74 !important;
+}
+
+[data-theme="dark"] .empty-message {
+    color: #9ca3af !important;
+}
+
+/* 6. Botones de Acción Especiales */
+[data-theme="dark"] .delete-button {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #f87171 !important;
+}
+
+    [data-theme="dark"] .delete-button:hover {
+        background: #ef4444 !important;
+        color: white !important;
+    }
+
+/* 7. Unificación de Títulos Globales */
+[data-theme="dark"] h2,
+[data-theme="dark"] .section-header h2 {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .section-header p {
+    color: #9ca3af !important;
+}
