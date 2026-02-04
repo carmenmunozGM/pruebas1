@@ -476,3 +476,260 @@ body {
     opacity: 0.6;
 }
 
+/* =================================================
+   SECCIÓN AGENDA / CALENDARIO (UNIFICACIÓN TÉCNICA)
+   ================================================= */
+
+/* 1. Contenedor Principal y Header */
+[data-theme="dark"] .agenda-container {
+    background: #111827 !important;
+    color: #f5f5f5 !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .agenda-header h1 {
+    color: #ffffff !important;
+}
+
+/* 2. Grid de Días y Tarjetas (Cards) */
+[data-theme="dark"] .day-name-header {
+    color: #9ca3af !important;
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .day-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .day-header {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .day-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    border-color: #4b5563 !important;
+}
+
+/* 3. Estados Especiales (Domingos e Inhábiles) */
+[data-theme="dark"] .day-card.sunday {
+    background: #1a1c23 !important;
+    opacity: 0.8;
+}
+
+[data-theme="dark"] .day-card.no-laboral {
+    background: rgba(127, 29, 29, 0.2) !important; /* Rojo muy sutil */
+    border-color: #991b1b !important;
+}
+
+    [data-theme="dark"] .day-card.no-laboral .day-header {
+        color: #f87171 !important;
+    }
+
+/* 4. Bloques de Tareas dentro del Calendario (List Items) */
+[data-theme="dark"] .list-item {
+    background: #374151 !important;
+    color: #e5e7eb !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+    [data-theme="dark"] .list-item:hover {
+        filter: brightness(1.2) !important;
+    }
+
+[data-theme="dark"] .task-count {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+/* 5. Modales Modernos en Modo Oscuro */
+[data-theme="dark"] .modal-content.modern-modal {
+    background: #1f2937 !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .modal-header {
+    background: linear-gradient(90deg, #1f2937, #111827) !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+    [data-theme="dark"] .modal-header h2 {
+        color: #ffffff !important;
+    }
+
+[data-theme="dark"] .modal-body.modal-scroll {
+    background: #111827 !important;
+}
+
+[data-theme="dark"] .modal-footer {
+    background: #1f2937 !important;
+    border-top: 1px solid #374151 !important;
+}
+
+/* 6. Colapsables y Detalles de Tarea dentro del Modal */
+[data-theme="dark"] .ot-card,
+[data-theme="dark"] .tramite-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .collapsible-header {
+    background: #374151 !important;
+    color: #ffffff !important;
+}
+
+    [data-theme="dark"] .collapsible-header:hover {
+        background: #4b5563 !important;
+    }
+
+[data-theme="dark"] .collapsible-content {
+    background: #1f2937 !important;
+    border-top-color: #374151 !important;
+}
+
+[data-theme="dark"] .task-details {
+    background: #1a1c23 !important;
+}
+
+/* 7. Tablas de Subtareas e Ítems Completados */
+[data-theme="dark"] .subtasks-table th {
+    background: #374151 !important;
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .subtasks-table td {
+    border-top-color: #374151 !important;
+}
+
+[data-theme="dark"] .subtasks-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+[data-theme="dark"] .actividad-completada,
+[data-theme="dark"] .actividad-completada td,
+[data-theme="dark"] .realizado {
+    color: #6b7280 !important; /* Gris tenue para lo tachado */
+    opacity: 0.5 !important;
+}
+
+/* 8. Mensajes Vacíos */
+[data-theme="dark"] .no-tasks-msg {
+    background-color: #1a1c23 !important;
+    border-color: #374151 !important;
+    color: #6b7280 !important;
+}
+
+/* =================================================
+   UNIFICACIÓN SEMANA - CALENDARIO (DÍAS INHÁBILES)
+   ================================================= */
+
+/* Aplicar el estilo de la agenda a la vista semanal */
+[data-theme="dark"] .day-card.no-laboral {
+    background: rgba(127, 29, 29, 0.2) !important; /* Rojo muy sutil de tu config */
+    border: 1px solid #991b1b !important; /* Borde rojo de tu config */
+    opacity: 0.9;
+}
+
+    /* Forzar que el encabezado del día tome el color rojo claro */
+    [data-theme="dark"] .day-card.no-laboral .day-header {
+        color: #f87171 !important;
+    }
+
+/* Opcional: Si el día es Domingo, aplicamos el fondo más oscuro de tu config */
+[data-theme="dark"] .day-card.sunday {
+    background: #1a1c23 !important;
+    opacity: 0.8;
+    border-color: #374151 !important;
+}
+
+/* Estilo para el mensaje de "No Laboral" dentro de la tarjeta semanal */
+[data-theme="dark"] .day-card.no-laboral .no-tasks-msg {
+    background-color: transparent !important; /* Para que luzca integrado */
+    border: none !important;
+    color: #f87171 !important; /* Texto en armonía con el header */
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* 1. Tareas (Primer bloque) */
+[data-theme="dark"] .blocks-list .list-item:nth-child(1) {
+    background-color: rgba(244, 114, 182, 0.2) !important;
+    color: #fce7f3 !important;
+}
+
+/* 2. Órdenes de Trabajo (Segundo bloque) */
+[data-theme="dark"] .blocks-list .list-item:nth-child(2) {
+    background-color: rgba(251, 146, 60, 0.2) !important;
+    color: #ffedd5 !important;
+}
+
+/* 3. Autoevaluación (Tercer bloque) */
+[data-theme="dark"] .blocks-list .list-item:nth-child(3) {
+    background-color: rgba(74, 222, 128, 0.2) !important;
+    color: #f0fdf4 !important;
+}
+
+/* 4. Servicio a Cliente (Cuarto bloque) */
+[data-theme="dark"] .blocks-list .list-item:nth-child(4) {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    color: #f5f3ff !important;
+}
+
+/* Ajuste general para que el texto no se pierda */
+[data-theme="dark"] .list-title,
+[data-theme="dark"] .list-item span {
+    color: inherit !important;
+}
+
+/* =================================================
+   CORRECCIÓN DE LEGIBILIDAD EN MODALES (MODO OSCURO)
+   ================================================= */
+
+/* Forzar color de texto en todo el cuerpo del modal */
+[data-theme="dark"] .modal-body,
+[data-theme="dark"] .modal-body p,
+[data-theme="dark"] .modal-body span,
+[data-theme="dark"] .modal-body td,
+[data-theme="dark"] .modal-body li,
+[data-theme="dark"] .task-details,
+[data-theme="dark"] .task-details p {
+    color: #e5e7eb !important; /* Gris muy claro, casi blanco */
+}
+
+    /* Títulos dentro de los colapsables o tarjetas */
+    [data-theme="dark"] .modal-body h3,
+    [data-theme="dark"] .modal-body h4,
+    [data-theme="dark"] .list-title {
+        color: #ffffff !important;
+    }
+
+/* Ajuste específico para etiquetas de "No hay datos" */
+[data-theme="dark"] .no-tasks-msg {
+    color: #9ca3af !important;
+    background-color: #1a1c23 !important;
+}
+
+/* Tablas dentro de modales: asegurar que el texto sea legible */
+[data-theme="dark"] .subtasks-table td {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .subtasks-table th {
+    color: #ffffff !important;
+}
+
+/* Corregir el tachado de actividades completadas para que no sea negro */
+[data-theme="dark"] .actividad-completada,
+[data-theme="dark"] .actividad-completada td,
+[data-theme="dark"] .actividad-completada span,
+[data-theme="dark"] .realizado {
+    color: #6b7280 !important; /* Gris tenue */
+    text-decoration: line-through !important;
+    opacity: 0.6 !important;
+}
+
+/* Íconos dentro del modal */
+[data-theme="dark"] .modal-icon,
+[data-theme="dark"] .toggle-icon {
+    color: #9ca3af !important;
+}

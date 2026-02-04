@@ -1,5 +1,7 @@
 @* Componente de Apariencia - Selector de Tema *@
 @using pruebas1.Components.UI
+@using pruebas1.Servicios
+@inject ThemeService ThemeService
 
 <div class="apariencia-container">
     <div class="section-header">
@@ -63,6 +65,7 @@
     private async Task ChangeTheme(string theme)
     {
         currentTheme = theme;
+        ThemeService.SetTheme(theme);
         await OnThemeChange.InvokeAsync(theme);
     }
 

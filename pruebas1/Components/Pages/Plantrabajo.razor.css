@@ -399,3 +399,246 @@ gap: 1rem;
         transform: translateY(0);
     }
 }
+
+/* =================================================
+   MODO OSCURO: COLUMNAS, SERVICIOS Y SUBMODALES
+   ================================================= */
+
+/* 1. Contenedores y Columnas de Servicio */
+[data-theme="dark"] .service-container {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .column {
+    background: #1e293b !important; /* Gris azulado oscuro */
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+    /* 1. Recuperar Azul y Verde (Oscuros pero visibles) */
+    [data-theme="dark"] .column:nth-child(1) {
+        background-color: #0a1a3b !important; /* Azul Marino saturado */
+        border: 2px solid #3b82f6 !important;
+        background-color: 
+    }
+
+    [data-theme="dark"] .column:nth-child(2) {
+        background-color: #012c20 !important; /* Verde Bosque saturado */
+        border: 2px solid #10b981 !important;
+    }
+
+/* 2. Forzar el Footer a ser oscuro (Ataque directo) */
+/* El HTML muestra que el footer está dentro de .modal.large */
+[data-theme="dark"] .modal.large .modal-footer,
+[data-theme="dark"] .submodal .modal-footer,
+[data-theme="dark"] .modal-footer {
+    background-color: #111827 !important;
+    background: #111827 !important;
+    border-top: 1px solid #374151 !important;
+}
+
+/* 3. Corregir los ítems de las listas que se ven blancos en el HTML */
+[data-theme="dark"] .group-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .empresa-list li {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+    [data-theme="dark"] .empresa-list li:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+/* 4. Asegurar que el fondo del modal mismo no sea blanco */
+[data-theme="dark"] .modal.large,
+[data-theme="dark"] .submodal {
+    background-color: #111827 !important;
+}
+
+/* 5. Inputs (Para que no se vean como huecos blancos) */
+[data-theme="dark"] .input-date,
+[data-theme="dark"] .input-text,
+[data-theme="dark"] .form-control {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    color: white !important;
+    border: 1px solid #4b5563 !important;
+}
+
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .service-subtitle,
+[data-theme="dark"] .title,
+[data-theme="dark"] .modal-title {
+    color: #ffffff !important;
+}
+
+/* 2. Bloques de Grupo y Listas (Empresas) */
+[data-theme="dark"] .group-block {
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .group-header {
+    background: #374151 !important;
+    color: #ffffff !important;
+}
+
+    [data-theme="dark"] .group-header:hover {
+        background: #4b5563 !important;
+    }
+
+[data-theme="dark"] .empresa-list li {
+    border-bottom-color: #374151 !important;
+    color: #cbd5e1 !important;
+}
+
+    [data-theme="dark"] .empresa-list li:hover {
+        background: #1f2937 !important;
+        color: #ffffff !important;
+    }
+
+/* 3. Modales y Submodales */
+[data-theme="dark"] .overlay,
+[data-theme="dark"] .submodal-overlay {
+    background: rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-theme="dark"] .modal.large,
+[data-theme="dark"] .submodal {
+    background: #111827 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid #374151 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+}
+
+    [data-theme="dark"] .submodal h4 {
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .submodal label {
+        color: #9ca3af !important;
+    }
+
+/* 4. Tablas de Actividades y Inputs */
+[data-theme="dark"] .activities-table th {
+    background: #1f2937 !important;
+    color: #ffffff !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .activities-table td {
+    border-color: #374151 !important;
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .activities-table input,
+[data-theme="dark"] .activities-table textarea,
+[data-theme="dark"] .input-date,
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .input-text {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    border: 1px solid #4b5563 !important;
+}
+
+    [data-theme="dark"] .activities-table input:focus,
+    [data-theme="dark"] .activities-table textarea:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.3) !important;
+    }
+
+/* 5. Historial Box (Limpieza de blancos) */
+[data-theme="dark"] .historial-box {
+    background: #0f172a !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .hist-row {
+    border-bottom-color: #1e293b !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .muted {
+    color: #6b7280 !important;
+}
+
+/* 6. Botones (Ajuste de visibilidad) */
+[data-theme="dark"] .btn-cancel {
+    background: #374151 !important;
+    color: #e5e7eb !important;
+}
+
+    [data-theme="dark"] .btn-cancel:hover {
+        background: #4b5563 !important;
+    }
+
+[data-theme="dark"] .btn-save {
+    background: #2563eb !important; /* Azul más vibrante para dark mode */
+}
+
+[data-theme="dark"] .btn-calendar {
+    background-color: #166534 !important; /* Verde oscuro */
+}
+
+/* =================================================
+   EXTERMINIO DE BLANCOS EN MODALES Y VISTAS
+   ================================================= */
+
+/* 1. Footer del Modal (El bloque blanco del botón cerrar) */
+[data-theme="dark"] .modal-footer,
+[data-theme="dark"] .bento-footer {
+    background-color: #111827 !important; /* Azul profundo del tema */
+    background: #111827 !important;
+    border-top: 1px solid #374151 !important;
+    padding: 1.5rem !important;
+}
+
+/* 2. Ítems del Equipo de Trabajo (Las filas blancas) */
+[data-theme="dark"] .full-name-tag,
+[data-theme="dark"] .equipo-item,
+[data-theme="dark"] .list-group-item,
+[data-theme="dark"] .participant-item {
+    background-color: #1f2937 !important; /* Gris azulado oscuro */
+    color: #f3f4f6 !important;
+    border: 1px solid #374151 !important;
+    margin-bottom: 5px !important;
+}
+
+    /* Forzar que el icono de tachuela/pin no sea negro */
+    [data-theme="dark"] .full-name-tag i,
+    [data-theme="dark"] .equipo-item i {
+        color: #f87171 !important;
+    }
+
+/* 3. El cuadro blanco del aviso "Día no laboral" (image_77b759.png) */
+[data-theme="dark"] .no-laboral-info,
+[data-theme="dark"] .day-card.dia-no-laboral .no-laboral-info {
+    background: transparent !important; /* Matamos el recuadro blanco */
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 4. Botón de Cerrar (X arriba a la derecha en image_783339.png) */
+[data-theme="dark"] .btn-close,
+[data-theme="dark"] .close-modal {
+    filter: invert(1) grayscale(100%) brightness(200%) !important; /* Hace la X blanca */
+}
+
+/* 5. Inputs y Textareas en tablas (image_6dba94.png) */
+[data-theme="dark"] .activities-table input,
+[data-theme="dark"] .activities-table textarea,
+[data-theme="dark"] .form-control {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    border: 1px solid #4b5563 !important;
+}
+
+/* 6. Fondo general de la página (image_783aa1.png) */
+/* Si el fondo de la página se ve blanco atrás de los cuadros oscuros */
+[data-theme="dark"] body,
+[data-theme="dark"] .main-content {
+    background-color: #0f172a !important;
+}

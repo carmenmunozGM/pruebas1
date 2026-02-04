@@ -133,3 +133,47 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* --- ADAPTACIÓN PARA FONDO OSCURO TOTAL --- */
+
+/* Forzar el fondo oscuro en la raíz cuando el tema es dark */
+[data-theme="dark"] .apariencia-container {
+    background-color: #15171d !important;
+    min-height: 100vh;
+    flex: 1;
+}
+
+/* Corregir los textos en modo oscuro */
+[data-theme="dark"] .section-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .section-description {
+    color: #9ca3af !important;
+}
+
+/* Asegurar que las tarjetas de las opciones se vean bien sobre el fondo negro */
+[data-theme="dark"] .theme-option {
+    background-color: #1f2937 !important; /* Gris oscuro para las tarjetas */
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .theme-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .theme-description {
+    color: #9ca3af !important;
+}
+
+/* Estilo para el botón activo en modo oscuro */
+[data-theme="dark"] .theme-option-active {
+    border-color: #8b5cf6 !important; /* Morado intenso */
+    background-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+/* ESTO MATA LA FRANJA BLANCA SI EL COMPONENTE ESTÁ DENTRO DE UN MAIN */
+[data-theme="dark"] body {
+    background-color: #15171d !important;
+}
+

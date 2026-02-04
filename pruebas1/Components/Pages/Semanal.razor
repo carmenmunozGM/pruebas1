@@ -1908,6 +1908,14 @@
 
 
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+
 
 
     void InicializarUbicacion(BaseTask bt)
@@ -3344,4 +3352,255 @@
         opacity: 0.6;
     }
 
+    /* =================================================
+       SISTEMA DE MODO OSCURO UNIFICADO (BENTO + AGENDA)
+       ================================================= */
+
+    /* 1. CONTENEDORES PRINCIPALES Y MODALES */
+    [data-theme="dark"] .agenda-container,
+    [data-theme="dark"] .bento-modal,
+    [data-theme="dark"] .modern-modal,
+    [data-theme="dark"] .modal-content {
+        background: #111827 !important;
+        color: #f3f4f6 !important;
+        border: 1px solid #374151;
+    }
+
+    /* 2. HEADERS Y TÍTULOS */
+    [data-theme="dark"] .bento-header,
+    [data-theme="dark"] .modal-header {
+        background: #111827 !important;
+        border-bottom: 1px solid #374151;
+    }
+
+        [data-theme="dark"] .title-row h3,
+        [data-theme="dark"] .modal-header h2,
+        [data-theme="dark"] .agenda-header h1 {
+            color: #ffffff !important;
+        }
+
+    /* 3. TARJETAS DE DÍAS (GRID SEMANAL) */
+    [data-theme="dark"] .day-card {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .day-header {
+        border-bottom: 1px solid #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    /* 4. DÍAS NO LABORALES (CLASE: .dia-no-laboral) */
+    [data-theme="dark"] .day-card.dia-no-laboral {
+        background: rgba(127, 29, 29, 0.25) !important; /* Rojo sutil */
+        border: 1px solid #991b1b !important; /* Borde rojo sólido */
+        box-shadow: none !important;
+    }
+
+        /* Forzar textos rojos en el header y el info del día no laboral */
+        [data-theme="dark"] .day-card.dia-no-laboral .day-header,
+        [data-theme="dark"] .day-card.dia-no-laboral .day-name,
+        [data-theme="dark"] .day-card.dia-no-laboral .day-date,
+        [data-theme="dark"] .day-card.dia-no-laboral .no-laboral-info {
+            color: #f87171 !important;
+            background: transparent !important;
+            border-bottom-color: rgba(153, 27, 27, 0.5) !important;
+        }
+
+        [data-theme="dark"] .day-card.dia-no-laboral .no-laboral-info {
+            text-align: center;
+            padding: 15px 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+    /* 5. ELEMENTOS INTERNOS Y BLOQUES */
+    [data-theme="dark"] .bento-item,
+    [data-theme="dark"] .ot-card,
+    [data-theme="dark"] .tramite-card,
+    [data-theme="dark"] .list-item {
+        background: #1f2937 !important;
+        border: 1px solid #374151 !important;
+        color: #e5e7eb !important;
+    }
+
+        /* Colores de los bloques (Nth-child) */
+        [data-theme="dark"] .list-item:nth-child(1) {
+            background-color: rgba(244, 114, 182, 0.2) !important;
+            color: #fce7f3 !important;
+        }
+
+        [data-theme="dark"] .list-item:nth-child(2) {
+            background-color: rgba(251, 146, 60, 0.2) !important;
+            color: #ffedd5 !important;
+        }
+
+        [data-theme="dark"] .list-item:nth-child(3) {
+            background-color: rgba(74, 222, 128, 0.2) !important;
+            color: #f0fdf4 !important;
+        }
+
+        [data-theme="dark"] .list-item:nth-child(4) {
+            background-color: rgba(168, 85, 247, 0.2) !important;
+            color: #f5f3ff !important;
+        }
+
+    /* 6. FORMULARIOS Y TABLAS */
+    [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea {
+        background-color: #111827 !important;
+        border: 1px solid #4b5563 !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .subtasks-table th {
+        background: #374151 !important;
+        color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .subtasks-table td {
+        border-bottom: 1px solid #374151 !important;
+        color: #d1d5db !important;
+    }
+
+    /* 7. ACTIVIDADES COMPLETADAS */
+    [data-theme="dark"] .actividad-completada,
+    [data-theme="dark"] .realizado {
+        color: #6b7280 !important;
+        opacity: 0.5 !important;
+        text-decoration: line-through !important;
+    }
+
+    Tienes razón, al aplicar los fondos con transparencia (rgba), el texto pierde contraste cuando el navegador aplica el filtro de oscurecimiento por defecto o cuando el fondo cambia en el hover.
+
+    Para arreglarlo, vamos a añadir una regla que brille un poco más la tarjeta y mantenga el texto en blanco puro o en el color vibrante original cuando pases el mouse.
+
+    Añade este bloque al final de tu CSS de modo oscuro:
+
+    CSS
+    /* =================================================
+       ESTILOS HOVER PARA ACTIVIDADES (MODO OSCURO)
+       ================================================= */
+    /* 1. Efecto general para cualquier list-item en hover */
+    [data-theme="dark"] .list-item:hover {
+        filter: brightness(1.3) !important; /* Aclara la tarjeta en lugar de oscurecerla */
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    /* 2. Mantener el color del texto brillante en hover para cada tipo */
+    [data-theme="dark"] .list-item:nth-child(1):hover {
+        color: #ffffff !important;
+        background-color: rgba(244, 114, 182, 0.35) !important;
+    }
+
+    [data-theme="dark"] .list-item:nth-child(2):hover {
+        color: #ffffff !important;
+        background-color: rgba(251, 146, 60, 0.35) !important;
+    }
+
+    [data-theme="dark"] .list-item:nth-child(3):hover {
+        color: #ffffff !important;
+        background-color: rgba(74, 222, 128, 0.35) !important;
+    }
+
+    [data-theme="dark"] .list-item:nth-child(4):hover {
+        color: #ffffff !important;
+        background-color: rgba(168, 85, 247, 0.35) !important;
+    }
+
+    /* 3. Asegurar que los íconos o spans internos no se oscurezcan */
+    [data-theme="dark"] .list-item:hover span,
+    [data-theme="dark"] .list-item:hover i {
+        color: #ffffff !important;
+    }
+
+    CSS
+    /* =================================================
+       CORRECCIÓN FINAL: ELIMINACIÓN DE BLANCOS EN MODALES
+       ================================================= */
+    /* 1. Forzar el fondo del Modal y sus secciones */
+    [data-theme="dark"] .bento-modal,
+    [data-theme="dark"] .modal-content,
+    [data-theme="dark"] .modal-body,
+    [data-theme="dark"] .modal-footer {
+        background-color: #111827 !important; /* Fondo oscuro profundo */
+        background: #111827 !important;
+        color: #f3f4f6 !important;
+        border-color: #374151 !important;
+    }
+
+    /* 2. Limpiar las etiquetas de nombres (Equipo de Trabajo) */
+    /* Según tu imagen image_782efb.png, estos son los que se ven blancos */
+    [data-theme="dark"] .full-name-tag,
+    [data-theme="dark"] .participant-item,
+    [data-theme="dark"] .equipo-item {
+        background-color: #1f2937 !important; /* Gris azulado oscuro */
+        color: #e5e7eb !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    /* 3. Limpiar el recuadro blanco del "Día no laboral" */
+    /* En tu imagen image_77b759.png se ve un card blanco dentro de la columna */
+    [data-theme="dark"] .no-laboral-info,
+    [data-theme="dark"] .day-card.dia-no-laboral .no-laboral-info {
+        background-color: rgba(127, 29, 29, 0.1) !important; /* Fondo rojizo casi transparente */
+        background: transparent !important;
+        border: 1px solid rgba(248, 113, 113, 0.2) !important;
+        color: #f87171 !important;
+    }
+
+    /* 4. Inputs y elementos de formulario que podrían seguir blancos */
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-group input,
+    [data-theme="dark"] .bento-input-style {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #374151 !important;
+    }
+
+    /* 5. Hover para actividades (Modo Oscuro) */
+    [data-theme="dark"] .list-item:hover {
+        filter: brightness(1.2) !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* 1. El Footer (donde está el botón Cerrar) */
+    [data-theme="dark"] .modal-footer,
+    [data-theme="dark"] .bento-footer {
+        background-color: #111827 !important; /* Azul profundo */
+        background: #111827 !important;
+        border-top: 1px solid #374151 !important;
+    }
+
+    /* 2. Los ítems del equipo (Filas blancas con tachuelas/pins) */
+    [data-theme="dark"] .full-name-tag,
+    [data-theme="dark"] .equipo-item,
+    [data-theme="dark"] .participant-item,
+    [data-theme="dark"] .modal-body .list-group-item {
+        background-color: #1f2937 !important; /* Gris oscuro */
+        color: #e5e7eb !important;
+        border: 1px solid #374151 !important;
+        margin-bottom: 8px; /* Espaciado para que no se peguen */
+    }
+
+    /* 3. El contenedor blanco del aviso "Día no laboral" */
+    [data-theme="dark"] .no-laboral-info {
+        background-color: rgba(127, 29, 29, 0.1) !important;
+        background: transparent !important;
+        border: none !important;
+        color: #f87171 !important;
+    }
+
+    /* 4. Ajuste para el botón Cerrar (Opcional por si quieres que no brille tanto) */
+    [data-theme="dark"] .btn-close-custom {
+        box-shadow: none !important;
+    }
+
+    /* 5. Asegurar que los textos dentro de las filas del equipo sean legibles */
+    [data-theme="dark"] .full-name-tag span,
+    [data-theme="dark"] .equipo-item i {
+        color: #9ca3af !important; /* Gris claro para íconos */
+    }
 </style>

@@ -218,3 +218,72 @@
 .dark-mode .section-header p {
     color: #9ca3af;
 }
+
+/* =================================================
+   SECCIÓN PERFILES (UNIFICACIÓN TÉCNICA)
+   ================================================= */
+
+/* Contenedor Principal */
+[data-theme="dark"] .perfiles-container {
+    background: #262626 !important;
+    border-color: #404040 !important;
+}
+
+/* Cabecera de Tabla con sus gradientes originales */
+[data-theme="dark"] .perfiles-table thead {
+    background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2)) !important;
+}
+
+    [data-theme="dark"] .perfiles-table thead tr {
+        border-bottom-color: #404040 !important;
+    }
+
+[data-theme="dark"] .perfiles-table th {
+    color: #d1d5db !important;
+}
+
+/* Cuerpo de Tabla y Filas */
+[data-theme="dark"] .perfiles-table tbody tr {
+    border-bottom-color: #333 !important;
+}
+
+    [data-theme="dark"] .perfiles-table tbody tr:hover {
+        background: rgba(26, 26, 26, 0.3) !important;
+    }
+
+[data-theme="dark"] .perfiles-table td {
+    color: #f5f5f5 !important;
+}
+
+/* Inputs y Selects */
+[data-theme="dark"] .user-type-select {
+    background: #1a1a1a !important;
+    border-color: #404040 !important;
+    color: #f5f5f5 !important;
+}
+
+    [data-theme="dark"] .user-type-select:focus {
+        border-color: #9333ea !important;
+    }
+
+/* Sección Inferior de Guardado */
+[data-theme="dark"] .save-section {
+    background: rgba(26, 26, 26, 0.5) !important;
+    border-top-color: #404040 !important;
+}
+
+/* Títulos y Párrafos de Sección */
+[data-theme="dark"] h2,
+[data-theme="dark"] .section-header h2 {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .section-header p {
+    color: #9ca3af !important;
+}
+
+/* Toast de Mensajes */
+[data-theme="dark"] .message-toast {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}

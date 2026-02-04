@@ -75,7 +75,7 @@
         left: 0;
         width: 100%;
         z-index: 2000;
-        background-color: #C6E9F0 !important;
+        background-color: #C6E9F0;
     }
     /* ---- CONTROLAR EL DESBORDAMIENTO ---- */
     .container-fluid {
@@ -190,6 +190,47 @@
             padding: 8px 10px;
             font-size: 0.85rem;
         }
+    }
+
+    /* --- ADAPTACIÓN AL MODO OSCURO PARA EL NAVMENU --- */
+
+    /* Cambiar el fondo de la barra de navegación */
+    [data-theme="dark"] .menu-container {
+        background: linear-gradient(90deg,#0b3c4a, #002E4A) !important;
+        border-bottom: 1px solid #1e293b;
+    }
+
+    /* Cambiar el color de los textos y botones del menú */
+    [data-theme="dark"] .navbar .nav-link,
+    [data-theme="dark"] .navbar .user-nav,
+    [data-theme="dark"] .subnav-btn {
+        color: #f8fafc !important; /* Blanco grisáceo */
+    }
+
+        /* Evitar que los botones se vuelvan blancos al hacer hover */
+        [data-theme="dark"] .subnav-btn:hover {
+            background-color: #1e293b !important;
+            color: #3b82f6 !important;
+        }
+
+    /* Dropdown (Configuración / Cerrar sesión) */
+    [data-theme="dark"] .dropdown-menu {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .dropdown-item {
+        color: #f8fafc !important;
+    }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background-color: #334155 !important;
+        }
+
+    /* Arreglar el fondo del body que el NavMenu está controlando */
+    [data-theme="dark"] html,
+    [data-theme="dark"] body {
+        background-color: #0f172a !important;
     }
 </style>
 

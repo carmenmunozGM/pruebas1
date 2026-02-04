@@ -725,3 +725,136 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     border-radius: 6px;
     font-size: 0.95rem;
 }
+
+/* =================================================
+   SECCIÓN ASIGNAR (MODO OSCURO UNIFICADO)
+   ================================================= */
+
+/* 1. Encabezados y Estructura */
+[data-theme="dark"] .section-title {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] .section-description {
+    color: #9ca3af !important;
+}
+
+/* 2. Formulario de Asignación (Tonos Morados) */
+[data-theme="dark"] .assignment-form {
+    background-color: #242731 !important;
+    border-color: rgba(168, 85, 247, 0.4) !important;
+}
+
+[data-theme="dark"] .form-title,
+[data-theme="dark"] .step-label {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] .step-number {
+    background-color: #374151 !important;
+    color: #9ca3af !important;
+}
+
+    [data-theme="dark"] .step-number.step-completed {
+        background-color: #9333ea !important;
+        color: white !important;
+    }
+
+/* 3. Botones de Tipo e Inputs */
+[data-theme="dark"] .type-button {
+    background-color: rgba(107, 114, 128, 0.1) !important;
+    border-color: #4b5563 !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .type-button-active {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    border-color: #7e22ce !important;
+    color: #d8b4fe !important;
+}
+
+[data-theme="dark"] .form-select {
+    background-color: #1a1c23 !important;
+    border-color: rgba(168, 85, 247, 0.4) !important;
+    color: #f5f5f5 !important;
+}
+
+/* 4. Tags de Empresas y Servicios (Tonos Azules/Morados) */
+[data-theme="dark"] .group-companies {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="dark"] .company-tag {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .service-item,
+[data-theme="dark"] .activity-item {
+    background-color: rgba(36, 39, 49, 0.5) !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .service-name,
+[data-theme="dark"] .activity-name {
+    color: #e5e7eb !important;
+}
+
+/* 5. Checkboxes Personalizados */
+[data-theme="dark"] .checkbox-custom {
+    border-color: #4b5563 !important;
+    background-color: #1a1c23 !important;
+}
+
+/* 6. Tabla de Asignaciones (Tonos Azules) */
+[data-theme="dark"] .assignments-table {
+    background-color: #242731 !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+[data-theme="dark"] .table-title {
+    color: #f5f5f5 !important;
+}
+
+[data-theme="dark"] .assignments-grid th {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .assignments-grid td {
+    color: #d1d5db !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] .td-bold {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .assignments-grid tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* 7. Autocomplete y Dropdowns */
+[data-theme="dark"] .autocomplete-list {
+    background-color: #1f2937 !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+    [data-theme="dark"] .autocomplete-list li {
+        color: #f5f5f5 !important;
+    }
+
+        [data-theme="dark"] .autocomplete-list li small {
+            color: #9ca3af !important;
+        }
+
+/* 8. Botones de Acción */
+[data-theme="dark"] .btn-cancel {
+    border-color: #4b5563 !important;
+    color: #9ca3af !important;
+}
+
+    [data-theme="dark"] .btn-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
