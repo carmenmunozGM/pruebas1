@@ -165,7 +165,7 @@
 }
 
 .pending-stat {
-    background: #d1fae5;
+    background: #FFD1DC;
 }
 
 .dark-mode .pending-stat {
@@ -173,7 +173,7 @@
 }
 
 .completed-stat {
-    background: #dbeafe;
+    background: #E2F0CB;
 }
 
 .dark-mode .completed-stat {
@@ -182,33 +182,35 @@
 
 .stat-label {
     font-size: 13px;
-    color: #374151;
+    color: #000000;
 }
 
 .dark-mode .stat-label {
     color: #d1d5db;
 }
 
-.stat-value {
-    font-weight: 700;
-    font-size: 16px;
-}
-
-.pending-stat .stat-value {
-    color: #047857;
-}
-
 .dark-mode .pending-stat .stat-value {
     color: #6ee7b7;
-}
-
-.completed-stat .stat-value {
-    color: #1e40af;
 }
 
 .dark-mode .completed-stat .stat-value {
     color: #93c5fd;
 }
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+.stat-ok {
+    color: #2da549;
+}
+.stat-warning {
+    color: #f78701;
+}
+.stat-danger {
+    color: #dd0203;
+}
+
+
 
 .ver-button {
     width: 100%;
@@ -835,7 +837,6 @@
     justify-content: center;
     padding: 16px;
 }
-
 /* CONTAINER */
 .vermodal-container {
     position: relative;
@@ -848,7 +849,6 @@
     display: flex;
     flex-direction: column;
 }
-
 .vermodal-lg {
     max-width: 900px;
 }
@@ -947,6 +947,228 @@
 }
 
 /* VER OT Y TRA */
+.verot-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 24, 35, 0.55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.verot-container {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    animation: modalIn .18s ease;
+}
+.modal-lg {
+    width: min(1200px, 94vw);
+}
+@keyframes modalIn {
+    from {
+        transform: translateY(20px) scale(.98);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+.verot-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid #e6e8ee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #FFDAC1;
+}
+.verot-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1b1f2a;
+}
+.verot-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.verot-close {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: .15s;
+}
+    .vermodal-close:hover {
+        background: #f0f2f7;
+    }
+.verot-body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    gap: 16px;
+}
+.orden-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 24px;
+}
+.orden-col p {
+    margin: 8px 0;
+    font-size: 16px;
+    color: #2c3142;
+}
+.orden-col b {
+    color: #6b7280;
+    font-weight: 600;
+    margin-right: 6px;
+}
+.orden-tabld{
+    flex:1 1 auto;
+    dispaly:flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.orden-table h4 {
+    margin: 8px 0 12px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1b1f2a;
+}
+.tabla-detalle {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+    .tabla-detalle thead {
+        background: #f4f6fb;
+    }
+    .tabla-detalle th {
+        text-align: left;
+        padding: 12px 14px;
+        font-weight: 600;
+        color: #596079;
+        font-size: 15px;
+    }
+    .tabla-detalle td {
+        padding: 12px 14px;
+        border-top: 1px solid #eef1f6;
+        color: #2b3040;
+    }
+    .tabla-detalle tbody tr:hover {
+        background: #f8faff;
+    }
+.modal-sm {
+    width: min(620px, 92vw);
+}
+.submodal-body {
+    padding: 20px;
+    font-size: 16px;
+    line-height: 1.45;
+}
+.submodal-section {
+    margin-bottom: 14px;
+}
+    .submodal-section b {
+        display: block;
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+    .submodal-section p {
+        margin: 0;
+        color: #2b3040;
+    }
+.orden-info {
+    flex: 0 0 auto;
+}
+.tabla-scroll {
+    flex: 1;
+    overflow: auto;
+    border-radius: 10px;
+}
+.tabla-detalle thead {
+    position: sticky;
+    top: 0;
+    background: #f4f6fb;
+    z-index: 2;
+}
+/* Layout tipo ficha */
+.submodal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 10px;
+}
+/* Cada campo */
+.submodal-section {
+    background: #f7f9fb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+}
+    /* Observación ocupa todo el ancho */
+    .submodal-section.full {
+        grid-column: 1 / -1;
+    }
+    /* etiqueta */
+    .submodal-section .label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+    /* valor */
+    .submodal-section .value {
+        font-size: 15px;
+        font-weight: 500;
+        color: #111827;
+    }
+/* estados */
+.estado {
+    font-weight: 600;
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+}
+    /* colores por estado */
+    .estado.proceso {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+    .estado.finalizado {
+        background: #ecfdf5;
+        color: #047857;
+    }
+    .estado.pendiente {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
 
 /* RESPONSIVE */
 @media (max-width: 640px) {
@@ -958,7 +1180,6 @@
         max-height: 95vh;
     }
 }
-
 
 /* MODIFICACIÓN EXCLUSIVA PARA MODO OSCURO */
 .dark-mode h2,
