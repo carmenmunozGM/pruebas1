@@ -242,18 +242,6 @@
         };
     }
 
-    // private string GetReportValue(UserInfo user)
-    // {
-    //     var value = reportType switch
-    //     {
-    //         "autoevaluacion" => user.Autoevaluaciones,
-    //         "programa" => user.ProgramasTrabajo,
-    //         "clientes" => user.ClientesAsignados,
-    //         _ => 0
-    //     };
-
-    //     return $"{value} registros";
-    // }
     private async Task ShowMessage(string text)
     {
         message = text;
@@ -269,36 +257,55 @@
     {
         try
         {
-            // 🚫 Bloqueo si NO es autoevaluación
-            if (reportType != "autoevaluacion")
-            {
-                await ShowMessage("Este usuario no cuenta con reportes de clientes asignados");
-                return;
-            }
-
             // 1️⃣ Extraer año y mes desde "yyyy-MM"
             var partes = selectedMonth.Split('-');
             int anio = int.Parse(partes[0]);
             int mes = int.Parse(partes[1]);
 
-            // 2️⃣ Construir URL del endpoint (solo autoevaluación)
-            var url = $"api/Reportes/Autoevaluacion/{user.Id}/{anio}/{mes}";
+            string url;
+            string filePrefix;
+
+            // 2️⃣ Elegir endpoint según tipo de reporte
+            if (reportType == "AUTOEVALUACIÓN")
+            {
+                url = $"api/Reportes/Autoevaluacion/{user.Id}/{anio}/{mes}";
+                filePrefix = "autoevaluación";
+            }
+            else if (reportType == "clientes")
+            {
+                url = $"api/Reportes/ClientesAsignados/{user.Id}/{anio}/{mes}";
+                filePrefix = "CLIENTES";
+            }
+            else
+            {
+                await ShowMessage("Tipo de reporte no soportado");
+                return;
+            }
 
             // 3️⃣ Llamada HTTP
             var response = await Http.GetAsync(url);
 
+            // 🚫 NO CONTENT → no descargar
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                await ShowMessage($"Este usuario no cuenta con reportes de {filePrefix}");
+                return;
+            }
+
+            // ❌ cualquier otro error
             if (!response.IsSuccessStatusCode)
             {
-                await ShowMessage("Este usuario no cuenta con reportes de autoevaluación");
+                await ShowMessage($"Este usuario no cuenta con reportes de {filePrefix}");
                 return;
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
 
-            // 4️⃣ Descargar archivo usando JS
-            var fileName = $"AE_{user.Name}_{anio}_{mes}.xlsx"
+            // 4️⃣ Nombre de archivo
+            var fileName = $"{filePrefix}_{user.Name}_{anio}_{mes}.xlsx"
                 .Replace(" ", "_");
 
+            // 5️⃣ Descargar archivo usando JS
             await JS.InvokeVoidAsync(
                 "downloadFile",
                 fileName,
@@ -314,6 +321,7 @@
             Console.WriteLine(ex);
         }
     }
+
 
 
     private List<UserInfo> filteredUsers
