@@ -69,11 +69,6 @@
     min-width: 180px;
 }
 
-.dark-mode .area-filter {
-    background: #262626;
-    border-color: #404040;
-    color: #f5f5f5;
-}
 
 .agendas-grid {
     display: grid;
@@ -88,11 +83,6 @@
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
-}
-
-.dark-mode .agenda-card {
-    background: #262626;
-    border-color: #404040;
 }
 
 .agenda-card:hover {
@@ -136,17 +126,10 @@
     margin-bottom: 4px;
 }
 
-.dark-mode .employee-details h4 {
-    color: #f5f5f5;
-}
 
 .employee-details p {
     font-size: 12px;
     color: #6b7280;
-}
-
-.dark-mode .employee-details p {
-    color: #9ca3af;
 }
 
 .stats-container {
@@ -1181,13 +1164,817 @@
     }
 }
 
-/* MODIFICACIÓN EXCLUSIVA PARA MODO OSCURO */
-.dark-mode h2,
-.dark-mode .section-header h2 {
-    color: #f5f5f5;
+
+
+/* =================================================
+                MODO OSCURO UNIFICADO
+   ================================================= */
+
+[data-theme="dark"] {
+    /* Variables Maestras */
+    --bg-deep: #0f172a;
+    --bg-sidebar: #111827;
+    --bg-card: #1e293b;
+    --bg-input: #1a1c23;
+    --border-main: #334155;
+    --text-bright: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent-purple: #a855f7;
 }
 
-.dark-mode p,
-.dark-mode .section-header p {
-    color: #9ca3af;
+    /* 1. Corrección de Transparencia en Header y Modales */
+    [data-theme="dark"] .modal-content,
+    [data-theme="dark"] .vermodal-container {
+        background-color: var(--bg-sidebar) !important;
+        opacity: 1 !important; /* Adiós transparencia */
+        border: 1px solid var(--border-main) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+    }
+
+    [data-theme="dark"] .modal-header,
+    [data-theme="dark"] .vermodal-header,
+    [data-theme="dark"] .agenda-toolbar {
+        background-color: var(--bg-card) !important; /* Fondo sólido */
+        border-bottom: 1px solid var(--border-main) !important;
+        opacity: 1 !important;
+    }
+
+    /* 2. Inputs y Formularios (Evita el blanco brillante que me mostraste) */
+    [data-theme="dark"] input,
+    [data-theme="dark"] textarea,
+    [data-theme="dark"] .search-bar{
+        background-color: var(--bg-input) !important;
+        border: 1px solid rgba(168, 85, 247, 0.4) !important;
+        color: var(--text-bright) !important;
+    }
+
+        [data-theme="dark"] input::placeholder {
+            color: #4b5563 !important;
+        }
+
+    /* 3. Tarjetas de Agenda (Grid principal) */
+    [data-theme="dark"] .agenda-card {
+        background-color: #1f2937 !important;
+        border: 1px solid var(--border-main) !important;
+        transition: all 0.3s ease;
+    }
+
+        [data-theme="dark"] .agenda-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-purple) !important;
+            box-shadow: 0 8px 20px rgba(147, 51, 234, 0.2) !important;
+        }
+
+    /* 4. Bloques Colapsables con "Colores Joya" */
+    [data-theme="dark"] .block {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-main) !important;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    /* Headers de bloques (Tareas, OT, etc) */
+    [data-theme="dark"] .tasks-block .block-header {
+        background-color: rgba(244, 114, 182, 0.2) !important;
+        color: #fce7f3 !important;
+    }
+
+    [data-theme="dark"] .orders-block .block-header {
+        background-color: rgba(251, 146, 60, 0.2) !important;
+        color: #ffedd5 !important;
+    }
+
+    [data-theme="dark"] .selfeval-block .block-header {
+        background-color: rgba(74, 222, 128, 0.2) !important;
+        color: #f0fdf4 !important;
+    }
+
+    [data-theme="dark"] .service-block .block-header {
+        background-color: rgba(168, 85, 247, 0.2) !important;
+        color: #f5f3ff !important;
+    }
+
+    /* Contenido interno de los bloques */
+    [data-theme="dark"] .block-content,
+    [data-theme="dark"] .task-item,
+    [data-theme="dark"] .order-item {
+        background-color: var(--bg-deep) !important;
+        border-bottom: 1px solid var(--border-main) !important;
+        color: var(--text-muted) !important;
+    }
+
+        /* 5. Etiquetas de Estado (Vencidas / Alerta) */
+        [data-theme="dark"] .order-item.red {
+            background: linear-gradient(180deg, rgba(140, 25, 25, 0.2), #1e293b) !important;
+        }
+        
+
+[data-theme="dark"] .order-item.yellow {
+    background: linear-gradient(180deg, rgba(146, 130, 22, 0.2), #1e293b) !important;
+}
+
+[data-theme="dark"] .order-item.green {
+    background: linear-gradient(180deg, rgba(24, 120, 62, 0.2), #1e293b) !important;
+    border-left: 4px solid #10b981 !important;
+}
+
+    /* 6. Scrollbars */
+    [data-theme="dark"] ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    [data-theme="dark"] ::-webkit-scrollbar-track {
+        background: var(--bg-deep);
+    }
+
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+        background: var(--border-main);
+        border-radius: 10px;
+    }
+
+/* =================================================
+   FIX MODO OSCURO - HEADER, INPUTS Y TABLAS
+   ================================================= */
+
+[data-theme="dark"] {
+    --bg-dark-solid: #111827; /* Azul noche sólido */
+    --bg-card-dark: #1e293b;
+    --text-main: #f8fafc;
+    --border-fix: #334155;
+}
+
+    /* =================================================
+   FIX DEFINITIVO PARA EL HEADER DEL MODAL
+   ================================================= */
+
+    [data-theme="dark"] .modal-header {
+        /* Forzamos fondo sólido para que nada se transparente */
+        background-color: #111827 !important;
+        /* Aseguramos que esté por encima de todo el contenido del scroll */
+        z-index: 1000 !important;
+        /* Quitamos cualquier transparencia que herede */
+        opacity: 1 !important;
+        /* Separación clara con el contenido de abajo */
+        border-bottom: 2px solid #334155 !important;
+        /* Si el header se queda fijo arriba al bajar */
+        position: sticky;
+        top: 0;
+    }
+
+    /* Arreglo para el texto y el icono dentro del header */
+    [data-theme="dark"] .modal-title h3 {
+        color: #ffffff !important;
+        margin: 0;
+    }
+
+    [data-theme="dark"] .lucide-calendar {
+        color: #a855f7 !important; /* Morado para que resalte */
+    }
+
+    /* Botón de cerrar para que no se pierda */
+    [data-theme="dark"] .close-button {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 50%;
+        padding: 5px;
+        transition: background 0.2s;
+    }
+
+        [data-theme="dark"] .close-button:hover {
+            background: rgba(239, 68, 68, 0.2) !important; /* Rojo sutil al pasar el mouse */
+        }
+
+    [data-theme="dark"] .close-icon {
+        stroke: #ffffff !important;
+    }
+
+
+/* =================================================
+   UNIFICACIÓN TOTAL (ANTI-HUECOS Y DIVISIONES)
+   ================================================= */
+
+[data-theme="dark"] {
+    /* Usaremos un solo color para toda la parte superior para que parezca una pieza única */
+    --header-bg: #111827;
+}
+
+    /* 1. SELLAR EL HUECO ENTRE HEADER Y TOOLBAR */
+    [data-theme="dark"] .modal-header {
+        background-color: var(--header-bg) !important;
+        margin-bottom: 0 !important; /* Eliminamos huecos */
+        padding-bottom: 10px !important;
+        border-bottom: none !important; /* Quitamos la línea para unirlo a la toolbar */
+    }
+
+    [data-theme="dark"] .agenda-toolbar {
+        background-color: var(--header-bg) !important; /* Mismo color que el header */
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        top: 0; /* Si usas Blazor Modal, a veces el contenedor ya tiene scroll interno */
+        border-bottom: 1px solid #334155 !important; /* Solo línea al final de la toolbar */
+    }
+
+    /* 2. ELIMINAR EL CONTENEDOR BLANCO BRILLANTE 
+    [data-theme="dark"] .employee-summary {
+        background-color: #1e293b !important; /* Gris azulado profundo */
+        border: 1px solid #334155 !important;
+        margin: 15px !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }
+
+    /* 3. FIX AL CALENDARIO (image_87aefe) */
+    /* El dropdown del calendario se ve cortado o con bordes claros */
+    [data-theme="dark"] .flatpickr-calendar {
+        background: #111827 !important;
+        border: 1px solid #a855f7 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* 4. FIX "VENCIDA" EN ÓRDENES (image_22a19c) */
+    /* En tu imagen las órdenes se ven dentro de una caja blanca que "flota" */
+    [data-theme="dark"] .order-item {
+        background-color: #1e293b !important; /* Fondo oscuro para la tarjeta de la orden */
+        border: 1px solid #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    /* 5. ELIMINAR EL FONDO GRISÁCEO DEL CUERPO DEL MODAL */
+    [data-theme="dark"] .modal-body {
+        background-color: #0f172a !important; /* Fondo base de la app */
+    }
+
+    /* =================================================
+   BLOQUEO TOTAL DE TRANSPARENCIAS Y HUECOS
+   ================================================= */
+
+    [data-theme="dark"] .modal-content {
+        background-color: #111827 !important; /* Fondo base oscuro */
+        padding: 0 !important; /* Evita que el padding del modal cree bordes claros */
+        overflow: hidden;
+    }
+
+    /* 1. UNIFICAR HEADER Y TOOLBAR (Elimina el huequito) */
+    [data-theme="dark"] .modal-header,
+    [data-theme="dark"] .agenda-toolbar {
+        background-color: #111827 !important; /* EXACTAMENTE el mismo color */
+        margin: 0 !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        opacity: 1 !important;
+        border: none !important; /* Quitamos bordes internos que dividen */
+    }
+
+    [data-theme="dark"] .modal-header {
+        padding-top: 15px !important;
+        padding-bottom: 5px !important;
+        position: sticky;
+        top: 0;
+        z-index: 1001;
+    }
+
+    /* 2. ELIMINAR EL "FOCO" BLANCO DEL EMPLEADO (image_2c966a.png) */
+    [data-theme="dark"] .employee-summary,
+    [data-theme="dark"] .info-container {
+        background-color: #1e293b !important; /* Azul grisáceo oscuro */
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        margin: 20px !important; /* Le da aire pero dentro de su caja oscura */
+        border-radius: 8px !important;
+    }
+
+    /* 3. ARREGLO DE TEXTO Y BOTONES EN HEADER */
+    [data-theme="dark"] .modal-title h3,
+    [data-theme="dark"] .current-date {
+        color: #ffffff !important;
+        text-shadow: none !important;
+    }
+
+    [data-theme="dark"] .refresh-btn {
+        background-color: #9333ea !important; /* Morado sólido */
+        color: white !important;
+        border: none !important;
+    }
+
+    /* 4. FIX PARA EL CALENDARIO QUE SE VE CORTADO (image_87aefe.png) */
+    [data-theme="dark"] .flatpickr-calendar {
+        background: #111827 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    [data-theme="dark"] .flatpickr-day.selected {
+        background: #9333ea !important;
+        border-color: #9333ea !important;
+    }
+
+    /* =================================================
+   REPLICA DE COMPORTAMIENTO MODO CLARO (ANTI-APACHURRE)
+   ================================================= */
+
+    [data-theme="dark"] .block {
+        height: auto !important;
+        min-height: fit-content !important;
+        overflow: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    [data-theme="dark"] .block-content,
+    [data-theme="dark"] .tasks-section,
+    [data-theme="dark"] .orders-section,
+    [data-theme="dark"] .selfeval-content {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important; /* Gap igual al modo claro */
+        height: auto !important;
+        max-height: none !important; /* Rompe el límite de los 220px */
+        overflow: visible !important;
+        padding: 12px !important;
+    }
+
+    [data-theme="dark"] .task-item,
+    [data-theme="dark"] .order-item,
+    [data-theme="dark"] .selfeval-item,
+    [data-theme="dark"] .service-item {
+        flex-shrink: 0 !important; /* PROHIBIDO encogerse */
+        height: auto !important; /* Altura según contenido */
+        min-height: 45px !important;
+        display: flex !important;
+        align-items: center !important;
+        background-color: rgba(255, 255, 255, 0.05) !important; /* Estilo cristal oscuro */
+        border: 1px solid var(--border-main) !important;
+        border-radius: 6px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* Fix específico para la Grid de Órdenes (3 columnas como pediste en claro) */
+    [data-theme="dark"] .orders-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 12px !important;
+        height: auto !important;
+    }
+
+/* Si el dispositivo es pequeño, bajamos a 1 columna para que no explote */
+@media (max-width: 768px) {
+    [data-theme="dark"] .orders-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+[data-theme="dark"] .dia-inhabil-card {
+    background: rgba(220, 38, 38, 0.4) !important; /* Rojo traslúcido oscuro */
+    color: #ffffff !important;
+    border: 1px solid #ef4444 !important;
+}
+
+
+/* FIX ESPECÍFICO PARA LAS LETRAS DE LA TARJETA */
+[data-theme="dark"] .employee-details h4 {
+    color: #ffffff !important; /* El nombre y clave en blanco puro */
+    font-weight: 600;
+}
+
+[data-theme="dark"] .employee-details p {
+    color: #cbd5e1 !important; /* El área y puesto en un gris muy claro para contraste */
+    opacity: 0.9;
+}
+
+/* =================================================
+   FIX PARA ICONOS (OJOS, FLECHAS) Y BLOQUES ABIERTOS
+   ================================================= */
+
+/* 1. Quitar fondo blanco a los botones de "ver" (ojos) */
+[data-theme="dark"] .view-button,
+[data-theme="dark"] .eye-icon-container,
+[data-theme="dark"] .agenda-card .lucide-eye,
+[data-theme="dark"] button:has(.lucide-eye) {
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Fondo sutil oscuro */
+    color: #f8fafc !important; /* Icono blanco/gris claro */
+    border: 1px solid var(--border-main) !important;
+}
+
+/* Botones circulares (prev / next) */
+[data-theme="dark"] .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--border);
+    border-radius: 999px color: white !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+/* =================================================
+   ESTILO PARA BLOQUE DE DÍA INHÁBIL (MODAL)
+   ================================================= */
+
+[data-theme="dark"] .dayoff-block {
+    background: rgba(220, 38, 38, 0.4) !important; /* Rojo traslúcido oscuro */
+    border: 1px solid #ef4444 !important;
+    border-radius: 8px;
+    padding: 20px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+}
+
+/* El icono SVG (Octagon Minus) */
+[data-theme="dark"] .dayoff-icon svg {
+    color: #fca5a5 !important; /* Rojo claro para que resalte */
+    stroke: #ffffff !important; /* Contorno blanco para máxima visibilidad */
+}
+
+/* El título "Día inhábil" */
+[data-theme="dark"] .dayoff-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem;
+    margin: 0 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Si hay contenido adicional dentro */
+[data-theme="dark"] .dayoff-content {
+    background: transparent !important; /* Evita que herede fondos blancos */
+    color: #ffffff !important;
+}
+
+/* =================================================
+   MODO OSCURO: BLOQUES DE AGENDA (MODAL)
+   ================================================= */
+
+/* 1. Encabezados de los bloques (Tareas, Órdenes, etc.) */
+[data-theme="dark"] .block-header {
+    background-color: #1e293b !important; /* Gris azulado oscuro para el header */
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .block-title,
+[data-theme="dark"] .block-title span,
+[data-theme="dark"] .block-actions span {
+    color: #ffffff !important; /* Texto del header en blanco */
+}
+[data-theme="dark"] .block {
+    border: 1px solid #334155 !important; /* Gris azulado medio */
+    border-radius: 8px;
+    overflow: hidden; /* Para que el header no tape las esquinas redondeadas */
+    margin-bottom: 12px;
+}
+
+/* 2. Bloque cuando está descolapsado (Contenido) */
+[data-theme="dark"] .tasks-section,
+[data-theme="dark"] .orders-section,
+[data-theme="dark"] .selfeval-content,
+[data-theme="dark"] .block-content {
+    background-color: #0f172a !important; /* Fondo gris muy oscuro/azul noche */
+    color: #ffffff !important;
+}
+
+/* 3. Items internos (Cards de tareas y órdenes) */
+[data-theme="dark"] .task-item,
+[data-theme="dark"] .order-item,
+[data-theme="dark"] .selfeval-item,
+[data-theme="dark"] .service-item {
+    background-color: #1e293b !important; /* Fondo gris para la card interna */
+    border: 1px solid #334155 !important;
+    color: #ffffff !important;
+}
+
+    /* 4. Textos específicos dentro de las cards */
+    [data-theme="dark"] .task-title span,
+    [data-theme="dark"] .order-main strong,
+    [data-theme="dark"] .selfeval-text,
+    [data-theme="dark"] .service-text,
+    [data-theme="dark"] .order-item span {
+        color: #ffffff !important;
+        /*border: 1px solid #475569 !important;*/ /* Un poco más claro para que resalte del fondo del bloque */
+        margin: 8px; /* Espaciado para que el borde se aprecie bien */
+        border-radius: 6px;
+    }
+
+
+
+    /* Textos secundarios (fechas, prioridades) */
+    [data-theme="dark"] .task-item small,
+    [data-theme="dark"] .order-date {
+        color: #94a3b8 !important; /* Gris claro para jerarquía visual */
+    }
+
+/* 5. Ajuste de los iconos Eye y Chevron */
+[data-theme="dark"] .icon-btn svg,
+[data-theme="dark"] .chevron {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .icon-btn {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px;
+}
+
+/* =================================================
+   MODO OSCURO: MODALES DE ORDEN (OT) Y SUBMODALES
+   ================================================= */
+
+/* 1. Contenedor Principal del Modal */
+[data-theme="dark"] .verot-container {
+    background-color: #0f172a !important; /* Fondo azul noche profundo */
+    color: #ffffff !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* 2. Header del Modal */
+[data-theme="dark"] .verot-header {
+    background-color: #2d2626 !important; /* Tono marrón/rojizo oscuro del header */
+    border-bottom: 1px solid #334155 !important;
+    padding: 1.2rem;
+}
+
+    [data-theme="dark"] .verot-title,
+    [data-theme="dark"] .verot-header h2,
+    [data-theme="dark"] .verot-header h3,
+    [data-theme="dark"] .verot-type {
+        color: #ffffff !important;
+    }
+
+[data-theme="dark"] .verot-close {
+    color: #ffffff !important;
+    opacity: 0.8;
+}
+
+/* 3. Cuerpo del Modal y Grid de Información */
+[data-theme="dark"] .verot-body {
+    background-color: #0f172a !important;
+    padding: 20px;
+}
+
+[data-theme="dark"] .orden-col p,
+[data-theme="dark"] .submodal-section p,
+[data-theme="dark"] .submodal-section span.value {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .orden-col b,
+[data-theme="dark"] .submodal-section b,
+[data-theme="dark"] .label {
+    color: #94a3b8 !important; /* Gris claro para los labels (Número, Autor, etc) */
+}
+
+/* 4. Tablas de Detalles */
+
+    [data-theme="dark"] .tabla-detalle thead tr {
+        background-color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .tabla-detalle th {
+        color: #ffffff !important;
+
+    }
+
+    [data-theme="dark"] .tabla-detalle td {
+        color: #e2e8f0 !important;
+        background-color: #0f172a !important;
+    }
+
+    [data-theme="dark"] .tabla-detalle tbody tr:hover td {
+        background-color: #1e293b !important; /* Efecto hover en filas */
+    }
+
+/* 5. Sub-modales Específicos */
+[data-theme="dark"] .submodal-section {
+    border-bottom: 1px solid #334155 !important;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+/* 6. Estados y Varios */
+[data-theme="dark"] .empty-state {
+    color: #64748b !important;
+    font-style: italic;
+}
+
+[data-theme="dark"] .verot-backdrop {
+    background-color: rgba(0, 0, 0, 0.75) !important; /* Fondo oscurecido detrás del modal */
+}
+
+/* Labels y Valores (Estilo limpio sin cajas) */
+[data-theme="dark"] .orden-col b,
+[data-theme="dark"] .submodal-section b,
+[data-theme="dark"] .label {
+    color: #94a3b8 !important; /* Gris azulado para etiquetas */
+    font-weight: 500;
+}
+
+[data-theme="dark"] .orden-col p,
+[data-theme="dark"] .submodal-section p,
+[data-theme="dark"] .submodal-section span.value {
+    color: #ffffff !important;
+}
+
+/* 4. Tabla de Detalles (Subtareas/Avances) */
+[data-theme="dark"] .tabla-detalle {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 15px;
+    border: 1px solid #334155 !important; /* Borde sutil exterior de la tabla */
+}
+
+    /* Header de la tabla (Nombre, Descripción, Avance) */
+    [data-theme="dark"] .tabla-detalle thead tr {
+        background-color: #1e293b !important; /* Gris azulado más claro */
+    }
+
+    [data-theme="dark"] .tabla-detalle th {
+        color: #ffffff !important;
+        border-bottom: 1px solid #334155 !important;
+        padding: 12px;
+    }
+
+    /* Celdas de la tabla */
+    [data-theme="dark"] .tabla-detalle td {
+        color: #e2e8f0 !important;
+        background-color: #0f172a !important;
+        border-bottom: 1px solid #334155 !important; /* Línea entre filas */
+        padding: 12px;
+    }
+
+    [data-theme="dark"] .tabla-detalle tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    [data-theme="dark"] .tabla-detalle tbody tr:hover td {
+        background-color: #1e293b !important; /* Efecto hover */
+    }
+
+/* 5. Secciones de Sub-modales (Separadores sutiles) */
+[data-theme="dark"] .submodal-section {
+    border-bottom: 1px solid #334155 !important;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+    [data-theme="dark"] .submodal-section:last-child {
+        border-bottom: none;
+    }
+
+/* 6. Fondo Detrás del Modal */
+[data-theme="dark"] .verot-backdrop {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* =================================================
+   MODO OSCURO: MODAL DETALLE DE ACTIVIDAD (EVENTOS/TAREAS)
+   ================================================= */
+
+/* Contenedor y fondo */
+[data-theme="dark"] .vermodal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .vermodal-container {
+    background-color: #0f172a !important; /* Fondo principal */
+    border: 1px solid #334155 !important;
+    color: #ffffff !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Header del modal */
+[data-theme="dark"] .vermodal-header {
+    background-color: #1e293b !important; /* Un tono más claro que el fondo */
+    border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .vermodal-title {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .vermodal-type {
+    color: #94a3b8 !important; /* Gris azulado para el tipo (Evento/Tarea) */
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+[data-theme="dark"] .vermodal-close {
+    color: #ffffff !important;
+    background: transparent;
+}
+
+/* Cards internas (Descripción, Organizador, etc.) */
+[data-theme="dark"] .vermodal-card {
+    background-color: #1e293b !important; /* Fondo de la card */
+    border: 1px solid #334155 !important; /* El bordecito que querías */
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+    [data-theme="dark"] .vermodal-card h4 {
+        color: #38bdf8 !important; /* Color azul brillante para los títulos internos */
+        border-bottom: 1px solid #334155;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+
+    [data-theme="dark"] .vermodal-card p,
+    [data-theme="dark"] .modal-list li {
+        color: #e2e8f0 !important;
+    }
+
+/* Listas (Subtareas/Participantes) */
+[data-theme="dark"] .modal-list li {
+    border-bottom: 1px solid #334155;
+    padding: 8px 0;
+}
+
+    [data-theme="dark"] .modal-list li:last-child {
+        border-bottom: none;
+    }
+
+/* Etiquetas de Prioridad */
+[data-theme="dark"] .verpriority-alta {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border: 1px solid #ef4444 !important;
+}
+
+/* PRIORIDAD MEDIA - Tonos Ámbar/Naranja */
+[data-theme="dark"] verpriority-media {
+    background-color: rgba(245, 158, 11, 0.2) !important; /* Ámbar con 20% opacidad */
+    color: #fbbf24 !important; /* Amarillo vibrante */
+    border: 1px solid #f59e0b !important; /* Borde ámbar */
+}
+
+/* PRIORIDAD BAJA - Tonos Esmeralda/Verde */
+[data-theme="dark"] verpriority-baja {
+    background-color: rgba(16, 185, 129, 0.2) !important; /* Verde con 20% opacidad */
+    color: #34d399 !important; /* Verde esmeralda claro */
+    border: 1px solid #10b981 !important; /* Borde verde */
+}
+
+/* Ajuste de columnas */
+[data-theme="dark"] .vermodal-left,
+[data-theme="dark"] .vermodal-right {
+    padding: 10px;
+}
+
+/* =================================================
+   MODO OSCURO: SUBMODALES ESPECÍFICOS (OT-TAREA, TRA)
+   ================================================= */
+
+/* 1. Fondo del cuerpo del submodal (Asegurar que sea oscuro) */
+[data-theme="dark"] .submodal-body {
+    background-color: #0f172a !important; /* El azul noche de la OT */
+    padding: 20px !important;
+}
+
+/* 2. Quitar las cajas blancas/claras de Nombre, Descripción y Observación */
+[data-theme="dark"] .submodal-section {
+    background-color: transparent !important; /* Adiós al fondo blanco */
+    border: none !important; /* Quitamos bordes si los hay */
+    border-bottom: 1px solid #1e293b !important; /* Solo una línea divisoria sutil */
+    border-radius: 0 !important;
+    margin-bottom: 15px !important;
+    padding: 10px 0 !important;
+}
+
+    /* 3. Estilo del Título (NOMBRE, DESCRIPCIÓN, OBSERVACIÓN) */
+    [data-theme="dark"] .submodal-section b,
+    [data-theme="dark"] .submodal-section .label {
+        color: #94a3b8 !important; /* Gris azulado para etiquetas */
+        font-size: 0.75rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 8px !important;
+    }
+
+    /* 4. Estilo de la Información (El texto que no se veía) */
+    [data-theme="dark"] .submodal-section p,
+    [data-theme="dark"] .submodal-section .value {
+        color: #ffffff !important; /* Blanco puro para máxima legibilidad */
+        font-size: 0.95rem !important;
+        line-height: 1.5;
+        margin: 0 !important;
+        background: none !important; /* Asegurar que no haya fondo heredado */
+    }
+
+/* 5. Si usas un contenedor tipo "grid", asegurar que no tenga fondo */
+[data-theme="dark"] .submodal-grid {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .area-filter {
+    background: #262626;
+    border-color: #404040;
+    color: #f5f5f5;
 }

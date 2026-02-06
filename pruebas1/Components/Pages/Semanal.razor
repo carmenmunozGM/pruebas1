@@ -3603,4 +3603,48 @@
     [data-theme="dark"] .equipo-item i {
         color: #9ca3af !important; /* Gris claro para íconos */
     }
+
+    /* =================================================
+       MODO OSCURO: TARJETAS DE SUBTAREAS (SUBTASK-CARD)
+       ================================================= */
+
+    [data-theme="dark"] .subtask-card {
+        /* Un fondo ligeramente más claro que el fondo del modal (#0f172a)
+           para que se note la elevación */
+        background: #1e293b !important;
+        /* Mantenemos el borde izquierdo para el color de prioridad/estado */
+        border-left: 4px solid #3b82f6 !important;
+        /* Texto en blanco suave para que no canse la vista */
+        color: #f1f5f9 !important;
+        /* Sombra sutil para separar del fondo */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        /* Espaciados consistentes */
+        padding: 12px;
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px; /* Separación entre tarjetas */
+    }
+
+        /* Efecto Hover para que se sienta interactivo */
+        [data-theme="dark"] .subtask-card:hover {
+            background: #2d3748 !important;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        /* Ajuste para los iconos o botones dentro de la card si existen */
+        [data-theme="dark"] .subtask-card .view-icon,
+        [data-theme="dark"] .subtask-card i {
+            color: #94a3b8 !important;
+        }
+
+    [data-theme="dark"] .remove-tag, .remove-sub {
+        background: #1e293b !important;
+   
+    }
+
 </style>
