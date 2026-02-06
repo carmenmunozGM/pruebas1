@@ -91,83 +91,135 @@
     <style>
         .refresh-glow {
             background-color: #BDEAF9;
-            color: black;
+            color: #004a5a; /* Un color de texto que combine mejor */
             border: none;
-            border-radius: 10px;
-            padding: 5px 30px;
-            transform: translateY(102px);
+            border-radius: 50px; /* Forma de píldora */
+            padding: 0px 20px; /* Delgado a lo alto, ancho a los lados */
             font-weight: 600;
-            font-size: 1rem;
-            min-width: 32px;
-            height: 32px;
-            box-shadow: 0 0 8px rgba(183, 183, 183);
-            transition: box-shadow 0.25s ease-in-out, background-color 0.25s ease-in-out;
+            font-size: 0.85rem; /* Texto más fino */
+            height: 30px; /* Altura delgada fija */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.25s ease-in-out;
+            cursor: pointer;
         }
 
-            .refresh-glow:hover,
-            .refresh-glow:focus,
-            .refresh-glow:active {
-                transform: translateY(102px);
+            .refresh-glow:hover {
+                background-color: #a3d8e9;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             }
 
+            .refresh-glow:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
 
-        .rotate-icon {
-            display: inline-block;
-            animation: spin 1s linear infinite;
+        /* Aplicamos lo mismo al botón del Modal */
+        .modal-button-container button {
+            padding: 4px 20px !important;
+            height: 32px !important;
+            border-radius: 50px !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important; /* Fuerza una sola línea */
+            display: inline-flex !important;
+            align-items: center !important;
+            width: auto !important; /* Evita que el botón se estire a lo ancho */
         }
 
+            .action-button-slender:hover, .modal-button-container button:hover {
+                filter: brightness(1.1);
+                transform: translateY(-1px);
+            }
+     /* El contenedor que los mantiene alineados al raz sin bajarse */
+    .dashboard-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 0 15px;
+        margin-bottom: 20px;
+        height: 40px; /* Altura fija para que no 'baile' */
+    }
+
+    .action-button-slender {
+        /* Usamos tus variables para que el color cambie solo */
+        background-color: var(--color-secondary); 
+        color: var(--color-primary); 
+        
+        border: none;
+        border-radius: 50px;
+        padding: 4px 18px; 
+        height: 32px; 
+        
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .action-button-slender:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
     </style>
-    <div class="text-start">
-        <button class="btn-sm refresh-glow"
-                @onclick="RefreshData"
-                disabled="@isRefreshing">
-            @if (isRefreshing)
-            {
-                <span class="spinner-border spinner-border-sm text-light"></span>
-            }
-            else
-            {
-                <span> 🔄 Actualizar</span>
-            }
-        </button>
-    </div>
+
+
+
     @if (!EsDiaNoLaboral)
     {
-        <div class="modal-button-container">
-            <ReusableModal OnSave="RefrescarTareas" />
+        <div class="dashboard-actions-row">
+
+            @* LADO IZQUIERDO: Botón Actualizar *@
+            <button class="action-button-slender" @onclick="RefreshData" disabled="@isRefreshing">
+                @if (isRefreshing)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <span>🔄 Actualizar</span>
+                }
+            </button>
+
+            @* LADO DERECHO: Botón Crear *@
+            <div class="modal-button-container">
+                @* Asegúrate de que el botón dentro de ReusableModal use la clase 'action-button-slender' *@
+                <ReusableModal OnSave="RefrescarTareas" />
+            </div>
 
         </div>
     }
-    <div class="dashboard-container @Settings.ViewMode">
     @if (EsDiaNoLaboral)
     {
+        @* Sección fuera del container principal *@
         <div class="dia-inhabil-container">
             <div class="dia-inhabil-card">
                 <div class="icono">⛔</div>
-
                 <h2>Día inhábil</h2>
-
                 <h4>
-                    @FechaSeleccionada.ToString(
-                    "dddd, dd MMMM yyyy",
-                                new CultureInfo("es-ES"))
-            </h4>
-
-            <p class="descripcion">
-                @(DiaNoLaboralActual?.Descripcion
-                                ?? DiaNoLaboralActual?.Nombre
-                                ?? "No laborable")
-            </p>
-
+                    @FechaSeleccionada.ToString("dddd, dd MMMM yyyy", new CultureInfo("es-ES"))
+                </h4>
+                <p class="descripcion">
+                    @(DiaNoLaboralActual?.Descripcion ?? DiaNoLaboralActual?.Nombre ?? "No laborable")
+                </p>
                 <span class="badge-inhabil">
                     @(DiaNoLaboralActual?.Tipo ?? "No laboral")
                 </span>
             </div>
         </div>
-        }
-         
+    }
+    
     else
     {
+        <div class="dashboard-container @Settings.ViewMode">
         @if (Categories.FirstOrDefault(c => c.Name.Trim() == "Tareas") is CategoryModel tareasCat)
         {
             <div class="card block-card @tareasCat.ColorClass">
@@ -504,13 +556,14 @@
             </div>
             <br />
         }
-        var autoevalDia = AutoevaluacionesDelDia
-        .Where(a => a.Fecha.Date == FechaSeleccionada.Date)
-        .ToList();
-        var mostrarMensajeRegistro = !autoevalDia.Any();
-        var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
-        var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
-
+            @{
+                var autoevalDia = AutoevaluacionesDelDia
+                .Where(a => a.Fecha.Date == FechaSeleccionada.Date)
+                .ToList();
+                var mostrarMensajeRegistro = !autoevalDia.Any();
+                var autoevalCompletadas = autoevalDia.Any() && autoevalDia.All(a => a.Realizado);
+                var autoevalPendientes = autoevalDia.Count(a => !a.Realizado);
+            }
         @if (true)
         {
             <div class="card block-card azul-lavanda">
@@ -654,10 +707,9 @@
                     }
                 </div>
             }
+        </div>
     }
-    </div> 
-</div>
-
+    </div>
 
 
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS -->
@@ -1374,7 +1426,7 @@
     </div>
 
     }
-
+    }
 
 
 
@@ -1442,7 +1494,9 @@
     private bool MostrarAlerta = false;
     private string MensajeAlerta = string.Empty;
     private string TipoAlerta = "exito";
-   
+  
+  
+    private bool mostrarMensajeRegistro = false;
     private HashSet<string> MenuE = new HashSet<string>();
     private HashSet<string> MenuS = new HashSet<string>();
 

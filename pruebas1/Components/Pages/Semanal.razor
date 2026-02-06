@@ -224,9 +224,12 @@
 <!-- Modal de Tarea (editar/ver) -->
 @if (IsModalOpen && SelectedTaskObject != null)
 {
-    <div class="view-overlay" @onclick="CloseTaskModal">
+    @* Usamos @key para que Blazor limpie la "memoria" del modal al cambiar de actividad *@
+    <div class="view-overlay" @key="SelectedTaskObject" @onclick="CloseTaskModal">
         <div class="bento-modal" @onclick:stopPropagation>
-            @if (SelectedTask != null)
+
+            @* --- CASO 1: TAREAS O EVENTOS (Solo entra si es BaseTask y tenemos el snapshot) --- *@
+            @if (SelectedTaskObject is BaseTask && SelectedTask != null)
             {
                 var bt = SelectedTask;
 
@@ -278,7 +281,7 @@
                                 @(prioridadesList.FirstOrDefault(p => p.Id == bt.IdPrioridad)?.Titulo)
                             </span>
                         }
-                    
+
                         <label class="mt-20">📅 PLANIFICACIÓN</label>
                         <div class="plan-row">
                             <div class="plan-item">
@@ -286,11 +289,9 @@
                                 @if (IsEditMode)
                                 {
                                     <div class="edit-date-row">
-                                      
                                         <DatePicker Value="bt.StartDate" ValueChanged="@(v => bt.StartDate = v ?? bt.StartDate)" />
                                         @if (bt.EsEvento)
                                         {
-
                                             <TimePickerList @bind-Value="bt.HoraInicio" />
                                         }
                                     </div>
@@ -385,7 +386,6 @@
                                             <button class="remove-tag" @onclick="() => QuitarParticipante(p)">&times;</button>
                                         </div>
                                     }
-                                  
                                 }
                                 else
                                 {
@@ -432,11 +432,11 @@
                     }
                     else
                     {
-                        <button class="bento-btn close-red" @onclick="() => IsModalOpen = false">Cerrar</button>
+                        <button class="bento-btn close-red" @onclick="CloseTaskModal">Cerrar</button>
                     }
                 </div>
             }
-            @* --- CASO 2: ES UNA AUTOEVALUACIÓN (Ahora dentro del modal) --- *@
+            @* --- CASO 2: AUTOEVALUACIÓN (Aislado de la lógica de tareas) --- *@
             else if (SelectedTaskObject is SelfAssessment sa)
             {
                 <div class="bento-header">
@@ -449,6 +449,9 @@
                     </div>
                     <button class="bento-close" @onclick="CloseTaskModal">&times;</button>
                 </div>
+
+              
+
                 <div class="bento-footer">
                     <button class="bento-btn close-red" @onclick="CloseTaskModal">Cerrar</button>
                 </div>
@@ -456,7 +459,6 @@
         </div>
     </div>
 }
-
 @if (IsClientModalOpen && SelectedClientTask != null)
 {
     <div class="modal-backdrop" @onclick="CloseClientModal"></div>
@@ -1969,34 +1971,76 @@
             };
     }
 
-    void OpenTaskModal(BaseTask task, bool editMode)
-    {
-        OriginalTask = task;
-        SelectedTask = CreateSnapshot(task);
-        SelectedTask.SubTasks = task.SubTasks;
+    // void OpenTaskModal(BaseTask task, bool editMode)
+    // {
+    //     OriginalTask = task;
+    //     SelectedTask = CreateSnapshot(task);
+    //     SelectedTask.SubTasks = task.SubTasks;
 
-        SelectedTaskObject = task;
+    //     SelectedTaskObject = task;
+    //     IsEditMode = editMode;
+    //     IsModalOpen = true;
+
+    //     salaSeleccionada = SelectedTask.IdSala.HasValue && SelectedTask.IdSala > 0
+    //         ? SelectedTask.IdSala
+    //         : null;
+
+    //     InicializarUbicacion(task);
+    //     if (task.EsEvento)
+    //     {
+    //         ParticipantesEdit = todosLosEmpleados
+    //             .Where(e => task.Participantes.Contains(e.Nombre))
+    //             .Select(e => new ParticipanteDTO
+    //             {
+    //                 idEmpleado = e.Id,
+    //                 nombreEmpleado = e.Nombre
+    //             })
+    //             .ToList();
+    //     }
+    //     else
+    //     {
+    //         ParticipantesEdit.Clear();
+    //     }
+    // }
+    void OpenTaskModal(object item, bool editMode) // Cambiamos BaseTask por object para aceptar ambos
+    {
+        // 1. Limpieza total preventiva (Reset)
+        CloseTaskModal();
+
+        // 2. Asignación del objeto principal
+        SelectedTaskObject = item;
         IsEditMode = editMode;
         IsModalOpen = true;
 
-        salaSeleccionada = SelectedTask.IdSala.HasValue && SelectedTask.IdSala > 0
-            ? SelectedTask.IdSala
-            : null;
+        // 3. Lógica específica según el tipo
+        if (item is BaseTask task)
+        {
+            OriginalTask = task;
+            SelectedTask = CreateSnapshot(task);
+            SelectedTask.SubTasks = task.SubTasks;
 
-        InicializarUbicacion(task);
-        if (task.EsEvento)
-        {
-            ParticipantesEdit = todosLosEmpleados
-                .Where(e => task.Participantes.Contains(e.Nombre))
-                .Select(e => new ParticipanteDTO
-                {
-                    idEmpleado = e.Id,
-                    nombreEmpleado = e.Nombre
-                })
-                .ToList();
+            salaSeleccionada = SelectedTask.IdSala.HasValue && SelectedTask.IdSala > 0
+                ? SelectedTask.IdSala
+                : null;
+
+            InicializarUbicacion(task);
+
+            if (task.EsEvento)
+            {
+                ParticipantesEdit = todosLosEmpleados
+                    .Where(e => task.Participantes.Contains(e.Nombre))
+                    .Select(e => new ParticipanteDTO
+                    {
+                        idEmpleado = e.Id,
+                        nombreEmpleado = e.Nombre
+                    })
+                    .ToList();
+            }
         }
-        else
+        else if (item is SelfAssessment sa)
         {
+            // Si la autoevaluación necesita lógica previa, va aquí
+            SelectedTask = null; // Nos aseguramos que no haya una tarea estorbando
             ParticipantesEdit.Clear();
         }
     }
@@ -2012,16 +2056,32 @@
         IsModalOpen = true;
     }
 
+    // void CloseTaskModal()
+    // {
+    //     SelectedTask = null;
+    //     OriginalTask = null;
+    //     salaSeleccionada = null;
+
+    //     IsModalOpen = false;
+    //     IsEditMode = false;
+    // }
     void CloseTaskModal()
     {
+        // Limpia las referencias específicas
         SelectedTask = null;
         OriginalTask = null;
         salaSeleccionada = null;
 
+        // ¡ESTA ES LA CLAVE!
+        // Si no la limpias, el próximo modal puede heredar datos del anterior
+        SelectedTaskObject = null;
+
         IsModalOpen = false;
         IsEditMode = false;
-    }
 
+        // Opcional: Limpiar búsquedas de empleados si usas la misma variable
+        BusquedaEmpleado = string.Empty;
+    }
     void OpenClientModal(ClientServiceTask cs)
     {
         SelectedClientTask = cs;
