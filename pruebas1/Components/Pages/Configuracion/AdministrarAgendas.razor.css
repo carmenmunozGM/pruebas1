@@ -329,7 +329,7 @@
 .submit-button {
     width: 100%;
     padding: 14px 24px;
-    background: linear-gradient(to right, #ec4899, #9333ea);
+    background: #9333ea;
     color: white;
     border: none;
     border-radius: 8px;
@@ -342,7 +342,7 @@
 }
 
     .submit-button:hover:not(:disabled) {
-        background: linear-gradient(to right, #db2777, #7c3aed);
+        background: #7c3aed;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 
@@ -352,11 +352,11 @@
     }
 
     .submit-button.desvincular-btn {
-        background: linear-gradient(to right, #f97316, #dc2626);
+        background: #dc2626;
     }
 
         .submit-button.desvincular-btn:hover:not(:disabled) {
-            background: linear-gradient(to right, #ea580c, #b91c1c);
+            background: #b91c1c;
         }
 
 .message-toast {
