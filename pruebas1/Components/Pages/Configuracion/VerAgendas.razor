@@ -1,4 +1,5 @@
 @using System.Diagnostics
+@using System.Text.Json
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
@@ -9,6 +10,8 @@
 @inject VerAgendasService VerAgendasService
 @inject CalendarioService CalendarioService
 @inject SalasEmService SalasEmService
+@inject OrdenTrabajoService OrdenTrabajoService
+@inject OrdenTramiteService OrdenTramiteService
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -45,25 +48,32 @@
                     <div class="employee-avatar" style="background: @GetAvatarColor(index)">
                         @GetInitials(employee.NetName)
                     </div>
+
                     <div class="employee-details">
                         <h4>@employee.NetName - @employee.ClavePersonal</h4>
                         <p>@employee.Area - @employee.Puesto</p>
-
                     </div>
                 </div>
 
                 <div class="stats-container">
                     <div class="stat-box pending-stat">
-                        <span class="stat-label">Pendientes</span>
-                        <span class="stat-value">@employee.UpcomingTasks</span>
+                        <span class="stat-label">Actividades Pendientes</span>
+                        <span class="stat-value @GetPendienteClass(employee.ActividadesPendientes)">
+                            @employee.ActividadesPendientes
+                        </span>
                     </div>
+
                     <div class="stat-box completed-stat">
-                        <span class="stat-label">Completadas hoy</span>
-                        <span class="stat-value">@employee.CompletedToday</span>
+                        <span class="stat-label">Autoevaluación Pendiente</span>
+                        <span class="stat-value @GetPendienteClass(employee.AutoevaluacionesPendientes)">
+                            @employee.AutoevaluacionesPendientes
+                        </span>
                     </div>
                 </div>
 
-                <button class="ver-button" @onclick:stopPropagation="true"  @onclick="async () => await ShowAgenda(employee)">
+                <button class="ver-button"
+                        @onclick:stopPropagation="true"
+                        @onclick="async () => await ShowAgenda(employee)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
@@ -72,6 +82,7 @@
                 </button>
             </div>
         }
+
     </div>
 
     @if (selectedEmployee != null)
@@ -189,14 +200,6 @@
                     <div class="block tasks-block">
                         <div class="block-header" @onclick="ToggleTasks">
                             <span class="block-title">
-                                @* <svg xmlns="http://www.w3.org/2000/svg"
-                                     width="20" height="20" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     class="lucide lucide-square-check-big">
-                                    <path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344" />
-                                    <path d="m9 11 3 3L22 4" />
-                                </svg> *@
                                 <span>📋 Tareas</span>
                             </span>
                             <span class=" block-actions">
@@ -220,16 +223,6 @@
                                     <div class="task-item @(task.completada ? "completed" : "")">
                                         <div>
                                             <div class="task-title">
-                                                @* <svg xmlns="http://www.w3.org/2000/svg"
-                                                     width="24" height="24" viewBox="0 0 24 24"
-                                                     fill="none" stroke="currentColor"
-                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                     class="lucide lucide-scroll-text-icon lucide-scroll-text">
-                                                    <path d="M15 12h-5" />
-                                                    <path d="M15 8h-5" />
-                                                    <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-                                                    <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
-                                                </svg> *@
                                                 <span>🗒️ @task.titulo</span>
                                             </div>
 
@@ -254,16 +247,6 @@
                                         <div class="task-item event @(evento.completada ? "completed" : "")">
                                             <div>
                                                 <div class="task-title">
-                                                    @* <svg xmlns="http://www.w3.org/2000/svg"
-                                                         width="24" height="24" viewBox="0 0 24 24"
-                                                         fill="none" stroke="currentColor"
-                                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                         class="lucide lucide-calendar-icon lucide-calendar">
-                                                        <path d="M8 2v4" />
-                                                        <path d="M16 2v4" />
-                                                        <rect width="18" height="18" x="3" y="4" rx="2" />
-                                                        <path d="M3 10h18" />
-                                                    </svg> *@
                                                     <span>📅 @evento.titulo</span>
                                                 </div>
 
@@ -288,10 +271,6 @@
                     <div class="block orders-block">
                         <div class="block-header" @onclick="ToggleOrders">
                             <span class="block-title">
-                                @* <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-notepad-text">
-                                    <path d="M8 2v4" /> <path d="M12 2v4" /> <path d="M16 2v4" /> <rect width="16" height="18" x="4" y="4" rx="2" /> <path d="M8 10h6" /> <path d="M8 14h8" />
-                                    <path d="M8 18h5" />
-                                </svg> *@
                                 <span>🧾 Órdenes de trabajo</span>
                             </span>
 
@@ -325,7 +304,7 @@
                                                 </div>
                                                 <span>@(o.Tipo == "OT" ? "vencida" : "vencida")</span>
 
-                                                <button class="icon-btn" title="Ver orden">
+                                                    <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                          width="18" height="18" viewBox="0 0 24 24"
                                                          fill="none" stroke="currentColor"
@@ -352,7 +331,7 @@
                                                 </div>
                                                 <span>@(o.Tipo == "OT" ? "próxima" : "próxima")</span>
 
-                                                <button class="icon-btn" title="Ver orden">
+                                                    <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                          width="18" height="18" viewBox="0 0 24 24"
                                                          fill="none" stroke="currentColor"
@@ -379,7 +358,7 @@
                                                 </div>
                                                 <span>@(o.Tipo == "OT" ? "hoy" : "hoy")</span>
 
-                                                <button class="icon-btn" title="Ver orden">
+                                                    <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                          width="18" height="18" viewBox="0 0 24 24"
                                                          fill="none" stroke="currentColor"
@@ -405,13 +384,6 @@
                         <div class="block-header" @onclick="() => SelfEvalCollapsed = !SelfEvalCollapsed">
 
                             <span class="block-title">
-                                @* <svg xmlns="http://www.w3.org/2000/svg"
-                                     width="20" height="20" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round"
-                                     class="lucide lucide-star">
-                                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
-                                </svg> *@
                                 <span>⭐ Autoevaluación</span>
                             </span>
 
@@ -453,15 +425,6 @@
                     <div class="block service-block">
                         <div class="block-header" @onclick="() => ServiceCollapsed = !ServiceCollapsed">
                             <span class="block-title">
-                                @* <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                     class="lucide lucide-building-2">
-                                    <path d="M10 12h4" />
-                                    <path d="M10 8h4" />
-                                    <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
-                                    <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" />
-                                    <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
-                                </svg> *@
                                 <span>🏢 Servicio a Cliente</span>
                             </span>
                             <span class="block-actions">
@@ -530,13 +493,13 @@
                                 <p>@ActividadSeleccionada.Organizador</p>
                             </section>
                         }
-                        <section class="vermodal-card">
-                            <h4>
-                                @(ActividadSeleccionada.EsEvento
-                                                            ? "Participantes"
-                                                            : "Subtareas")
+                    <section class="vermodal-card">
+                        <h4>
+                            @(ActividadSeleccionada.EsEvento
+                                                        ? "Participantes"
+                                                        : "Subtareas")
                         </h4>
-                            <ul class="modal-list">
+                        <ul class="modal-list">
                             @foreach (var item in
                                                         ActividadSeleccionada.EsEvento
                                                         ? ActividadSeleccionada.Participantes
@@ -547,17 +510,15 @@
                             </ul>
                         </section>
                     </div>
-
                     <!-- DERECHA -->
                     <div class="vermodal-right">
 
                         <section class="vermodal-card">
                             <h4>Prioridad</h4>
-                            <span class="verpriority priority-alta">
+                            <span class="verpriority ">
                                 @ActividadSeleccionada.Prioridad
                             </span>
                         </section>
-
                         <section class="vermodal-card">
                             <h4>Horario</h4>
 
@@ -571,7 +532,6 @@
                                 <p>Inicio: @FormatearFecha(ActividadSeleccionada.FechaInicio)</p>
                                 <p>Término: @FormatearFecha(ActividadSeleccionada.FechaFin)</p>
                             }
-
                         </section>
                         @if (ActividadSeleccionada.EsEvento)
                         {
@@ -588,6 +548,310 @@
         </div>
     }
 
+    <!-- MODAL DETALLES DE ORDEN-->
+    @if (MostrarOrden && OrdenSeleccionada != null)
+    {
+        <div class="verot-backdrop" @onclick="CerrarOrden">
+
+            <div class="verot-container modal-lg"
+                 @onclick:stopPropagation>
+
+                <!-- HEADER -->
+                <div class="verot-header">
+                    <div>
+                        <span class="verot-type">
+                            @(OrdenSeleccionada.Tipo == "OT"
+                                                    ? "Orden de Trabajo"
+                                                    : "Orden de Trámite")
+                    </span>
+
+                        <h2 class="verot-title">
+                            @OrdenSeleccionada.Numero
+                        </h2>
+                    </div>
+
+                    <button class="verot-close" @onclick="CerrarOrden">✕</button>
+                </div>
+
+                <!-- BODY -->
+                <div class="verot-body">
+                @if (OrdenSeleccionada.Tipo == "OT")
+                    {
+                        @if (CargandoDetalle || DetalleOT == null)
+                        {
+                            <p>Cargando detalle...</p>
+                        }
+                        else
+                        {
+                            <div class="orden-grid">
+                                <div class="orden-col">
+                                    <p><b>Número:</b> @DetalleOT.strClave</p>
+                                    <p><b>Autor:</b> @DetalleOT.nombreCompleto</p>
+                                    <p><b>Objetivo:</b> @DetalleOT.strValor</p>
+                                    <p><b>Objetivo otros:</b> @DetalleOT.strObjetivoOtro</p>
+                                    <p><b>Fecha conclusión:</b> @FormatoFechaOrden(DetalleOT.fechaFinal)</p>
+                                </div>
+
+                                <div class="orden-col">
+                                    <p><b>Fecha solicitud:</b> @FormatoFechaOrden(DetalleOT.dteFechaSolicitud)</p>
+                                    <p><b>Cliente:</b> @DetalleOT.nombreCliente</p>
+                                    <p><b>Estado:</b> @DetalleOT.estado</p>
+                                </div>
+                            </div>
+
+                            <div class="orden-table">
+                                <h4>Tareas</h4>
+
+                                <table class="tabla-detalle">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Descripción</th>
+                                            <th>Avance</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var tarea in DetalleOT.tareas)
+                                        {
+                                            <tr>
+                                                <td>@tarea.strNombreTarea</td>
+                                                <td>@tarea.strDescripcionAutor</td>
+                                                <td>@tarea.avance</td>
+                                                <td>
+                                                    <button class="icon-btn"
+                                                            @onclick="() => VerDetalleTareaOT(tarea)">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                             width="18" height="18" viewBox="0 0 24 24"
+                                                             fill="none" stroke="currentColor"
+                                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                             class="lucide lucide-eye">
+                                                            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        @if (CargandoDetalle || DetalleTramite == null)
+                        {
+                            <p>Cargando detalle...</p>
+                        }
+                        else
+                        {
+                            <div class="orden-grid">
+                                <div class="orden-col">
+                                    <p><b>Fecha solicitud:</b> @DetalleTramite.fechaSolicitud</p>
+                                    <p><b>Cliente:</b> @DetalleTramite.cliente</p>
+                                    <p><b>Fecha conclusión:</b> @DetalleTramite.fechaConclusionTramite</p>
+                                </div>
+
+                                <div class="orden-col">
+                                    <p><b>Solicitante:</b> @DetalleTramite.solicitanteInterno</p>
+                                    <p><b>Nombre global:</b> @DetalleTramite.nombreGlobal</p>
+                                    <p><b>Número orden:</b> @DetalleTramite.numeroOrden</p>
+                                </div>
+                            </div>
+
+                            <div class="orden-table">
+                                <h4>Trámites individuales</h4>
+
+                                <table class="tabla-detalle">
+                                    <thead>
+                                        <tr>
+                                            <th>Clave</th>
+                                            <th>Trámite</th>
+                                            <th>Encargado</th>
+                                            <th>Tareas</th>
+                                            <th>Detalle</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        @foreach (var tramite in DetalleTramite.tramitesIndividuales)
+                                        {
+                                            <tr>
+                                                <td>@tramite.clave</td>
+                                                <td>@tramite.tramiteIndividual</td>
+                                                <td>@tramite.personalEncargado</td>
+
+                                                <!-- VER TAREAS -->
+                                                <td>
+                                                    <button class="icon-btn"
+                                                            @onclick="() => VerTareasTramite(tramite)">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                             width="18" height="18" viewBox="0 0 24 24"
+                                                             fill="none" stroke="currentColor"
+                                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                             class="lucide lucide-eye">
+                                                            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+
+                                                <!-- VER DETALLE -->
+                                                <td>
+                                                    <button class="icon-btn"
+                                                            @onclick="() => VerDetalleTramite(tramite)">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                             width="18" height="18" viewBox="0 0 24 24"
+                                                             fill="none" stroke="currentColor"
+                                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                             class="lucide lucide-eye">
+                                                            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    @if (MostrarSubModal)
+    {
+        <div class="verot-backdrop submodal" @onclick="CerrarSubModal">
+
+            <div class="verot-container modal-sm"
+                 @onclick:stopPropagation="true">
+
+                <!-- HEADER -->
+                <div class="verot-header">
+                    <h3>
+                        @switch (TipoSubModal)
+                        {
+                            case "OT-TAREA":
+                                if (SubModalData is TareaDTO tareaOT)
+                                {
+                                    <span>Detalle de la tarea @tareaOT.strNombreTarea</span>
+                                }
+                                break;
+
+                            case "TRA-TAREAS":
+                                if (SubModalData is TramiteIndividualDTO tramiteTareas)
+                                {
+                                    <span>Tareas @tramiteTareas.clave</span>
+                                }
+                                break;
+
+                            case "TRA-DETALLE":
+                                if (SubModalData is TramiteIndividualDTO tramiteDetalle)
+                                {
+                                    <span>Detalle @tramiteDetalle.clave</span>
+                                }
+                                break;
+                        }
+                    </h3>
+                    <button class="verot-close" @onclick="CerrarSubModal">✕</button>
+                </div>
+
+                <!-- BODY -->
+                <div class="verot-body submodal-body">
+                    @switch (TipoSubModal)
+                    {
+                        case "OT-TAREA":
+                            if (SubModalData is TareaDTO tarea)
+                            {
+                                <div class="submodal-section">
+                                    <b>Nombre</b>
+                                    <p>@tarea.strNombreTarea</p>
+                                </div>
+
+                                <div class="submodal-section">
+                                    <b>Descripción</b>
+                                    <p>@tarea.strDescripcionAutor</p>
+                                </div>
+
+                                <div class="submodal-section">
+                                    <b>Observación</b>
+                                    <p>@tarea.strObservacion</p>
+                                </div>
+                            }
+                            break;
+
+                        case "TRA-TAREAS":
+
+                            if (SubModalData is TramiteIndividualDTO tramiteTareas)
+                            {
+                                <table class="tabla-detalle">
+                                    <thead>
+                                        <tr>
+                                            <th>Clave</th>
+                                            <th>Tarea</th>
+                                            <th>Encargado</th>
+                                            <th>Fecha fin</th>
+                                            <th>Avance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var t in tramiteTareas.tareas)
+                                        {
+                                            <tr>
+                                                <td>@t.claveTarea</td>
+                                                <td>@t.tarea</td>
+                                                <td>@t.encargadoTarea</td>
+                                                <td>@FormatoFechaOrden(DateTime.Parse(t.fechaConclusion))</td>
+                                                <td>@t.avance</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <div class="empty-state">Sin tareas registradas</div>
+                            }
+                            break;
+
+                        case "TRA-DETALLE":
+                            <div class="submodal-grid">
+
+                                @if (SubModalData is TramiteIndividualDTO tramiteDetalle)
+                                {
+                                    <div class="submodal-section">
+                                        <span class="label">Encargado</span>
+                                        <span class="value">@tramiteDetalle.personalEncargado</span>
+                                    </div>
+
+                                    <div class="submodal-section">
+                                        <span class="label">Dependencia</span>
+                                        <span class="value">@tramiteDetalle.dependencia</span>
+                                    </div>
+
+                                    <div class="submodal-section">
+                                        <span class="label">Estado</span>
+                                        <span class="value estado proceso">@tramiteDetalle.estadoTramite</span>
+                                    </div>
+
+                                    <div class="submodal-section full">
+                                        <span class="label">Observación</span>
+                                        <span class="value">@tramiteDetalle.observacion</span>
+                                    </div>
+                                }
+                            </div>
+                            break;
+                    }
+                </div>
+
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -599,6 +863,7 @@
     List<EmpleadoDTO> empleadoList = new();
     List<SalasEm> Salas = new();
     private List<EmployeeInfo> employees = new();
+    private bool cargando = true;
 
     string? selectedArea;
 
@@ -610,6 +875,8 @@
         areaList = await AreasService.GetAreas();
         await CargarEmpleados();
         Salas = await SalasEmService.GetSalas();
+        empleadoList = await VerAgendasService.GetEmpleadosPendientes();
+        cargando = false;
     }
 
     async Task RefreshAgenda()
@@ -621,8 +888,8 @@
     {
         var empleadosDto = await Http
             .GetFromJsonAsync<List<EmpleadoDTO>>(
-                "https://redgm.site:9096/empleado"
-                //"http://localhost:5231/empleado"
+               "https://redgm.site:9096/empleado/pendientes"
+            //"http://localhost:5231/empleado"
             )
             ?? new();
         employees = empleadosDto
@@ -635,8 +902,8 @@
             NetName = e.NombreRed,
             Area = e.Area,
             Puesto = e.Puesto,
-            UpcomingTasks = 0,
-            CompletedToday = 0
+            ActividadesPendientes = e.ActividadesPendientes,
+            AutoevaluacionesPendientes = e.AutoevaluacionesPendientes
         }).ToList();
     }
 
@@ -651,8 +918,8 @@
         public string Area { get; set; } = string.Empty;
         public string Puesto { get; set; } = string.Empty;
 
-        public int UpcomingTasks { get; set; }
-        public int CompletedToday { get; set; }
+        public int ActividadesPendientes { get; set; }
+        public int AutoevaluacionesPendientes { get; set; }
     }
 
     private string[] colors = new string[] 
@@ -687,7 +954,6 @@
             await InvokeAsync(StateHasChanged);
             return;
         }
-
         try
         {
             agendaSeleccionada =
@@ -725,6 +991,17 @@
                     e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
+    }
+
+    string GetPendienteClass(int cantidad)
+    {
+        if (cantidad == 0)
+            return "stat-ok";
+
+        if (cantidad <= 5)
+            return "stat-warning";
+
+        return "stat-danger";
     }
 
     <!-- DATE BAR -->
@@ -809,11 +1086,27 @@
     int TotalPendientesDelDia =>
     TareasPendientesDelDia + EventosPendientesDelDia;
 
+    string hoy = DateOnly.FromDateTime(DateTime.Today).ToString();
+
+    int TareasPendientes =>
+    TareasAgenda.Count(t =>
+        !t.completada &&
+        t.fechaFin == DateTime.Parse(hoy));
+
+    int EventosPendientes =>
+        EventosAgenda.Count(e =>
+            !e.completada &&
+            e.fechaFin == DateTime.Parse(hoy));
+
+    int TotalPendientes =>
+        TareasPendientes + EventosPendientes;
+
     <!-- ORDENES DE TRABAJO -->
     bool OrdersCollapsed = false;
 
     class OrdenAgendaVM
     {
+        public int Id { get; set; }
         public string Numero { get; set; } = "";
         public DateTime Fecha { get; set; }
         public string Tipo { get; set; } = "";
@@ -829,6 +1122,7 @@
             .Concat(
                 agendaSeleccionada.OTHoy.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.id,
                     Numero = o.strClave,
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
@@ -839,6 +1133,7 @@
             .Concat(
                 agendaSeleccionada.OTProximas.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.id,
                     Numero = o.strClave,
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
@@ -849,6 +1144,7 @@
             .Concat(
                 agendaSeleccionada.OTVencidas.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.id,
                     Numero = o.strClave,
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
@@ -860,6 +1156,7 @@
             .Concat(
                 agendaSeleccionada.TRAHoy.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.idOrden,
                     Numero = o.numeroOrden,
                     Fecha = DateTime.Parse(o.fechaConclusionTramite),
                     Tipo = "TRA",
@@ -870,6 +1167,7 @@
             .Concat(
                 agendaSeleccionada.TRAProximas.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.idOrden,
                     Numero = o.numeroOrden,
                     Fecha = DateTime.Parse(o.fechaConclusionTramite),
                     Tipo = "TRA",
@@ -880,6 +1178,7 @@
             .Concat(
                 agendaSeleccionada.TRAVencidas.Select(o => new OrdenAgendaVM
                 {
+                    Id = o.idOrden,
                     Numero = o.numeroOrden,
                     Fecha = DateTime.Parse(o.fechaConclusionTramite),
                     Tipo = "TRA",
@@ -922,15 +1221,14 @@
 
     List<AutoEvalItemUI> AutoEvalDelDia => ObtenerAutoevaluacionDelDia(
     agendaSeleccionada?.Autoevaluaciones,
-    DateOnly.FromDateTime(SelectedDate)
-);
+    DateOnly.FromDateTime(SelectedDate));
 
     List<AutoEvalItemUI> ObtenerAutoevaluacionDelDia(
     List<AutoevaluacionDTO>? bloques,
     DateOnly diaSeleccionado)
     {
         if (bloques == null)
-        return new();
+            return new();
 
         return bloques
             .SelectMany(b => b.Tareas)
@@ -949,6 +1247,33 @@
 
     int AUPendiente =>
     AutoEvalDelDia.Count(a =>
+        !a.Realizado);
+
+    List<AutoEvalItemUI> ObtenerAutoevaluacionPendiente(
+    List<AutoevaluacionDTO>? bloques)
+    {
+        if (bloques == null)
+            return new();
+        return bloques
+            .SelectMany(b => b.Tareas)
+            .SelectMany(t => t.Registros
+                .Where(r => r.Fecha == DateOnly.FromDateTime(DateTime.Now))
+                .Select(r => new AutoEvalItemUI
+                {
+                    IdTarea = t.IdTareaAU,
+                    Nombre = t.Tarea,
+                    Fecha = r.Fecha,
+                    Realizado = r.Realizado
+                })
+            )
+            .ToList();
+    }
+
+    List<AutoEvalItemUI> AutoEvalPend => ObtenerAutoevaluacionPendiente(
+    agendaSeleccionada?.Autoevaluaciones);
+
+    int AUPendientes =>
+    AutoEvalPend.Count(a =>
         !a.Realizado);
 
     <!-- SERVICIO A CLIENTE -->
@@ -1143,5 +1468,75 @@
     }
 
     <!--- MODAL DETALLE OT Y TRA --->
+    bool MostrarOrden = false;
+    OrdenAgendaVM? OrdenSeleccionada;
+    OrdenTrabajoDTO? DetalleOT;
+    OrdenTramiteDTO? DetalleTramite;
+    bool CargandoDetalle = false;
 
+    async Task VerOrden(OrdenAgendaVM orden)
+    {
+        OrdenSeleccionada = orden;
+        MostrarOrden = true;
+        CargandoDetalle = true;
+        try
+        {
+            if (orden.Tipo == "OT")
+            {
+                DetalleOT = await OrdenTrabajoService.GetDetalle(orden.Id);
+                DetalleTramite = null;
+            }
+            else
+            {
+                DetalleTramite = await OrdenTramiteService.GetDetalle(orden.Id);
+                DetalleOT = null;
+            }
+        }
+        finally
+        {
+            CargandoDetalle = false;
+            StateHasChanged();
+        }
+    }
+
+    void CerrarOrden()
+    {
+        MostrarOrden = false;
+        OrdenSeleccionada = null;
+
+        DetalleOT = null;
+        DetalleTramite = null;
+    }
+
+    bool MostrarSubModal = false;
+    string TipoSubModal = "";
+    object? SubModalData;
+
+    void VerDetalleTareaOT(object tarea)
+    {
+        TipoSubModal = "OT-TAREA";
+        SubModalData = tarea;
+        MostrarSubModal = true;
+    }
+
+    void VerTareasTramite(object tramite)
+    {
+        TipoSubModal = "TRA-TAREAS";
+        SubModalData = tramite;
+        MostrarSubModal = true;
+    }
+
+    void VerDetalleTramite(object detalle)
+    {
+        TipoSubModal = "TRA-DETALLE";
+        SubModalData = detalle;
+        MostrarSubModal = true;
+    }
+
+    void CerrarSubModal()
+    {
+        MostrarSubModal = false;
+        TipoSubModal = "";
+        SubModalData = null;
+    }
 }

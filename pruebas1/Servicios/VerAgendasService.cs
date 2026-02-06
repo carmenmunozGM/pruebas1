@@ -185,5 +185,12 @@ namespace pruebas1.Servicios
                 Servicios = servicioTask.Result
             };
         }
+
+        public async Task<List<EmpleadoDTO>> GetEmpleadosPendientes()
+        {
+            return await _http.GetFromJsonAsync<List<EmpleadoDTO>>(
+                "/empleado/pendientes"
+            ) ?? new();
+        }
     }
 }

@@ -684,15 +684,14 @@
                                                             string[] p = st.Title.Split(new string[] { " – " }, StringSplitOptions.None);
                                                             @* NIVEL 3: ACTIVIDAD (Checkbox + Texto Juntos) *@
                                                             <div class="actividad-fila @(st.IsDone ? "es-completada" : "")">
-                                                                <input type="checkbox" @bind="st.IsDone"
-                                                                       @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)" />
+                                                                <input type="checkbox"
+                                                                       @bind="st.IsDone"
+                                                                       @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
+                                                                       disabled="@(st.Tipo == "ServicioCliente" && FechaSeleccionada.Date != DateTime.Today.Date)"
+                                                                       style="@(st.Tipo == "ServicioCliente" && FechaSeleccionada.Date != DateTime.Today.Date ? "cursor: not-allowed; opacity: 0.6;" : "")" />
+
                                                                 <span class="actividad-txt">
                                                                     @(p.Length > 2 ? p[2] : st.Title)
-                                                                   
-                                                                   @*  @if (st.IsDone)
-                                                                    {
-                                                                        <span class="indicador-hecho">Hecho</span>
-                                                                    } *@
                                                                 </span>
                                                             </div>
                                                         }
@@ -2691,7 +2690,7 @@ MasterCategories.Add(servicioClienteCategory);
                 if (st == null) return false;
 
              
-                if (st.Tipo == "Evento")
+                if (st.Tipo == "Evento" || st.Tipo == "ServicioCliente")
                 {
                     if (!st.FechaInicio.HasValue || !st.FechaFin.HasValue) return false;
                     return fechaVista >= st.FechaInicio.Value.Date && fechaVista <= st.FechaFin.Value.Date;
@@ -3134,4 +3133,3 @@ MasterCategories.Add(servicioClienteCategory);
         }
     }
 }
-

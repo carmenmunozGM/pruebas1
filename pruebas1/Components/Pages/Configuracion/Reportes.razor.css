@@ -456,3 +456,29 @@
 [data-theme="dark"] .section-header p {
     color: #9ca3af !important;
 }
+
+/* Estilo base (se mantiene igual) */
+.message-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #10b981;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease;
+    z-index: 9999 !important; /* Aseguramos que esté por encima de todo */
+}
+
+/* MODIFICACIÓN PARA MODO OSCURO */
+[data-theme="dark"] .message-toast {
+    background: #065f46 !important; /* Un verde más oscuro y profundo */
+    border: 1px solid #10b981; /* Borde brillante para que resalte */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    color: #ecfdf5 !important;
+}
+
+[data-theme="dark"] .toast-content p {
+    color: #a7f3d0 !important; /* Texto secundario más legible */
+}
