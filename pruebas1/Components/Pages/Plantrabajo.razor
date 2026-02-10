@@ -4,12 +4,17 @@
 @inject ServicioClienteService ServicioClienteService
 @inject IJSRuntime JS
 @inject HttpClient _http
+@using pruebas1.Components.Pages
 <br />
 <br />
 <br />
 <br />
 <h2 class="title">🏢 Servicio a Cliente</h2>
 
+    <div class="modal-button-container">
+        <Minuta OnSave="RefrescarDatos" />
+    </div>
+    <br />
 <div class="service-container">
     <!-- Columna izquierda: Grupos de clientes -->
     <div class="column">
@@ -233,7 +238,11 @@
             StateHasChanged();
         }
     }
-
+    void RefrescarDatos()
+    {
+       
+        StateHasChanged();
+    }
     // Clase para historial de cambios
     public class CambioFecha
     {
@@ -242,7 +251,11 @@
         public DateTime FechaNueva { get; set; }
         public string Motivo { get; set; } = string.Empty;
     }
-
+    private void RefrescarMinutas()
+    {
+        // Aquí puedes poner lógica para actualizar la lista de servicio al cliente
+        StateHasChanged();
+    }
 
     private string? ErrorServidor = null;
 private bool Procesando = false; // Para deshabilitar el botón mientras guarda

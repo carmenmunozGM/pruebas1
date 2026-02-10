@@ -176,8 +176,6 @@
     @if (!EsDiaNoLaboral)
     {
         <div class="dashboard-actions-row">
-
-            @* LADO IZQUIERDO: Botón Actualizar *@
             <button class="action-button-slender" @onclick="RefreshData" disabled="@isRefreshing">
                 @if (isRefreshing)
                 {
@@ -188,10 +186,7 @@
                     <span>🔄 Actualizar</span>
                 }
             </button>
-
-            @* LADO DERECHO: Botón Crear *@
             <div class="modal-button-container">
-                @* Asegúrate de que el botón dentro de ReusableModal use la clase 'action-button-slender' *@
                 <ReusableModal OnSave="RefrescarTareas" />
             </div>
 

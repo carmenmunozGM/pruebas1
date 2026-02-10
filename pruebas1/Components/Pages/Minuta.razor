@@ -1,0 +1,738 @@
+﻿@using System.Collections.Generic
+@using System.Linq
+@using pruebas1.Components.DTOs
+@inject pruebas1.Servicios.LoginService LoginService
+@inject HttpClient Http
+<div class="d-flex justify-content-end">
+    <button class="action-button-slender" style="margin-right: 40px; float: right;" @onclick="AbrirModal">
+        <span style="font-size: 18px; line-height: 1;">+</span>
+        Crear Minuta
+    </button>
+</div>
+@if (IsVisible)
+{
+    <div class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="header-left">
+                    <span class="header-title">Minuta de Trabajo Interna</span>
+                  
+                </div>
+                <button class="close-modal-btn" @onclick="Cerrar">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="top-info-grid">
+                    <div class="field-box">
+                        <label>Asesor (Clave y Nombre)</label>
+                        <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
+                    </div>
+                    <div class="field-box folio">
+                        <label>Folio :</label>
+                        <input type="text" disabled class="input-readonly" />
+                    </div>
+                 
+                    <div class="field-box date-box">
+                        <label>Fecha</label>
+                        <DatePicker Value="FechaSeleccionada"
+                                    ValueChanged="OnFechaInicioChanged"
+                                    CssClass="form-control custom-dp" />
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th class="col-cliente">Cliente (Clave y Nombre)</th>
+                                <th>Actividad</th>
+                                <th style="width: 110px;">Periodo</th>
+                                <th style="width: 110px;">Hrs. Invertidas</th>
+                                <th style="width: 40px;">Cap.</th>
+                                <th style="width: 90px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fila in FilasMinuta)
+                            {
+                                <tr>
+                                    <td class="col-cliente">
+                                        <select @bind="fila.ClienteId" class="cell-input select-limitado">
+                                            <option value="0">Seleccionar Empresa...</option>
+                                            @foreach (var cliente in listaClientes)
+                                            {
+                                                <option value="@cliente.Id">
+                                                    @cliente.Clave - @cliente.RazonSocial
+                                                </option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <div class="activity-stack">
+                                            <select @bind="fila.Actividad" class="cell-input">
+                                                <option value="">Seleccione...</option>
+                                                @foreach (var act in ListadoActividades)
+                                                {
+                                                    <option value="@act">@act</option>
+                                                }
+                                                <option value="Otros">Otros (Especificar)</option>
+                                            </select>
+                                            @if (fila.Actividad == "Otros")
+                                            {
+                                                <input type="text" @bind="fila.OtraActividad" class="input-subtle" placeholder="Especifique actividad..." />
+                                            }
+                                        </div>
+                                    </td>
+                                    <td><input type="text" @bind="fila.Periodo" placeholder="Ej. Ene-Feb" class="cell-input" /></td>
+                                    <td><TimePickerList @bind-Value="fila.Horas" /></td>
+                                    <td class="text-center"><input type="checkbox" @bind="fila.CapAux" /></td>
+                                    <td>
+                                        <div class="cell-actions">
+                                            <button class="action-icon btn-del" @onclick="() => EliminarFila(fila)" title="Eliminar">🗑</button>
+                                            @if (fila == FilasMinuta.Last())
+                                            {
+                                                <button class="action-icon btn-add" @onclick="AgregarFila" title="Agregar">+</button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-section">
+                    <div class="notes-area">
+                        <label>Comentarios u Observaciones</label>
+                        <textarea @bind="Observaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+                    </div>
+                    <div class="total-box-display">
+                        <div class="total-label">HORAS TOTALES</div>
+                        <div class="total-number">@CalcularTotalHoras()</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="Cerrar">Cancelar</button>
+                <button class="btn-primary" @onclick="Guardar">Guardar Minuta</button>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+
+<style>
+    /* ================================
+       ANIMALISTA UI 2026 – MODAL MINUTA
+       ================================ */
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    }
+    /* Forzamos el ancho de la columna de clientes */
+    .col-cliente {
+        width: 22% !important;
+        min-width: 180px !important;
+    }
+
+    /* Hacemos que el select no se desborde y corte texto largo */
+    .select-limitado {
+        width: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    /* Aseguramos que la tabla no se estire más del contenedor */
+    .custom-table {
+        width: 100%;
+        table-layout: fixed; /* Esto es MAGIA: obliga a respetar los anchos */
+    }
+    /* ================= MODAL CONTAINER ================= */
+
+    .modal-container {
+        background: #f8fafc;
+        width: 96%;
+        max-width: 1180px;
+        border-radius: 22px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ================= HEADER ================= */
+
+    .modal-header {
+        background: linear-gradient(135deg, #0f172a, #14532d);
+        color: #ecfdf5;
+        padding: 20px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+    }
+
+    .folio-badge {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(6px);
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .close-modal-btn {
+        background: none;
+        border: none;
+        color: #ecfdf5;
+        font-size: 26px;
+        cursor: pointer;
+    }
+
+    /* ================= BODY ================= */
+
+    .modal-body {
+        padding: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* ================= TOP INFO ================= */
+
+    .top-info-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+    }
+
+    .field-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .field-box label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #475569;
+            text-transform: uppercase;
+        }
+
+    .input-readonly {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 12px 14px;
+        border-radius: 12px;
+        color: #334155;
+        font-weight: 500;
+    }
+
+    /* ================= INPUTS GENERALES ================= */
+
+    .cell-input,
+    textarea,
+    input[type="text"],
+    select {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 10px 12px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+        .cell-input:focus,
+        textarea:focus,
+        input[type="text"]:focus,
+        select:focus {
+            background: #ffffff;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+            outline: none;
+        }
+
+    /* ================= TABLE ================= */
+
+    .table-wrapper {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .custom-table thead {
+            background: #f1f5f9;
+        }
+
+        .custom-table th {
+            padding: 14px 12px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #334155;
+            text-transform: uppercase;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .custom-table td {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .custom-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+            .custom-table tbody tr:hover {
+                background: #f0fdf4;
+            }
+
+    /* ================= ACTIVITY STACK ================= */
+
+    .activity-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .input-subtle {
+        background: #ecfdf5;
+        border: 1px dashed #22c55e;
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+    }
+
+    /* ================= ACTIONS ================= */
+
+    .cell-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .action-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        .action-icon:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+        }
+
+    .btn-del {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .btn-add {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    /* ================= SUMMARY ================= */
+
+    .summary-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 28px;
+        align-items: end;
+    }
+
+    .notes-area label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #475569;
+        text-transform: uppercase;
+    }
+
+    .notes-area textarea {
+        width: 100%;
+        resize: none;
+        margin-top: 6px;
+    }
+
+    /* ================= TOTAL ================= */
+
+    .total-box-display {
+        background: #f1f5f9;
+        color: #0f172a;
+        padding: 16px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: inset 0 0 0 1px #e5e7eb;
+    }
+
+    .total-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+
+    .total-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-top: 4px;
+        color: #14532d;
+    }
+
+    .action-button-slender {
+        background: #BDEAF9;
+        border: none;
+        padding: 12px 22px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.25s ease;
+        box-shadow: 0 10px 25px rgba(15,23,42,0.35);
+    }
+
+        .action-button-slender:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(34,197,94,0.35);
+            background: linear-gradient(135deg, #14532d, #22c55e);
+        }
+
+        .action-button-slender span {
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 900;
+        }
+
+    /* ================= FOOTER ================= */
+
+    .modal-footer {
+        background: #f1f5f9;
+        padding: 20px 28px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 14px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #ecfdf5;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 999px;
+        font-weight: 700;
+        cursor: pointer;
+      
+    }
+
+      
+
+    .btn-secondary {
+        background: #C42B1C;
+        color: #ecfdf5;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 999px;
+        font-weight: 700;
+        cursor: pointer;
+     
+    }
+
+      
+    /* Select de actividades con scroll */
+    .activity-stack select {
+        max-height: 160px; /* aprox 4 opciones visibles */
+        overflow-y: auto;
+    }
+    /* Contenedor correcto */
+    .date-box {
+        position: relative;
+        z-index: 10;
+    }
+
+        /* Forzar popup dentro del modal */
+        .date-box .datepicker-dropdown,
+        .date-box .dropdown-menu,
+        .date-box .rz-datepicker-popup {
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            transform: none !important;
+            z-index: 99999 !important;
+        }
+    /* TimePicker compacto */
+    .timepicker-cell,
+    .timepicker-cell select,
+    .timepicker-cell input {
+        max-width: 90px;
+        font-size: 0.85rem;
+        padding: 6px 8px;
+        border-radius: 10px;
+    }
+
+    /* ================= TIMEPICKER ================= */
+
+    .timepicker-container {
+        position: relative;
+        width: 100%;
+
+    }
+
+    .date-box, .timepicker-container {
+        position: relative;
+    }
+
+    .rz-datepicker-popup,
+    .timepicker-panel {
+        position: fixed !important;
+        z-index: 100000 !important;
+        /* Movemos el panel arriba del input */
+        transform: translateY(-110%) !important;
+        top: auto !important;
+        background: #ffffff !important;
+        box-shadow: 0 -10px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .timepicker-column {
+        scrollbar-width: none; /* Firefox */
+    }
+
+        .timepicker-column::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+    /* Hacemos los inputs de la tabla un poco más delgados verticalmente */
+    .cell-input, select {
+        padding: 6px 10px !important;
+    }
+    .timepicker-input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+        .timepicker-input:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+        }
+
+    /* PANEL */
+
+    .timepicker-panel {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        display: flex;
+        gap: 6px;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+        padding: 8px;
+        z-index: 99999;
+    }
+
+    /* COLUMNAS */
+
+    .timepicker-column {
+        max-height: 180px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        padding: 4px;
+    }
+
+    /* ITEMS */
+
+    .timepicker-item {
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        text-align: center;
+        cursor: pointer;
+        color: #334155;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+        .timepicker-item:hover {
+            background: #f0fdf4;
+        }
+
+        .timepicker-item.selected {
+            background: #22c55e;
+            color: #ecfdf5;
+            font-weight: 700;
+        }
+
+    /* SCROLL BONITO */
+
+    .timepicker-column::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .timepicker-column::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @@media (max-width: 768px) {
+        .modal-container
+
+    {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+
+    .top-info-grid,
+    .summary-section {
+        grid-template-columns: 1fr;
+    }
+
+        .custom-table th:nth-child(2),
+        .custom-table td:nth-child(2) {
+            width: 20% !important; /* Ajuste para la columna de Actividad */
+        }
+    .total-number {
+        font-size: 1.6rem;
+    }
+
+    }
+</style>
+@code {
+    [Parameter] public EventCallback OnSave { get; set; }
+    private List<ClientesDTO> listaClientes = new();
+    private bool IsVisible = false;
+
+    private string NombreAsesor = "";
+    private int ClaveAsesor = 0;
+    private DateTime FechaSeleccionada = DateTime.Now;
+    private string Observaciones = "";
+    private int FolioAutoIncremental = 1234;
+    // Lista de actividades solicitadas
+    private List<string> ListadoActividades = new() {
+        "Registro Contable", "Calculo de Impuestos", "Análisis de Saldos",
+        "Supervisión", "Asesoría", "Información Mensual", "Autoevaluación",
+        "Programa de Trabajo", "Junta de Trabajo", "Curso", "Cuadernillo de Cierre",
+        "Declaración Informática", "Declaración Anual", "Trabajos Especiales",
+        "Pendientes", "Archivos", "Otros"
+    };
+
+    public class FilaMinuta
+    {
+        public int ClienteId { get; set; }
+        public string Actividad { get; set; } = "";
+        public string OtraActividad { get; set; }
+        public string Periodo { get; set; } = "";
+        public TimeOnly? Horas { get; set; }
+        public bool CapAux { get; set; }
+        
+    }
+    private void OnFechaInicioChanged(DateTime? nuevaFecha)
+    {
+        FechaSeleccionada = nuevaFecha ?? DateTime.Now;
+    }
+    private List<FilaMinuta> FilasMinuta = new();
+
+    private async Task AbrirModal()
+    {
+        // 1. Cargamos los datos del asesor (la lógica que ya tenías)
+        var obj = LoginService.obtenerUsuarioLogueado();
+        NombreAsesor = !string.IsNullOrWhiteSpace(obj.NombreRed) ? obj.NombreRed : obj.NombreUsuario;
+        ClaveAsesor = obj.IdEmpleado;
+
+        // 2. Cargamos los clientes desde tu API
+        try
+        {
+            listaClientes = await Http.GetFromJsonAsync<List<ClientesDTO>>("/api/servicio-cliente/admin/clientes") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando clientes: {ex.Message}");
+        }
+
+        FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
+        IsVisible = true;
+    }
+
+    private void Cerrar() => IsVisible = false;
+
+    private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
+
+    private void EliminarFila(FilaMinuta fila)
+    {
+        if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
+    }
+
+    private string CalcularTotalHoras()
+    {
+        TimeSpan total = TimeSpan.Zero;
+        foreach (var f in FilasMinuta)
+        {
+            if (f.Horas.HasValue)
+            {
+                total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
+            }
+        }
+        return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
+    }
+
+    private async Task Guardar()
+    {
+        // Lógica de guardado aquí
+        await OnSave.InvokeAsync();
+        Cerrar();
+    }
+}

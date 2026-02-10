@@ -32,6 +32,10 @@
 .input-text {
     min-height: 40px;
 }
+.action-button-slender {
+    background-color: red !important;
+    color: white;
+}
 
 /* Botones */
 .btn-save, .btn-cancel, .btn-calendar {
