@@ -3707,4 +3707,253 @@
    
     }
 
+    /* =================================================
+       MODO OSCURO: MODERN-MODAL (OT Y TRÁMITES)
+       ================================================= */
+
+    /* 1. Fondo Principal y Overlay */
+    [data-theme="dark"] .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    [data-theme="dark"] .modern-modal {
+        background-color: #0f172a !important; /* Azul noche */
+        border: 1px solid #334155 !important;
+        color: #ffffff !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+        /* 2. Header (Estilo unificado con OT) */
+        [data-theme="dark"] .modern-modal .modal-header {
+            background-color: #2d2626 !important; /* Tono rojizo oscuro */
+            border-bottom: 1px solid #334155 !important;
+            color: #ffffff !important;
+            padding: 1.25rem;
+        }
+
+    /* 3. Estructura de Cards e Info Grid */
+    [data-theme="dark"] .ot-card,
+    [data-theme="dark"] .tramite-card {
+        background-color: transparent !important; /* Eliminamos el fondo de la card */
+        border: none !important;
+        margin-bottom: 2rem;
+    }
+
+    [data-theme="dark"] .collapsible-header {
+        background-color: #1e293b !important; /* Gris azulado para separar secciones */
+        color: #38bdf8 !important; /* Azul claro para el título de sección */
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    [data-theme="dark"] .info-grid {
+        display: grid;
+        gap: 12px;
+        padding: 15px 5px;
+    }
+
+        [data-theme="dark"] .info-grid div {
+            border-bottom: 1px solid #1e293b !important;
+            padding-bottom: 8px;
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .info-grid b {
+            color: #94a3b8 !important; /* Labels en gris suave */
+            font-size: 0.85rem;
+            margin-right: 5px;
+        }
+
+    /* 4. Tablas (Subtasks-table) */
+    [data-theme="dark"] .subtasks-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+        [data-theme="dark"] .subtasks-table thead tr {
+            background-color: #1e293b !important;
+        }
+
+        [data-theme="dark"] .subtasks-table th {
+            color: #94a3b8 !important;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #334155 !important;
+        }
+
+        [data-theme="dark"] .subtasks-table td {
+            padding: 12px;
+            color: #cbd5e1 !important;
+            border-bottom: 1px solid #1e293b !important;
+        }
+
+        [data-theme="dark"] .subtasks-table tbody tr:hover td {
+            background-color: rgba(51, 65, 85, 0.3) !important;
+        }
+
+    /* 5. Footer y Botones */
+    [data-theme="dark"] .modal-footer {
+        background-color: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+        padding: 1rem;
+    }
+
+        [data-theme="dark"] .modal-footer button {
+            background-color: #334155 !important;
+            color: white !important;
+            border: 1px solid #475569 !important;
+            padding: 8px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+            [data-theme="dark"] .modal-footer button:hover {
+                background-color: #475569 !important;
+            }
+
+    /* Scrollbar para el cuerpo */
+    [data-theme="dark"] .modal-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    [data-theme="dark"] .modal-scroll::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .modal-scroll::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+
+    /* =================================================
+       MODO OSCURO: MODALES GLOBALES (OT Y TRAMITES)
+       ================================================= */
+
+    /* 1. Fondo del cuerpo y eliminación de parches blancos */
+    [data-theme="dark"] .modal-body,
+    [data-theme="dark"] .modal-scroll {
+        background-color: #0f172a !important; /* Azul noche profundo */
+    }
+
+    /* 2. Tarjetas de Información (Info-grid) */
+    /* Esto elimina los cuadros blancos de la imagen 846b62 */
+    [data-theme="dark"] .ot-card,
+    [data-theme="dark"] .tramite-card,
+    [data-theme="dark"] .collapsible-content {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    /* 3. Ajuste de los campos individuales (Número, Autor, Cliente...) */
+    [data-theme="dark"] .info-grid div {
+        background-color: #1e293b !important; /* Fondo azul pizarra sutil */
+        border: 1px solid #334155 !important; /* Borde fino */
+        border-radius: 8px;
+        padding: 12px 15px !important;
+        color: #f1f5f9 !important; /* Texto blanco suave */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Estilo para las etiquetas (B) dentro de los campos */
+    [data-theme="dark"] .info-grid b {
+        color: #94a3b8 !important; /* Gris azulado para el título del campo */
+        font-size: 0.75rem !important;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    /* 4. Encabezados de Sección (INFORMACIÓN GENERAL / TAREAS) */
+    [data-theme="dark"] .collapsible-header {
+        background-color: #1e293b !important;
+        color: #FFFFFF !important;
+        padding: 12px 20px !important;
+        font-weight: 700 !important;
+        margin-bottom: 15px !important;
+    }
+
+    /* 5. Tabla de Tareas interna */
+    [data-theme="dark"] .subtasks-table {
+        background-color: transparent !important;
+        border: 1px solid #334155 !important;
+    }
+
+        [data-theme="dark"] .subtasks-table thead tr {
+            background-color: #1e293b !important;
+        }
+
+        [data-theme="dark"] .subtasks-table th {
+            color: #94a3b8 !important;
+            border-bottom: 2px solid #334155 !important;
+        }
+
+        [data-theme="dark"] .subtasks-table td {
+            color: #e2e8f0 !important;
+            border-bottom: 1px solid #1e293b !important;
+        }
+
+    /* 6. Footer del modal */
+    [data-theme="dark"] .modal-footer {
+        background-color: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+    }
+
+    /* =================================================
+       LIMPIEZA FINAL: TABLAS Y CONTENEDORES INFERIORES
+       ================================================= */
+
+    /* 1. Forzar fondo oscuro en el cuerpo del modal y cualquier contenedor blanco */
+    [data-theme="dark"] .modal-body,
+    [data-theme="dark"] .collapsible-content,
+    [data-theme="dark"] .ot-card,
+    [data-theme="dark"] .tramite-card {
+        background-color: #0f172a !important; /* Azul noche profundo */
+        background: #0f172a !important;
+    }
+
+    /* 2. Corregir las filas de la tabla que se ven blancas (image_846bdf.png) */
+    [data-theme="dark"] .subtasks-table tbody tr,
+    [data-theme="dark"] .tabla-detalle tbody tr {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+
+    [data-theme="dark"] .subtasks-table td,
+    [data-theme="dark"] .tabla-detalle td {
+        background-color: transparent !important;
+        color: #e2e8f0 !important; /* Texto gris claro/blanco */
+        border-bottom: 1px solid #1e293b !important; /* Línea divisoria sutil */
+    }
+
+    /* 3. Corregir el efecto hover en las filas para que no se pongan blancas */
+    [data-theme="dark"] .subtasks-table tbody tr:hover td,
+    [data-theme="dark"] .tabla-detalle tbody tr:hover td {
+        background-color: #1e293b !important; /* Azul pizarra al pasar el mouse */
+    }
+
+    /* 4. Limpiar los cuadros de texto de Información General (image_846b62.png) */
+    [data-theme="dark"] .info-grid div {
+        background-color: #1e293b !important; /* Fondo oscuro sutil para cada dato */
+        border: 1px solid #334155 !important;
+        color: #ffffff !important;
+    }
+
+    /* 5. Estilo para el Footer (Botón Cerrar) */
+    [data-theme="dark"] .modal-footer {
+        background-color: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+    }
+
+   [data-theme="dark"] .modal-footer button {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            padding: 10px 25px !important;
+    }
+
 </style>

@@ -27,10 +27,10 @@
                         <label>Asesor (Clave y Nombre)</label>
                         <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
                     </div>
-                    <div class="field-box folio">
+                @*     <div class="field-box folio">
                         <label>Folio :</label>
                         <input type="text" disabled class="input-readonly" />
-                    </div>
+                    </div> *@
                  
                     <div class="field-box date-box">
                         <label>Fecha</label>
@@ -438,12 +438,12 @@
         box-shadow: 0 10px 25px rgba(15,23,42,0.35);
     }
 
-        .action-button-slender:hover {
+/*         .action-button-slender:hover {
             transform: translateY(-1px);
             box-shadow: 0 14px 30px rgba(34,197,94,0.35);
             background: linear-gradient(135deg, #14532d, #22c55e);
         }
-
+ */
         .action-button-slender span {
             font-size: 20px;
             line-height: 1;
@@ -650,6 +650,132 @@
     }
 
     }
+
+
+    /* === Variables Modo Oscuro === */
+    [data-theme="dark"] .action-button-slender {
+        background-color: #03324a; /* Azul vibrante */
+        color: #ffffff; /* ¡IMPORTANTE! Texto blanco para el azul */
+        /* ... tus otras variables ... */
+    }
+
+        .action-button-slender span {
+            font-weight: 400; /* Para que el '+' no se vea tan tosco */
+        }
+
+    /* =================================================
+       MODO OSCURO: MINUTA DE TRABAJO INTERNA
+       ================================================= */
+
+    /* 1. Contenedor y Fondo General */
+    [data-theme="dark"] .modal-container {
+        background: #0f172a !important; /* Azul noche profundo */
+        color: #f1f5f9;
+    }
+
+    /* 2. Inputs de solo lectura (Asesor) */
+    [data-theme="dark"] .input-readonly {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #94a3b8 !important;
+    }
+
+    /* 3. Tabla y Encabezados */
+    [data-theme="dark"] .table-wrapper {
+        background: #1e293b !important;
+        box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="dark"] .custom-table thead {
+        background: #0f172a !important;
+    }
+
+    [data-theme="dark"] .custom-table th {
+        border-bottom: 2px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .custom-table td {
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .custom-table tbody tr:hover {
+        background: #1e293b !important;
+    }
+
+    /* 4. Inputs dentro de la tabla (Celdas) */
+    [data-theme="dark"] .cell-input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea,
+    [data-theme="dark"] .timepicker-input {
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+        [data-theme="dark"] .cell-input:focus,
+        [data-theme="dark"] select:focus {
+            border-color: #38bdf8 !important;
+        }
+
+    /* 5. Otros (Input dinámico verde) */
+    [data-theme="dark"] .input-subtle {
+        background: rgba(34, 197, 94, 0.1) !important;
+        border: 1px dashed #22c55e !important;
+        color: #4ade80 !important;
+    }
+
+    /* 6. Botones de Acción (+ y Papelera) */
+    [data-theme="dark"] .btn-del {
+        background: rgba(185, 28, 28, 0.2) !important;
+        color: #ef4444 !important;
+    }
+
+    [data-theme="dark"] .btn-add {
+        background: rgba(21, 128, 61, 0.2) !important;
+        color: #4ade80 !important;
+    }
+
+    /* 7. Resumen de Totales y Notas */
+    [data-theme="dark"] .total-box-display {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: none;
+    }
+
+    [data-theme="dark"] .total-label {
+        color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] .total-number {
+        color: white!important; /* Azul para resaltar las horas */
+    }
+
+    [data-theme="dark"] .field-box label,
+    [data-theme="dark"] .notes-area label {
+        color: #64748b !important;
+    }
+
+    /* 8. Footer del Modal */
+    [data-theme="dark"] .modal-footer {
+        background: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+    }
+
+    /* 9. Paneles de Selección (DatePicker/TimePicker) */
+    [data-theme="dark"] .timepicker-panel,
+    [data-theme="dark"] .rz-datepicker-popup {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 20px 45px rgba(0,0,0,0.5) !important;
+    }
+
+    [data-theme="dark"] .timepicker-item {
+        color: #cbd5e1 !important;
+    }
+
+        [data-theme="dark"] .timepicker-item:hover {
+            background: #334155 !important;
+        }
 </style>
 @code {
     [Parameter] public EventCallback OnSave { get; set; }
