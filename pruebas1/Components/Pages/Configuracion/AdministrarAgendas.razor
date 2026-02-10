@@ -1,3 +1,10 @@
+@using pruebas1.Components.DTOs
+@using pruebas1.Servicios
+@inject AdministrarAgendasService AdministrarAgendasService
+@inject AreasService AreasService
+@inject LoginService LoginService
+@inject NavigationManager Nav
+
 <div class="administrar-section">
     <div class="section-header">
         <h2>Administrar Agendas</h2>
@@ -5,7 +12,7 @@
     </div>
 
     <div class="action-buttons">
-        <button class="mode-button @(mode == "registrar" ? "active" : "")" 
+        <button class="mode-button @(mode == "registrar" ? "active" : "")"
                 @onclick='() => SetMode("registrar")'>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -15,7 +22,7 @@
             <span>Registrar Agenda</span>
         </button>
 
-        <button class="mode-button @(mode == "desvincular" ? "active" : "")" 
+        <button class="mode-button @(mode == "desvincular" ? "active" : "")"
                 @onclick='() => SetMode("desvincular")'>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -38,24 +45,37 @@
 
                 @if (!string.IsNullOrEmpty(employeeNumber))
                 {
-                    <div class="form-step">
+                    <div class="form-step combo">
                         <label>Puesto</label>
-                        <select @bind="selectedPosition">
-                            <option value="">Seleccionar puesto...</option>
-                            @foreach (var pos in positions)
-                            {
-                                <option value="@pos">@pos</option>
-                            }
-                        </select>
+
+                        <input class="combo-input"
+                               placeholder="Escribe para buscar puesto..."
+                               @bind="textoBusqueda"
+                               @bind:event="oninput"
+                               @onfocus="() => mostrarLista = true" />
+
+                        @if (mostrarLista && puestosFiltrados.Any())
+                        {
+                            <div class="combo-results">
+                                @foreach (var p in puestosFiltrados)
+                                {
+                                    <div class="combo-item"
+                                         @onclick="() => SeleccionarPuesto(p)">
+                                        <span>@p.Puesto</span>
+                                        <small>#@p.Clave</small>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                 }
 
-                @if (!string.IsNullOrEmpty(selectedPosition))
+                @if (selectedPuesto != null)
                 {
                     <div class="form-step">
                         <label>Acción</label>
                         <div class="action-options">
-                            <div class="action-option @(agendaAction == "crear" ? "selected" : "")" 
+                            <div class="action-option @(agendaAction == "crear" ? "selected" : "")"
                                  @onclick='() => agendaAction = "crear"'>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -66,7 +86,7 @@
                                 <span>Crear Agenda</span>
                             </div>
 
-                            <div class="action-option @(agendaAction == "asignar" ? "selected" : "")" 
+                            <div class="action-option @(agendaAction == "asignar" ? "selected" : "")"
                                  @onclick='() => agendaAction = "asignar"'>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -79,27 +99,35 @@
                     </div>
                 }
 
-                @if (agendaAction == "asignar" && !string.IsNullOrEmpty(selectedPosition))
+                @if (agendaAction == "asignar" && selectedPuesto != null)
                 {
                     <div class="form-step">
                         <label>Seleccionar Agenda Existente</label>
                         <div class="agenda-cards">
-                            @foreach (var agenda in GetAgendasByPosition(selectedPosition))
+                            @foreach (var agenda in agendas.Where(a => !a.Activa))
                             {
-                                <div class="agenda-card @(selectedAgenda == agenda.Id ? "selected" : "")" 
+                                <div class="agenda-card @(selectedAgenda == agenda.Id ? "selected" : "")"
                                      @onclick="() => selectedAgenda = agenda.Id">
+
                                     <div class="agenda-card-header">
-                                        <strong>@agenda.Name</strong>
-                                        <span class="badge">@agenda.Position</span>
+                                        <strong>@agenda.EmpleadoActual</strong>
+                                        <span class="badge">Disponible</span>
                                     </div>
-                                    <p>Pertenece a: @agenda.Owner</p>
+
+                                    <p>
+                                        @(agenda.IdEmpleadoActual != null ? agenda.Puesto : "Sin asignar")
+                                        @if (agenda.Activa)
+                                        {
+                                            <span class="estado-activa">Activa</span>
+                                        }
+                                    </p>
                                 </div>
                             }
                         </div>
                     </div>
                 }
 
-                <button class="submit-button" @onclick="HandleRegistrar" 
+                <button class="submit-button" @onclick="HandleRegistrar"
                         disabled="@(!CanSubmitRegistrar())">
                     Guardar
                 </button>
@@ -112,42 +140,58 @@
             <div class="form-card">
                 <h3>Desvincular Agenda</h3>
 
-                <div class="form-step">
+                <div class="form-step combo">
                     <label>Puesto</label>
-                    <select @bind="selectedPosition">
-                        <option value="">Seleccionar puesto...</option>
-                        @foreach (var pos in positions)
-                        {
-                            <option value="@pos">@pos</option>
-                        }
-                    </select>
+
+                    <input class="combo-input"
+                           placeholder="Escribe para buscar puesto..."
+                           @bind="textoBusqueda"
+                           @bind:event="oninput"
+                           @onfocus="() => mostrarLista = true" />
+
+                    @if (mostrarLista && puestosFiltrados.Any())
+                    {
+                        <div class="combo-results">
+                            @foreach (var p in puestosFiltrados)
+                            {
+                                <div class="combo-item"
+                                     @onclick="() => SeleccionarPuesto(p)">
+                                    <span>@p.Puesto</span>
+                                    <small>#@p.Clave</small>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
 
-                @if (!string.IsNullOrEmpty(selectedPosition))
+                @if (selectedPuesto != null)
                 {
                     <div class="form-step">
                         <label>Seleccionar Agenda a Desvincular</label>
                         <div class="agenda-list">
-                            @foreach (var agenda in GetAgendasByPosition(selectedPosition))
+                            @foreach (var agenda in agendas.Where(a => a.Activa))
                             {
-                                <div class="agenda-list-item @(selectedAgenda == agenda.Id ? "selected" : "")" 
+                                <div class="agenda-list-item @(selectedAgenda == agenda.Id ? "selected" : "")"
                                      @onclick="() => selectedAgenda = agenda.Id">
+
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14 2 14 8 20 8"></polyline>
                                     </svg>
+
                                     <div class="agenda-info">
-                                        <strong>@agenda.Name</strong>
-                                        <span>@agenda.Owner</span>
+                                        <strong>@agenda.EmpleadoActual</strong>
+                                        <span>@agenda.Puesto</span>
                                     </div>
                                 </div>
                             }
+
                         </div>
                     </div>
                 }
 
-                <button class="submit-button desvincular-btn" @onclick="HandleDesvincular" 
-                        disabled="@(string.IsNullOrEmpty(selectedAgenda))">
+                <button class="submit-button desvincular-btn" @onclick="HandleDesvincular"
+                        disabled="@(selectedAgenda == null)">
                     Desvincular
                 </button>
             </div>
@@ -165,84 +209,220 @@
 @code {
     private string mode = "registrar";
     private string employeeNumber = "";
-    private string selectedPosition = "";
     private string agendaAction = "";
-    private string selectedAgenda = "";
     private string message = "";
 
-    private List<string> positions = new List<string>
-    {
-        "Developer", "Designer", "Manager", "Sales", "Support", "Marketing"
-    };
+    private List<AgendaAdminDTO> agendas = new();
+    private List<PuestoDTO> puestos = new();
+    private List<AreaDTO> areas = new();
 
-    private class AgendaInfo
+    private int? selectedAgenda = null;
+    private int? _selectedPuesto;
+
+    private int? selectedPuesto
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Position { get; set; }
-        public string Owner { get; set; }
+        get => _selectedPuesto;
+        set
+        {
+            if (_selectedPuesto == value)
+                return;
+
+            _selectedPuesto = value;
+            _ = PuestoCambiado();
+        }
     }
 
-    private List<AgendaInfo> agendas = new List<AgendaInfo>
+
+    bool empleadoValido => clavePersonalInt is not null;
+
+    private int usuarioActualId;
+
+    protected override async Task OnInitializedAsync()
     {
-        new AgendaInfo { Id = "1", Name = "Agenda Desarrollo Full Stack", Position = "Developer", Owner = "Karim Negrete" },
-        new AgendaInfo { Id = "2", Name = "Agenda Desarrollo Frontend", Position = "Developer", Owner = "Carmen Muñoz" },
-        new AgendaInfo { Id = "3", Name = "Agenda Gestión Proyectos", Position = "Manager", Owner = "Gustavo Betanzos" },
-        new AgendaInfo { Id = "4", Name = "Agenda Ventas B2B", Position = "Sales", Owner = "Ana Torres" },
-        new AgendaInfo { Id = "5", Name = "Agenda Diseño UX/UI", Position = "Designer", Owner = "Roberto Silva" }
-    };
+        var usuario = LoginService.obtenerUsuarioLogueado();
+        usuarioActualId = usuario.IdUsuario;
+
+        var puestosPlano = await AreasService.GetAreasConPuestos();
+
+        areas = await AreasService.GetAreasConPuestos();
+        puestos = await AreasService.GetPuestos();
+    }
+
+    private async Task OnPuestoChange(ChangeEventArgs e)
+    {
+        selectedPuesto = int.TryParse(e.Value?.ToString(), out var v) ? v : null;
+
+        selectedAgenda = null;
+        agendas.Clear();
+
+        if (selectedPuesto is null)
+            return;
+
+        agendas = await AdministrarAgendasService.GetAgendasPorPuesto(selectedPuesto.Value);
+    }
+
+    public class AreaConPuestosVM
+    {
+        public string Area { get; set; } = "";
+        public List<PuestoDTO> Puestos { get; set; } = new();
+    }
+
+    private async Task PuestoCambiado()
+    {
+        selectedAgenda = null;
+        agendas.Clear();
+
+        if (selectedPuesto is null)
+            return;
+
+        agendas = await AdministrarAgendasService.GetAgendasPorPuesto(selectedPuesto.Value);
+    }
 
     private void SetMode(string newMode)
     {
         mode = newMode;
         employeeNumber = "";
-        selectedPosition = "";
+        selectedPuesto = null;
         agendaAction = "";
-        selectedAgenda = "";
+        selectedAgenda = null;
+        agendas.Clear();
     }
 
-    private List<AgendaInfo> GetAgendasByPosition(string position)
-    {
-        return agendas.Where(a => a.Position == position).ToList();
-    }
+    int? clavePersonalInt =>
+    int.TryParse(employeeNumber, out var v) ? v : null;
+
 
     private bool CanSubmitRegistrar()
     {
-        if (string.IsNullOrEmpty(employeeNumber) || string.IsNullOrEmpty(selectedPosition))
+        if (clavePersonalInt is null || selectedPuesto is null)
             return false;
 
         if (agendaAction == "crear")
             return true;
 
-        if (agendaAction == "asignar" && !string.IsNullOrEmpty(selectedAgenda))
+        if (agendaAction == "asignar" && selectedAgenda is not null)
             return true;
 
         return false;
     }
 
-    private async Task HandleRegistrar()
+    private async Task MostrarMensaje(string texto)
     {
-        if (agendaAction == "crear")
-            message = "Agenda creada exitosamente";
-        else
-            message = "Agenda asignada exitosamente";
-
-        employeeNumber = "";
-        selectedPosition = "";
-        agendaAction = "";
-        selectedAgenda = "";
-
+        message = texto;
+        StateHasChanged();
         await Task.Delay(3000);
         message = "";
+    }
+
+    private async Task HandleRegistrar()
+    {
+        if (clavePersonalInt is null || selectedPuesto is null)
+            return;
+
+        if (agendaAction == "crear")
+        {
+            var id = await AdministrarAgendasService.PostAgendaNueva(
+                clavePersonalInt.Value,
+                selectedPuesto.Value,
+                usuarioActualId);
+
+            await MostrarMensajeTemporal(id != null ? "Agenda creada exitosamente" : "No se pudo crear agenda");
+        }
+        else if (agendaAction == "asignar" && selectedAgenda is not null)
+        {
+            var ok = await AdministrarAgendasService.PutReasignarAgenda(
+                clavePersonalInt.Value,
+                selectedPuesto.Value,
+                selectedAgenda.Value,
+                usuarioActualId);
+
+            await MostrarMensajeTemporal(ok ? "Agenda reasignada exitosamente" : "No se pudo desvincular");
+        }
+
+            await Task.Delay(1200);
+            RefrescarPagina();
     }
 
     private async Task HandleDesvincular()
     {
-        message = "Agenda desvinculada exitosamente";
-        selectedPosition = "";
-        selectedAgenda = "";
+        if (selectedAgenda is null)
+            return;
 
-        await Task.Delay(3000);
-        message = "";
+        var ok = await AdministrarAgendasService.PutDesvincularAgenda(selectedAgenda.Value);
+
+        await MostrarMensajeTemporal(ok
+            ? "Agenda desvinculada exitosamente"
+            : "No se pudo desvincular");
+
+
+        await RefrescarAgendas();
+
+        if (ok)
+        {
+            await Task.Delay(1200);
+            RefrescarPagina();
+        }
     }
+
+    private async Task RefrescarAgendas()
+    {
+        if (selectedPuesto is not null)
+            agendas = await AdministrarAgendasService.GetAgendasPorPuesto(selectedPuesto.Value);
+
+        selectedAgenda = null;
+        employeeNumber = "";
+    }
+
+    private async Task MostrarMensajeTemporal(string texto, int duracionMs = 3000)
+    {
+        message = texto;
+        StateHasChanged();
+
+        await Task.Delay(duracionMs);
+
+        message = "";
+        StateHasChanged();
+    }
+
+    private string textoBusqueda = "";
+    private bool mostrarLista = false;
+
+    private IEnumerable<PuestoDTO> puestosFiltrados =>
+        string.IsNullOrWhiteSpace(textoBusqueda)
+            ? puestos
+            : puestos.Where(p =>
+                p.Puesto.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase) ||
+                p.Clave.ToString().Contains(textoBusqueda));
+
+    private async Task SeleccionarPuesto(PuestoDTO puesto)
+    {
+        selectedPuesto = puesto.Clave;
+        textoBusqueda = puesto.Puesto;
+        mostrarLista = false;
+
+        selectedAgenda = null;
+        agendas.Clear();
+
+        try
+        {
+            agendas = await AdministrarAgendasService.GetAgendasPorPuesto(puesto.Clave);
+        }
+        catch (HttpRequestException ex)
+        {
+            agendas = new List<AgendaAdminDTO>();
+            Console.WriteLine($"No se pudieron cargar agendas para el puesto {puesto.Puesto}: {ex.Message}");
+        }
+    }
+
+    private async Task CerrarPorBlur()
+    {
+        await Task.Delay(150); // deja vivir al click del item
+        mostrarLista = false;
+    }
+
+    void RefrescarPagina()
+    {
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+    }
+
 }

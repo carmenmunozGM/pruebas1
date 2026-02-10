@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace pruebas1.Servicios
 {
@@ -33,8 +34,21 @@ namespace pruebas1.Servicios
         // Lista de pustos.
         public async Task<List<PuestoDTO>> GetPuestos()
         {
-            var puestos = await httpClient.GetFromJsonAsync<List<PuestoDTO>>("area/puestos");
+            var puestos = await httpClient.GetFromJsonAsync<List<PuestoDTO>>("/area/puestos");
             return puestos ?? new List<PuestoDTO>();
+        }
+
+        public async Task<List<AreaDTO>> GetAreasConPuestos()
+        {
+            try
+            {
+                var data = await httpClient.GetFromJsonAsync<List<AreaDTO>>("/area/con-puestos");
+                return data ?? new List<AreaDTO>();
+            }
+            catch
+            {
+                return new List<AreaDTO>();
+            }
         }
     }
 }

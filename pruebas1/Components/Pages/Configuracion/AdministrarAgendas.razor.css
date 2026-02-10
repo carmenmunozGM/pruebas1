@@ -36,6 +36,15 @@
     width: 24px;
     height: 24px;
 }
+.combo-results {
+    position: absolute;
+    z-index: 9999;
+    background: white;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
 
 .mode-button:hover {
     border-color: #9333ea;
@@ -372,6 +381,73 @@
     animation: slideIn 0.3s ease;
     z-index: 100;
 }
+
+/* CONTENEDOR */
+.combo {
+    position: relative;
+}
+/* INPUT */
+.combo-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+}
+/* RESULTADOS */
+.combo-results {
+    position: absolute;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 4px;
+    border-radius: 8px;
+    z-index: 50;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 8px 18px rgba(0,0,0,.12);
+}
+/* ITEM */
+.combo-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    color: #111827;
+}
+    .combo-item small {
+        color: #6b7280;
+    }
+    .combo-item:hover {
+        background: #f1f5f9;
+    }
+
+.dark-mode .combo-input {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+}
+
+.dark-mode .combo-results {
+    background: #1f2937;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 22px rgba(0,0,0,.45);
+}
+
+.dark-mode .combo-item {
+    color: #e5e7eb;
+}
+
+    .dark-mode .combo-item small {
+        color: #9ca3af;
+    }
+
+    .dark-mode .combo-item:hover {
+        background: #374151;
+    }
+
+
 
 @keyframes slideIn {
     from {
