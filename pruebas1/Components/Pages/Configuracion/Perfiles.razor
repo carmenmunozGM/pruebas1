@@ -1,7 +1,31 @@
+@using pruebas1.Components.DTOs
+@using pruebas1.Servicios
+@inject AreasService AreasService
+
 <div class="perfiles-section">
     <div class="section-header">
         <h2>Perfiles</h2>
         <p>Gestiona los permisos y roles de los empleados</p>
+    </div>
+
+    <div class="search-section">
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text"
+                   @bind="searchName"
+                   @bind:event="oninput"
+                   placeholder="Buscar por nombre..." />
+        </div>
+        <select class="area-filter" @bind="selectedArea">
+            <option value="">Todas las áreas</option>
+            @foreach (var area in areaList)
+            {
+                <option value="@area.Area">@area.Area</option>
+            }
+        </select>
     </div>
 
     <div class="perfiles-container">
@@ -59,7 +83,16 @@
 </div>
 
 @code {
+    private string searchName = "";
+    string? selectedArea;
+    List<AreaDTO> areaList = new();
+
     private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        areaList = await AreasService.GetAreas();
+    }
 
     private class EmployeeProfile
     {
