@@ -24,6 +24,7 @@
 @inject SalasEmService SalasService
 @inject ReglasRecurrenciaServices ReglasService
 @inject ServicioClienteService ServicioClienteService
+@inject InfoPersonalService InfoService
 @using Blazored.LocalStorage
 @inject ILocalStorageService LocalStorage
 @inject AppSettingsService Settings
@@ -51,8 +52,8 @@
             <button class="calendar-btn" @onclick="AbrirCalendario">📅</button>
   
         </div>
-  
 
+   
         @if (MostrarModal)
         {
             <div class="modal-overlay" @onclick="CerrarCalendario">
@@ -169,9 +170,18 @@
         filter: brightness(1.1);
         transform: translateY(-1px);
     }
+        .banner-cumple {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: none;
+            border-radius: 15px;
+            color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    
     </style>
-
-
+    
 
     @if (!EsDiaNoLaboral)
     {
@@ -704,8 +714,84 @@
         </div>
     }
     </div>
+@* --- BLOQUE 1: BANNER DE CUMPLEAÑOS --- *@
+@if (esMiCumple)
+{
+    <div class="alert alert-success shadow-sm d-flex align-items-center" role="alert"
+         style="background: linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%); border: none; color: #155724;">
+        <div class="fs-1 me-3">🎉</div>
+        <div>
+            <h4 class="alert-heading mb-1">¡Feliz Cumpleaños, @miCumple?.Nombre!</h4>
+            <p class="mb-0">Hoy es tu día especial. Tienes el beneficio de <strong>medio día laboral</strong>. ¡Disfrútalo!</p>
+        </div>
+    </div>
+}
+
+@* <div class="row">
+   
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Mis Vacaciones 2026</h5>
+            </div>
+            <div class="card-body">
+                @if (listaVacaciones == null)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Buscando periodos...</p>
+                    </div>
+                }
+                else if (listaVacaciones.Count == 0)
+                {
+                    <div class="alert alert-light border">
+                        <i class="bi bi-info-circle"></i> No tienes vacaciones registradas para este año.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var v in listaVacaciones)
+                    {
+                        <div class="border-start border-4 border-success ps-3 mb-3">
+                            <span class="badge bg-success mb-1">@v.Movimiento</span>
+                            <p class="mb-0 font-weight-bold">Del @v.Desde al @v.Hasta</p>
+                            <small class="text-muted">Área: @v.Area</small>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
 
 
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🎂 Compañeros de Cumpleaños</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                @if (listaTodosCumple.Count == 0)
+                {
+                    <p class="text-muted">Cargando lista de compañeros...</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var c in listaTodosCumple.OrderBy(x => x.Cumpleanios))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @c.Nombre
+                                <span class="badge bg-info text-dark">@c.Cumpleanios</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+ *@
 <!-- MODAL DE MODIFICAR HSITORIAS DE FECHAS -->
 @if (ShowModificarFechaModal)
 {
@@ -1488,12 +1574,48 @@
     private bool MostrarAlerta = false;
     private string MensajeAlerta = string.Empty;
     private string TipoAlerta = "exito";
-  
-  
     private bool mostrarMensajeRegistro = false;
     private HashSet<string> MenuE = new HashSet<string>();
     private HashSet<string> MenuS = new HashSet<string>();
+    //Cumpleaños
+    private List<VacacionesDTO>? listaVacaciones;
+    private List<CumpleaniosDTO> listaTodosCumple = new();
+    private CumpleaniosDTO? miCumple;
+    private bool esMiCumple = false;
 
+   
+    private async Task CargarCumpleanios()
+    {
+        try
+        {
+            miCumple = await InfoService.GetMiCumpleanios();
+
+            // 1. Obtenemos la fecha de tu computadora
+            string hoy = DateTime.Now.ToString("dd/MM");
+
+            if (miCumple != null)
+            {
+                // 2. LOGS FORZADOS (Saldrán aunque no sea tu cumple)
+                await JS.InvokeVoidAsync("console.warn", "--- REVISIÓN DE FECHAS ---");
+                await JS.InvokeVoidAsync("console.log", "Fecha de tu PC: " + hoy);
+                await JS.InvokeVoidAsync("console.log", "Fecha de la API: " + miCumple.Cumpleanios);
+
+                // 3. Comparación (Si pusiste el 13, esto dará FALSE hoy día 10)
+                esMiCumple = (miCumple.Cumpleanios?.Trim() == hoy);
+
+                await JS.InvokeVoidAsync("console.log", "¿Coinciden?: " + esMiCumple);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", "Error al cargar: " + ex.Message);
+        }
+    }
+    private async Task CargarVacaciones()
+    {
+        // Usamos 'listaVacaciones' que declaraste como List<VacacionesDTO>
+        listaVacaciones = await InfoService.GetMisVacaciones();
+    }
     private void AlternarE(string nombre)
     {
         if (MenuE.Contains(nombre)) MenuE.Remove(nombre);
@@ -2020,6 +2142,15 @@
             usuarioActualId = usuario.IdUsuario;
             Debug.WriteLine($"👤 usuarioActualId (IdUsuario) = {usuarioActualId}");
         }
+        // Log inmediato para saber si la página arrancó
+        await JS.InvokeVoidAsync("console.log", "--- DIA2 CARGADO ---");
+        // Llamamos a los métodos al iniciar
+        await CargarCumpleanios();
+        await CargarVacaciones();
+
+        // Cargamos también la lista general
+        listaTodosCumple = await InfoService.GetTodosLosCumpleanios();
+
         var salas = await SalasService.GetSalas();
 
         salasLookup = salas.ToDictionary(
@@ -2158,7 +2289,7 @@
 
         foreach (var ev in eventosApi)
         {
-            Console.Error.WriteLine($"DEBUG EVENTO: {ev.titulo} | CreadorDB: {ev.creadorId} | MiID: {usuarioActualId}");
+            // Console.Error.WriteLine($"DEBUG EVENTO: {ev.titulo} | CreadorDB: {ev.creadorId} | MiID: {usuarioActualId}");
             bool esMio = ev.creadorId == usuarioActualId;
             bool soyInvitada = !esMio &&
                 ev.participantes.Any(p => p.idEmpleado == usuarioActualId);
@@ -2483,14 +2614,10 @@ MasterCategories.Add(servicioClienteCategory);
 }
     private async Task EliminarSubtask(SubtaskModel st)
     {
-        // 1. Detectar tema
+    
         bool isDark = await JS.InvokeAsync<bool>("eval", "document.documentElement.getAttribute('data-theme') === 'dark'");
-
-        // 2. Configuración de estilos
         string bgColor = isDark ? "#1e293b" : "#ffffff";
         string txtColor = isDark ? "#f8fafc" : "#1e293b";
-
-        // 3. PRIMERA PREGUNTA
         var firstResult = await JS.InvokeAsync<System.Text.Json.JsonElement>("Swal.fire", new
         {
             title = "¿Estás seguro?",
@@ -2501,7 +2628,6 @@ MasterCategories.Add(servicioClienteCategory);
             cancelButtonColor = isDark ? "#334155" : "#6e7881",
             confirmButtonText = "Sí, eliminar",
             cancelButtonText = "Cancelar",
-            // Forzar colores
             background = bgColor,
             color = txtColor,
             customClass = new
@@ -2511,8 +2637,6 @@ MasterCategories.Add(servicioClienteCategory);
         });
 
         if (!firstResult.GetProperty("isConfirmed").GetBoolean()) return;
-
-        // 4. SEGUNDA PREGUNTA (Solo si confirmó la primera)
         var secondResult = await JS.InvokeAsync<System.Text.Json.JsonElement>("Swal.fire", new
         {
             title = "¿Eliminar?",
@@ -2625,8 +2749,6 @@ MasterCategories.Add(servicioClienteCategory);
     void AgregarSubtarea()
     {
         if (string.IsNullOrWhiteSpace(nuevaSubtareaTexto)) return;
-
-        // Asegúrate de que NO estás haciendo EditItem.Subtareas = new List...
         if (EditItem.Subtareas == null) EditItem.Subtareas = new List<EditableSubtask>();
 
         EditItem.Subtareas.Add(new EditableSubtask
@@ -2696,14 +2818,12 @@ MasterCategories.Add(servicioClienteCategory);
 
                 if (st.IsDone)
                 {
-                    // Solo mostrar si se completó el mismo día que estamos viendo
                     return st.FechaCompletada.HasValue &&
                            st.FechaCompletada.Value.Date == fechaVista.Date;
                 }
                 
                 else
                 {
-                    // Pendiente: desde inicio hasta HOY
                     return fechaVista >= inicio && fechaVista <= hoyReal;
                 }
             }).ToList();
@@ -2768,7 +2888,6 @@ MasterCategories.Add(servicioClienteCategory);
             Id = t.idOrden,
             IdOrdenTramite = t.idOrden,
             NumeroOrden = t.numeroOrden,
-            // Guardamos los datos de una vez para que no salgan vacíos
             Cliente = t.cliente,
             Autor = t.solicitanteInterno,
             Objetivo = t.nombreGlobal,
@@ -2776,8 +2895,7 @@ MasterCategories.Add(servicioClienteCategory);
             FechaProgramada = DateTime.TryParse(t.fechaConclusionTramite, out var f) ? f : DateTime.Now,
             Status = status,
             Tipo = TipoOrden.Tramite,
-            // Guardamos el DTO completo dentro de una propiedad si tu modelo lo permite
-            // O simplemente nos aseguramos de que estos campos existan en OrdenTrabajoModel
+         
         };
     }
     private OrdenTrabajoModel ConvertirOrdenDetalle(OrdenTrabajoDTO api) => new()
@@ -2932,11 +3050,7 @@ MasterCategories.Add(servicioClienteCategory);
         {
             if (ot == null) return;
             int idReal = ot.IdOrdenTramite ?? ot.Id;
-
-            // 1. FORZAMOS la apertura del modal inmediatamente
             ShowTramiteModal = true;
-
-            // Creamos un objeto temporal con los datos que ya tenemos de la Card
             SelectedOrdenTramite = new OrdenTramiteDTO
             {
                 idOrden = idReal,
@@ -2950,8 +3064,6 @@ MasterCategories.Add(servicioClienteCategory);
             };
 
             StateHasChanged();
-
-            // 2. Llamada a la API
             var detalleApi = await OrdenTramiteService.GetDetalle(idReal);
 
             if (detalleApi != null)
@@ -2960,7 +3072,6 @@ MasterCategories.Add(servicioClienteCategory);
             }
             else
             {
-                // Si la API falla, inicializamos la lista vacía para que desaparezca el "Cargando"
                 SelectedOrdenTramite.tramitesIndividuales = new List<TramiteIndividualDTO>();
                 await JS.InvokeVoidAsync("console.warn", "La API no devolvió detalles para el ID:", idReal);
             }
@@ -3103,20 +3214,12 @@ MasterCategories.Add(servicioClienteCategory);
         try
         {
             isRefreshing = true;
-
-            // 1. Volvemos a verificar si es día festivo/domingo
             await VerificarDiaNoLaboralAsync();
-
-            // 2. Recargamos todas las categorías desde la API (MasterCategories)
             await InitializeMasterCategoriesAsync();
-
-            // 3. Aplicamos los filtros de la fecha seleccionada
             await CargarTareasPorFecha();
-
-            // 4. Actualizamos órdenes de trabajo si existen
             await PrepararOrdenesVisuales();
 
-            StateHasChanged(); // Forzamos el renderizado
+            StateHasChanged(); 
         }
         catch (Exception ex)
         {

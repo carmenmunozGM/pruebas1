@@ -11,6 +11,7 @@
 @inject OrdenTramiteService OrdenTramiteService
 @inject CalendarioService CalendarioService
 @inject ServicioClienteService ServicioClienteService
+@inject InfoPersonalService infoPersonalService
 <br />
 <br />
 <div class="agenda-container">
@@ -40,9 +41,51 @@
         {
             @if (day != null)
             {
+
                 <div class="day-card @(EsNoLaboral(day.Date) ? "no-laboral" : "")"
                      title="@DescripcionNoLaboral(day.Date)">
+                    <div class="day-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 1.2rem; color: #d9534f;"></strong>
 
+                        @{
+                            var festejadosHoy = ObtenerCumpleaniosDelDia(day.Date.Day);
+                        }
+
+                        @if (festejadosHoy.Any())
+                        {
+                            <div class="birthday-badge"
+                                 @onclick="() => OpenBirthdayModal(day.Date)"
+                                 @onclick:stopPropagation="true"
+                                 title="Cumpleaños de: @(string.Join(", ", festejadosHoy.Select(f => f.Nombre)))"
+                                 style="cursor:pointer; background-color: #fff0f0; border: 1px solid #ffccd5; border-radius: 6px; padding: 2px 6px;">
+                                <span style="font-size: 1.2rem;">🎂</span>
+                                @if (festejadosHoy.Count > 1)
+                                {
+                                    <span style="font-size: 0.75rem; font-weight: bold; color: #ff5e78;"></span>
+                                }
+                            </div>
+                        }
+                    </div> 
+                   @*  @{
+                        var festejadosHoy = ObtenerCumpleaniosDelDia(day.Date.Day);
+                    }
+
+                    @if (festejadosHoy.Any())
+                    {
+                        /* IMPORTANTE: He movido los estilos al CSS para que no estorben,
+                        pero mantengo el stopPropagation para que el click funcione
+                        */
+                        <div class="birthday-badge"
+                             @onclick="() => OpenBirthdayModal(day.Date)"
+                             @onclick:stopPropagation="true"
+                             title="Cumpleaños de: @(string.Join(", ", festejadosHoy.Select(f => f.Nombre)))">
+                            <span class="birthday-icon">🎂</span>
+                            @if (festejadosHoy.Count > 1)
+                            {
+                                <span class="birthday-count">x@festejadosHoy.Count</span>
+                            }
+                        </div>
+                    } *@
                     <div class="day-header">
                         @day.Date.ToString("dd")
                         @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
@@ -51,8 +94,8 @@
                         }
 
                     </div>
-
-
+                        
+                 
                     @if (EsNoLaboral(day.Date))
                     {
                         <div class="no-laboral">
@@ -102,6 +145,251 @@
         }
     </div>
 </div>
+@* --- MODAL DE CUMPLEAÑOS --- *@
+@if (ShowBirthdayModal)
+{
+    <div class="modal-backdrop-custom" @onclick="() => ShowBirthdayModal = false">
+        <div class="modal-birthday-card" @onclick:stopPropagation="true">
+
+            <div class="modal-birthday-header">
+                <div style="font-size: 40px;">🎂</div>
+                <h3>¡Festejados!</h3>
+            </div>
+
+            <div class="modal-birthday-body">
+                @if (EmpleadosFestejados != null && EmpleadosFestejados.Any())
+                {
+                    @foreach (var emp in EmpleadosFestejados)
+                    {
+                        <div class="birthday-item">
+                            <div class="birthday-avatar">
+                                <i class="fas fa-user">
+                                    <svg width="100" height="100" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 21v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1" fill="#AED6F1" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round" />
+                                        <circle cx="12" cy="11" r="4" fill="#AED6F1" stroke="#2C3E50" stroke-width="1.5" />
+
+                                        <path d="M12 2L16 9H8L12 2Z" fill="#FF5733" stroke="#2C3E50" stroke-width="1" stroke-linejoin="round" />
+
+                                        <circle cx="12" cy="4.5" r="0.4" fill="white" />
+                                        <circle cx="11" cy="6" r="0.4" fill="white" />
+                                        <circle cx="13" cy="6" r="0.4" fill="white" />
+                                        <circle cx="10.5" cy="7.5" r="0.4" fill="white" />
+                                        <circle cx="12" cy="7.5" r="0.4" fill="white" />
+                                        <circle cx="13.5" cy="7.5" r="0.4" fill="white" />
+
+                                        <circle cx="12" cy="2" r="0.8" fill="#FFC300" stroke="#2C3E50" stroke-width="0.5" />
+                                    </svg>
+                                </i>
+                            </div>
+                            <div class="birthday-info">
+                                <span class="birthday-name">@emp.Nombre</span>
+                                <span class="birthday-id">No.Empleado: @emp.NumeroPersonal</span>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="modal-birthday-footer">
+                <button class="btn-close-modal" @onclick="() => ShowBirthdayModal = false">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+    <style >
+    .day-card {
+        position: relative; /* Clave para que el pastel flote dentro */
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 6px;
+        min-height: 150px; /* Altura fija para que todos sean iguales */
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .day-number {
+        font-size: 1.1rem;
+        color: #d9534f;
+        margin-bottom: 8px;
+    }
+
+    /* El pastel ahora no ocupa espacio en el flujo (absolute) */
+    .birthday-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        cursor: pointer;
+        background-color: #fff0f0;
+        border: 1px solid #ffccd5;
+        border-radius: 6px;
+        padding: 2px 5px;
+        display: flex;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .birthday-icon {
+        font-size: 1rem;
+    }
+
+    .birthday-count {
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: #ff5e78;
+        margin-left: 2px;
+    }
+
+    .blocks-container {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .list-item {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    /* Estilos del Modal para que aparezca al frente */
+    .modal-backdrop-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+        backdrop-filter: blur(4px); /* Efecto de desenfoque al fondo */
+    }
+    /* Tarjeta del Modal */
+    .modal-birthday-card {
+        background: white;
+        width: 90%;
+        max-width: 450px;
+        border-radius: 20px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        overflow: hidden;
+        animation: scaleIn 0.3s ease-out;
+    }
+
+    /* Animación de entrada */
+    @@keyframes scaleIn {
+        from
+
+    {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    }
+
+    /* Encabezado festivo */
+    .modal-birthday-header {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        padding: 30px;
+        text-align: center;
+        color: #fff;
+    }
+
+        .modal-birthday-header h3 {
+            margin-top: 10px;
+            font-weight: 700;
+            color: #5d5d5d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+    /* Cuerpo del modal con scroll si hay muchos festejados */
+    .modal-birthday-body {
+        padding: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* Cada fila de empleado */
+    .birthday-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+
+        .birthday-item:hover {
+            background-color: #fffaf0;
+        }
+
+    /* Círculo del avatar */
+    .birthday-avatar {
+        width: 50px;
+        height: 50px;
+        background-color: #e0e0e0;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 15px;
+        font-size: 20px;
+    }
+
+    /* Información del texto */
+    .birthday-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .birthday-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 1.1rem;
+    }
+
+    .birthday-id {
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    /* Footer y Botón */
+    .modal-birthday-footer {
+        padding: 15px;
+        text-align: center;
+        background-color: #f9f9f9;
+    }
+
+    .btn-close-modal {
+        background-color: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        border-radius: 50px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+        .btn-close-modal:hover {
+            background-color: #ee5253;
+            transform: translateY(-2px);
+        }
+</style>
 
 <!-- Modal -->
 @if (SelectedBlock != null)
@@ -370,7 +658,10 @@
     List<OrdenTramiteDTO> OrdenesTramite = new();
     List<DiaNoLaboralDto> DiasNoLaborales = new();
     List<ServicioClienteAgendaDTO> ServicioClienteAgenda = new();
-   
+    private List<CumpleaniosDTO> listaTodosCumple = new();
+    private List<CumpleaniosDTO> EmpleadosFestejados = new(); 
+    private List<CumpleaniosDTO> CumplesMesActual = new(); 
+    private bool ShowBirthdayModal = false;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -464,6 +755,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        listaTodosCumple = await infoPersonalService.GetTodosLosCumpleanios() ?? new();
         await CargarAutoevaluaciones();
 
         var agendas = await AgendaService.ObtenerAgendaAsignadasAsync();
@@ -551,7 +843,12 @@
 
         for (int i = 0; i < padding; i++)
             Days.Add(null);
-
+       
+        CumplesMesActual = listaTodosCumple.Where(c =>
+        {
+            var partes = c.Cumpleanios?.Split('/');
+            return partes?.Length >= 2 && int.TryParse(partes[1], out int m) && m == CurrentDate.Month;
+        }).ToList();
         int daysInMonth = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
         for (int i = 1; i <= daysInMonth; i++)
         {
@@ -567,7 +864,19 @@
         else
             ExpandedEvents.Add(ev);
     }
-
+    void OpenBirthdayModal(DateTime date)
+    {
+        EmpleadosFestejados = ObtenerCumpleaniosDelDia(date.Day);
+        if (EmpleadosFestejados.Any()) ShowBirthdayModal = true;
+    }
+    private List<CumpleaniosDTO> ObtenerCumpleaniosDelDia(int dia)
+    {
+        return CumplesMesActual.Where(c =>
+        {
+            var partes = c.Cumpleanios?.Split('/');
+            return partes != null && int.TryParse(partes[0], out int d) && d == dia;
+        }).ToList();
+    }
     DayColumn CreateDay(DateTime date)
     {
         var day = new DayColumn { Date = date };
@@ -764,6 +1073,3 @@
         _ => "📋"
     };
 }
-
-
-
