@@ -71,5 +71,20 @@
         observer.observe(document.body, { childList: true });
     };
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+
+
+    window.swalFire = (title, text, icon) => {
+        return Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#6c63ff',
+            allowOutsideClick: false,
+            backdrop: true
+        });
+    };
+</script>
 
 </html>

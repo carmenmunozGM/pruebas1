@@ -1,130 +1,392 @@
-﻿@using System.Collections.Generic
-@using System.Linq
-@using pruebas1.Components.DTOs
-@inject pruebas1.Servicios.LoginService LoginService
-@inject HttpClient Http
-<div class="d-flex justify-content-end">
-    <button class="action-button-slender" style="margin-right: 40px; float: right;" @onclick="AbrirModal">
-        <span style="font-size: 18px; line-height: 1;">+</span>
-        Crear Minuta
-    </button>
-</div>
-@if (IsVisible)
-{
-    <div class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <div class="header-left">
-                    <span class="header-title">Minuta de Trabajo Interna</span>
-                  
-                </div>
-                <button class="close-modal-btn" @onclick="Cerrar">&times;</button>
-            </div>
+﻿    @using System.Collections.Generic
+    @using System.Linq
+    @using System.Diagnostics
+    @using System.Text.Json
+    @using pruebas1.Components.DTOs
+    @inject pruebas1.Servicios.LoginService LoginService
+    @inject HttpClient Http
+@inject IJSRuntime JS
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-            <div class="modal-body">
-                <div class="top-info-grid">
-                    <div class="field-box">
-                        <label>Asesor (Clave y Nombre)</label>
-                        <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
-                    </div>
-                    <div class="field-box folio">
-                        <label>Folio :</label>
-                        <input type="text" disabled class="input-readonly" />
-                    </div>
-                 
-                    <div class="field-box date-box">
-                        <label>Fecha</label>
-                        <DatePicker Value="FechaSeleccionada"
-                                    ValueChanged="OnFechaInicioChanged"
-                                    CssClass="form-control custom-dp" />
-                    </div>
+    <div class="d-flex justify-content-end">
+        <button type="button" class="action-button-slender" style="margin-right: 40px; float: right;" @onclick="AbrirModal">
+            <span style="font-size: 18px; line-height: 1;">+</span>
+            Crear Minuta
+        </button>
+    </div>
+    @if (IsVisible)
+    {
+    @if (MostrarAlerta)
+    {
+        <div class="alert-overlay">
+            <div class="alert-box @(TipoAlerta)">
+                <div class="alert-content">
+                    <span>@MensajeAlerta</span>
+                    <button type="button" class="alert-close" @onclick="() => MostrarAlerta = false">×</button>
                 </div>
-
-                <div class="table-wrapper">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th class="col-cliente">Cliente (Clave y Nombre)</th>
-                                <th>Actividad</th>
-                                <th style="width: 110px;">Periodo</th>
-                                <th style="width: 110px;">Hrs. Invertidas</th>
-                                <th style="width: 40px;">Cap.</th>
-                                <th style="width: 90px;">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var fila in FilasMinuta)
-                            {
-                                <tr>
-                                    <td class="col-cliente">
-                                        <select @bind="fila.ClienteId" class="cell-input select-limitado">
-                                            <option value="0">Seleccionar Empresa...</option>
-                                            @foreach (var cliente in listaClientes)
-                                            {
-                                                <option value="@cliente.Id">
-                                                    @cliente.Clave - @cliente.RazonSocial
-                                                </option>
-                                            }
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <div class="activity-stack">
-                                            <select @bind="fila.Actividad" class="cell-input">
-                                                <option value="">Seleccione...</option>
-                                                @foreach (var act in ListadoActividades)
-                                                {
-                                                    <option value="@act">@act</option>
-                                                }
-                                                <option value="Otros">Otros (Especificar)</option>
-                                            </select>
-                                            @if (fila.Actividad == "Otros")
-                                            {
-                                                <input type="text" @bind="fila.OtraActividad" class="input-subtle" placeholder="Especifique actividad..." />
-                                            }
-                                        </div>
-                                    </td>
-                                    <td><input type="text" @bind="fila.Periodo" placeholder="Ej. Ene-Feb" class="cell-input" /></td>
-                                    <td><TimePickerList @bind-Value="fila.Horas" /></td>
-                                    <td class="text-center"><input type="checkbox" @bind="fila.CapAux" /></td>
-                                    <td>
-                                        <div class="cell-actions">
-                                            <button class="action-icon btn-del" @onclick="() => EliminarFila(fila)" title="Eliminar">🗑</button>
-                                            @if (fila == FilasMinuta.Last())
-                                            {
-                                                <button class="action-icon btn-add" @onclick="AgregarFila" title="Agregar">+</button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="summary-section">
-                    <div class="notes-area">
-                        <label>Comentarios u Observaciones</label>
-                        <textarea @bind="Observaciones" rows="2" placeholder="Notas adicionales..."></textarea>
-                    </div>
-                    <div class="total-box-display">
-                        <div class="total-label">HORAS TOTALES</div>
-                        <div class="total-number">@CalcularTotalHoras()</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-secondary" @onclick="Cerrar">Cancelar</button>
-                <button class="btn-primary" @onclick="Guardar">Guardar Minuta</button>
             </div>
         </div>
-    </div>
-}
+    }
+
+        <div class="modal-overlay">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <div class="header-left">
+                        <span class="header-title">Minuta de Trabajo Interna</span>
+                  
+                    </div>
+                    <button type="button" class="close-modal-btn" @onclick="Cerrar">
+                        &times;
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="top-info-grid">
+                        <div class="field-box">
+                            <label>Asesor (Clave y Nombre)</label>
+                            <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
+                        </div>
+                 
+                        <div class="field-box date-box">
+                            <label>Fecha</label>
+                            <DatePicker Value="FechaSeleccionada"
+                                        ValueChanged="OnFechaInicioChanged"
+                                        CssClass="form-control custom-dp" />
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-cliente">Cliente (Clave y Nombre)</th>
+                                    <th>Actividad</th>
+                                    <th style="width: 110px;">Periodo</th>
+                                    <th style="width: 110px;">Hrs. Invertidas</th>
+                                    <th style="width: 90px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fila in FilasMinuta)
+                                {
+                                    <tr>
+                                        <td class="col-cliente">
+                                            <select @bind="fila.ClienteId" class="cell-input select-limitado">
+                                                <option value="0">Seleccionar Empresa...</option>
+                                                @foreach (var cliente in listaClientes)
+                                                {
+                                                    <option value="@cliente.Id">
+                                                        @cliente.Clave - @cliente.RazonSocial
+                                                    </option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <div class="activity-stack">
+                                                <select @bind="fila.IdActividad" class="cell-input">
+                                                    <option value="0">Seleccione...</option>
+                                                    @foreach (var act in ListadoActividades)
+                                                    {
+                                                        <option value="@act.Id">@act.Descripcion</option>
+                                                    }
+                                                </select>
+
+                                                @if (fila.IdActividad == 99)
+                                                {
+                                                    <input type="text" @bind="fila.OtraActividad" class="input-subtle" placeholder="Especifique actividad..." />
+                                                }
+                                            </div>
+                                        </td>
+                                        <td><input type="text" @bind="fila.Periodo" placeholder="Ej. Ene-Feb" class="cell-input" /></td>
+                                        <td>
+                                            <TimePickerList @bind-Value="fila.Horas" />
+                                        </td>
+                                        <td>
+
+                                            <div class="cell-actions">
+                                                @if (fila == FilasMinuta.Last())
+                                                {
+                                                    <button type="button" class="action-icon btn-add" @onclick="AgregarFila" title="Agregar">
+                                                        +
+                                                    </button>
+                                                }
+                                                <button type="button" class="action-icon btn-del" @onclick="() => EliminarFila(fila)" title="Eliminar">
+                                                    🗑
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="notes-area">
+                            <label>Comentarios u Observaciones</label>
+                            <textarea @bind="Observaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+                        </div>
+                        <div class="total-box-display">
+                            <div class="total-label">HORAS TOTALES</div>
+                            <div class="total-number">@CalcularTotalHoras()</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" @onclick="Cerrar">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn-primary" @onclick="Guardar">
+
+                        Guardar Minuta
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @code {
+        [Parameter] public EventCallback OnSave { get; set; }
+        private List<ClientesDTO> listaClientes = new();
+        private bool IsVisible = false;
+
+        private string NombreAsesor = "";
+        private int ClaveAsesor = 0;
+        private DateTime FechaSeleccionada = DateTime.Now;
+        private string Observaciones = "";
+        private List<ActividadMinutaDTO> ListadoActividades = new();
+
+    private bool MostrarAlerta = false;
+    private string MensajeAlerta = "";
+    private string TipoAlerta = "error"; 
+
+        public class FilaMinuta
+        {
+            public int ClienteId { get; set; }
+            public int IdActividad { get; set; }
+            public string? OtraActividad { get; set; }   
+            public string Periodo { get; set; } = "";
+            public TimeOnly? Horas { get; set; }
+        }
+
+
+        private void OnFechaInicioChanged(DateTime? nuevaFecha)
+        {
+            FechaSeleccionada = nuevaFecha ?? DateTime.Now;
+        }
+        private List<FilaMinuta> FilasMinuta = new();
+
+        private async Task AbrirModal()
+        {
+            var usuario = LoginService.obtenerUsuarioLogueado();
+
+            NombreAsesor = !string.IsNullOrWhiteSpace(usuario.NombreRed)
+                ? usuario.NombreRed
+                : usuario.NombreUsuario;
+
+            ClaveAsesor = usuario.IdEmpleado;
+
+            FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
+            IsVisible = true;
+
+            try
+            {
+                // =============================
+                // 1️⃣ Cargar clientes
+                // =============================
+                var respClientes = await Http.GetAsync("/api/servicio-cliente/admin/clientes");
+
+                if (respClientes.IsSuccessStatusCode)
+                {
+                    listaClientes = await respClientes.Content.ReadFromJsonAsync<List<ClientesDTO>>() ?? new();
+                }
+                else
+                {
+                    Debug.WriteLine("Error cargando clientes: " + respClientes.StatusCode);
+                }
+
+                // =============================
+                // 2️⃣ Cargar empleado
+                // =============================
+                var respEmpleado = await Http.GetAsync($"/empleado/Obtener/{usuario.IdUsuario}");
+                Debug.WriteLine("La clave del empleado es " + usuario.IdUsuario);
+                if (!respEmpleado.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine("Error obteniendo empleado: " + usuario.IdUsuario  + respEmpleado.StatusCode);
+                    return;
+                }
+
+            var empleado = await respEmpleado.Content.ReadFromJsonAsync<EmpleadoDTO>();
+
+            if (empleado == null || string.IsNullOrWhiteSpace(empleado.Area))
+            {
+                Debug.WriteLine("Empleado sin área.");
+                return;
+            }
+
+            // =============================
+            // 3️⃣ Cargar actividades por área
+            // =============================
+            var respActividades = await Http.GetAsync(
+                $"/Minutas/catalogo?area={Uri.EscapeDataString(empleado.Area)}"
+            );
+
+            Debug.WriteLine(Uri.EscapeDataString(empleado.Area) + " " + respActividades);
+       
+                if (respActividades.IsSuccessStatusCode)
+                {
+                    ListadoActividades = await respActividades
+                        .Content
+                        .ReadFromJsonAsync<List<ActividadMinutaDTO>>() ?? new();
+
+                    Debug.WriteLine("Cantidad actividades: " + ListadoActividades.Count);
+                }
+
+            else
+            {
+                Debug.WriteLine("Error cargando actividades: " + respActividades.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("ERROR GENERAL: " + ex.Message);
+        }
+
+        StateHasChanged();
+    }
+
+
+        private void Cerrar() => IsVisible = false;
+
+        private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
+
+        private void EliminarFila(FilaMinuta fila)
+        {
+            if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
+        }
+
+        private string CalcularTotalHoras()
+        {
+            TimeSpan total = TimeSpan.Zero;
+            foreach (var f in FilasMinuta)
+            {
+                if (f.Horas.HasValue)
+                {
+                    total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
+                }
+            }
+            return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
+        }
+
+        private bool Guardando = false;
+    private string? ErrorGuardar;
+
+    private async Task Guardar()
+    {
+        string mensaje = "";
+
+        // Validar fecha
+        if (FechaSeleccionada == default)
+            mensaje += "• Debe seleccionar la fecha.\n";
+
+        // Validar filas
+        if (FilasMinuta == null || !FilasMinuta.Any())
+            mensaje += "• Debe agregar al menos una actividad.\n";
+        else
+        {
+            foreach (var fila in FilasMinuta)
+            {
+                if (fila.ClienteId <= 0)
+                    mensaje += "• Debe seleccionar el cliente.\n";
+
+                if (fila.IdActividad <= 0)
+                    mensaje += "• Debe seleccionar la actividad.\n";
+
+                if (string.IsNullOrWhiteSpace(fila.Periodo))
+                    mensaje += "• Debe capturar el periodo.\n";
+
+                if (!fila.Horas.HasValue)
+                    mensaje += "• Debe capturar las horas invertidas.\n";
+            }
+        }
+
+        // Si hay errores → mostrar alerta tipo SweetAlert
+        if (!string.IsNullOrEmpty(mensaje))
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Campos obligatorios incompletos",
+                text = mensaje
+            });
+            return;
+        }
+
+        // Construir DTO
+        var dto = new
+        {
+            Fecha = FechaSeleccionada,
+            Comentarios = Observaciones,
+            Actividades = FilasMinuta.Select(f => new
+            {
+                ClaveCliente = f.ClienteId,
+                IdActividad = f.IdActividad,
+                Periodo = f.Periodo,
+                HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute
+            }).ToList()
+        };
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/Minutas/crear", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "Minuta guardada con éxito 🎉",
+                    confirmButtonText = "OK"
+                });
+
+                Cerrar();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error al guardar",
+                    text = "Ocurrió un error al intentar guardar la minuta."
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error inesperado",
+                text = ex.Message
+            });
+        }
+    }
 
 
 
+    private void LanzarAlerta(string mensaje, string tipo)
+    {
+        MensajeAlerta = mensaje;
+        TipoAlerta = tipo;
+        MostrarAlerta = true;
+        StateHasChanged();
+    }
 
-<style>
+    }
+
+    <style>
     /* ================================
        ANIMALISTA UI 2026 – MODAL MINUTA
        ================================ */
@@ -177,8 +439,13 @@
 
     /* ================= HEADER ================= */
 
+    .swal2-container {
+        z-index: 999999 !important;
+    }
+
+
     .modal-header {
-        background: linear-gradient(135deg, #0f172a, #14532d);
+        background: #08172a;
         color: #ecfdf5;
         padding: 20px 28px;
         display: flex;
@@ -438,12 +705,12 @@
         box-shadow: 0 10px 25px rgba(15,23,42,0.35);
     }
 
-        .action-button-slender:hover {
+/*         .action-button-slender:hover {
             transform: translateY(-1px);
             box-shadow: 0 14px 30px rgba(34,197,94,0.35);
             background: linear-gradient(135deg, #14532d, #22c55e);
         }
-
+ */
         .action-button-slender span {
             font-size: 20px;
             line-height: 1;
@@ -485,12 +752,7 @@
      
     }
 
-      
-    /* Select de actividades con scroll */
-    .activity-stack select {
-        max-height: 160px; /* aprox 4 opciones visibles */
-        overflow-y: auto;
-    }
+
     /* Contenedor correcto */
     .date-box {
         position: relative;
@@ -650,89 +912,178 @@
     }
 
     }
+
+
+    /* === Variables Modo Oscuro === */
+    [data-theme="dark"] .action-button-slender {
+        background-color: #03324a; /* Azul vibrante */
+        color: #ffffff; /* ¡IMPORTANTE! Texto blanco para el azul */
+        /* ... tus otras variables ... */
+    }
+
+        .action-button-slender span {
+            font-weight: 400; /* Para que el '+' no se vea tan tosco */
+        }
+
+    /* =================================================
+       MODO OSCURO: MINUTA DE TRABAJO INTERNA
+       ================================================= */
+
+    /* 1. Contenedor y Fondo General */
+    [data-theme="dark"] .modal-container {
+        background: #0f172a !important; /* Azul noche profundo */
+        color: #f1f5f9;
+    }
+
+    /* 2. Inputs de solo lectura (Asesor) */
+    [data-theme="dark"] .input-readonly {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #94a3b8 !important;
+    }
+
+    /* 3. Tabla y Encabezados */
+    [data-theme="dark"] .table-wrapper {
+        background: #1e293b !important;
+        box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="dark"] .custom-table thead {
+        background: #0f172a !important;
+    }
+
+    [data-theme="dark"] .custom-table th {
+        border-bottom: 2px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .custom-table td {
+        border-bottom: 1px solid #334155 !important;
+    }
+
+    [data-theme="dark"] .custom-table tbody tr:hover {
+        background: #1e293b !important;
+    }
+
+    /* 4. Inputs dentro de la tabla (Celdas) */
+    [data-theme="dark"] .cell-input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea,
+    [data-theme="dark"] .timepicker-input {
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+        [data-theme="dark"] .cell-input:focus,
+        [data-theme="dark"] select:focus {
+            border-color: #38bdf8 !important;
+        }
+
+    /* 5. Otros (Input dinámico verde) */
+    [data-theme="dark"] .input-subtle {
+        background: rgba(34, 197, 94, 0.1) !important;
+        border: 1px dashed #22c55e !important;
+        color: #4ade80 !important;
+    }
+
+    /* 6. Botones de Acción (+ y Papelera) */
+    [data-theme="dark"] .btn-del {
+        background: rgba(185, 28, 28, 0.2) !important;
+        color: #ef4444 !important;
+    }
+
+    [data-theme="dark"] .btn-add {
+        background: rgba(21, 128, 61, 0.2) !important;
+        color: #4ade80 !important;
+    }
+
+    /* 7. Resumen de Totales y Notas */
+    [data-theme="dark"] .total-box-display {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: none;
+    }
+
+    [data-theme="dark"] .total-label {
+        color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] .total-number {
+        color: white!important; /* Azul para resaltar las horas */
+    }
+
+    [data-theme="dark"] .field-box label,
+    [data-theme="dark"] .notes-area label {
+        color: #64748b !important;
+    }
+
+    /* 8. Footer del Modal */
+    [data-theme="dark"] .modal-footer {
+        background: #0f172a !important;
+        border-top: 1px solid #334155 !important;
+    }
+
+    /* 9. Paneles de Selección (DatePicker/TimePicker) */
+    [data-theme="dark"] .timepicker-panel,
+    [data-theme="dark"] .rz-datepicker-popup {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 20px 45px rgba(0,0,0,0.5) !important;
+    }
+
+    [data-theme="dark"] .timepicker-item {
+        color: #cbd5e1 !important;
+    }
+
+        [data-theme="dark"] .timepicker-item:hover {
+            background: #334155 !important;
+        }
+
+    .alert-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+    }
+
+    .alert-box {
+        min-width: 350px;
+        max-width: 500px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        box-shadow: 0 10px 30px rgba(0,0,0,.25);
+        pointer-events: all;
+        animation: fadeIn .2s ease-in-out;
+    }
+
+        .alert-box.error {
+            background-color: #ffe5e5;
+            border-left: 5px solid #d32f2f;
+            color: #b71c1c;
+        }
+
+        .alert-box.success {
+            background-color: #e6f4ea;
+            border-left: 5px solid #2e7d32;
+            color: #1b5e20;
+        }
+
+    .alert-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+
+    .alert-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
 </style>
-@code {
-    [Parameter] public EventCallback OnSave { get; set; }
-    private List<ClientesDTO> listaClientes = new();
-    private bool IsVisible = false;
-
-    private string NombreAsesor = "";
-    private int ClaveAsesor = 0;
-    private DateTime FechaSeleccionada = DateTime.Now;
-    private string Observaciones = "";
-    private int FolioAutoIncremental = 1234;
-    // Lista de actividades solicitadas
-    private List<string> ListadoActividades = new() {
-        "Registro Contable", "Calculo de Impuestos", "Análisis de Saldos",
-        "Supervisión", "Asesoría", "Información Mensual", "Autoevaluación",
-        "Programa de Trabajo", "Junta de Trabajo", "Curso", "Cuadernillo de Cierre",
-        "Declaración Informática", "Declaración Anual", "Trabajos Especiales",
-        "Pendientes", "Archivos", "Otros"
-    };
-
-    public class FilaMinuta
-    {
-        public int ClienteId { get; set; }
-        public string Actividad { get; set; } = "";
-        public string OtraActividad { get; set; }
-        public string Periodo { get; set; } = "";
-        public TimeOnly? Horas { get; set; }
-        public bool CapAux { get; set; }
-        
-    }
-    private void OnFechaInicioChanged(DateTime? nuevaFecha)
-    {
-        FechaSeleccionada = nuevaFecha ?? DateTime.Now;
-    }
-    private List<FilaMinuta> FilasMinuta = new();
-
-    private async Task AbrirModal()
-    {
-        // 1. Cargamos los datos del asesor (la lógica que ya tenías)
-        var obj = LoginService.obtenerUsuarioLogueado();
-        NombreAsesor = !string.IsNullOrWhiteSpace(obj.NombreRed) ? obj.NombreRed : obj.NombreUsuario;
-        ClaveAsesor = obj.IdEmpleado;
-
-        // 2. Cargamos los clientes desde tu API
-        try
-        {
-            listaClientes = await Http.GetFromJsonAsync<List<ClientesDTO>>("/api/servicio-cliente/admin/clientes") ?? new();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error cargando clientes: {ex.Message}");
-        }
-
-        FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
-        IsVisible = true;
-    }
-
-    private void Cerrar() => IsVisible = false;
-
-    private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
-
-    private void EliminarFila(FilaMinuta fila)
-    {
-        if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
-    }
-
-    private string CalcularTotalHoras()
-    {
-        TimeSpan total = TimeSpan.Zero;
-        foreach (var f in FilasMinuta)
-        {
-            if (f.Horas.HasValue)
-            {
-                total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
-            }
-        }
-        return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
-    }
-
-    private async Task Guardar()
-    {
-        // Lógica de guardado aquí
-        await OnSave.InvokeAsync();
-        Cerrar();
-    }
-}

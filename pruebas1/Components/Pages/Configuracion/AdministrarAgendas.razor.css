@@ -577,3 +577,89 @@
 [data-theme="dark"] .section-header p {
     color: #9ca3af !important;
 }
+
+/* =================================================
+   MODO OSCURO: COMBO-BOX / BUSCADOR DE PUESTOS
+   ================================================= */
+
+/* Contenedor principal */
+[data-theme="dark"] .form-step.combo {
+    background-color: transparent !important;
+}
+
+    /* Label del buscador */
+    [data-theme="dark"] .form-step.combo label {
+        color: #94a3b8 !important; /* Gris azulado */
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+/* Input de búsqueda */
+[data-theme="dark"] .combo-input {
+    background-color: #1e293b !important; /* Gris pizarra */
+    color: #ffffff !important; /* Texto blanco */
+    border: 1px solid #334155 !important;
+    border-radius: 8px;
+    padding: 12px 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+    [data-theme="dark"] .combo-input::placeholder {
+        color: #64748b !important; /* Placeholder discreto */
+    }
+
+    [data-theme="dark"] .combo-input:focus {
+        border-color: #38bdf8 !important; /* Glow azul al escribir */
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+/* Contenedor de resultados (Dropdown) */
+[data-theme="dark"] .combo-results {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    margin-top: 5px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* Items de la lista */
+[data-theme="dark"] .combo-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+    [data-theme="dark"] .combo-item:last-child {
+        border-bottom: none;
+    }
+
+    [data-theme="dark"] .combo-item span {
+        color: #f1f5f9 !important; /* Texto del puesto */
+    }
+
+    [data-theme="dark"] .combo-item small {
+        color: #64748b !important; /* Clave en gris oscuro */
+        background: #0f172a; /* Pequeño badge oscuro para la clave */
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* Hover en los resultados */
+    [data-theme="dark"] .combo-item:hover {
+        background-color: #334155 !important;
+    }
+
+        [data-theme="dark"] .combo-item:hover span {
+            color: #38bdf8 !important; /* Resalte azul al pasar el mouse */
+        }

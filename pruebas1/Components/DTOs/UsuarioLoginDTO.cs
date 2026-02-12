@@ -15,7 +15,4 @@ namespace pruebas1.Components.DTOs
         public List<int> IdAgendasAsignadas { get; set; }
         public string Token { get; set; }
     }
-
-
-
 }

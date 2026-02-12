@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>﻿
 <div class="action-button-wrapper">
-    <button class="action-button-floating" @onclick="@OpenModal">➕ Crear Nueva Actividad</button>
+    <button class="action-button-floating" @onclick="@OpenModal"><span style="font-size: 18px; line-height: 5;"> +</span> Crear Actividad</button>
 </div>
 @if (ShowModal)
 {
@@ -43,7 +43,7 @@
                         <InputText class="form-control" @bind-Value="titulo" />
                     </div>
                     <div class="form-control-group col-span-2">
-                        <label>⚡Prioridad</label>
+                        <label>⚡Prioridad*</label>
                         <select class="form-input" @bind="selectedPrioridadId">
                             <option value="">Seleccione...</option>
                             @foreach (var p in prioridadesDisponibles)
@@ -54,7 +54,7 @@
                     </div>
                     <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>🗓️ Fecha Inicio</label>
+                            <label>🗓️ Fecha Inicio*</label>
                             <DatePicker Value="FechaInicio"
                                         ValueChanged="OnFechaInicioChanged"
                                         CssClass="form-control" />
@@ -63,23 +63,23 @@
                    
                     <div class="date-time-group">
                         <div class="form-control-group">
-                            <label>🗓️ Fecha Término</label>
+                            <label>🗓️ Fecha Término*</label>
                             <DatePicker Value="FechaFin"
                                         ValueChanged="OnFechaFinChanged"
                                         CssClass="form-control" />
                         </div>
                     </div>
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>🕒Hora Inicio</label>
+                        <label>🕒Hora Inicio*</label>
                         <TimePickerList @bind-Value="HoraInicio" />
                     </div>
                     <div class="form-control-group @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>🕒Hora Término</label>
+                        <label>🕒Hora Término*</label>
                         <TimePickerList @bind-Value="HoraFin" />
                     </div>
                     <!-- Ubicación -->
                     <div class="form-control-group col-span-2 @(FormType != FormTypes.Evento ? "disabled-field-if-tarea" : "")">
-                        <label>📍 Ubicación</label>
+                        <label>📍 Ubicación*</label>
                         <select class="form-control"
                                 @bind="selectedSalaId"
                                 @bind:after="OnSalaChanged">
