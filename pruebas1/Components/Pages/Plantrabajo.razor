@@ -2,9 +2,11 @@
 @using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
-@inject IJSRuntime JS
 @inject HttpClient _http
 @using pruebas1.Components.Pages
+@inject IJSRuntime JS
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>-
 <br />
 <br />
 <br />
@@ -475,80 +477,93 @@ void MostrarAlertaSinFecha()
         MostrarAlerta = true;
     }
 
-private async Task GuardarCambioFecha()
-{
-    // 1. Limpieza inicial
-    MostrarErrorFecha = false;
-    MostrarErrorMotivo = false;
-    ErrorServidor = null;
-
-    // 2. Validaciones básicas de campos vacíos
-    if (NuevaFecha == null) { MostrarErrorFecha = true; }
-    if (string.IsNullOrWhiteSpace(MotivoCambio)) { MostrarErrorMotivo = true; }
-    if (MostrarErrorFecha || MostrarErrorMotivo || ActividadSeleccionada == null) return;
-
-    try
+    private async Task GuardarCambioFecha()
     {
-        Procesando = true;
+        MostrarErrorFecha = false;
+        MostrarErrorMotivo = false;
+        ErrorServidor = null;
 
-        // --- SOLUCIÓN AL DÍA ANTERIOR ---
-        // Extraemos solo año, mes y día para crear una fecha sin zona horaria (Unspecified)
-        var f = NuevaFecha.Value;
-        DateTime fechaNeutral = new DateTime(f.Year, f.Month, f.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        if (NuevaFecha == null) { MostrarErrorFecha = true; }
+        if (string.IsNullOrWhiteSpace(MotivoCambio)) { MostrarErrorMotivo = true; }
+        if (MostrarErrorFecha || MostrarErrorMotivo || ActividadSeleccionada == null) return;
 
-        var dto = new HistorialFechaCreateDTO
+        try
         {
-            IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
-            FechaNueva = fechaNeutral, 
-            Motivo = MotivoCambio
-        };
+            Procesando = true;
 
-        var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+            var f = NuevaFecha.Value;
+            DateTime fechaNeutral = new DateTime(f.Year, f.Month, f.Day, 0, 0, 0, DateTimeKind.Unspecified);
 
-        if (response.IsSuccessStatusCode)
-        {
-            // --- ÉXITO: Recargamos historial y actualizamos UI ---
-            var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(
-                ActividadSeleccionada.IdHorasProgramaTrabajo);
-
-            ActividadSeleccionada.HistorialFechas = historialDto.Select(h => new CambioFecha
+            var dto = new HistorialFechaCreateDTO
             {
-                FechaMovimiento = h.FechaModificacion,
-                FechaAnterior = h.FechaAnterior,
-                FechaNueva = h.FechaNueva,
-                Motivo = h.Motivo
-            }).ToList();
+                IdHorasProgramaTrabajo = ActividadSeleccionada.IdHorasProgramaTrabajo,
+                FechaNueva = fechaNeutral,
+                Motivo = MotivoCambio
+            };
 
-            // Usamos la misma fecha neutral para la UI
-            ActividadSeleccionada.Fecha = fechaNeutral;
-            ActividadSeleccionada.FechaOriginalDesdeDB = true; 
+            var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
 
-            ShowSubModal = false;
-            MotivoCambio = ""; 
-            StateHasChanged();
-        }
-        else
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            if (string.IsNullOrEmpty(errorContent))
+            if (response.IsSuccessStatusCode)
             {
-                ErrorServidor = $"El servidor rechazó el cambio (Código: {(int)response.StatusCode}). Verifica que la fecha sea mayor a la actual.";
+                // 🔄 Recargar historial
+                var historialDto = await ServicioClienteService.ObtenerHistorialFechasAsync(
+                    ActividadSeleccionada.IdHorasProgramaTrabajo);
+
+                ActividadSeleccionada.HistorialFechas = historialDto.Select(h => new CambioFecha
+                {
+                    FechaMovimiento = h.FechaModificacion,
+                    FechaAnterior = h.FechaAnterior,
+                    FechaNueva = h.FechaNueva,
+                    Motivo = h.Motivo
+                }).ToList();
+
+                ActividadSeleccionada.Fecha = fechaNeutral;
+                ActividadSeleccionada.FechaOriginalDesdeDB = true;
+
+                // 🔥 ALERTA SWAL DE ÉXITO
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "Fecha actualizada correctamente",
+                    text = "El cambio fue guardado exitosamente.",
+                    confirmButtonText = "OK",
+                    allowOutsideClick = false
+                });
+
+                // Cerrar después de confirmar
+                ShowSubModal = false;
+                MotivoCambio = "";
+                StateHasChanged();
             }
             else
             {
-                ErrorServidor = errorContent;
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error al guardar",
+                    text = string.IsNullOrEmpty(errorContent)
+                        ? $"La fecha seleccionada no puede ser anterior al dia actual ni a la ultima fecha de cambio (Código: {(int)response.StatusCode})."
+                        : errorContent
+                });
             }
         }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error crítico de conexión",
+                text = ex.Message
+            });
+        }
+        finally
+        {
+            Procesando = false;
+        }
     }
-    catch (Exception ex)
-    {
-        ErrorServidor = "Error crítico de conexión: " + ex.Message;
-    }
-    finally
-    {
-        Procesando = false;
-    }
-}
+
 
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {

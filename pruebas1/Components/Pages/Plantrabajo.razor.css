@@ -37,6 +37,11 @@
     color: white;
 }
 
+.swal2-container {
+    z-index: 999999 !important;
+}
+
+
 /* Botones */
 .btn-save, .btn-cancel, .btn-calendar {
     padding: 0.5rem 1.3rem;
