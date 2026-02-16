@@ -90,11 +90,11 @@
 }
 
 .perfiles-table thead {
-    background: linear-gradient(to right, #fce7f3, #e9d5ff);
+    background: #e9d5ff;
 }
 
 .dark-mode .perfiles-table thead {
-    background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2));
+    background: rgba(168, 85, 247, 0.2);
 }
 
 .perfiles-table thead tr {
@@ -212,7 +212,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: linear-gradient(to right, #ec4899, #9333ea);
+    background: #9333ea;
     color: white;
     border: none;
     border-radius: 8px;
@@ -223,7 +223,7 @@
 }
 
 .save-button:hover {
-    background: linear-gradient(to right, #db2777, #7c3aed);
+    background: #db2777;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -322,7 +322,7 @@
 
 /* Cabecera de Tabla con sus gradientes originales */
 [data-theme="dark"] .perfiles-table thead {
-    background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2)) !important;
+    background: rgba(168, 85, 247, 0.2);
 }
 
     [data-theme="dark"] .perfiles-table thead tr {

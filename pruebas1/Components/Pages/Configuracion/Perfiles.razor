@@ -1,6 +1,9 @@
 @using pruebas1.Components.DTOs
 @using pruebas1.Servicios
+@using static System.Net.WebRequestMethods
 @inject AreasService AreasService
+@inject PerfilesService PerfilesService
+@inject HttpClient Http
 
 <div class="perfiles-section">
     <div class="section-header">
@@ -38,30 +41,31 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var (employee, index) in employees.Select((emp, idx) => (emp, idx)))
+                @foreach (var (employee, index) in filteredEmployees.Select((emp, idx) => (emp, idx)))
                 {
                     <tr>
                         <td>
                             <div class="employee-info">
                                 <div class="employee-avatar" style="background: @GetAvatarColor(index)">
-                                    @GetInitials(employee.Name)
+                                    @GetInitials(employee.Nombre)
                                 </div>
-                                <span>@employee.Name</span>
+                                <span>@employee.Nombre</span>
                             </div>
                         </td>
-                        <td>@employee.Position</td>
+                        <td>@employee.Puesto</td>
                         <td>
-                            <select class="user-type-select" @bind="employee.UserType">
-                                <option value="Usuario">Usuario</option>
-                                <option value="Administrador">Administrador</option>
-                                <option value="Super Administrador">Super Administrador</option>
+                            <select class="user-type-select" @bind="employee.PerfilId">
+                                @foreach (var perfil in perfilesList)
+                                {
+                                    <option value="@perfil.Id">@perfil.Descripcion</option>
+                                }
                             </select>
+                           
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
-
         <div class="save-section">
             <button class="save-button" @onclick="HandleSave">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -73,7 +77,6 @@
             </button>
         </div>
     </div>
-
     @if (!string.IsNullOrEmpty(message))
     {
         <div class="message-toast">
@@ -83,42 +86,68 @@
 </div>
 
 @code {
-    private string searchName = "";
     string? selectedArea;
     List<AreaDTO> areaList = new();
 
+    List<PerfilesDTO> perfilesList = new();
+
+    List<EmpleadoPerfilDTO> empleadosList = new();
+    List<EmployeeInfo> employees = new();
+
     private string message = "";
+    private string searchName = "";
+
+    string? selectedPerfil;
 
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
+        perfilesList = await PerfilesService.GetPerfiles();
+        await CargarEmpleados();
     }
 
-    private class EmployeeProfile
+    private async Task CargarEmpleados()
     {
-        public string Name { get; set; }
-        public string Position { get; set; }
-        public string UserType { get; set; }
+        var empleadosDto = await PerfilesService.GetEmpleadosPerfiles();
+
+        employees = empleadosDto
+            .OrderBy(e => e.Clave)
+            .Select(e =>
+            {
+                var perfil = perfilesList.FirstOrDefault(p => p.Descripcion == e.Perfil);
+
+                return new EmployeeInfo
+                {
+                    Clave = e.Clave,
+                    Nombre = e.Nombre,
+                    Area = e.Area,
+                    Puesto = e.Puesto,
+                    Perfil = e.Perfil,
+                    PerfilId = perfil?.Id ?? 0,
+                    PerfilOriginalId = perfil?.Id ?? 0
+                };
+            })
+            .ToList();
     }
 
-    private List<EmployeeProfile> employees = new List<EmployeeProfile>
+    private class EmployeeInfo
     {
-        new EmployeeProfile { Name = "Karim Negrete", Position = "Developer", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Carmen Muñoz", Position = "Designer", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Gustavo Betanzos", Position = "Manager", UserType = "Administrador" },
-        new EmployeeProfile { Name = "Ana Torres", Position = "Sales Representative", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Roberto Silva", Position = "Support Specialist", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Laura Martínez", Position = "Marketing Manager", UserType = "Administrador" },
-        new EmployeeProfile { Name = "Diego Ramírez", Position = "HR Manager", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Patricia Gómez", Position = "Accountant", UserType = "Usuario" },
-        new EmployeeProfile { Name = "Carlos Hernández", Position = "IT Manager", UserType = "Super Administrador" },
-        new EmployeeProfile { Name = "María López", Position = "Customer Service", UserType = "Usuario" }
+        public int Clave { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Area { get; set; } = string.Empty;
+        public string Puesto { get; set; } = string.Empty;
+        public string Perfil { get; set; } = string.Empty;
+
+        public int PerfilId { get; set; }
+        public int PerfilOriginalId { get; set; }
+
+        public bool Modificado => PerfilId != PerfilOriginalId;
     };
 
     private string[] colors = new string[] 
     { 
-        "#ec4899", "#9333ea", "#3b82f6", "#10b981", "#f97316", 
-        "#14b8a6", "#8b5cf6", "#f59e0b", "#06b6d4", "#84cc16" 
+        "#dd0203", "#f78701", "#f7e801",
+        "#2da549", "#4543ec", "#85119a"
     };
 
     private string GetAvatarColor(int index)
@@ -132,10 +161,62 @@
         return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
     }
 
+    private List<EmployeeInfo> filteredEmployees
+    {
+        get
+        {
+            return employees
+                .Where(e =>
+                    string.IsNullOrWhiteSpace(searchName) ||
+                    e.Nombre.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                .Where(e =>
+                    string.IsNullOrEmpty(selectedArea) ||
+                    e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
     private async Task HandleSave()
     {
-        message = "Cambios guardados exitosamente";
-        await Task.Delay(3000);
+        var cambios = employees
+            .Where(e => e.Modificado)
+            .Select(e => new EditarPerfilDTO
+            {
+                ClavePersonal = e.Clave,
+                IdPerfil = e.PerfilId
+            })
+            .ToList();
+
+        if (!cambios.Any())
+        {
+            message = "No hay cambios";
+            await InvokeAsync(StateHasChanged);
+
+            await Task.Delay(2000);
+
+            message = "";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var ok = await PerfilesService.GuardarPerfiles(cambios);
+
+        if (ok)
+        {
+            foreach (var e in employees)
+                e.PerfilOriginalId = e.PerfilId;
+
+            message = "Cambios guardados correctamente";
+        }
+        else
+            message = "Error al guardar";
+
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(2000);
+
         message = "";
+        await InvokeAsync(StateHasChanged);
     }
+
 }
