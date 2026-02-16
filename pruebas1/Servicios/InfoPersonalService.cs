@@ -1,6 +1,8 @@
 ﻿using pruebas1.Components.DTOs;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.JSInterop;
 
 namespace pruebas1.Servicios
 {
@@ -27,16 +29,38 @@ namespace pruebas1.Servicios
         }
 
 
+        //public async Task<CumpleaniosDTO?> GetMiCumpleanios()
+        //{
+        //    try
+        //    {
+        //        var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        //        return await _http.GetFromJsonAsync<CumpleaniosDTO>($"{_baseApi}/api/personal/cumpleanios", opciones);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Esto lanzará el error REAL a la consola del navegador (F12)
+        //        Console.WriteLine($"[CUMPLE ERROR]: {ex.Message}");
+        //        return null;
+        //    }
+        //}
         public async Task<CumpleaniosDTO?> GetMiCumpleanios()
         {
             try
             {
+                // Usamos la misma Key que tu LoginService ("token")
+                var token = Preferences.Get("token", "");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
                 var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await _http.GetFromJsonAsync<CumpleaniosDTO>($"{_baseApi}/api/personal/cumpleanios", opciones);
+                // La ruta debe llevar /personal/cumpleanios
+                return await _http.GetFromJsonAsync<CumpleaniosDTO>($"{_baseApi}/infoPersonal/personal/cumpleanios", opciones);
             }
+
             catch (Exception ex)
             {
-                // Esto lanzará el error REAL a la consola del navegador (F12)
                 Console.WriteLine($"[CUMPLE ERROR]: {ex.Message}");
                 return null;
             }

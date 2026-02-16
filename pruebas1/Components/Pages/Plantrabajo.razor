@@ -3,6 +3,7 @@
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
 @inject IJSRuntime JS
+@inject NavigationManager NavManager
 @inject HttpClient _http
 @using pruebas1.Components.Pages
 <br />
@@ -230,6 +231,9 @@
         </div>
     </div>
 }
+
+
+
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -243,6 +247,9 @@
        
         StateHasChanged();
     }
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? tareaId { get; set; }
     // Clase para historial de cambios
     public class CambioFecha
     {
@@ -318,7 +325,14 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
     protected override async Task OnInitializedAsync()
     {
         var data = await ServicioClienteService.ObtenerMisEmpresas();
-
+        if (!string.IsNullOrEmpty(tareaId))
+        {
+            int idEntidad = ObtenerIdEmpresaPorTarea(tareaId);
+            if (idEntidad > 0)
+            {
+                await OpenModal(idEntidad);
+            }
+        }
         GruposClientes = data.Grupos.Select(g => new GrupoCliente
         {
             Nombre = g.NombreGrupo,
@@ -334,9 +348,41 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
             IdUsuarioEntidadAgenda = c.IdUsuarioEntidadAgenda,
             Nombre = c.NombreCliente
         }).ToList();
+
+        // 2. AHORA QUE LOS DATOS EXISTEN, LEER LA URL
+        if (!string.IsNullOrEmpty(tareaId))
+        {
+            int idEntidad = ObtenerIdEmpresaPorTarea(tareaId);
+            if (idEntidad > 0)
+            {
+                await OpenModal(idEntidad);
+            }
+        }
     }
+    private int ObtenerIdEmpresaPorTarea(string tareaIdStr)
+    {
+        if (int.TryParse(tareaIdStr, out int tId))
+        {
+            // 1. Buscar en los grupos de clientes
+            foreach (var grupo in GruposClientes)
+            {
+                foreach (var empresa in grupo.Empresas)
+                {
+                    // Como el DTO de la lista inicial es sencillo,
+                    // aquí la lógica ideal es que el botón de origen
+                    // (el del checklist) nos mande el Id de la empresa directamente.
+                    // Pero si solo tenemos el tareaId, abriremos el modal
+                    // si logramos vincularlo.
+                }
+            }
 
+            // 2. Si el ID que recibes es en realidad el IdUsuarioEntidadAgenda (recomendado)
+            // Entonces solo lo retornamos:
+            return tId;
+        }
 
+        return 0;
+    }
 
     private void ToggleGrupo(GrupoCliente grupo)
     {

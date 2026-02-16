@@ -40,9 +40,10 @@
                         &times;
                     </button>
                 </div>
-
+          
                 <div class="modal-body">
-                    <div class="top-info-grid">
+
+                   @*  <div class="top-info-grid">
                         <div class="field-box">
                             <label>Asesor (Clave y Nombre)</label>
                             <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
@@ -53,15 +54,32 @@
                             <DatePicker Value="FechaSeleccionada"
                                         ValueChanged="OnFechaInicioChanged"
                                         CssClass="form-control custom-dp" />
-                        </div>
-                    </div>
+                        </div> 
+                   
+                    </div> *@
+                    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
+    
+    <div class="field-box" style="flex: 2;">
+        <label>Asesor (Clave y Nombre)</label>
+        <div class="input-readonly">
+                            <input type="text" value="@($"{ClaveAsesor} - {NombreAsesor}")" disabled class="input-readonly" />
+        </div>
+    </div>
 
+    <div class="field-box date-box" style="flex: 1;">
+        <label>Fecha</label>
+                        <DatePicker Value="FechaSeleccionada"
+                                    ValueChanged="OnFechaInicioChanged"
+                                    CssClass="form-control custom-dp" />
+    </div>
+</div>
+                
                     <div class="table-wrapper">
                         <table class="custom-table">
                             <thead>
                                 <tr>
                                     <th class="col-cliente">Cliente (Clave y Nombre)</th>
-                                    <th>Actividad</th>
+                                <th class="col-actividad">Actividad</th>
                                     <th style="width: 110px;">Periodo</th>
                                     <th style="width: 110px;">Hrs. Invertidas</th>
                                     <th style="width: 90px;">Acción</th>
@@ -82,22 +100,21 @@
                                                 }
                                             </select>
                                         </td>
-                                        <td>
-                                            <div class="activity-stack">
-                                                <select @bind="fila.IdActividad" class="cell-input">
-                                                    <option value="0">Seleccione...</option>
-                                                    @foreach (var act in ListadoActividades)
-                                                    {
-                                                        <option value="@act.Id">@act.Descripcion</option>
-                                                    }
-                                                </select>
-
-                                                @if (fila.IdActividad == 99)
+                                    <td class="col-actividad">
+                                        <div class="activity-stack">
+                                            <select @bind="fila.IdActividad" class="cell-input">
+                                                <option value="0">Seleccione...</option>
+                                                @foreach (var act in ListadoActividades)
                                                 {
-                                                    <input type="text" @bind="fila.OtraActividad" class="input-subtle" placeholder="Especifique actividad..." />
+                                                    <option value="@act.Id">@act.Descripcion</option>
                                                 }
-                                            </div>
-                                        </td>
+                                            </select>
+                                            @if (fila.IdActividad == 99)
+                                            {
+                                                <input type="text" @bind="fila.OtraActividad" class="input-subtle" placeholder="Especifique actividad..." />
+                                            }
+                                        </div>
+                                    </td>
                                         <td><input type="text" @bind="fila.Periodo" placeholder="Ej. Ene-Feb" class="cell-input" /></td>
                                         <td>
                                             <TimePickerList @bind-Value="fila.Horas" />
@@ -410,7 +427,53 @@
         width: 22% !important;
         min-width: 180px !important;
     }
+    /* 1. AJUSTE DE PROPORCIONES SOLICITADO */
+    .col-actividad {
+        width: 25% !important; /* Más pequeño */
+    }
 
+    .col-horas {
+        width: 160px !important; /* Más grande para que el TimePicker respire */
+        min-width: 160px !important;
+    }
+
+    /* 2. SOLUCIÓN DEFINITIVA AL DATEPICKER */
+    /* Forzamos que los contenedores no corten lo que sale de ellos */
+    .modal-body,
+    .table-wrapper,
+    .date-box {
+        overflow: visible !important;
+    }
+
+    /* Forzamos al DatePicker (y sus posibles variantes de librería) a estar al frente */
+   .rz-datepicker-popup,
+.ui-datepicker,
+.datepicker-dropdown,
+.flatpickr-calendar {
+    position: absolute !important;
+    z-index: 9999999 !important;
+    /
+}
+
+    /* Estilo para que el input de fecha parezca que se puede clickear */
+    .custom-dp {
+        position: relative;
+        z-index: 1000;
+    }
+
+  
+    .date-box .datepicker-plot-area,
+    .date-box .rz-datepicker-popup,
+    .date-box .flatpickr-calendar {
+        position: absolute !important;
+        z-index: 999999 !important;
+        display: block !important; /* Por si el grid lo oculta */
+    }
+    /* Asegurar que el panel del TimePicker también flote correctamente */
+    .timepicker-panel {
+        z-index: 9999999 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+    }
     /* Hacemos que el select no se desborde y corte texto largo */
     .select-limitado {
         width: 100%;
@@ -435,6 +498,12 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+    }
+
+    .modal-container,
+    .modal-body,
+    .top-info-grid {
+        overflow: visible !important;
     }
 
     /* ================= HEADER ================= */
@@ -489,16 +558,30 @@
         display: flex;
         flex-direction: column;
         gap: 24px;
+        overflow: visible !important;
     }
 
     /* ================= TOP INFO ================= */
 
-    .top-info-grid {
+  /*   .top-info-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        gap: 20px;
-    }
 
+        gap: 20px;
+    } */
+
+   /*  .top-info-grid,
+    .field-box.date-box {
+        position: relative !important;
+        overflow: visible !important; /* La clave: permite que el hijo salga del div */
+    }*/
+    .field-box.date-box {
+        position: relative !important;
+        overflow: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+        z-index: 100 !important; /* Elevamos un poco el contenedor */
+    }
     .field-box {
         display: flex;
         flex-direction: column;
@@ -552,9 +635,17 @@
         background: #ffffff;
         border-radius: 18px;
         box-shadow: 0 14px 30px rgba(0,0,0,0.08);
-        overflow: hidden;
+        overflow: visible !important;
     }
 
+    .flatpickr-calendar {
+        z-index: 1000000 !important; /* Mayor que el modal-overlay */
+    }
+
+    /* 5. EVITAR QUE EL TEXTO DE CLIENTE SEA MUY LARGO Y ROMPA LA TABLA */
+    .col-cliente select {
+        max-width: 100%;
+    }
     .custom-table {
         width: 100%;
         border-collapse: collapse;
@@ -754,13 +845,13 @@
 
 
     /* Contenedor correcto */
-    .date-box {
-        position: relative;
-        z-index: 10;
+    .date-box,
+    .timepicker-container {
+        position: relative !important;
     }
 
         /* Forzar popup dentro del modal */
-        .date-box .datepicker-dropdown,
+        /* .date-box .datepicker-dropdown,
         .date-box .dropdown-menu,
         .date-box .rz-datepicker-popup {
             position: absolute !important;
@@ -768,7 +859,31 @@
             left: 0 !important;
             transform: none !important;
             z-index: 99999 !important;
-        }
+        } */
+
+    /* 3. El DatePicker específico (ajuste para Radzen/Blazor o librerías comunes) */
+    .custom-dp, .rz-datepicker {
+        width: 100% !important;
+        display: block !important;
+        position: relative !important;
+    }
+
+    /* 4. Forzamos que el POPUP (el calendario que flota) salga hasta arriba */
+    /* He añadido selectores comunes de Blazor/Radzen/Bootstrap */
+    .rz-datepicker-popup,
+    .ui-datepicker,
+    .datepicker-dropdown,
+    .flatpickr-calendar {
+        position: absolute !important;
+        z-index: 9999999 !important; /* El número más alto posible */
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        /* Evitamos que el modal-body lo tape si el calendario aparece hacia abajo */
+        top: 100% !important;
+        left: 0 !important;
+    }
+
     /* TimePicker compacto */
     .timepicker-cell,
     .timepicker-cell select,
@@ -791,17 +906,20 @@
         position: relative;
     }
 
-    .rz-datepicker-popup,
     .timepicker-panel {
-        position: fixed !important;
-        z-index: 100000 !important;
-        /* Movemos el panel arriba del input */
-        transform: translateY(-110%) !important;
-        top: auto !important;
-        background: #ffffff !important;
-        box-shadow: 0 -10px 25px rgba(0,0,0,0.15) !important;
+        position: absolute !important; /* Cambiado de fixed a absolute */
+        top: 100% !important; /* Se pega al borde inferior del input */
+        left: 0 !important;
+        transform: none !important; /* Eliminamos el desplazamiento que lo mandaba arriba */
+        margin-top: 4px;
+        z-index: 999999 !important; /* Por encima de todo el modal */
+        display: flex;
+        gap: 6px;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        padding: 8px;
     }
-
     .timepicker-column {
         scrollbar-width: none; /* Firefox */
     }
@@ -1085,5 +1203,10 @@
         font-size: 20px;
         cursor: pointer;
     }
+    @@media (max-width: 768px) {
+        div [style*="display: flex"]
 
+    {
+        flex-direction: column !important;
+    }
 </style>
