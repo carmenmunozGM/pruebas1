@@ -733,3 +733,384 @@ body {
 [data-theme="dark"] .toggle-icon {
     color: #9ca3af !important;
 }
+
+
+/* Contenedor del item */
+[data-theme="dark"] .birthday-item {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+
+
+/* El nombre del cumpleañero (suponiendo que hay un span o div al lado) */
+[data-theme="dark"] .birthday-item span {
+    color: #f1f5f9 !important;
+    font-weight: 600;
+}
+
+/* Badge en el calendario */
+[data-theme="dark"] .birthday-badge {
+    background-color: rgba(255, 94, 120, 0.1) !important; /* Rosa muy sutil */
+    border: 1px solid rgba(255, 94, 120, 0.1) !important;
+    border-radius: 6px;
+    padding: 2px 6px;
+    transition: transform 0.2s;
+}
+
+    [data-theme="dark"] .birthday-badge:hover {
+        background-color: rgba(255, 94, 120, 0.3) !important;
+        transform: scale(1.1);
+    }
+
+
+[data-theme="dark"] .modal-birthday-header h3 {
+    color: antiquewhite
+}
+
+/* Modo Claro - Badge Cumpleaños */
+.birthday-badge {
+    background-color: #fff0f0;
+    border: 1px solid #ffccd5 !important;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+    .birthday-badge:hover {
+        background-color: #ffe4e8 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(255, 94, 120, 0.2);
+    }
+
+    .birthday-badge span {
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+    }
+
+/* =================================================
+   MODAL DE CUMPLEAÑOS (STYLING COMPLETO)
+   ================================================= */
+
+/* --- COMÚN (Estructura Base) --- */
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-birthday-card {
+    width: 90%;
+    max-width: 450px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.3s ease-out;
+}
+
+.modal-birthday-header {
+    padding: 30px;
+    text-align: center;
+    background: #ffb1b1; /* Fallback claro */
+}
+
+    .modal-birthday-header h3 {
+        margin: 10px 0 0;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+.modal-birthday-body {
+    padding: 20px;
+}
+
+.birthday-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+}
+
+.birthday-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.birthday-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.birthday-id {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* --- MODO CLARO --- */
+[data-theme="light"] .modal-birthday-card,
+:not([data-theme="dark"]) .modal-birthday-card {
+    background: #ffffff;
+}
+
+
+[data-theme="light"] .birthday-item,
+:not([data-theme="dark"]) .birthday-item {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+}
+
+[data-theme="light"] .birthday-name {
+    color: #1e293b;
+}
+
+/* --- MODO OSCURO (Adiós bordes blancos) --- */
+[data-theme="dark"] .modal-birthday-card {
+    background: #1e293b !important;
+    border: 1px solid #334155;
+}
+
+[data-theme="dark"] .modal-birthday-header {
+    background: linear-gradient(135deg, #0f172a 30%, #1e293b 100%) !important;
+    color: antiquewhite !important;
+    border-bottom: 1px solid #334155;
+}
+
+[data-theme="dark"] .birthday-item {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .birthday-name {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .birthday-id {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .modal-birthday-footer {
+    background: #1e293b !important;
+}
+
+/* --- BOTÓN CERRAR --- */
+.modal-birthday-footer {
+    padding: 20px;
+    text-align: center;
+}
+
+.btn-close-modal {
+    background: #ff5e78;
+    color: white;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 999px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .btn-close-modal:hover {
+        transform: translateY(-2px);
+    }
+
+
+
+.day-card {
+    position: relative; /* Clave para que el pastel flote dentro */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 6px;
+    min-height: 150px; /* Altura fija para que todos sean iguales */
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.day-number {
+    font-size: 1.1rem;
+    color: #d9534f;
+    margin-bottom: 8px;
+}
+
+/* El pastel ahora no ocupa espacio en el flujo (absolute) */
+.birthday-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    background-color: #fff0f0;
+    border: 1px solid #ffccd5;
+    border-radius: 6px;
+    padding: 2px 5px;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+.birthday-icon {
+    font-size: 1rem;
+}
+
+.birthday-count {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #ff5e78;
+    margin-left: 2px;
+}
+
+.blocks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.list-item {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+/* Estilos del Modal para que aparezca al frente */
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    backdrop-filter: blur(4px); /* Efecto de desenfoque al fondo */
+}
+/* Tarjeta del Modal */
+.modal-birthday-card {
+    background: white;
+    width: 90%;
+    max-width: 450px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* Animación de entrada */
+@@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Encabezado festivo */
+.modal-birthday-header {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    padding: 30px;
+    text-align: center;
+    color: #fff;
+}
+
+    .modal-birthday-header h3 {
+        margin-top: 10px;
+        font-weight: 700;
+        color: #5d5d5d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+/* Cuerpo del modal con scroll si hay muchos festejados */
+.modal-birthday-body {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Cada fila de empleado */
+.birthday-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+    .birthday-item:hover {
+        background-color: #fffaf0;
+    }
+
+/* Círculo del avatar */
+.birthday-avatar {
+    width: 50px;
+    height: 50px;
+    background-color: #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+    font-size: 20px;
+}
+
+/* Información del texto */
+.birthday-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.birthday-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.birthday-id {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Footer y Botón */
+.modal-birthday-footer {
+    padding: 15px;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+.btn-close-modal {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+    .btn-close-modal:hover {
+        background-color: #ee5253;
+        transform: translateY(-2px);
+    }

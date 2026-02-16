@@ -252,8 +252,6 @@
         CultureInfo.CurrentUICulture = cultura;
 
         listaSalas = await SalasEmService.GetSalas();
-        Debug.WriteLine($"Salas cargadas: {listaSalas.Count}");
-        foreach (var s in listaSalas) Debug.WriteLine($"Id={s.Id} - Nombre={s.Salas}");
         frecuencias = await reglasRecurrenciaServices.GetFrecuencia();
         prioridadesDisponibles = await reglasRecurrenciaServices.GetPrioridad();
 
@@ -371,7 +369,7 @@
             });
             return;
         }
-        await JSRuntime.InvokeVoidAsync("alert", $"DEBUG VALORES:\nIdUsuario: {UsuarioState.IdUsuario}\nIdAgenda: {UsuarioState.IdAgenda}");
+  
         var idUsuario = UsuarioState.IdUsuario;
         var idAgenda = UsuarioState.IdAgenda;
 
