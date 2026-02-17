@@ -37,6 +37,7 @@ namespace pruebas1
             builder.Services.AddScoped<VerAgendasService>();
             builder.Services.AddScoped<AdministrarAgendasService>();
             builder.Services.AddScoped<PerfilesService>();
+            builder.Services.AddScoped<EmpleadosService>();
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddScoped<AppSettingsService>();
             builder.Services.AddScoped<ThemeService>();
