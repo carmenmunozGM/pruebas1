@@ -312,7 +312,7 @@
     {
         message = texto;
         StateHasChanged();
-        await Task.Delay(3000);
+        await Task.Delay(1500);
         message = "";
     }
 
@@ -341,8 +341,8 @@
             await MostrarMensajeTemporal(ok ? "Agenda reasignada exitosamente" : "No se pudo desvincular");
         }
 
-            await Task.Delay(1200);
-            RefrescarPagina();
+        await Task.Delay(1200);
+        RefrescarPagina();
     }
 
     private async Task HandleDesvincular()
@@ -418,13 +418,13 @@
 
     private async Task CerrarPorBlur()
     {
-        await Task.Delay(150); // deja vivir al click del item
+        await Task.Delay(150);
         mostrarLista = false;
     }
 
     void RefrescarPagina()
     {
-        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+        SetMode("limpiar");
     }
 
 }
