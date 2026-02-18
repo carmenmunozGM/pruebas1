@@ -8,7 +8,7 @@
 @using System.Globalization
 @inject LoginService LoginService
 @inject IJSRuntime JS
-
+@inject EmpleadosService EmpleadosService
 
 <div class="asignar-container">
     <div class="section-header">
@@ -506,10 +506,7 @@
 
     private async Task CargarEmpleados()
     {
-        empleados = await Http
-            .GetFromJsonAsync<List<EmpleadoDTO>>(
-                "https://redgm.site:9096/empleado")
-            ?? new();
+        empleados = await EmpleadosService.GetFiltrados();
     }
 
     private async Task CargarHistorialAsignaciones()

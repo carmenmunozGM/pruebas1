@@ -5,7 +5,8 @@
 @inject AreasService AreasService
 @inject HttpClient Http
 @inject IJSRuntime JS
-
+@inject EmpleadosService EmpleadosService
+@inject PerfilesService PerfilesService
 
 <div class="reportes-section">
     <div class="section-header">
@@ -57,13 +58,15 @@
             }
         </select>
 
-        <select class="area-filter" @bind="selectedArea">
-            <option value="">Todas las áreas</option>
-            @foreach (var area in areaList)
-            {
-                <option value="@area.Area">@area.Area</option>
-            }
-        </select>
+        @if (puedeVerFiltroArea){
+            <select class="area-filter" @bind="selectedArea">
+                <option value="">Todas las áreas</option>
+                @foreach (var area in areaList)
+                {
+                    <option value="@area.Area">@area.Area</option>
+                }
+            </select>
+        }
     </div>
 
     <!-- Report Content -->
@@ -145,11 +148,30 @@
 
     private List<MonthOption> monthOptions = new();
 
+    PermisosDTO? permisos;
+    bool puedeVerFiltroArea = false;
+
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
         GenerarMeses();
         await CargarEmpleados();
+
+        try
+        {
+            permisos = await PerfilesService.GetPermisos();
+
+            if (permisos != null)
+            {
+                puedeVerFiltroArea =
+                    permisos.ClavePuesto == 11001 ||
+                    permisos.ClavePuesto == 7202;
+            }
+        }
+        catch
+        {
+            puedeVerFiltroArea = false;
+        }
     }
 
     private void GenerarMeses()
@@ -175,11 +197,7 @@
 
     private async Task CargarEmpleados()
     {
-        var empleadosDto = await Http
-            .GetFromJsonAsync<List<EmpleadoDTO>>(
-                "https://redgm.site:9096/empleado"
-            )
-            ?? new();
+        var empleadosDto = await EmpleadosService.GetFiltrados();
 
         employees = empleadosDto
             .OrderBy(e => e.ClavePersonal)

@@ -245,7 +245,7 @@
         var puestosPlano = await AreasService.GetAreasConPuestos();
 
         areas = await AreasService.GetAreasConPuestos();
-        puestos = await AreasService.GetPuestos();
+        puestos = await AreasService.GetPuestosFiltrados();
     }
 
     private async Task OnPuestoChange(ChangeEventArgs e)

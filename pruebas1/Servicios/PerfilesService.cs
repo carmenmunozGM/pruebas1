@@ -41,5 +41,13 @@ namespace pruebas1.Servicios
 
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<PermisosDTO> GetPermisos()
+        {
+            var respuesta = await _http.GetFromJsonAsync<PermisosDTO>(
+                $"/empleado/permisos");
+
+            return respuesta ?? new PermisosDTO();
+        }
     }
 }

@@ -38,6 +38,12 @@ namespace pruebas1.Servicios
             return puestos ?? new List<PuestoDTO>();
         }
 
+        public async Task<List<PuestoDTO>> GetPuestosFiltrados()
+        {
+            var puestos = await httpClient.GetFromJsonAsync<List<PuestoDTO>>("/area/puestosFiltrados");
+            return puestos ?? new List<PuestoDTO>();
+        }
+
         public async Task<List<AreaDTO>> GetAreasConPuestos()
         {
             try
