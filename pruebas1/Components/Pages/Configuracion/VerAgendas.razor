@@ -12,6 +12,8 @@
 @inject SalasEmService SalasEmService
 @inject OrdenTrabajoService OrdenTrabajoService
 @inject OrdenTramiteService OrdenTramiteService
+@inject EmpleadosService EmpleadosService
+@inject PerfilesService PerfilesService
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -31,13 +33,16 @@
                    @bind:event="oninput"
                    placeholder="Buscar por nombre..." />
         </div>
-        <select class="area-filter" @bind="selectedArea">
-            <option value="">Todas las áreas</option>
-            @foreach (var area in areaList)
-            {
-                <option value="@area.Area">@area.Area</option>
-            }
-        </select>
+        @if (puedeVerFiltroArea)
+        {
+            <select class="area-filter" @bind="selectedArea">
+                <option value="">Todas las áreas</option>
+                @foreach (var area in areaList)
+                {
+                    <option value="@area.Area">@area.Area</option>
+                }
+            </select>
+        }
     </div>
 
     <div class="agendas-grid">
@@ -870,6 +875,10 @@
     private EmployeeInfo selectedEmployee = null;
     private string searchName = "";
 
+    PermisosDTO? permisos;
+    bool puedeVerFiltroArea = false;
+
+
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
@@ -877,6 +886,22 @@
         Salas = await SalasEmService.GetSalas();
         empleadoList = await VerAgendasService.GetEmpleadosPendientes();
         cargando = false;
+
+        try
+        {
+            permisos = await PerfilesService.GetPermisos();
+
+            if (permisos != null)
+            {
+                puedeVerFiltroArea =
+                    permisos.ClavePuesto == 11001 ||
+                    permisos.ClavePuesto == 7202;
+            }
+        }
+        catch
+        {
+            puedeVerFiltroArea = false;
+        }
     }
 
     async Task RefreshAgenda()
@@ -886,12 +911,7 @@
 
     private async Task CargarEmpleados()
     {
-        var empleadosDto = await Http
-            .GetFromJsonAsync<List<EmpleadoDTO>>(
-               "https://redgm.site:9096/empleado/pendientes"
-            //"http://localhost:5231/empleado/pendientes"
-            )
-            ?? new();
+        var empleadosDto = await EmpleadosService.GetPendientes();
         employees = empleadosDto
         .OrderBy(e => e.ClavePersonal)
         .Select(e => new EmployeeInfo

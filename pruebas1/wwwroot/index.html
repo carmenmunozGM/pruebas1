@@ -86,5 +86,47 @@
         });
     };
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    window.alertaErrorEliminar = function (mensaje) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo eliminar',
+            text: mensaje,
+            confirmButtonText: 'Entendido',
+            zIndex: 99999
+        });
+    };
+
+    window.alertaEliminarExitosa = function () {
+        Swal.fire({
+            icon: 'success',
+            title: 'Asignación eliminada correctamente',
+            confirmButtonText: 'OK',
+            zIndex: 99999
+        });
+    };
+
+    window.alertaReasignacionExitosa = function () {
+        Swal.fire({
+            icon: 'success',
+            title: 'Reasignación realizada con éxito',
+            confirmButtonText: 'OK',
+            zIndex: 99999
+        });
+    };
+
+    window.alertaErrorReasignacion = function (mensaje) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo reasignar',
+            text: mensaje,
+            confirmButtonText: 'Entendido',
+            zIndex: 99999
+        });
+    };
+
+</script>
 
 </html>
