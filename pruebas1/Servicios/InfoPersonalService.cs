@@ -14,8 +14,6 @@ namespace pruebas1.Servicios
         public InfoPersonalService(HttpClient http)
         {
             _http = http;
-
-            // Detectar si estás en LOCAL automáticamente
             var host = http.BaseAddress?.Host?.ToLower() ?? "";
 
             if (host == "localhost" || host == "127.0.0.1")
@@ -47,15 +45,12 @@ namespace pruebas1.Servicios
         {
             try
             {
-                // Usamos la misma Key que tu LoginService ("token")
                 var token = Preferences.Get("token", "");
                 if (!string.IsNullOrEmpty(token))
                 {
                     _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
-
                 var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                // La ruta debe llevar /personal/cumpleanios
                 return await _http.GetFromJsonAsync<CumpleaniosDTO>($"{_baseApi}/infoPersonal/personal/cumpleanios", opciones);
             }
 
@@ -75,25 +70,42 @@ namespace pruebas1.Servicios
             }
             catch { return new List<CumpleaniosDTO>(); }
         }
-        public async Task<List<VacacionesDTO>> GetMisVacaciones()
+        public async Task<List<VacacionesDTO>> GetVacacionesTodos()
         {
             try
             {
-                string url = $"{_baseApi}/infoPersonal/personal/vacaciones";
-            
-
-                // Agregamos esta configuración mágica:
-                var opciones = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                return await _http.GetFromJsonAsync<List<VacacionesDTO>>(url, opciones)
+                // Eliminamos la lógica del token para probar si es libre como el de cumpleaños
+                return await _http.GetFromJsonAsync<List<VacacionesDTO>>($"{_baseApi}/infoPersonal/personal/todos-vacaciones")
                        ?? new List<VacacionesDTO>();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"Error en Vacaciones: {ex.Message}");
+                return new List<VacacionesDTO>();
+            }
+        }
+        public async Task<List<VacacionesDTO>> GetMisVacaciones()
+        {
+            try
+            {
+                var token = Preferences.Get("token", "");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                string url = $"{_baseApi}/infoPersonal/personal/vacaciones";
+                var opciones = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var respuesta = await _http.GetFromJsonAsync<List<VacacionesDTO>>(url, opciones);
+
+                return respuesta ?? new List<VacacionesDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error Vacaciones: {ex.Message}");
                 return new List<VacacionesDTO>();
             }
         }

@@ -31,7 +31,10 @@ body {
         color: #a80000;
         font-weight: bold;
     }
-
+.dia-vacaciones {
+    background-color: #f0fdf4 !important; 
+    border: 1px dashed #28a745 !important;
+}
 .no-laboral {
     font-size: 0.95rem;
     font-weight: 500;
@@ -775,7 +778,7 @@ body {
 }
 
 /* Modo Claro - Badge Cumpleaños */
-.birthday-badge {
+/*.birthday-badge {
     background-color: #fff0f0;
     border: 1px solid #ffccd5 !important;
     border-radius: 6px;
@@ -792,7 +795,71 @@ body {
 
     .birthday-badge span {
         filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+    }*/
+/* Base común para ambos iconos */
+/* Base idéntica para asegurar que midan lo mismo */
+.badge-custom {
+    width: 35px !important;
+    height: 35px !important;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: 2px solid transparent;
+    z-index: 5;
+}
+
+    .badge-custom .emoji {
+        font-size: 20px;
+        line-height: 1;
     }
+
+/* --- ESTILO CUMPLEAÑOS (Rosa/Rojo) --- */
+.birthday-badge {
+    background: linear-gradient(145deg, #ffeff2, #fce4ec);
+    border-color: #ff5252;
+}
+
+    .birthday-badge:hover {
+        transform: scale(1.1); /* Crece desde la esquina */
+        background: linear-gradient(145deg, #fce4ec, #ffcdd2);
+        z-index: 10;
+    }
+
+/* --- ESTILO VACACIONES (Verde/Amarillo) --- */
+.vacation-badge {
+    background: linear-gradient(145deg, #f9fbe7, #e8f5e9);
+    border-color: #fdd835;
+}
+
+    .vacation-badge:hover {
+        /* Mantiene el centrado al crecer */
+        transform: translateX(-50%) scale(1.1) !important;
+        background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
+        z-index: 10;
+    }
+
+/* Contador de notificaciones */
+.notification-count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background: #E74C3C;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 
 /* =================================================
    MODAL DE CUMPLEAÑOS (STYLING COMPLETO)
