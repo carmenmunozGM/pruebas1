@@ -114,7 +114,7 @@
     padding: 20px 25px;
     background: var(--color-background-light);
     flex: 1;
-    overflow-y: auto;
+    overflow-y: visible;
 }
 
 /* === Selector de Tipo de Actividad === */
@@ -221,7 +221,7 @@
     left: 0;
     width: 100%;
     max-height: 200px;
-    overflow-y: auto;
+    overflow-y: visible;
     background: white;
     border-radius: 8px;
     padding: 4px 0;
@@ -321,7 +321,7 @@ label {
 .checklist-list-wrapper {
     margin-top: 10px;
     max-height: 150px;
-    overflow-y: auto;
+    overflow-y: visible;
     border: 1px solid var(--color-border);
     border-radius: 8px;
     background: #fff;
