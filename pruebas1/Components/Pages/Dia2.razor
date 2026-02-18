@@ -1565,18 +1565,10 @@
         try
         {
             miCumple = await InfoService.GetMiCumpleanios();
-
-            // 1. Obtenemos la fecha de tu computadora
             string hoy = DateTime.Now.ToString("dd/MM");
 
             if (miCumple != null)
             {
-                // 2. LOGS FORZADOS (Saldrán aunque no sea tu cumple)
-                await JS.InvokeVoidAsync("console.warn", "--- REVISIÓN DE FECHAS ---");
-                await JS.InvokeVoidAsync("console.log", "Fecha de tu PC: " + hoy);
-                await JS.InvokeVoidAsync("console.log", "Fecha de la API: " + miCumple.Cumpleanios);
-
-                // 3. Comparación (Si pusiste el 13, esto dará FALSE hoy día 10)
                 esMiCumple = (miCumple.Cumpleanios?.Trim() == hoy);
 
                 await JS.InvokeVoidAsync("console.log", "¿Coinciden?: " + esMiCumple);
@@ -1589,7 +1581,7 @@
     }
     private async Task CargarVacaciones()
     {
-        // Usamos 'listaVacaciones' que declaraste como List<VacacionesDTO>
+      
         listaVacaciones = await InfoService.GetMisVacaciones();
     }
     private void AlternarE(string nombre)
@@ -1606,27 +1598,24 @@
 
     private async Task ValidarYGuardar(SubtaskModel st)
     {
-        // 1. Verificación de seguridad: ¿Es una tarea de servicio en fecha pasada?
+        
         bool esFechaPasada = FechaSeleccionada.Date < DateTime.Today.Date;
         bool esServicio = st.Tipo == "ServicioCliente";
 
         if (esServicio && esFechaPasada)
         {
-            // Si el usuario logró hacer check (por ejemplo, si la tarea ya estaba marcada)
-            // pero intenta desmarcarla, o si hubo un error de renderizado:
+    
             if (st.IsDone)
             {
-                // Revertimos el cambio inmediatamente
+              
                 st.IsDone = false;
 
-                // Aquí lanzamos la alerta visual (puedes usar JSRuntime para un alert simple)
+             
                 await JSRuntime.InvokeVoidAsync("alert", "⚠️ BLOQUEO DE SEGURIDAD: \n\nNo puedes modificar tareas de 'Servicio a Cliente' de días anteriores. \n\nPor favor, cambia la fecha en el Historial para poder registrar esta actividad.");
 
-                return; // Salimos sin guardar nada
+                return; 
             }
         }
-
-        // 2. Si pasa la validación, procedemos a guardar normalmente
         try
         {
             if (st.Subtasks != null && st.Subtasks.Any())
@@ -1640,7 +1629,7 @@
         }
         catch (Exception ex)
         {
-            // Manejo de errores al guardar
+
             Console.WriteLine($"Error al guardar la tarea: {ex.Message}");
         }
     }
