@@ -32,6 +32,7 @@
 .input-text {
     min-height: 40px;
 }
+
 .action-button-slender {
     background-color: red !important;
     color: white;
@@ -429,7 +430,7 @@ gap: 1rem;
     [data-theme="dark"] .column:nth-child(1) {
         background-color: #0a1a3b !important; /* Azul Marino saturado */
         border: 2px solid #3b82f6 !important;
-        background-color: 
+        background-color:
     }
 
     [data-theme="dark"] .column:nth-child(2) {
