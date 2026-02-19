@@ -3,6 +3,8 @@
 @inject ThemeService ThemeService
 @inject LoginService loginService
 @implements IDisposable
+@inject IJSRuntime JS
+
 
 @* Este div es la clave, ahora sí reaccionará *@
 <div class="app-container" data-theme="@ThemeService.CurrentTheme">
@@ -34,6 +36,27 @@
     {
         ThemeService.OnChange -= StateHasChanged;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var usuario = loginService.obtenerUsuarioLogueado();
+            string temaGuardado = "light";
+
+            if (usuario != null && !string.IsNullOrEmpty(usuario.NombreUsuario))
+            {
+                string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
+                temaGuardado = Microsoft.Maui.Storage.Preferences.Get(themeKey, "light");
+            }
+
+            await JS.InvokeVoidAsync(
+                "toggleFlatpickrTheme",
+                temaGuardado == "dark"
+            );
+        }
+    }
+
 }
 
 <style>

@@ -3,6 +3,8 @@
 @using pruebas1.Servicios
 @inject ThemeService ThemeService
 @inject LoginService loginService
+@inject IJSRuntime JS
+
 
 <div class="apariencia-container">
     <div class="section-header">
@@ -62,22 +64,36 @@
     {
         currentTheme = theme;
 
-        // 1. Aplicar cambio visual inmediato en el estado de la app
+        // Aplicar tema global
         ThemeService.SetTheme(theme);
 
-        // 2. Persistir la preferencia vinculada al usuario
+        // 🔥 Decirle a Flatpickr que cambie
+        await JS.InvokeVoidAsync(
+            "toggleFlatpickrTheme",
+            theme == "dark"
+        );
+
         var usuario = loginService.obtenerUsuarioLogueado();
         if (usuario != null && !string.IsNullOrEmpty(usuario.NombreUsuario))
         {
-            // Creamos una llave única: userThemeMode_NombreDeUsuario
             string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
             Microsoft.Maui.Storage.Preferences.Set(themeKey, theme);
         }
 
-        // 3. Notificar al componente padre si existe un callback
         if (OnThemeChange.HasDelegate)
         {
             await OnThemeChange.InvokeAsync(theme);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync(
+                "toggleFlatpickrTheme",
+                currentTheme == "dark"
+            );
         }
     }
 
@@ -89,9 +105,6 @@
         {
             string themeKey = $"userThemeMode_{usuario.NombreUsuario}";
             currentTheme = Microsoft.Maui.Storage.Preferences.Get(themeKey, CurrentTheme);
-
-            // Sincronizar el servicio visual por si acaso
-            ThemeService.SetTheme(currentTheme);
         }
         else
         {

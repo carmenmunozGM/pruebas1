@@ -22,8 +22,7 @@
                 "flatpickrInit",
                 inputRef,
                 Value,
-                dotNetRef,
-                true
+                dotNetRef
             );
         }
     }
@@ -40,11 +39,15 @@
 }
 
 <style>
+
     /* =================================================
-           MODO OSCURO UNIFICADO: FLATPICKR & COMPONENTES
-           ================================================= */
+
+               MODO OSCURO UNIFICADO: FLATPICKR & COMPONENTES
+
+               ================================================= */
 
     /* 1. INPUT DEL CALENDARIO */
+
     [data-theme="dark"] .date-control {
         background-color: #0f172a !important;
         color: #ffffff !important;
@@ -54,15 +57,19 @@
     }
 
     /* 2. CONTENEDOR PRINCIPAL DEL CALENDARIO */
+
     [data-theme="dark"] .flatpickr-calendar {
         background: #111827 !important; /* Fondo ultra oscuro */
+
         border: 1px solid #374151 !important;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* 3. CABECERA (MES Y AÑO) - Azul más oscuro y profundo */
+
     [data-theme="dark"] .flatpickr-months {
         background: #000000 !important; /* Azul medianoche */
+
         border-radius: 5px 5px 0 0;
     }
 
@@ -76,18 +83,22 @@
     }
 
     /* 4. DÍAS DE LA SEMANA (Elimina la franja extraña) */
+
     [data-theme="dark"] .flatpickr-weekdays {
         background: #000000 !important; /* Mismo color que la cabecera para unificar */
+
         height: 30px;
     }
 
     [data-theme="dark"] span.flatpickr-weekday {
         background: transparent !important;
         color: #9ca3af !important; /* Gris suave */
+
         font-weight: bold;
     }
 
     /* 5. CUERPO DE DÍAS */
+
     [data-theme="dark"] .flatpickr-innerContainer,
     [data-theme="dark"] .flatpickr-days,
     [data-theme="dark"] .dayContainer {
@@ -100,12 +111,14 @@
     }
 
         /* Día Hoy */
+
         [data-theme="dark"] .flatpickr-day.today {
             border-color: #3b82f6 !important;
             color: #3b82f6 !important;
         }
 
         /* Día Seleccionado */
+
         [data-theme="dark"] .flatpickr-day.selected {
             background: #2563eb !important;
             border-color: #2563eb !important;
@@ -113,18 +126,21 @@
         }
 
         /* Hover sobre días */
+
         [data-theme="dark"] .flatpickr-day:hover {
             background: #1f2937 !important;
             color: #ffffff !important;
         }
 
         /* Días fuera de mes */
+
         [data-theme="dark"] .flatpickr-day.prevMonthDay,
         [data-theme="dark"] .flatpickr-day.nextMonthDay {
             color: #4b5563 !important;
         }
 
     /* 6. FLECHAS DE NAVEGACIÓN */
+
     [data-theme="dark"] .flatpickr-prev-month,
     [data-theme="dark"] .flatpickr-next-month {
         fill: #ffffff !important;
@@ -137,6 +153,7 @@
         }
 
     /* 7. EXTERMINIO DE FOOTERS Y MODALES BLANCOS (De tus capturas) */
+
     [data-theme="dark"] .modal-footer,
     [data-theme="dark"] .modal-content {
         background-color: #111827 !important;
@@ -151,9 +168,11 @@
     }
 
     /* Asegurar que el contenedor de días tenga altura automática */
+
     [data-theme="dark"] .flatpickr-calendar {
         height: auto !important;
         min-height: 300px; /* Altura mínima recomendada */
+
         display: flex;
         flex-direction: column;
     }
@@ -169,7 +188,9 @@
     }
 
     /* IMPORTANTE: Evitar que el modal corte el calendario */
+
     .modal-body, .main-form-grid {
         overflow: visible !important;
     }
 </style>
+
