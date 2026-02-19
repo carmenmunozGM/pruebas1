@@ -16,8 +16,8 @@
 <h2 class="title">🏢 Servicio a Cliente</h2>
 
     <div class="modal-button-container">
-        <Minuta OnSave="RefrescarDatos" />
-    </div>
+       <Minuta OnSave="RefrescarDatos" />
+    </div> *
     <br />
 <div class="service-container">
     <!-- Columna izquierda: Grupos de clientes -->
@@ -82,7 +82,7 @@
                 <h4 class="service-subtitle">
                     @servicio.NombreServicio
                 </h4>
-                
+
 
                 <table class="activities-table">
                     <thead>
@@ -101,7 +101,7 @@
                                 <td>@actividad.Nombre</td>
 
                                 <td>
-                                                                    @* Si la fecha viene de la DB, mostramos el campo bloqueado *@
+                                    @* Si la fecha viene de la DB, mostramos el campo bloqueado *@
                                     @if (actividad.FechaOriginalDesdeDB)
                                     {
                                         <input type="date"
@@ -113,25 +113,28 @@
                                     else
                                     {
                                         @* Si NO viene de la DB (estaba vacía), mostramos el DatePicker editable *@
-                                        <DatePicker Value="actividad.Fecha"
-                                                    ValueChanged="@((fecha) => OnFechaChanged(actividad, fecha))"
-                                                    CssClass="input-date small" />
+                                        <div class="fix-datepicker">
+                                            <DatePicker Value="actividad.Fecha"
+                                                        ValueChanged="@((fecha) => OnFechaChanged(actividad, fecha))"
+                                                        CssClass="input-date small" />
+                                        </div>
+                                        
                                     }
                                 </td>
-
+                               
                                 <td>
                                     <button class="btn-calendar"
-                                             title="Modificar fecha"
-                                             @onclick="() => AbrirSubModal(actividad)">
+                                            title="Modificar fecha"
+                                            @onclick="() => AbrirSubModal(actividad)">
                                         📅
                                     </button>
                                 </td>
 
                                 <td class="check-cell">
                                     <input type="checkbox"
-                                       class="form-check-input"
-                                       checked="@actividad.Minuta"
-                                       @onchange="async e => await OnMinutaChanged(actividad, e)" />
+                                           class="form-check-input"
+                                           checked="@actividad.Minuta"
+                                           @onchange="async e => await OnMinutaChanged(actividad, e)" />
 
                                 </td>
 
@@ -139,7 +142,7 @@
                                     <textarea class="input-text"
                                               value="@actividad.Observaciones"
                                               @onchange="async e => await OnObservacionesChanged(actividad, e)">
-                                      </textarea>
+                                                  </textarea>
                                 </td>
                             </tr>
                         }
@@ -147,7 +150,7 @@
                 </table>
             }
 
-                        <div class="modal-footer">
+            <div class="modal-footer">
                 <button class="btn-save" @onclick="GuardarTodo">Guardar</button>
                 <button class="btn-cancel" @onclick="CloseModal">Cerrar</button>
             </div>
@@ -175,17 +178,17 @@
 
                         <!-- Motivo del cambio (obligatorio) -->
                         <label>Motivo del cambio <span class="required" style="color:red;">*</span>:</label>
-                            <textarea @bind="MotivoCambio"
-                                      class="input-text @(MostrarErrorMotivo ? "is-invalid" : "")"
-                                      style="@(MostrarErrorMotivo ? "border: 1px solid red;" : "")">
-                            </textarea>
+                        <textarea @bind="MotivoCambio"
+                                  class="input-text @(MostrarErrorMotivo ? "is-invalid" : "")"
+                                  style="@(MostrarErrorMotivo ? "border: 1px solid red;" : "")">
+                                    </textarea>
 
-                                            @if (MostrarErrorMotivo)
-                                            {
-                                                <div style="color: red; font-size: 0.85em; margin-top: 4px;">
-                                                    ✖ El motivo es obligatorio para justificar el cambio de fecha.
-                                                </div>
-                                            }
+                        @if (MostrarErrorMotivo)
+                        {
+                            <div style="color: red; font-size: 0.85em; margin-top: 4px;">
+                                ✖ El motivo es obligatorio para justificar el cambio de fecha.
+                            </div>
+                        }
 
 
                         @if (!string.IsNullOrEmpty(ErrorServidor))
@@ -201,7 +204,7 @@
                             </button>
                             <button class="btn-cancel" @onclick="CerrarSubModal" disabled="@Procesando">Cancelar</button>
                         </div>
-                        
+
 
                         <!-- Historial compacto con scroll -->
                         <label style="margin-top:8px;">Historial de cambios:</label>
@@ -234,9 +237,6 @@
         </div>
     </div>
 }
-
-
-
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
