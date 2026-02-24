@@ -2623,7 +2623,18 @@
         width: 100%;
     }
 
-        /* Estilo para el input de hora específico */
+    [data-theme="dark"] .edit-date-row {
+        color:white;
+        background: #0f172a;
+    }
+
+        [data-theme="dark"].edit-date-row select,
+        .edit-date-row input {
+            color: white;
+            background: #0f172a;
+        }
+
+    /* Estilo para el input de hora específico */
         input[type="time"],
         .edit-date-row select,
         .edit-date-row input {
@@ -3219,6 +3230,67 @@
             background-color: #0078d4;
             color: white;
             font-weight: 600;
+        }
+
+    /* =================================================
+       TIMEPICKER - MODO OSCURO (CORREGIDO)
+       ================================================= */
+
+    /* 1. El panel principal (el cuadro que flota) */
+    [data-theme="dark"] .timepicker-panel {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    }
+
+    /* 2. Las columnas de scroll */
+    [data-theme="dark"] .timepicker-column {
+        background-color: #0f172a !important; /* Fondo más profundo */
+        border: 1px solid #334155 !important;
+    }
+
+    /* 3. Los ítems (horas/minutos) */
+    [data-theme="dark"] .timepicker-item {
+        color: #94a3b8 !important; /* Gris azulado suave */
+        background: transparent !important;
+    }
+
+        /* 4. Hover: Cuando pasas el mouse por encima */
+        [data-theme="dark"] .timepicker-item:hover {
+            background-color: rgba(56, 189, 248, 0.15) !important;
+            color: #38bdf8 !important; /* Azul neón */
+        }
+
+        /* 5. Item Seleccionado */
+        [data-theme="dark"] .timepicker-item.selected {
+            background-color: #38bdf8 !important; /* Azul neón vibrante */
+            color: #0f172a !important; /* Texto oscuro para legibilidad */
+            font-weight: 800 !important;
+        }
+
+    /* 6. El Input que abre el Timepicker */
+    [data-theme="dark"] .timepicker-input {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    /* 7. Scrollbar del Timepicker para que no se vea blanco */
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+
+        [data-theme="dark"] .timepicker-column::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
         }
     /* ================= MODAL OVERLAY ================= */
     .modal-overlay {
