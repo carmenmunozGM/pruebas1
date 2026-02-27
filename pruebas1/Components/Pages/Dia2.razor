@@ -2808,7 +2808,6 @@ MasterCategories.Add(servicioClienteCategory);
     }
     private async Task CargarTareasPorFecha()
     {
-        // Console.WriteLine(">>>> EJECUTANDO FILTRO - Fecha Vista: " + FechaSeleccionada.ToShortDateString());
         if (MasterCategories == null) return;
 
         var fechaVista = FechaSeleccionada.Date;
@@ -2818,41 +2817,27 @@ MasterCategories.Add(servicioClienteCategory);
         {
             var subtasksFiltradas = (c.Subtasks ?? new List<SubtaskModel>()).Where(st =>
             {
-                if (st == null) return false;
+                if (st == null || !st.FechaInicio.HasValue) return false;
+
+                var inicio = st.FechaInicio.Value.Date;
+                var fin = st.FechaFin?.Date ?? inicio;
 
              
-                if (st.Tipo == "Evento" )
-                {
-                    if (!st.FechaInicio.HasValue || !st.FechaFin.HasValue) return false;
-                    return fechaVista >= st.FechaInicio.Value.Date && fechaVista <= st.FechaFin.Value.Date;
-                }
-                // Dentro de CargarTareasPorFecha, cambia el bloque de ServicioCliente por este:
-                if (st.Tipo == "ServicioCliente")
-                {
-                    if (!st.FechaInicio.HasValue || !st.FechaFin.HasValue) return false;
-
-                    // Rango original (para verla en el calendario en sus días programados)
-                    bool enRangoOriginal = fechaVista >= st.FechaInicio.Value.Date && fechaVista <= st.FechaFin.Value.Date;
-
-                    // --- EL RECORRIDO ---
-                    // Si estoy viendo el día de HOY, y la tarea está vencida pero NO terminada, la incluimos
-                    bool esRecorridoAlDiaDeHoy = (fechaVista == hoyReal) && (hoyReal > st.FechaFin.Value.Date) && !st.IsDone;
-
-                    return enRangoOriginal || esRecorridoAlDiaDeHoy;
-                }
-                if (!st.FechaInicio.HasValue) return false;
-                var inicio = st.FechaInicio.Value.Date;
-
                 if (st.IsDone)
                 {
-                    return st.FechaCompletada.HasValue &&
-                           st.FechaCompletada.Value.Date == fechaVista.Date;
+                    return st.FechaCompletada.HasValue && st.FechaCompletada.Value.Date == fechaVista;
                 }
-                
-                else
+
+                if (st.Tipo == "Evento")
                 {
-                    return fechaVista >= inicio && fechaVista <= hoyReal;
+                    return fechaVista >= inicio && fechaVista <= fin;
                 }
+                bool enRangoProgramado = fechaVista >= inicio && fechaVista <= fin;
+
+                bool esTareaPendienteVencida = (fechaVista == hoyReal) && (hoyReal > fin) && !st.IsDone;
+
+                return enRangoProgramado || esTareaPendienteVencida;
+
             }).ToList();
 
             return new CategoryModel

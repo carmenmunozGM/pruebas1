@@ -362,7 +362,16 @@ gap: 1rem;
     margin-top: 4px;
 }
 
-
+.total-horas-badge {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    border: 1px solid #bbdefb;
+}
 .service-subtitle {
     font-size: 1.1rem;
     color: #1a237e;

@@ -10,10 +10,10 @@ namespace pruebas1.Components.DTOs
     {
         public int IdAsignacion { get; set; }
         public DateTime Fecha { get; set; }
-        public bool Minuta { get; set; }
+        public int HorasProgramadas { get; set; }
     }
 
-    public class ObservacionesDTO
+    public class ObservacionesDTO   
     {
         public string? Observaciones { get; set; }
     }

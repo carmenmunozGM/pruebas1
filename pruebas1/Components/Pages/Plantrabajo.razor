@@ -68,7 +68,9 @@
     <div class="overlay" @onclick="CloseModal">
         <div class="modal large" @onclick:stopPropagation="true">
             <h3 class="modal-title">@ModalEmpresa</h3>
-
+            <div class="total-horas-badge">
+                Total horas programadas: <strong>@CalcularTotalHoras() hrs</strong>
+            </div>
 
             @if (MostrarAlerta)
             {
@@ -90,7 +92,7 @@
                             <th>Actividad</th>
                             <th>Fecha</th>
                             <th>Modificar fecha</th>
-                            <th>Minuta</th>
+                            <th>Horas Programadas</th>
                             <th>Observaciones</th>
                         </tr>
                     </thead>
@@ -131,11 +133,16 @@
                                 </td>
 
                                 <td class="check-cell">
-                                    <input type="checkbox"
-                                           class="form-check-input"
-                                           checked="@actividad.Minuta"
-                                           @onchange="async e => await OnMinutaChanged(actividad, e)" />
-
+                                    <div class="form-control-group">
+                                        <select class="form-control"
+                                                value="@actividad.HorasProgramadas"
+                                                @onchange="@((e) => OnHorasChanged(actividad, e))">
+                                            @for (int i = 1; i <= 10; i++)
+                                            {
+                                                <option value="@i">@i @(i == 1 ? "hora" : "horas")</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </td>
 
                                 <td>
@@ -280,7 +287,7 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
 
     public string Nombre { get; set; } = string.Empty;
     public DateTime? Fecha { get; set; }
-    public bool Minuta { get; set; }
+    public int HorasProgramadas { get; set; }
     public string? Observaciones { get; set; }
     public bool FechaOriginalDesdeDB { get; set; }
     public List<CambioFecha> HistorialFechas { get; set; } = new();
@@ -421,7 +428,7 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
                         Fecha = a.Fecha,
                         // Si ya tiene fecha en la DB, bloqueamos el input directo
                         FechaOriginalDesdeDB = a.Fecha.HasValue, 
-                        Minuta = a.Minuta ?? false,
+                        HorasProgramadas = a.HorasProgramadas,
                         Observaciones = a.Observaciones
                     })
                     .ToList()
@@ -614,7 +621,7 @@ void MostrarAlertaSinFecha()
 
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {
-    actividad.Minuta = (bool)e.Value!;
+        actividad.HorasProgramadas = (int)e.Value!;
 
     if (actividad.Fecha == null)
         return; // No se guarda sin fecha
@@ -624,7 +631,7 @@ void MostrarAlertaSinFecha()
         {
             IdAsignacion = actividad.IdCheckListAsignacion,
             Fecha = actividad.Fecha.Value,
-            Minuta = actividad.Minuta
+                HorasProgramadas = actividad.HorasProgramadas
         }
     );
 }
@@ -650,7 +657,7 @@ private async Task GuardarCambiosActividad(Actividad actividad)
         await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO {
             IdAsignacion = actividad.IdCheckListAsignacion,
             Fecha = actividad.Fecha.Value,
-            Minuta = actividad.Minuta
+            HorasProgramadas = actividad.HorasProgramadas
         });
 
         await JS.InvokeVoidAsync("Swal.fire", new {
@@ -673,11 +680,24 @@ private async Task GuardarTodo()
 {
     try 
     {
+
         // 1. VALIDACIÓN
         foreach (var servicio in ServiciosModal)
         {
             foreach (var actividad in servicio.Actividades)
             {
+
+                    // Si seleccionó fecha pero las horas son 0 o menores
+                    if (actividad.Fecha.HasValue && actividad.HorasProgramadas <= 0)
+                    {
+                        await JS.InvokeVoidAsync("Swal.fire", new
+                        {
+                            title = "Datos incompletos",
+                            text = $"En la actividad '{actividad.Nombre}', seleccionaste una fecha pero no has asignado las horas programadas. Por favor, selecciona al menos 1 hora.",
+                            icon = "warning"
+                        });
+                        return; // Detiene el guardado por completo
+                    }
                 if (!actividad.FechaOriginalDesdeDB && 
                      actividad.Fecha.HasValue && 
                      actividad.Fecha.Value.Date < DateTime.Today)
@@ -703,7 +723,7 @@ private async Task GuardarTodo()
                     {
                         IdAsignacion = actividad.IdCheckListAsignacion,
                         Fecha = actividad.Fecha.Value,
-                        Minuta = actividad.Minuta
+                            HorasProgramadas = actividad.HorasProgramadas
                     });
 
                     // 🔥 ESTA LÍNEA ES LA QUE SOLUCIONA TU ERROR:
@@ -739,6 +759,31 @@ private async Task GuardarTodo()
                 actividad.Observaciones
             );
         }
+    // 1. Método para manejar el cambio en el SELECT
+    private async Task OnHorasChanged(Actividad actividad, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int nuevasHoras))
+        {
+            actividad.HorasProgramadas = nuevasHoras;
+
+            // Si ya tiene fecha, guardamos automáticamente el cambio
+            if (actividad.Fecha.HasValue)
+            {
+                await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
+                {
+                    IdAsignacion = actividad.IdCheckListAsignacion,
+                    Fecha = actividad.Fecha.Value,
+                    HorasProgramadas = actividad.HorasProgramadas
+                });
+            }
+        }
+    }
+
+    // 2. Método para sumar todas las horas del modal actual
+    private int CalcularTotalHoras()
+    {
+        return ServiciosModal.SelectMany(s => s.Actividades).Sum(a => a.HorasProgramadas);
+    }
 
 }
 
