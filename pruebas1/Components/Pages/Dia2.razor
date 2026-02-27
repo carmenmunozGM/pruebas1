@@ -2141,82 +2141,147 @@
             item.Realizado = !nuevoValor;
         }
     }
-
     protected override async Task OnInitializedAsync()
     {
-      
+        // 1. Datos críticos de usuario (Síncronos o rápidos)
         var usuario = LoginService.obtenerUsuarioLogueado();
         if (usuario != null)
         {
             usuarioActualId = usuario.IdUsuario;
-            Debug.WriteLine($"👤 usuarioActualId (IdUsuario) = {usuarioActualId}");
+            string userKey = $"userViewMode_{usuario.NombreUsuario}";
+            string modoGuardado = Microsoft.Maui.Storage.Preferences.Get(userKey, "horizontal");
+            Settings.SetViewMode(modoGuardado);
         }
-        // 1. Cargar datos desde el servicio corregido
-        miCumple = await InfoService.GetMiCumpleanios();
-        listaVacaciones = await InfoService.GetMisVacaciones();
+        Settings.OnChange += StateHasChanged;
 
-        // 2. Lógica de comparación
-        if (miCumple != null)
+        // 2. Carga de servicios con protección (Try-Catch individual)
+        // Usamos bloques try-catch para que si InfoService falla, no detenga a SalasService, etc.
+
+        try { miCumple = await InfoService.GetMiCumpleanios(); } catch { /* Log error */ }
+        try { listaVacaciones = await InfoService.GetMisVacaciones(); } catch { /* Log error */ }
+        try { listaTodosCumple = await InfoService.GetTodosLosCumpleanios(); } catch { /* Log error */ }
+
+        try
         {
-            string hoy = DateTime.Now.ToString("dd/MM");
-            // El Trim es vital por si la API manda espacios
-            esMiCumple = (miCumple.Cumpleanios?.Trim() == hoy);
+            var salas = await SalasService.GetSalas();
+            salasLookup = salas.ToDictionary(s => s.Id, s => s.Salas);
         }
-        // Cargamos también la lista general
-        listaTodosCumple = await InfoService.GetTodosLosCumpleanios();
+        catch (Exception ex) { Console.WriteLine($"Error Salas: {ex.Message}"); }
 
-        var salas = await SalasService.GetSalas();
+        try
+        {
+            var prioridades = await ReglasService.GetPrioridad();
+            prioridadesLookup = prioridades.ToDictionary(p => p.Id, p => p.Titulo);
 
-        salasLookup = salas.ToDictionary(
-            s => s.Id,
-            s => s.Salas
-        );
+            var frecuencias = await ReglasService.GetFrecuencia();
+            frecuenciaLookup = frecuencias.ToDictionary(f => f.Id, f => f.Nombre);
+        }
+        catch (Exception ex) { Console.WriteLine($"Error Reglas: {ex.Message}"); }
 
-   
-        var prioridades = await ReglasService.GetPrioridad();
-        prioridadesLookup = prioridades.ToDictionary(
-            p => p.Id,
-            p => p.Titulo
-        );
-
-        var frecuencias = await ReglasService.GetFrecuencia();
-        frecuenciaLookup = frecuencias.ToDictionary(
-            f => f.Id,
-            f => f.Nombre
-        );
+        // 3. El punto donde estaba tronando (HttpClient directo)
         try
         {
             using var client = new HttpClient();
+            // Sugerencia: Usa un timeout corto para no bloquear la app
+            client.Timeout = TimeSpan.FromSeconds(5);
             var json = await client.GetStringAsync("https://redgm.site:9096/empleado");
             todosLosEmpleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json) ?? new();
             ActualizarDatosParticipantesExistentes();
         }
-        catch (Exception ex)
+        catch (Exception ex) { Console.WriteLine($"Error Empleados: {ex.Message}"); }
+
+        // 4. Llamadas críticas de la interfaz (Protegidas)
+        try
         {
-            Console.WriteLine($"Error cargando empleados: {ex.Message}");
+            // Esta es la que lanzaba el 404. Al envolverla, permites que lo de abajo corra.
+            await VerificarDiaNoLaboralAsync();
         }
-    
-  
-       
-        var usuarioLogueado = LoginService.obtenerUsuarioLogueado();
-        if (usuarioLogueado != null)
-        {
-            // Nota: Si tu DTO no tiene .Id, usa .NombreUsuario o la propiedad que identifique al usuario
-            string userKey = $"userViewMode_{usuarioLogueado.NombreUsuario}";
-            string modoGuardado = Microsoft.Maui.Storage.Preferences.Get(userKey, "horizontal");
-            Settings.SetViewMode(modoGuardado);
-        }
+        catch (Exception ex) { Console.WriteLine($"Error Días No Laborales (404 detectado): {ex.Message}"); }
 
-        Settings.OnChange += StateHasChanged;
-
-
-        await VerificarDiaNoLaboralAsync();
         await InitializeMasterCategoriesAsync();
         await CargarTareasPorFecha();
         await PrepararOrdenesVisuales();
 
+        // 5. Renderizado final
         GenerarDiasCalendario();
     }
+    // protected override async Task OnInitializedAsync()
+    // {
+      
+    //     var usuario = LoginService.obtenerUsuarioLogueado();
+    //     if (usuario != null)
+    //     {
+    //         usuarioActualId = usuario.IdUsuario;
+    //         Debug.WriteLine($"👤 usuarioActualId (IdUsuario) = {usuarioActualId}");
+    //     }
+    //     // 1. Cargar datos desde el servicio corregido
+    //     miCumple = await InfoService.GetMiCumpleanios();
+    //     listaVacaciones = await InfoService.GetMisVacaciones();
+
+    //     // 2. Lógica de comparación
+    //     if (miCumple != null)
+    //     {
+    //         string hoy = DateTime.Now.ToString("dd/MM");
+    //         // El Trim es vital por si la API manda espacios
+    //         esMiCumple = (miCumple.Cumpleanios?.Trim() == hoy);
+    //     }
+    //     // Cargamos también la lista general
+    //     listaTodosCumple = await InfoService.GetTodosLosCumpleanios();
+
+    //     var salas = await SalasService.GetSalas();
+
+    //     salasLookup = salas.ToDictionary(
+    //         s => s.Id,
+    //         s => s.Salas
+    //     );
+
+   
+    //     var prioridades = await ReglasService.GetPrioridad();
+    //     prioridadesLookup = prioridades.ToDictionary(
+    //         p => p.Id,
+    //         p => p.Titulo
+    //     );
+
+    //     var frecuencias = await ReglasService.GetFrecuencia();
+    //     frecuenciaLookup = frecuencias.ToDictionary(
+    //         f => f.Id,
+    //         f => f.Nombre
+    //     );
+    //     try
+    //     {
+    //         using var client = new HttpClient();
+    //         var json = await client.GetStringAsync("https://redgm.site:9096/empleado");
+    //         todosLosEmpleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json) ?? new();
+    //         ActualizarDatosParticipantesExistentes();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error cargando empleados: {ex.Message}");
+    //     }
+    
+  
+       
+    //     var usuarioLogueado = LoginService.obtenerUsuarioLogueado();
+    //     if (usuarioLogueado != null)
+    //     {
+    //         // Nota: Si tu DTO no tiene .Id, usa .NombreUsuario o la propiedad que identifique al usuario
+    //         string userKey = $"userViewMode_{usuarioLogueado.NombreUsuario}";
+    //         string modoGuardado = Microsoft.Maui.Storage.Preferences.Get(userKey, "horizontal");
+    //         Settings.SetViewMode(modoGuardado);
+    //     }
+
+    //     Settings.OnChange += StateHasChanged;
+
+
+    //     await VerificarDiaNoLaboralAsync();
+    //     await InitializeMasterCategoriesAsync();
+    //     await CargarTareasPorFecha();
+    //     await PrepararOrdenesVisuales();
+
+    //     GenerarDiasCalendario();
+    // }
+
+
     [CascadingParameter] public string ViewMode { get; set; } = "grid";
 
   

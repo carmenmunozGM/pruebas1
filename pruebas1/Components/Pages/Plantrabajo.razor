@@ -134,14 +134,29 @@
 
                                 <td class="check-cell">
                                     <div class="form-control-group">
-                                        <select class="form-control"
-                                                value="@actividad.HorasProgramadas"
-                                                @onchange="@((e) => OnHorasChanged(actividad, e))">
-                                            @for (int i = 1; i <= 10; i++)
-                                            {
-                                                <option value="@i">@i @(i == 1 ? "hora" : "horas")</option>
-                                            }
-                                        </select>
+                                        @if (actividad.FechaOriginalDesdeDB)
+                                        {
+                                            @* Se muestra como un texto o un input deshabilitado sin flecha de selección *@
+                                            <input type="text"
+                                                   class="form-control text-center bg-light"
+                                                   value="@actividad.HorasProgramadas hrs"
+                                                   disabled
+                                                   style="cursor: not-allowed; font-weight: bold; border: 1px solid #ced4da;" />
+                                        }
+                                        else
+                                        {
+                                            @* Solo es un select cuando el registro es NUEVO *@
+                                            <select class="form-control @(actividad.Fecha.HasValue && actividad.HorasProgramadas <= 0 ? "border-danger" : "")"
+                                                    value="@actividad.HorasProgramadas"
+                                                    @onchange="@((e) => OnHorasChanged(actividad, e))">
+
+                                                <option value="0">-- Horas --</option>
+                                                @for (int i = 1; i <= 25; i++)
+                                                {
+                                                    <option value="@i">@i @(i == 1 ? "hr" : "hrs")</option>
+                                                }
+                                            </select>
+                                        }
                                     </div>
                                 </td>
 
@@ -676,76 +691,101 @@ private async Task GuardarCambiosActividad(Actividad actividad)
     }
 }
 
-private async Task GuardarTodo()
-{
-    try 
+    private async Task GuardarTodo()
     {
-
-        // 1. VALIDACIÓN
-        foreach (var servicio in ServiciosModal)
+        try
         {
-            foreach (var actividad in servicio.Actividades)
+            // --- PASO 1: VALIDACIÓN "CERO TOLERANCIA" ---
+            foreach (var servicio in ServiciosModal)
             {
+                foreach (var actividad in servicio.Actividades)
+                {
+                    // Verificamos si el renglón está "a medias"
+                    bool tieneFecha = actividad.Fecha.HasValue;
+                    bool tieneHoras = actividad.HorasProgramadas > 0;
 
-                    // Si seleccionó fecha pero las horas son 0 o menores
-                    if (actividad.Fecha.HasValue && actividad.HorasProgramadas <= 0)
+                    // Si tiene una cosa pero le falta la otra, es un ERROR
+                    if (tieneFecha != tieneHoras)
+                    {
+                        string mensajeError = tieneFecha
+                            ? $"A la actividad '{actividad.Nombre}' le pusiste FECHA, pero se te olvidó ponerle las HORAS."
+                            : $"A la actividad '{actividad.Nombre}' le pusiste HORAS, pero se te olvidó ponerle la FECHA.";
+
+                        await JS.InvokeVoidAsync("Swal.fire", new
+                        {
+                            title = "Información incompleta",
+                            text = mensajeError,
+                            icon = "error",
+                            confirmButtonText = "Entendido"
+                        });
+                        return; // CORTA EL FLUJO: No guarda nada de ninguna actividad
+                    }
+
+                    // Validación extra: Que no pongan fechas pasadas en registros nuevos
+                    if (!actividad.FechaOriginalDesdeDB && tieneFecha && actividad.Fecha.Value.Date < DateTime.Today)
                     {
                         await JS.InvokeVoidAsync("Swal.fire", new
                         {
-                            title = "Datos incompletos",
-                            text = $"En la actividad '{actividad.Nombre}', seleccionaste una fecha pero no has asignado las horas programadas. Por favor, selecciona al menos 1 hora.",
-                            icon = "warning"
+                            title = "Fecha inválida",
+                            text = $"La fecha de '{actividad.Nombre}' no puede ser de días anteriores.",
+                            icon = "error"
                         });
-                        return; // Detiene el guardado por completo
+                        return;
                     }
-                if (!actividad.FechaOriginalDesdeDB && 
-                     actividad.Fecha.HasValue && 
-                     actividad.Fecha.Value.Date < DateTime.Today)
-                {
-                    await JS.InvokeVoidAsync("Swal.fire", new {
-                        title = "Fecha no válida",
-                        text = $"La fecha de '{actividad.Nombre}' no puede ser anterior a hoy.",
-                        icon = "error"
-                    });
-                    return;
                 }
             }
-        }
 
-        // 2. PROCESO DE GUARDADO
-        foreach (var servicio in ServiciosModal)
-        {
-            foreach (var actividad in servicio.Actividades)
+            // --- PASO 2: GUARDADO (Solo llega aquí si TODO está perfecto) ---
+            bool huboCambios = false;
+
+            foreach (var servicio in ServiciosModal)
             {
-                if (actividad.Fecha.HasValue)
+                foreach (var actividad in servicio.Actividades)
                 {
-                    await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO 
+                    // Solo guardamos las que tienen el par completo
+                    if (actividad.Fecha.HasValue && actividad.HorasProgramadas > 0)
                     {
-                        IdAsignacion = actividad.IdCheckListAsignacion,
-                        Fecha = actividad.Fecha.Value,
+                        await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
+                        {
+                            IdAsignacion = actividad.IdCheckListAsignacion,
+                            Fecha = actividad.Fecha.Value,
                             HorasProgramadas = actividad.HorasProgramadas
-                    });
-                    actividad.FechaOriginalDesdeDB = true;
+                        });
+
+                        actividad.FechaOriginalDesdeDB = true;
+                        huboCambios = true;
+                    }
                 }
             }
+
+            if (huboCambios)
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    title = "¡Éxito!",
+                    text = "Toda la información se guardó correctamente.",
+                    icon = "success",
+                    timer = 2000,
+                    showConfirmButton = false
+                });
+                CloseModal();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    title = "Sin cambios",
+                    text = "No has llenado ninguna actividad para guardar.",
+                    icon = "info"
+                });
+            }
         }
-
-        // 3. ÉXITO Y CIERRE
-        await JS.InvokeVoidAsync("Swal.fire", new {
-            title = "¡Guardado!",
-            text = "Todos los cambios han sido procesados correctamente.",
-            icon = "success",
-            timer = 2000,
-            showConfirmButton = false
-        });
-
-        CloseModal(); 
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new { title = "Error", text = "Ocurrió un error al guardar: " + ex.Message, icon = "error" });
+        }
     }
-    catch (Exception ex)
-    {
-        await JS.InvokeVoidAsync("Swal.fire", new { title = "Error crítico", text = ex.Message, icon = "error" });
-    }
-}
+
     private async Task OnObservacionesChanged(Actividad actividad, ChangeEventArgs e)
         {
             actividad.Observaciones = e.Value?.ToString();
@@ -755,14 +795,13 @@ private async Task GuardarTodo()
                 actividad.Observaciones
             );
         }
-    // 1. Método para manejar el cambio en el SELECT
+
     private async Task OnHorasChanged(Actividad actividad, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int nuevasHoras))
         {
             actividad.HorasProgramadas = nuevasHoras;
 
-            // Si ya tiene fecha, guardamos automáticamente el cambio
             if (actividad.Fecha.HasValue)
             {
                 await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
@@ -775,7 +814,6 @@ private async Task GuardarTodo()
         }
     }
 
-    // 2. Método para sumar todas las horas del modal actual
     private int CalcularTotalHoras()
     {
         return ServiciosModal.SelectMany(s => s.Actividades).Sum(a => a.HorasProgramadas);
