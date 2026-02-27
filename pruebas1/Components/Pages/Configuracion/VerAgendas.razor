@@ -62,7 +62,7 @@
 
                 <div class="stats-container">
                     <div class="stat-box pending-stat">
-                        <span class="stat-label">Actividades Pendientes</span>
+                        <span class="stat-label">Tareas Pendientes</span>
                         <span class="stat-value @GetPendienteClass(employee.ActividadesPendientes)">
                             @employee.ActividadesPendientes
                         </span>
@@ -72,6 +72,12 @@
                         <span class="stat-label">Autoevaluación Pendiente</span>
                         <span class="stat-value @GetPendienteClass(employee.AutoevaluacionesPendientes)">
                             @employee.AutoevaluacionesPendientes
+                        </span>
+                    </div>
+                    <div class="stat-box cliente-stat">
+                        <span class="stat-label">Actividades Pendientes</span>
+                        <span class="stat-value @GetPendienteClass(employee.ServicioClientePendiente)">
+                            @employee.ServicioClientePendiente
                         </span>
                     </div>
                 </div>
@@ -87,7 +93,6 @@
                 </button>
             </div>
         }
-
     </div>
 
     @if (selectedEmployee != null)
@@ -489,7 +494,7 @@
 
                         <section class="vermodal-card">
                             <h4>Descripción</h4>
-                            <p>@ActividadSeleccionada.Descripcion</p>
+                            <p>@ActividadSeleccionada.Descripcion </p>
                         </section>
                         @if (ActividadSeleccionada.EsEvento)
                         {
@@ -923,7 +928,8 @@
             Area = e.Area,
             Puesto = e.Puesto,
             ActividadesPendientes = e.ActividadesPendientes,
-            AutoevaluacionesPendientes = e.AutoevaluacionesPendientes
+            AutoevaluacionesPendientes = e.AutoevaluacionesPendientes,
+            ServicioClientePendiente = e.ServicioClientePendiente
         }).ToList();
     }
 
@@ -940,6 +946,7 @@
 
         public int ActividadesPendientes { get; set; }
         public int AutoevaluacionesPendientes { get; set; }
+        public int ServicioClientePendiente { get; set; }
     }
 
     private string[] colors = new string[] 
@@ -1438,7 +1445,7 @@
         public bool EsEvento { get; set; }
 
         public string Titulo { get; set; } = "";
-        public string Descripcion { get; set; } = "";
+        public string? Descripcion { get; set; } = "";
 
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
@@ -1459,7 +1466,9 @@
         {
             EsEvento = false,
             Titulo = t.titulo,
-            Descripcion = t.descripcion,
+            Descripcion = string.IsNullOrWhiteSpace(t.descripcion)
+            ? "Sin descripción detallada disponible."
+            : t.descripcion,
             FechaInicio = t.fechaInicio,
             FechaFin = t.fechaFin,
             Prioridad = t.prioridadTitulo,
@@ -1477,7 +1486,9 @@
         {
             EsEvento = true,
             Titulo = e.titulo,
-            Descripcion = e.descripcion,
+            Descripcion = string.IsNullOrWhiteSpace(e.descripcion)
+            ? "Sin descripción detallada disponible."
+            : e.descripcion,
             FechaInicio = e.fechaInicio,
             FechaFin = e.fechaFin,
             Prioridad = ResolverPrioridad(e.idPrioridad),
