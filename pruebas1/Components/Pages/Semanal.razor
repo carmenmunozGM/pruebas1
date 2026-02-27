@@ -2623,7 +2623,18 @@
         width: 100%;
     }
 
-        /* Estilo para el input de hora específico */
+    [data-theme="dark"] .edit-date-row {
+        color:white;
+        background: #0f172a;
+    }
+
+        [data-theme="dark"].edit-date-row select,
+        .edit-date-row input {
+            color: white;
+            background: #0f172a;
+        }
+
+    /* Estilo para el input de hora específico */
         input[type="time"],
         .edit-date-row select,
         .edit-date-row input {
@@ -3219,6 +3230,67 @@
             background-color: #0078d4;
             color: white;
             font-weight: 600;
+        }
+
+    /* =================================================
+       TIMEPICKER - MODO OSCURO (CORREGIDO)
+       ================================================= */
+
+    /* 1. El panel principal (el cuadro que flota) */
+    [data-theme="dark"] .timepicker-panel {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    }
+
+    /* 2. Las columnas de scroll */
+    [data-theme="dark"] .timepicker-column {
+        background-color: #0f172a !important; /* Fondo más profundo */
+        border: 1px solid #334155 !important;
+    }
+
+    /* 3. Los ítems (horas/minutos) */
+    [data-theme="dark"] .timepicker-item {
+        color: #94a3b8 !important; /* Gris azulado suave */
+        background: transparent !important;
+    }
+
+        /* 4. Hover: Cuando pasas el mouse por encima */
+        [data-theme="dark"] .timepicker-item:hover {
+            background-color: rgba(56, 189, 248, 0.15) !important;
+            color: #38bdf8 !important; /* Azul neón */
+        }
+
+        /* 5. Item Seleccionado */
+        [data-theme="dark"] .timepicker-item.selected {
+            background-color: #38bdf8 !important; /* Azul neón vibrante */
+            color: #0f172a !important; /* Texto oscuro para legibilidad */
+            font-weight: 800 !important;
+        }
+
+    /* 6. El Input que abre el Timepicker */
+    [data-theme="dark"] .timepicker-input {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    /* 7. Scrollbar del Timepicker para que no se vea blanco */
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar-track {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .timepicker-column::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+
+        [data-theme="dark"] .timepicker-column::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
         }
     /* ================= MODAL OVERLAY ================= */
     .modal-overlay {
@@ -3956,4 +4028,134 @@
             padding: 10px 25px !important;
     }
 
+    /* =================================================
+       MODAL DE CONFIRMACIÓN DE ELIMINACIÓN
+       ================================================= */
+
+    /* --- ESTRUCTURA BASE --- */
+    .confirm-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10001;
+        width: 320px;
+        padding: 24px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: fadeInScale 0.2s ease-out;
+    }
+
+    @@keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -45%) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+
+    .confirm-modal h3 {
+        margin-top: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .confirm-modal p {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        margin: 15px 0 25px;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    /* --- MODO CLARO ORIGINAL --- */
+    .confirm-modal {
+        background: white;
+    }
+
+        .confirm-modal h3 {
+            color: #1e293b;
+        }
+
+        .confirm-modal p {
+            color: #64748b;
+        }
+
+            .confirm-modal p strong {
+                color: #0f172a;
+            }
+
+    /* Botón Cancelar (Clase .save según tu código) */
+    .action-btn.save {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+        .action-btn.save:hover {
+            background: #e2e8f0;
+        }
+
+    /* Botón Eliminar (Clase .cancel según tu código) */
+    .action-btn.cancel {
+        background: #ef4444;
+        color: white;
+    }
+
+        .action-btn.cancel:hover {
+            background: #dc2626;
+        }
+
+    /* --- MODO OSCURO (CONGRUENTE) --- */
+    [data-theme="dark"] .confirm-modal {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6) !important;
+    }
+
+        [data-theme="dark"] .confirm-modal h3 {
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .confirm-modal p {
+            color: #94a3b8 !important;
+        }
+
+            [data-theme="dark"] .confirm-modal p strong {
+                color: #38bdf8 !important;
+            }
+    /* Resaltamos el nombre en azul */
+
+    [data-theme="dark"] .action-btn.save {
+        background: #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] .action-btn.cancel {
+        background: #7f1d1d !important; /* Rojo oscuro para que no moleste a la vista */
+        color: #fecaca !important; /* Texto rosa pálido para contraste */
+        border: 1px solid #b91c1c !important;
+    }
+
+        [data-theme="dark"] .action-btn.cancel:hover {
+            background: #b91c1c !important;
+            color: white !important;
+        }
 </style>

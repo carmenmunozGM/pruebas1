@@ -105,5 +105,25 @@ h1:focus {
 
 /* Evita que el calendario salga atrás de modales */
 .flatpickr-calendar {
-    z-index: 999999 !important;
+    z-index: 99999 !important;
 }
+
+[data-theme="dark"] input:not(.flatpickr-input) {
+    background: #1a1c23 !important;
+}
+
+[data-theme="dark"] .flatpickr-calendar {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+[data-theme="dark"] .flatpickr-day {
+    color: #f5f5f5;
+}
+
+    [data-theme="dark"] .flatpickr-day:hover {
+        background: #334155;
+    }
+
+
+

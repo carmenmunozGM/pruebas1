@@ -725,10 +725,6 @@ private async Task GuardarTodo()
                         Fecha = actividad.Fecha.Value,
                             HorasProgramadas = actividad.HorasProgramadas
                     });
-
-                    // 🔥 ESTA LÍNEA ES LA QUE SOLUCIONA TU ERROR:
-                    // Al marcarlo como true, el sistema ya sabe que existe en la DB
-                    // y permitirá abrir el historial sin tronar.
                     actividad.FechaOriginalDesdeDB = true;
                 }
             }

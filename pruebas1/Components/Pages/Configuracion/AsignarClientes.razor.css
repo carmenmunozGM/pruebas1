@@ -618,10 +618,6 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
         background-color: rgba(239, 68, 68, 0.1);
     }
 
-.dark-mode .btn-delete:hover {
-    background-color: rgba(239, 68, 68, 0.2);
-}
-
 /* ================================================= */
 /* AUTOCOMPLETE LIST */
 /* ================================================= */
@@ -927,35 +923,6 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     color: #9ca3af;
 }
 
-/* Botón reasignar de tabla */
-.btn-reassign {
-    padding: 0.45rem 0.85rem;
-    background-color: rgba(168, 85, 247, 0.1);
-    border: 1px solid rgba(168, 85, 247, 0.4);
-    border-radius: 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #7e22ce;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-    .btn-reassign:hover {
-        background-color: #a855f7;
-        color: white;
-    }
-
-[data-theme="dark"] .btn-reassign {
-    background-color: rgba(168, 85, 247, 0.2);
-    border-color: rgba(168, 85, 247, 0.5);
-    color: #d8b4fe;
-}
-
-    [data-theme="dark"] .btn-reassign:hover {
-        background-color: #9333ea;
-        color: white;
-    }
-
 .autocomplete-container {
     position: relative;
 }
@@ -993,5 +960,35 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 
     /* Opcional: que brille un poco al pasar el mouse */
     .btn-delete-assign:hover {
-        opacity: 0.7;
+        opacity: 0.4;
+    }
+
+.btn-copy {
+    background: none; /* Quita el fondo gris */
+    border: none; /* Quita el borde negro */
+    padding: 0; /* Quita el espacio interno */
+    cursor: pointer; /* Hace que salga la manita al pasar el mouse */
+    outline: none; /* Quita el borde azul al hacer clic */
+}
+
+    /* Opcional: que brille un poco al pasar el mouse */
+    .btn-copy:hover {
+        opacity: 0.4;
+    }
+
+/* Botón reasignar de tabla */
+.btn-reassign {
+    padding: 0.45rem 0.85rem;
+    background: none; /* Quita el fondo gris */
+    border: none; /* Quita el borde negro */
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #7e22ce;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .btn-reassign:hover {
+        opacity: 0.4;
     }

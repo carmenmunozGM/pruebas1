@@ -1303,6 +1303,7 @@
     {
         public int Id { get; set; }
         public string Texto { get; set; } = "";
+        public DateOnly FechaAsig { get; set; }
         public DateOnly Fecha { get; set; }
         public bool Completada { get; set; }
     }
@@ -1317,12 +1318,14 @@
         return servicios
             .Where(s =>
                 s.FechaConclusion != default &&
-                DateOnly.FromDateTime(s.FechaConclusion) == diaSeleccionado
+                DateOnly.FromDateTime(s.FechaAsignacion) <= diaSeleccionado &&
+                DateOnly.FromDateTime(s.FechaConclusion) >= diaSeleccionado
             )
             .Select(s => new ServiceItemUI
             {
                 Id = s.IdHorasProgramaTrabajo,
                 Texto = $"{s.NombreEmpresa} - {s.NombreServicio} - {s.NombreActividad}",
+                FechaAsig = DateOnly.FromDateTime(s.FechaAsignacion),
                 Fecha = DateOnly.FromDateTime(s.FechaConclusion),
                 Completada = s.Completada == true
             })

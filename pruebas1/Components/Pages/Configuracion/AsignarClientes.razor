@@ -295,9 +295,38 @@
                                     @item.FechaAsignacion.ToString("dd/MM/yyyy")
                                 </td>
                                 <td>
+                                    <button class="btn-copy"
+                                            disabled="@copiando"
+                                            @onclick="() => CopiarAsignacion(item)">
+
+                                        @if (copiando)
+                                        {
+                                            <span class="spinner-border spinner-border-sm"></span>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                 width="18"
+                                                 height="18"
+                                                 viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="#0D9488"
+                                                 stroke-width="2"
+                                                 stroke-linecap="round"
+                                                 stroke-linejoin="round"
+                                                 style="background: none; border: none;">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                            </svg>
+                                        }
+
+                                    </button>
                                     <button class="btn-reassign"
                                             @onclick="() => AbrirReasignacion(item)">
-                                        Reasignar
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background: none; border: none;">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
                                     </button>
                                     <button class="btn-delete-assign"
                                             @onclick="() => AbrirModalEliminar(item)">
@@ -1104,4 +1133,49 @@
     }
 
 
+    private bool copiando = false;
+    private async Task CopiarAsignacion(HistorialAsignacionDTO item)
+    {
+        if (copiando)
+            return;
+
+        copiando = true;
+
+        try
+        {
+            var usuario = LoginService.obtenerUsuarioLogueado();
+
+            if (usuario == null || !usuario.IdAgendasAsignadas.Any())
+                return;
+
+            int idAgenda = usuario.IdAgendasAsignadas.First();
+
+            var dto = new AsignacionClienteActividadesDTO
+            {
+                IdAgenda = idAgenda,
+                TipoEntidad = item.TipoEntidad,
+                IdEmpleado = item.IdEmpleado,
+                ClientesIds = item.EntidadesExternasIds,
+                ActividadesIds = item.ActividadesIds
+            };
+
+            var response = await Http.PostAsJsonAsync(
+                "/api/servicio-cliente/admin/asignar",
+                dto
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alertaErrorReasignacion", error);
+                return;
+            }
+
+            await CargarHistorialAsignaciones();
+        }
+        finally
+        {
+            copiando = false;
+        }
+    }
 }
