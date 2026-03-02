@@ -67,6 +67,7 @@ namespace pruebas1.Entidades
         public string Icon { get; set; }
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
+        public int HorasProgramadas { get; set; }
         public DateTime FechaConclusion { get; set; } = DateTime.Now.Date;
         public DateTime? FechaSolicitud { get; set; }
         public TimeOnly? HoraInicio { get; set; }

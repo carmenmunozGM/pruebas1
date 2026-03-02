@@ -37,8 +37,19 @@
                     <ul class="empresa-list">
                         @foreach (var empresa in grupo.Empresas)
                         {
-                            <li @onclick="() => OpenModal(empresa.IdUsuarioEntidadAgenda)">
-                                🏢 @empresa.Nombre
+                            <li @onclick="() => OpenModal(empresa.IdUsuarioEntidadAgenda)" class="empresa-item">
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <span>🏢 @empresa.Nombre</span>
+
+                                    @if (empresa.TotalHoras > 0)
+                                    {
+                                        <span class="badge-horas">@empresa.TotalHoras hrs</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-sin-horas">0 hrs</span>
+                                    }
+                                </div>
                             </li>
                         }
                     </ul>
@@ -47,7 +58,7 @@
         }
     </div>
 
-    <!-- Columna derecha: Clientes individuales -->
+ 
     <div class="column">
         <h3 class="section-title">Clientes Individuales</h3>
 
@@ -55,7 +66,19 @@
             @foreach (var cliente in ClientesIndividuales)
             {
                 <li @onclick="() => OpenModal(cliente.IdUsuarioEntidadAgenda)">
-                    🧾 @cliente.Nombre
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span>🧾 @cliente.Nombre</span>
+
+                      
+                        @if (cliente.TotalHoras > 0)
+                        {
+                            <span class="badge-horas">@cliente.TotalHoras hrs</span>
+                        }
+                        else
+                        {
+                            <span class="badge-sin-horas">0 hrs</span>
+                        }
+                    </div>
                 </li>
             }
         </ul>
@@ -103,7 +126,7 @@
                                 <td>@actividad.Nombre</td>
 
                                 <td>
-                                    @* Si la fecha viene de la DB, mostramos el campo bloqueado *@
+                               
                                     @if (actividad.FechaOriginalDesdeDB)
                                     {
                                         <input type="date"
@@ -114,7 +137,7 @@
                                     }
                                     else
                                     {
-                                        @* Si NO viene de la DB (estaba vacía), mostramos el DatePicker editable *@
+
                                         <div class="fix-datepicker">
                                             <DatePicker Value="actividad.Fecha"
                                                         ValueChanged="@((fecha) => OnFechaChanged(actividad, fecha))"
@@ -136,7 +159,7 @@
                                     <div class="form-control-group">
                                         @if (actividad.FechaOriginalDesdeDB)
                                         {
-                                            @* Se muestra como un texto o un input deshabilitado sin flecha de selección *@
+                                     
                                             <input type="text"
                                                    class="form-control text-center bg-light"
                                                    value="@actividad.HorasProgramadas hrs"
@@ -145,7 +168,7 @@
                                         }
                                         else
                                         {
-                                            @* Solo es un select cuando el registro es NUEVO *@
+
                                             <select class="form-control @(actividad.Fecha.HasValue && actividad.HorasProgramadas <= 0 ? "border-danger" : "")"
                                                     value="@actividad.HorasProgramadas"
                                                     @onchange="@((e) => OnHorasChanged(actividad, e))">
@@ -182,23 +205,16 @@
                 <div class="submodal-overlay" @onclick="CerrarSubModal">
                     <div class="submodal" @onclick:stopPropagation="true">
                         <h4>Modificar fecha para: @ActividadSeleccionada?.Nombre</h4>
-
-                        <!-- Fecha actual (no editable) -->
                         <label>Fecha actual (no editable):</label>
                         <input type="date" value="@(OriginalFecha?.ToString("yyyy-MM-dd") ?? String.Empty)" disabled class="input-date" />
-
-                        <!-- Nueva fecha (obligatoria) -->
                         <label>Selecciona nueva fecha <span class="required">*</span>:</label>
                         <DatePicker Value="NuevaFecha"
                                     ValueChanged="@(fecha => NuevaFecha = fecha)"
                                     CssClass="form-control" />
-
                         @if (MostrarErrorFecha)
                         {
                             <div class="error-msg">La nueva fecha es obligatoria.</div>
                         }
-
-                        <!-- Motivo del cambio (obligatorio) -->
                         <label>Motivo del cambio <span class="required" style="color:red;">*</span>:</label>
                         <textarea @bind="MotivoCambio"
                                   class="input-text @(MostrarErrorMotivo ? "is-invalid" : "")"
@@ -226,8 +242,6 @@
                             </button>
                             <button class="btn-cancel" @onclick="CerrarSubModal" disabled="@Procesando">Cancelar</button>
                         </div>
-
-
                         <!-- Historial compacto con scroll -->
                         <label style="margin-top:8px;">Historial de cambios:</label>
                         <div class="historial-box">
@@ -267,11 +281,12 @@
             StateHasChanged();
         }
     }
-    void RefrescarDatos()
+    private async Task RefrescarDatos()
     {
        
-        StateHasChanged();
+        StateHasChanged(); 
     }
+    private int idEmpresaAbierta;
     [Parameter]
     [SupplyParameterFromQuery]
     public string? tareaId { get; set; }
@@ -290,7 +305,7 @@
     }
 
     private string? ErrorServidor = null;
-private bool Procesando = false; // Para deshabilitar el botón mientras guarda
+private bool Procesando = false; 
 
     public class Actividad
 {
@@ -307,22 +322,18 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
     public bool FechaOriginalDesdeDB { get; set; }
     public List<CambioFecha> HistorialFechas { get; set; } = new();
 }
-
-
-
     public class Empresa
     {
         public int IdUsuarioEntidadAgenda { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public int TotalHoras { get; set; }
     }
-
     public class GrupoCliente
     {
         public string Nombre { get; set; } = string.Empty;
         public bool Expandido { get; set; }
         public List<Empresa> Empresas { get; set; } = new();
     }
-
     private List<GrupoCliente> GruposClientes { get; set; } = new();
     private List<Empresa> ClientesIndividuales { get; set; } = new();
     bool ShowSubModal = false;
@@ -349,32 +360,27 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
 
     protected override async Task OnInitializedAsync()
     {
+
         var data = await ServicioClienteService.ObtenerMisEmpresas();
-        if (!string.IsNullOrEmpty(tareaId))
-        {
-            int idEntidad = ObtenerIdEmpresaPorTarea(tareaId);
-            if (idEntidad > 0)
-            {
-                await OpenModal(idEntidad);
-            }
-        }
+
         GruposClientes = data.Grupos.Select(g => new GrupoCliente
         {
             Nombre = g.NombreGrupo,
             Empresas = g.Clientes.Select(c => new Empresa
             {
                 IdUsuarioEntidadAgenda = c.IdUsuarioEntidadAgenda,
-                Nombre = c.NombreCliente
+                Nombre = c.NombreCliente,
+                TotalHoras = 0 
             }).ToList()
         }).ToList();
 
         ClientesIndividuales = data.ClientesIndividuales.Select(c => new Empresa
         {
             IdUsuarioEntidadAgenda = c.IdUsuarioEntidadAgenda,
-            Nombre = c.NombreCliente
+            Nombre = c.NombreCliente,
+            TotalHoras = 0 
         }).ToList();
-
-        // 2. AHORA QUE LOS DATOS EXISTEN, LEER LA URL
+        await CargarTotalesIniciales();
         if (!string.IsNullOrEmpty(tareaId))
         {
             int idEntidad = ObtenerIdEmpresaPorTarea(tareaId);
@@ -409,6 +415,38 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
         return 0;
     }
 
+    private async Task CargarTotalesIniciales()
+    {
+        // Creamos una lista con todas las empresas para no repetir código
+        var todas = GruposClientes.SelectMany(g => g.Empresas).Concat(ClientesIndividuales);
+
+        foreach (var empresa in todas)
+        {
+            // Obtenemos las actividades reales de esta empresa desde el servicio
+            var detalle = await ServicioClienteService.ObtenerActividadesEmpresa(empresa.IdUsuarioEntidadAgenda);
+            if (detalle != null)
+            {
+                // Sumamos las horas de todos los servicios y actividades
+                empresa.TotalHoras = detalle.Servicios
+                    .SelectMany(s => s.Actividades)
+                    .Sum(a => a.HorasProgramadas);
+            }
+        }
+        StateHasChanged();
+    }
+    private void ActualizarEmpresaEnLista(int id, int nuevasHoras)
+    {
+        // Actualizamos en grupos
+        var empGrupo = GruposClientes.SelectMany(g => g.Empresas)
+                        .FirstOrDefault(e => e.IdUsuarioEntidadAgenda == id);
+        if (empGrupo != null) empGrupo.TotalHoras = nuevasHoras;
+
+        // Actualizamos en individuales
+        var empInd = ClientesIndividuales.FirstOrDefault(e => e.IdUsuarioEntidadAgenda == id);
+        if (empInd != null) empInd.TotalHoras = nuevasHoras;
+
+        StateHasChanged();
+    }
     private void ToggleGrupo(GrupoCliente grupo)
     {
         grupo.Expandido = !grupo.Expandido;
@@ -418,7 +456,7 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
     {
         ShowModal = true;
         ServiciosModal.Clear();
-
+        idEmpresaAbierta = idUsuarioEntidadAgenda;
         var data = await ServicioClienteService.ObtenerActividadesEmpresa(idUsuarioEntidadAgenda);
 
         if (data == null)
@@ -510,32 +548,38 @@ private bool Procesando = false; // Para deshabilitar el botón mientras guarda
     void CerrarSubModal()
     {
         ShowSubModal = false;
-
-        // --- LIMPIEZA DE MENSAJES DE ERROR ---
         ErrorServidor = null;
         MostrarErrorFecha = false;
         MostrarErrorMotivo = false;
-
-        // --- LIMPIEZA DE CAMPOS ---
         MotivoCambio = "";
         NuevaFecha = null;
         OriginalFecha = null;
         ActividadSeleccionada = null;
-
-        // Si tenías una alerta general en el modal principal, también la limpiamos
         MostrarAlerta = false;
         MensajeAlerta = "";
     }
-
     void CloseModal()
     {
+        int totalCalculado = CalcularTotalHoras();
+
+        foreach (var grupo in GruposClientes)
+        {
+            var empresa = grupo.Empresas.FirstOrDefault(e => e.IdUsuarioEntidadAgenda == idEmpresaAbierta);
+            if (empresa != null)
+            {
+                empresa.TotalHoras = totalCalculado;
+            }
+        }
+        var clienteInd = ClientesIndividuales.FirstOrDefault(c => c.IdUsuarioEntidadAgenda == idEmpresaAbierta);
+        if (clienteInd != null)
+        {
+            clienteInd.TotalHoras = totalCalculado;
+        }
+
         ShowModal = false;
         ShowSubModal = false;
-        MostrarAlerta = false;
-        MensajeAlerta = "";
-        ActividadSeleccionada = null;
+        StateHasChanged(); 
     }
-
 
     bool MostrarAlerta = false;
     string MensajeAlerta = "";
