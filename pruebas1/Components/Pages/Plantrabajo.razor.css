@@ -32,7 +32,29 @@
 .input-text {
     min-height: 40px;
 }
+.empresa-item {
+    display: flex;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s;
+}
 
+.badge-horas {
+    background-color: #28a745; /* Verde si tiene horas */
+    color: white;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.badge-sin-horas {
+    background-color: #e9ecef;
+    color: #6c757d;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
 .action-button-slender {
     background-color: red !important;
     color: white;
@@ -396,6 +418,73 @@ gap: 1rem;
         font-size: 1.3rem;
         margin-bottom: 0.8rem;
     }
+}
+/* Contenedores para alinear todo en la misma línea */
+.actividad-txt {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+}
+
+.status-container, .info-badges-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Estilo base para Badges y Botón (Unificación de tamaño) */
+.badge-custom, .btn-recorrer-unificado {
+    height: 24px; /* Altura idéntica para todos */
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 12px; /* Estilo redondeado 'pill' */
+    border: none;
+    white-space: nowrap;
+}
+
+/* Colores específicos */
+.badge-date {
+    background-color: #f1f3f5;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.badge-hours {
+    background-color: #e7f5ff;
+    color: #1971c2;
+    border: 1px solid #a5d8ff;
+}
+
+/* Botón de Reprogramar con estilo más moderno */
+.btn-recorrer-unificado {
+    background-color: #343a40;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .btn-recorrer-unificado:hover {
+        background-color: #212529;
+    }
+
+/* Leyenda de vencimiento */
+.leyenda-vencido {
+    color: #e03131;
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.titulo-actividad {
+    flex-shrink: 0;
+    margin-right: 4px;
 }
 
 /* Para pantallas muy pequeñas en altura */
