@@ -2450,7 +2450,6 @@
         {
             Name = "Servicio a Cliente",
             ColorClass = "azul-morado",
-            Icon = "🤝",
             Subtasks = new()
         };
 
@@ -2470,20 +2469,18 @@
 {
     servicioClienteCategory.Subtasks.Add(new SubtaskModel
     {
-        ApiId = sc.IdHorasProgramaTrabajo,
-        Title = $"{sc.NombreEmpresa} – {sc.NombreServicio} – {sc.NombreActividad}",
 
-        Descripcion = $"{sc.NombreServicio} – {sc.NombreEmpresa}",
-        Tipo = "ServicioCliente",
-        FechaInicio = sc.FechaAsignacion.Date,
-        FechaFin = sc.FechaConclusion.Date,
-        IsDone = sc.Completada ?? false,
+                ApiId = sc.IdHorasProgramaTrabajo,
+                Title = $"{sc.NombreEmpresa} – {sc.NombreServicio} – {sc.NombreActividad} - {sc.FechaConclusion}",
+                Tipo = "ServicioCliente",
+                FechaInicio = sc.FechaAsignacion.Date,
+                FechaFin = sc.FechaConclusion.Date,
+                IsDone = sc.Completada ?? false,
                 FechaCompletada = sc.Completada == true
-            ? sc.FechaCompletada
-            : null,
-        Icon = "🤝",
-        Prioridad = 0,
-        Subtasks = new()
+                    ? sc.FechaCompletada
+                    : null,
+                Prioridad = 0,
+                Subtasks = new()
     });
 }
 
@@ -2577,7 +2574,6 @@ MasterCategories.Add(servicioClienteCategory);
             Subtareas = new List<EditableSubtask>()
         };
 
-        // ... (resto del mapeo de participantes)
         return model;
     }
     private void OnUbicacionChanged(ChangeEventArgs e)

@@ -557,11 +557,17 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 .td-bold {
     font-weight: 500;
     color: #1f2937;
+    max-width: 15rem;
 }
 
 .td-services {
-    max-width: 20rem;
+    max-width: 15rem;
 }
+
+.td-cliente {
+    max-width: 15rem;
+}
+
 
 .services-more {
     color: #a855f7;
@@ -912,6 +918,19 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     color: #f5f5f5;
 }
 
+/* INPUT EN MODO OSCURO */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .date-control,
+[data-theme="dark"] input {
+    color: #ffffff !important;
+}
+
+    /* Placeholder en modo oscuro */
+    [data-theme="dark"] .form-control::placeholder,
+    [data-theme="dark"] input::placeholder {
+        color: #bbbbbb !important;
+    }
+
 /* Info actual */
 .modal-content p {
     margin: 0.25rem 0;
@@ -992,3 +1011,50 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     .btn-reassign:hover {
         opacity: 0.4;
     }
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-content {
+    background: white;
+    width: 600px;
+    max-width: 90%;
+    max-height: 80vh; /* 🔥 límite vertical */
+    overflow-y: auto; /* 🔥 scroll interno */
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+
+.actividades-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.swal-top-layer {
+    z-index: 20000 !important;
+}
+
+.dropdown-item {
+    cursor: pointer;
+}
+
+    .dropdown-item:hover {
+        background-color: rgba(255,255,255,0.08);
+    }
+
+.modal-confirm {
+    max-width: 420px;
+    max-height: 300px;
+    overflow: hidden;
+    padding: 24px;
+}
