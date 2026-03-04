@@ -7,6 +7,10 @@
             InitializeComponent();
 
             MainPage = new MainPage();
+            MainPage = new MainPage
+            {
+                Title = "Agenda GM"
+            };
         }
     }
 }

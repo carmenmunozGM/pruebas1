@@ -2,6 +2,9 @@
 using pruebas1.Servicios;
 using System.Globalization;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Maui.Handlers;
+using Microsoft.Web.WebView2.Core;
 namespace pruebas1
 {
     public static class MauiProgram

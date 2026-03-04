@@ -22,7 +22,7 @@
         <Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
         <!-- Display name -->
-        <ApplicationTitle>pruebas1</ApplicationTitle>
+        <ApplicationTitle>Agenda GM</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.pruebas1</ApplicationId>
