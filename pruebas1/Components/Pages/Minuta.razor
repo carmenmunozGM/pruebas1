@@ -64,8 +64,10 @@
                         <thead>
                             <tr>
                                 <th class="col-cliente">Cliente (Clave y Nombre)</th>
+                                <th class="col-servicio">Servicio</th>
                                 <th class="col-actividad">Actividad</th>
                                 <th style="width: 110px;">Periodo</th>
+                                <th class="col-realizado">Realizado en</th>
                                 <th style="width: 110px;">Hrs. Invertidas</th>
                                 <th style="width: 90px;">Acción</th>
                             </tr>
@@ -76,20 +78,41 @@
                                 <tr>
                                     <td class="col-cliente">
                                         <select @bind="fila.ClienteId" class="cell-input select-limitado">
-                                            <option value="0">Seleccionar Empresa...</option>
+                                            <option value="0">Seleccionar empresa</option>
                                             @foreach (var cliente in listaClientes)
                                             {
                                                 <option value="@cliente.Id">@cliente.Clave - @cliente.RazonSocial</option>
                                             }
                                         </select>
                                     </td>
+                                    <td class="col-servicio">
+                                        <select @bind="fila.IdServicio" class="cell-input">
+                                            <option value="0">Seleccionar servicio</option>
+                                            @foreach (var serv in ListaServicios)
+                                            {
+                                                <option value="@serv.IdServicio">@serv.Servicio</option>
+                                            }
+                                        </select>
+                                  
+                                  
+                                    </td>
                                     <td class="col-actividad">
                                         <div class="activity-stack">
                                             <select @bind="fila.IdActividad" class="cell-input">
-                                                <option value="0">Seleccione...</option>
-                                                @foreach (var act in ListadoActividades)
+                                                <option value="0">Seleccionar actividad</option>
+
+                                                @if (fila.IdServicio > 0)
                                                 {
-                                                    <option value="@act.Id">@act.Descripcion</option>
+                                                    var servicioSeleccionado = ListaServicios
+                                                    .FirstOrDefault(s => s.IdServicio == fila.IdServicio);
+
+                                                    if (servicioSeleccionado != null)
+                                                    {
+                                                        foreach (var act in servicioSeleccionado.Actividades)
+                                                        {
+                                                            <option value="@act.IdActividad">@act.Actividad</option>
+                                                        }
+                                                    }
                                                 }
                                             </select>
                                             @if (fila.IdActividad == 99)
@@ -99,6 +122,16 @@
                                         </div>
                                     </td>
                                     <td><input type="text" @bind="fila.Periodo" placeholder="Ej. Ene-Feb" class="cell-input" /></td>
+                                    <td class="col-realizado">
+                                        <select @bind="fila.IdLugar" class="cell-input">
+                                            <option value="0">Seleccionar lugar</option>
+
+                                            @foreach (var lugar in ListaLugares)
+                                            {
+                                                <option value="@lugar.Id">@lugar.Nombre</option>
+                                            }
+                                        </select>
+                                    </td>
                                     <td style="overflow: visible !important; position: relative;">
                                         <div class="timepicker-container">
                                             <TimePickerList @bind-Value="fila.Horas" />
@@ -144,6 +177,273 @@
     </div>
 }
 
+    @code {
+        [Parameter] public EventCallback OnSave { get; set; }
+        private List<ClientesDTO> listaClientes = new();
+        private bool IsVisible = false;
+        private string NombreAsesor = "";
+        private int ClaveAsesor = 0;
+        private DateTime FechaSeleccionada = DateTime.Now;
+        private string Observaciones = "";
+        private List<ActividadMinutaDTO> ListadoActividades = new();
+        private bool MostrarAlerta = false;
+        private string MensajeAlerta = "";
+        private string TipoAlerta = "error"; 
+        private List<ServicioConActividadesDTO> ListaServicios = new();
+        private List<CatalogoLugarDTO> ListaLugares = new();
+
+        public class FilaMinuta
+        {
+            public int ClienteId { get; set; }
+            public int IdServicio { get; set; }
+            public int IdActividad { get; set; }
+            public int IdLugar { get; set; }
+            public string? OtraActividad { get; set; }   
+            public string Periodo { get; set; } = "";
+            public TimeOnly? Horas { get; set; }
+        }
+
+
+        private void OnFechaInicioChanged(DateTime? nuevaFecha)
+        {
+            FechaSeleccionada = nuevaFecha ?? DateTime.Now;
+        }
+        private List<FilaMinuta> FilasMinuta = new();
+
+    private async Task AbrirModal()
+    {
+        var usuario = LoginService.obtenerUsuarioLogueado();
+
+        NombreAsesor = !string.IsNullOrWhiteSpace(usuario.NombreRed)
+            ? usuario.NombreRed
+            : usuario.NombreUsuario;
+
+        ClaveAsesor = usuario.IdEmpleado;
+
+        FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
+
+        try
+        {
+            // =============================
+            // 1️⃣ Cargar clientes
+            // =============================
+            var respClientes = await Http.GetAsync("/api/servicio-cliente/admin/clientes");
+
+            if (respClientes.IsSuccessStatusCode)
+            {
+                listaClientes = await respClientes.Content
+                    .ReadFromJsonAsync<List<ClientesDTO>>() ?? new();
+
+                Debug.WriteLine("Clientes cargados: " + listaClientes.Count);
+            }
+            else
+            {
+                Debug.WriteLine("Error cargando clientes: " + respClientes.StatusCode);
+            }
+
+            // =============================
+            // 2️⃣ Cargar empleado
+            // =============================
+            var respEmpleado = await Http.GetAsync($"/empleado/Obtener/{usuario.IdUsuario}");
+
+            if (!respEmpleado.IsSuccessStatusCode)
+            {
+                Debug.WriteLine("Error obteniendo empleado");
+                return;
+            }
+
+            var empleado = await respEmpleado.Content.ReadFromJsonAsync<EmpleadoDTO>();
+
+            if (empleado == null || string.IsNullOrWhiteSpace(empleado.Area))
+            {
+                Debug.WriteLine("Empleado sin área");
+                return;
+            }
+
+            // =============================
+            // 3️⃣ Cargar servicios por área
+            // =============================
+            Debug.WriteLine(empleado.Area);
+            var respServicios = await Http.GetAsync(
+                $"/api/servicio-cliente/admin/servicios-actividades?area={Uri.EscapeDataString(empleado.Area)}"
+            );
+
+            if (respServicios.IsSuccessStatusCode)
+            {
+                ListaServicios = await respServicios.Content
+                    .ReadFromJsonAsync<List<ServicioConActividadesDTO>>() ?? new();
+
+                Debug.WriteLine("Servicios cargados: " + ListaServicios.Count);
+            }
+            else
+            {
+                Debug.WriteLine("Error cargando servicios: " + respServicios.StatusCode);
+            }
+
+            // =============================
+            // 4️⃣ Cargar catálogo de lugares
+            // =============================
+            var respLugares = await Http.GetAsync("/Minutas/catalogo-lugares");
+
+            if (respLugares.IsSuccessStatusCode)
+            {
+                ListaLugares = await respLugares.Content
+                    .ReadFromJsonAsync<List<CatalogoLugarDTO>>() ?? new();
+
+                Debug.WriteLine("Lugares cargados: " + ListaLugares.Count);
+            }
+            else
+            {
+                Debug.WriteLine("Error cargando lugares: " + respLugares.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("ERROR GENERAL: " + ex.Message);
+        }
+
+        // 🔥 Mostrar modal SOLO cuando todo esté cargado
+        IsVisible = true;
+
+        StateHasChanged();
+    }
+
+
+        private void Cerrar() => IsVisible = false;
+
+        private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
+
+        private void EliminarFila(FilaMinuta fila)
+        {
+            if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
+        }
+
+        private string CalcularTotalHoras()
+        {
+            TimeSpan total = TimeSpan.Zero;
+            foreach (var f in FilasMinuta)
+            {
+                if (f.Horas.HasValue)
+                {
+                    total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
+                }
+            }
+            return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
+        }
+
+        private bool Guardando = false;
+    private string? ErrorGuardar;
+
+    private async Task Guardar()
+    {
+        string mensaje = "";
+
+        // Validar fecha
+        if (FechaSeleccionada == default)
+            mensaje += "• Debe seleccionar la fecha.\n";
+
+        // Validar filas
+        if (FilasMinuta == null || !FilasMinuta.Any())
+            mensaje += "• Debe agregar al menos una actividad.\n";
+        else
+        {
+            foreach (var fila in FilasMinuta)
+            {
+                if (fila.ClienteId <= 0)
+                    mensaje += "• Debe seleccionar el cliente.\n";
+
+                if (fila.IdActividad <= 0)
+                    mensaje += "• Debe seleccionar la actividad.\n";
+
+                if (fila.IdServicio <= 0)
+                    mensaje += "• Debe seleccionar el servicio.\n";
+
+                if (fila.IdLugar <= 0)
+                    mensaje += "• Debe seleccionar el lugar donde se realizó la actividad.\n";
+
+                if (string.IsNullOrWhiteSpace(fila.Periodo))
+                    mensaje += "• Debe capturar el periodo.\n";
+
+                if (!fila.Horas.HasValue)
+                    mensaje += "• Debe capturar las horas invertidas.\n";
+            }
+        }
+
+        // Si hay errores → mostrar alerta tipo SweetAlert
+        if (!string.IsNullOrEmpty(mensaje))
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Campos obligatorios incompletos",
+                text = mensaje
+            });
+            return;
+        }
+
+        // Construir DTO
+        var dto = new
+        {
+            Fecha = FechaSeleccionada,
+            Comentarios = Observaciones,
+            Actividades = FilasMinuta.Select(f => new
+            {
+                ClaveCliente = f.ClienteId,
+                IdActividad = f.IdActividad,
+                IdLugar = f.IdLugar,
+                Periodo = f.Periodo,
+                HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute
+            }).ToList()
+        };
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/Minutas/crear", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = "Minuta guardada con éxito 🎉",
+                    confirmButtonText = "OK"
+                });
+
+                Cerrar();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error al guardar",
+                    text = "Ocurrió un error al intentar guardar la minuta."
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error inesperado",
+                text = ex.Message
+            });
+        }
+    }
+
+
+
+    private void LanzarAlerta(string mensaje, string tipo)
+    {
+        MensajeAlerta = mensaje;
+        TipoAlerta = tipo;
+        MostrarAlerta = true;
+        StateHasChanged();
+    }
+
+    }
+
 <style>
     /* ================= ESTILOS BASE ================= */
     .modal-overlay {
@@ -159,7 +459,7 @@
     .modal-container {
         background: #ffffff;
         width: 90%;
-        max-width: 1000px;
+        max-width: 1500px;
         border-radius: 12px;
         overflow: hidden;
         display: flex;
@@ -238,7 +538,7 @@
 
         .custom-table td {
             padding: 8px;
-           /*  border-bottom: 1px solid #f1f5f9; */
+            /*  border-bottom: 1px solid #f1f5f9; */
         }
 
     .cell-input, select, textarea {
@@ -318,7 +618,7 @@
 
     .timepicker-panel {
         /* Usamos fixed si absolute sigue dando problemas,
-               pero absolute con z-index millonario suele bastar */
+                   pero absolute con z-index millonario suele bastar */
         position: absolute !important;
         top: calc(100% + 5px) !important;
         left: 0 !important;
@@ -644,242 +944,21 @@
         background: rgba(239, 68, 68, 0.2) !important;
         color: #f87171 !important;
     }
+
+    .col-cliente{
+    max-width: 170px;
+    }
+
+    .col-servicio {
+        max-width: 80px;
+    }
+
+    .col-actividad {
+        max-width: 80px;
+    }
+
+    .col-realizado{
+        max-width: 80px;
+    }
+
 </style>
-    @code {
-        [Parameter] public EventCallback OnSave { get; set; }
-        private List<ClientesDTO> listaClientes = new();
-        private bool IsVisible = false;
-
-        private string NombreAsesor = "";
-        private int ClaveAsesor = 0;
-        private DateTime FechaSeleccionada = DateTime.Now;
-        private string Observaciones = "";
-        private List<ActividadMinutaDTO> ListadoActividades = new();
-
-    private bool MostrarAlerta = false;
-    private string MensajeAlerta = "";
-    private string TipoAlerta = "error"; 
-
-        public class FilaMinuta
-        {
-            public int ClienteId { get; set; }
-            public int IdActividad { get; set; }
-            public string? OtraActividad { get; set; }   
-            public string Periodo { get; set; } = "";
-            public TimeOnly? Horas { get; set; }
-        }
-
-
-        private void OnFechaInicioChanged(DateTime? nuevaFecha)
-        {
-            FechaSeleccionada = nuevaFecha ?? DateTime.Now;
-        }
-        private List<FilaMinuta> FilasMinuta = new();
-
-        private async Task AbrirModal()
-        {
-            var usuario = LoginService.obtenerUsuarioLogueado();
-
-            NombreAsesor = !string.IsNullOrWhiteSpace(usuario.NombreRed)
-                ? usuario.NombreRed
-                : usuario.NombreUsuario;
-
-            ClaveAsesor = usuario.IdEmpleado;
-
-            FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
-            IsVisible = true;
-
-            try
-            {
-                // =============================
-                // 1️⃣ Cargar clientes
-                // =============================
-                var respClientes = await Http.GetAsync("/api/servicio-cliente/admin/clientes");
-
-                if (respClientes.IsSuccessStatusCode)
-                {
-                    listaClientes = await respClientes.Content.ReadFromJsonAsync<List<ClientesDTO>>() ?? new();
-                }
-                else
-                {
-                    Debug.WriteLine("Error cargando clientes: " + respClientes.StatusCode);
-                }
-
-                // =============================
-                // 2️⃣ Cargar empleado
-                // =============================
-                var respEmpleado = await Http.GetAsync($"/empleado/Obtener/{usuario.IdUsuario}");
-                Debug.WriteLine("La clave del empleado es " + usuario.IdUsuario);
-                if (!respEmpleado.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine("Error obteniendo empleado: " + usuario.IdUsuario  + respEmpleado.StatusCode);
-                    return;
-                }
-
-            var empleado = await respEmpleado.Content.ReadFromJsonAsync<EmpleadoDTO>();
-
-            if (empleado == null || string.IsNullOrWhiteSpace(empleado.Area))
-            {
-                Debug.WriteLine("Empleado sin área.");
-                return;
-            }
-
-            // =============================
-            // 3️⃣ Cargar actividades por área
-            // =============================
-            var respActividades = await Http.GetAsync(
-                $"/Minutas/catalogo?area={Uri.EscapeDataString(empleado.Area)}"
-            );
-
-            Debug.WriteLine(Uri.EscapeDataString(empleado.Area) + " " + respActividades);
-       
-                if (respActividades.IsSuccessStatusCode)
-                {
-                    ListadoActividades = await respActividades
-                        .Content
-                        .ReadFromJsonAsync<List<ActividadMinutaDTO>>() ?? new();
-
-                    Debug.WriteLine("Cantidad actividades: " + ListadoActividades.Count);
-                }
-
-            else
-            {
-                Debug.WriteLine("Error cargando actividades: " + respActividades.StatusCode);
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine("ERROR GENERAL: " + ex.Message);
-        }
-
-        StateHasChanged();
-    }
-
-
-        private void Cerrar() => IsVisible = false;
-
-        private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
-
-        private void EliminarFila(FilaMinuta fila)
-        {
-            if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
-        }
-
-        private string CalcularTotalHoras()
-        {
-            TimeSpan total = TimeSpan.Zero;
-            foreach (var f in FilasMinuta)
-            {
-                if (f.Horas.HasValue)
-                {
-                    total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
-                }
-            }
-            return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
-        }
-
-        private bool Guardando = false;
-    private string? ErrorGuardar;
-
-    private async Task Guardar()
-    {
-        string mensaje = "";
-
-        // Validar fecha
-        if (FechaSeleccionada == default)
-            mensaje += "• Debe seleccionar la fecha.\n";
-
-        // Validar filas
-        if (FilasMinuta == null || !FilasMinuta.Any())
-            mensaje += "• Debe agregar al menos una actividad.\n";
-        else
-        {
-            foreach (var fila in FilasMinuta)
-            {
-                if (fila.ClienteId <= 0)
-                    mensaje += "• Debe seleccionar el cliente.\n";
-
-                if (fila.IdActividad <= 0)
-                    mensaje += "• Debe seleccionar la actividad.\n";
-
-                if (string.IsNullOrWhiteSpace(fila.Periodo))
-                    mensaje += "• Debe capturar el periodo.\n";
-
-                if (!fila.Horas.HasValue)
-                    mensaje += "• Debe capturar las horas invertidas.\n";
-            }
-        }
-
-        // Si hay errores → mostrar alerta tipo SweetAlert
-        if (!string.IsNullOrEmpty(mensaje))
-        {
-            await JS.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Campos obligatorios incompletos",
-                text = mensaje
-            });
-            return;
-        }
-
-        // Construir DTO
-        var dto = new
-        {
-            Fecha = FechaSeleccionada,
-            Comentarios = Observaciones,
-            Actividades = FilasMinuta.Select(f => new
-            {
-                ClaveCliente = f.ClienteId,
-                IdActividad = f.IdActividad,
-                Periodo = f.Periodo,
-                HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute
-            }).ToList()
-        };
-
-        try
-        {
-            var response = await Http.PostAsJsonAsync("/Minutas/crear", dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                await JS.InvokeVoidAsync("Swal.fire", new
-                {
-                    icon = "success",
-                    title = "Minuta guardada con éxito 🎉",
-                    confirmButtonText = "OK"
-                });
-
-                Cerrar();
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("Swal.fire", new
-                {
-                    icon = "error",
-                    title = "Error al guardar",
-                    text = "Ocurrió un error al intentar guardar la minuta."
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "error",
-                title = "Error inesperado",
-                text = ex.Message
-            });
-        }
-    }
-
-
-
-    private void LanzarAlerta(string mensaje, string tipo)
-    {
-        MensajeAlerta = mensaje;
-        TipoAlerta = tipo;
-        MostrarAlerta = true;
-        StateHasChanged();
-    }
-
-    }
