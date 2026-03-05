@@ -140,7 +140,8 @@
 
                                 <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
 
-                                    <DatePicker Value="FechasEventuales[localIndex]"
+                                    <DatePicker @key="FechasEventuales[localIndex]"
+                                        Value="FechasEventuales[localIndex]"
                                         ValueChanged="@(v => OnFechaEventualChange(localIndex, v))"
                                         CssClass="form-control" />
 
@@ -375,6 +376,7 @@
 
     private Tarea? CurrentTask;
     public List<DateTime> FechasEventuales { get; set; } = new();
+    private List<DateTime> BackupFechasEventuales = new();
 
     private void NoSeleccionarFechasEventual()
     {
@@ -508,23 +510,32 @@
         }
 
         // ---------------------------------------------
-        // 2️⃣ EVENTUAL en mes actual: no permitir fechas pasadas
+        // 2️⃣ EVENTUAL en mes actual: no permitir NUEVAS fechas pasadas
         // ---------------------------------------------
         if (IsEventual &&
-            FechaConsulta.Year == DateTime.Today.Year &&
-            FechaConsulta.Month == DateTime.Today.Month)
+    FechaConsulta.Year == DateTime.Today.Year &&
+    FechaConsulta.Month == DateTime.Today.Month)
         {
             var hoy = DateTime.Today;
 
-            bool hayFechasInvalidas = fechasAValidar.Any(f =>
-                f.HasValue && f.Value.Date < hoy);
+            var fechasEventualesActuales = FechasEventuales
+                .Select(f => f.Date)
+                .ToList();
+
+            var fechasExistentes = CurrentTask?.Registros?
+                .Where(r => r.Fecha.Month == FechaConsulta.Month && r.Fecha.Year == FechaConsulta.Year)
+                .Select(r => r.Fecha.ToDateTime(TimeOnly.MinValue).Date)
+                .ToHashSet() ?? new HashSet<DateTime>();
+
+            bool hayFechasInvalidas = fechasEventualesActuales.Any(f =>
+                f < hoy && !fechasExistentes.Contains(f));
 
             if (hayFechasInvalidas)
             {
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     title = "Fecha no válida",
-                    text = "No puede seleccionar fechas anteriores al día de hoy en el mes en curso.",
+                    text = "No puede agregar fechas pasadas nuevas. Solo mantener o eliminar las ya existentes.",
                     icon = "warning",
                     backdrop = false,
                     customClass = new { container = "swal-ontop" }
@@ -573,8 +584,11 @@
                     .Where(f => f.HasValue)
                     .Select(f => f.Value.ToString("dd/MM/yyyy")));
         else if (IsEventual)
-            CurrentTask.RegistradoProgramado =
-                string.Join("\n", FechasEventuales.Select(f => f.ToString("dd/MM/yyyy")));
+    CurrentTask.RegistradoProgramado =
+        string.Join(", ",
+            FechasEventuales
+                .OrderBy(f => f)
+                .Select(f => f.ToString("dd/MM/yyyy")));
         else if (IsAnnual)
             CurrentTask.RegistradoProgramado =
                 SelectedDate?.ToString("dd/MM/yyyy") ?? "";
@@ -745,11 +759,6 @@
             return;
         }
 
-        // Si es Eventual y ya tiene datos (y no es "Sin fechas"), permitimos que el check se quede
-        // Pero si el usuario hace click de nuevo, normalmente es para editar,
-        // así que quitamos el return para que los modales siempre puedan abrirse si es necesario.
-        // if (tarea.Periodicidad == "Eventual" && !string.IsNullOrWhiteSpace(tarea.RegistradoProgramado) && tarea.RegistradoProgramado != "Sin fechas") return;
-
         ResetModalFlags();
         ModalTitle = tarea.Nombre;
 
@@ -821,30 +830,85 @@
     }
 
     private void ResetModalFlags() { IsWeekly = IsMonthly = IsAnnual = IsEventual = IsQuincenal = false; }
-    private void CloseModal() { if (CurrentTask != null) { CurrentTask.Realizado = BackupRealizado; CurrentTask.RegistradoProgramado = BackupRegistradoProgramado; } ShowModal = false; }
+    
+    private void CloseModal()
+    {
+        if (CurrentTask != null)
+        {
+            bool tieneRegistrosBD = CurrentTask.Registros != null &&
+                CurrentTask.Registros.Any(r =>
+                    r.Fecha.Month == FechaConsulta.Month &&
+                    r.Fecha.Year == FechaConsulta.Year);
+
+            if (IsEventual && tieneRegistrosBD)
+            {
+                // Restaurar solo fechas originales
+                FechasEventuales = BackupFechasEventuales.ToList();
+
+                CurrentTask.RegistradoProgramado =
+                    string.Join("\n", FechasEventuales.Select(f => f.ToString("dd/MM/yyyy")));
+
+                CurrentTask.Realizado = true;
+            }
+            else
+            {
+                // Restauración completa
+                CurrentTask.Realizado = BackupRealizado;
+                CurrentTask.RegistradoProgramado = BackupRegistradoProgramado;
+                FechasEventuales = BackupFechasEventuales.ToList();
+            }
+        }
+
+        ShowModal = false;
+    }
+    
     private void ConfirmarGuardar() => ShowConfirm = true;
     private void AddNuevaFechaEventual() => FechasEventuales.Add(FechaConsulta);
-    private void RemoveFechaEventual(int index) => FechasEventuales.RemoveAt(index);
+    private void RemoveFechaEventual(int index)
+    {
+        if (index >= 0 && index < FechasEventuales.Count)
+            FechasEventuales.RemoveAt(index);
+    }
 
     private void EditarEventual(Tarea tarea)
     {
         CurrentTask = tarea;
         ResetModalFlags();
         IsEventual = true;
-        // PRIORIDAD 1: Si tiene registros reales en el objeto, usarlos (esto viene de la DB)
-        if (tarea.Registros != null && tarea.Registros.Any(r => r.Fecha.Month == FechaConsulta.Month))
-        {
-            FechasEventuales = tarea.Registros
-                .Where(r => r.Fecha.Month == FechaConsulta.Month)
-                .Select(r => r.Fecha.ToDateTime(TimeOnly.MinValue))
-                .ToList();
-        }
-        // PRIORIDAD 2: Si no hay registros (es nuevo), intentar parsear el texto
-        else
+
+        // Si ya fue editado manualmente, confiar solo en lo local
+        if (tarea.EditadoManualmente)
         {
             FechasEventuales = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
         }
-        if (!FechasEventuales.Any()) FechasEventuales.Add(FechaConsulta);
+        else
+        {
+            var fechasBD = new List<DateTime>();
+            var fechasLocal = new List<DateTime>();
+
+            if (tarea.Registros != null)
+            {
+                fechasBD = tarea.Registros
+                    .Where(r => r.Fecha.Month == FechaConsulta.Month &&
+                                r.Fecha.Year == FechaConsulta.Year)
+                    .Select(r => r.Fecha.ToDateTime(TimeOnly.MinValue))
+                    .ToList();
+            }
+
+            fechasLocal = ParseFechasFromRegistradoProgramado(tarea.RegistradoProgramado);
+
+            FechasEventuales = fechasBD
+                .Concat(fechasLocal)
+                .Distinct()
+                .OrderBy(f => f)
+                .ToList();
+        }
+
+        if (!FechasEventuales.Any())
+            FechasEventuales.Add(FechaConsulta);
+
+        BackupFechasEventuales = FechasEventuales.ToList();
+
         ShowModal = true;
     }
 
@@ -852,16 +916,6 @@
 }
 
 <style>
-
-    /* --- INTEGRACIÓN CON EL SISTEMA DE TEMAS (MODO OSCURO) --- */
-
-    /* ESTO ES LO MÁS IMPORTANTE:
-           Forzamos a que TODO el fondo de la página sea oscuro
-/* =================================================
-   SECCIÓN EVALUACIÓN Y MODALES (UNIFICACIÓN)
-   ================================================= */
-
-/* 1. Fondos Base de la Aplicación */
 [data-theme="dark"],
 [data-theme="dark"] body,
 [data-theme="dark"] #app,
@@ -1064,6 +1118,7 @@
     .activities-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
     }
 
         .activities-table th {
@@ -1079,6 +1134,12 @@
             border-top: 1px solid #eee;
             vertical-align: middle;
         }
+
+            .activities-table td:nth-child(3),
+            .activities-table th:nth-child(3) {
+                width: 320px;
+                max-width: 320px;
+            }
 
     .badge {
         padding: 0.3rem 0.6rem;
@@ -1167,15 +1228,16 @@
     }
 
     .fechas-multiline {
-        display: flex;
-        flex-direction: column;
+        display: block;
         overflow-y: auto;
+        overflow-x: hidden;
         max-height: calc(1.4em * 3);
-        padding-right: 4vh;
+        max-width: 100%;
+        word-break: break-word;
     }
 
     .fecha-linea {
-        white-space: nowrap;
+        white-space: normal;
         line-height: 1.4em;
     }
 
