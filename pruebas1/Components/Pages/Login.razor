@@ -148,27 +148,28 @@
     private bool Loading { get; set; } = false;
     private string mensajeError = string.Empty;
 
-/*private async Task Ingresar()
-{
-    Loading = true;
-    mensajeError = string.Empty; // Limpia mensaje anterior
+        /*private async Task Ingresar()
+        {
+            Loading = true;
+            mensajeError = string.Empty; // Limpia mensaje anterior
 
-    var usuariologin = await loginService.login(loginDTO);
+            var usuariologin = await loginService.login(loginDTO);
 
-    if (usuariologin.IdUsuario == 0)
-    {
-        Loading = false;
-        mensajeError = "Usuario o contraseña incorrectos.";
-    }
-    else
-    {
-        Loading = false;
-        loginService.guardarUsuario(usuariologin);
-        navigate.NavigateTo("/dia2");
-    }
-}*/
-    private async Task Ingresar()
+            if (usuariologin.IdUsuario == 0)
+            {
+                Loading = false;
+                mensajeError = "Usuario o contraseña incorrectos.";
+            }
+            else
+            {
+                Loading = false;
+                loginService.guardarUsuario(usuariologin);
+                navigate.NavigateTo("/dia2");
+            }
+        }*/
+        private async Task Ingresar()
 {
+
     Loading = true;
     mensajeError = string.Empty;
 

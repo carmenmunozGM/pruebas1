@@ -46,6 +46,7 @@ namespace pruebas1
             builder.Services.AddScoped<ThemeService>();
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddScoped<InfoPersonalService>();
+            builder.Services.AddScoped<Updater>();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
