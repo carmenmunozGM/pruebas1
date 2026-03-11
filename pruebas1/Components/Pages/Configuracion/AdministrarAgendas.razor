@@ -341,7 +341,6 @@
             await MostrarMensajeTemporal(ok ? "Agenda reasignada exitosamente" : "No se pudo desvincular");
         }
 
-        await Task.Delay(1200);
         RefrescarPagina();
     }
 
@@ -361,7 +360,6 @@
 
         if (ok)
         {
-            await Task.Delay(1200);
             RefrescarPagina();
         }
     }
@@ -375,7 +373,7 @@
         employeeNumber = "";
     }
 
-    private async Task MostrarMensajeTemporal(string texto, int duracionMs = 3000)
+    private async Task MostrarMensajeTemporal(string texto, int duracionMs = 1500)
     {
         message = texto;
         StateHasChanged();
