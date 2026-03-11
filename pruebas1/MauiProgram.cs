@@ -2,6 +2,9 @@
 using pruebas1.Servicios;
 using System.Globalization;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Maui.Handlers;
+using Microsoft.Web.WebView2.Core;
 namespace pruebas1
 {
     public static class MauiProgram
@@ -43,13 +46,14 @@ namespace pruebas1
             builder.Services.AddScoped<ThemeService>();
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddScoped<InfoPersonalService>();
+            builder.Services.AddScoped<Updater>();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
                 return new HttpClient
                 {
-               //BaseAddress = new Uri("https://redgm.site:9096/")
-               BaseAddress = new Uri("http://localhost:5231/")
+               BaseAddress = new Uri("https://redgm.site:9096/")
+               //BaseAddress = new Uri("http://localhost:5231/")
                 };
             });
 

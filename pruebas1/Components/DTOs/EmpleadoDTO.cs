@@ -20,5 +20,6 @@ namespace pruebas1.Components.DTOs
 
         [JsonPropertyName("autoevaluacionPendiente")]
         public int AutoevaluacionesPendientes { get; set; }
+        public int ServicioClientePendiente { get; set; }
     }
 }

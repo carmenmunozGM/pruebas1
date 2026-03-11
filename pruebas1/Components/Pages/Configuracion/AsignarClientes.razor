@@ -279,7 +279,7 @@
                         {
                             <tr>
                                 <td class="td-bold">@item.Empleado</td>
-                                <td>@item.Entidad</td>
+                                <td class="td-cliente">@item.Entidad</td>
                                 <td>
                                     <span class="type-badge type-badge-@item.TipoEntidad.ToLower()">
                                         @item.TipoEntidad
@@ -322,7 +322,7 @@
 
                                     </button>
                                     <button class="btn-reassign"
-                                            @onclick="() => AbrirReasignacion(item)">
+                                            @onclick="() => AbrirModalEditar(item)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background: none; border: none;">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -347,57 +347,95 @@
               
             </div>
         </div>
-        @if (mostrarModalReasignar && asignacionSeleccionada != null)
+        @if (mostrarModalEditar && asignacionSeleccionada != null)
         {
             <div class="modal-overlay">
                 <div class="modal-content">
-                    <h3>Reasignar</h3>
+
+                    <h3>Editar Asignación</h3>
 
                     <p><strong>Empleado actual:</strong> @asignacionSeleccionada.Empleado</p>
                     <p><strong>Entidad:</strong> @asignacionSeleccionada.Entidad</p>
 
-                    <div class="autocomplete-container">
+                    <hr />
 
-                        <input class="form-select"
-                               placeholder="Buscar nuevo empleado..."
-                               @bind="searchReasignar"
-                               @onfocus="MostrarListaEmpleados"
-                               @oninput="FiltrarEmpleadosReasignar" />
+                    <!-- 🔵 CAMBIAR EMPLEADO -->
+                    <h4>Cambiar empleado</h4>
 
-                        @if (mostrarListaReasignar && empleadosFiltradosReasignar.Any())
+                    <input type="text"
+                           class="form-control"
+                           placeholder="Buscar empleado..."
+                           @bind="searchEditar"
+                           @oninput="FiltrarEmpleadosEditar"
+                           @onfocus="MostrarTodosEmpleadosEditar" />
+
+                    @if (mostrarListaEditar && empleadosFiltradosEditar.Any())
+                    {
+                        <div class="dropdown-list">
+                            @foreach (var emp in empleadosFiltradosEditar)
+                            {
+                                <div class="dropdown-item"
+                                     @onclick="() => SeleccionarEmpleadoEditar(emp)">
+                                    <strong>@emp.Nombre</strong> — @emp.ClavePersonal
+                                    <br />
+                                    <small>@emp.Area</small>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (empleadoEditarSeleccionado != null)
+                    {
+                        <p style="margin-top:10px;">
+                            <strong>Nuevo empleado seleccionado:</strong>
+                            @empleadoEditarSeleccionado.Nombre
+                        </p>
+                    }
+
+                    <hr />
+
+                    <!-- 🔵 ACTIVIDADES -->
+                    <h4>Actividades</h4>
+
+                    <div class="actividades-container">
+                        @foreach (var servicio in serviciosEditar)
                         {
-                            <ul class="autocomplete-list">
-                                @foreach (var emp in empleadosFiltradosReasignar)
-                                {
-                                    <li @onclick="() => SeleccionarNuevoEmpleado(emp)">
-                                        <strong>@emp.Nombre</strong> — @emp.ClavePersonal
-                                        <br />
-                                        <small>@emp.Puesto — @emp.Area</small>
-                                    </li>
-                                }
-                            </ul>
-                        }
+                            <div style="margin-bottom:10px;">
+                                <strong>@servicio.Servicio</strong>
 
+                                @foreach (var actividad in servicio.Actividades)
+                                {
+                                    <div>
+                                        <input type="checkbox"
+                                               checked="@selectedActivitiesEditar.Contains(actividad.IdActividad)"
+                                               @onchange="() => ToggleActividad(actividad.IdActividad)" />
+                                        @actividad.Actividad
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
+
                     <div class="form-actions">
                         <button class="btn-save"
-                                disabled="@(nuevoEmpleadoSeleccionado == null)"
-                                @onclick="ConfirmarReasignacion">
-                            Confirmar
+                                @onclick="ConfirmarEditar"
+                                disabled="@editando">
+                            Guardar Cambios
                         </button>
 
                         <button class="btn-cancel"
-                                @onclick="CerrarModalReasignar">
+                                @onclick="CerrarModalEditar">
                             Cancelar
                         </button>
                     </div>
+
                 </div>
             </div>
         }
         @if (mostrarModalEliminar && asignacionEliminar != null)
         {
             <div class="modal-overlay">
-                <div class="modal-content">
+                <div class="modal-content modal-confirm">
                     <h3>Confirmar Eliminación</h3>
 
                     <p>
@@ -457,15 +495,21 @@
     private bool serviciosCargados = false;
     private List<HistorialAsignacionDTO> historialAsignaciones = new();
     private bool cargandoHistorial = false;
-    private bool mostrarModalReasignar = false;
-    private HistorialAsignacionDTO? asignacionSeleccionada;
-    private EmpleadoDTO? nuevoEmpleadoSeleccionado;
-    private string searchReasignar = "";
-    private List<EmpleadoDTO> empleadosFiltradosReasignar = new();
-    private bool mostrarListaReasignar = false;
     private bool mostrarModalEliminar = false;
     private HistorialAsignacionDTO? asignacionEliminar;
     private bool eliminando = false;
+    private bool mostrarModalEditar = false;
+    private HistorialAsignacionDTO? asignacionSeleccionada;
+
+    private EmpleadoDTO? empleadoEditarSeleccionado;
+    private string searchEditar = "";
+    private List<EmpleadoDTO> empleadosFiltradosEditar = new();
+    private bool mostrarListaEditar = false;
+
+    private List<ServicioConActividadesDTO> serviciosEditar = new();
+    private HashSet<int> selectedActivitiesEditar = new();
+
+    private bool editando = false;
 
 
     protected override async Task OnInitializedAsync()
@@ -993,95 +1037,170 @@
         }
     }
 
-
-    private void AbrirReasignacion(HistorialAsignacionDTO item)
+    private void MostrarTodosEmpleadosEditar()
     {
-        asignacionSeleccionada = item;
-        mostrarModalReasignar = true;
-        nuevoEmpleadoSeleccionado = null;
-        searchReasignar = "";
+        empleadosFiltradosEditar = empleados.ToList();
+        mostrarListaEditar = empleadosFiltradosEditar.Any();
     }
-
-    private void CerrarModalReasignar()
-    {
-        mostrarModalReasignar = false;
-        asignacionSeleccionada = null;
-        nuevoEmpleadoSeleccionado = null;
-        empleadosFiltradosReasignar.Clear();
-        searchReasignar = "";
-        mostrarListaReasignar = false;
-    }
-
-
-    private void FiltrarEmpleadosReasignar(ChangeEventArgs e)
-    {
-        searchReasignar = e.Value?.ToString() ?? "";
-
-        empleadosFiltradosReasignar = empleados
-            .Where(x => x.Nombre.Contains(searchReasignar,
-                    StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        mostrarListaReasignar = true;
-    }
-
-   
-    private void SeleccionarNuevoEmpleado(EmpleadoDTO emp)
-    {
-        nuevoEmpleadoSeleccionado = emp;
-        searchReasignar = emp.Nombre;
-        mostrarListaReasignar = false;
-    }
-
     
-
-    private async Task ConfirmarReasignacion()
+    private void FiltrarEmpleadosEditar(ChangeEventArgs e)
     {
-        if (asignacionSeleccionada == null || nuevoEmpleadoSeleccionado == null)
+        searchEditar = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(searchEditar))
+        {
+            empleadosFiltradosEditar = empleados.ToList();
+        }
+        else
+        {
+            empleadosFiltradosEditar = empleados
+                .Where(x =>
+                    x.Nombre.Contains(searchEditar, StringComparison.OrdinalIgnoreCase) ||
+                    x.ClavePersonal.ToString().Contains(searchEditar))
+                .ToList();
+        }
+
+        mostrarListaEditar = empleadosFiltradosEditar.Any();
+    }
+
+    private async Task SeleccionarEmpleadoEditar(EmpleadoDTO emp)
+    {
+        empleadoEditarSeleccionado = emp;
+        searchEditar = emp.Nombre;
+        mostrarListaEditar = false;
+
+        // 🔥 Recargar servicios según nueva área
+        await CargarServiciosPorAreaEditar(emp.Area);
+    }
+
+    private void CerrarModalEditar()
+    {
+        mostrarModalEditar = false;
+        empleadoEditarSeleccionado = null;
+        searchEditar = "";
+        mostrarListaEditar = false;
+    }
+
+    private async Task AbrirModalEditar(HistorialAsignacionDTO asignacion)
+    {
+         Debug.WriteLine("Entro en el metodo editar");
+        asignacionSeleccionada = asignacion;
+
+        // 🔥 Buscar el empleado real en memoria
+        empleadoEditarSeleccionado =
+            empleados.FirstOrDefault(e => e.Id == asignacion.IdEmpleado);
+
+        if (empleadoEditarSeleccionado == null)
             return;
 
-        var usuario = LoginService.obtenerUsuarioLogueado();
+        selectedActivitiesEditar = asignacion.ActividadesIds.ToHashSet();
 
-        if (usuario == null || !usuario.IdAgendasAsignadas.Any())
+        // 🔥 Usar el área del empleado encontrado
+        await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
+
+        mostrarModalEditar = true;
+    }
+
+    private async Task CargarServiciosPorAreaEditar(string area)
+    {
+        serviciosEditar = await Http.GetFromJsonAsync<List<ServicioConActividadesDTO>>(
+            $"/api/servicio-cliente/admin/servicios-actividades?area={Uri.EscapeDataString(area)}"
+        ) ?? new();
+    }
+
+    private async Task ConfirmarEditar()
+    {
+        if (asignacionSeleccionada == null)
             return;
 
-        Debug.WriteLine("🔥 ConfirmarReasignacion ejecutado");
-        Debug.WriteLine($"AsignacionSeleccionada null? {asignacionSeleccionada == null}");
-        Debug.WriteLine($"NuevoEmpleado null? {nuevoEmpleadoSeleccionado == null}");
+        if (empleadoEditarSeleccionado == null)
+            return;
 
-        int idAgenda = usuario.IdAgendasAsignadas.First();
+        if (!selectedActivitiesEditar.Any())
+            return;
 
-        var dto = new ReasignarAsignacionDTO
+        editando = true;
+
+        await Task.Delay(900);
+        mostrarModalEditar = false;
+        await InvokeAsync(StateHasChanged);
+
+        var dto = new EditarAsignacionDTO
         {
             IdUsuarioEntidadAgenda = asignacionSeleccionada.IdUsuarioEntidadAgenda,
-            IdEmpleadoActual = asignacionSeleccionada.IdEmpleado,
-            IdEmpleadoNuevo = nuevoEmpleadoSeleccionado.Id
+            IdEmpleado = empleadoEditarSeleccionado.Id,
+            ActividadesIds = selectedActivitiesEditar.ToList()
         };
 
-        var response = await Http.PatchAsJsonAsync(
-        "/api/servicio-cliente/admin/reasignar",
-        dto
-    );
+        var response = await Http.PutAsJsonAsync(
+            "/api/servicio-cliente/admin/editar-asignacion",
+            dto
+        );
 
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            await JS.InvokeVoidAsync("alertaErrorReasignacion", error);
+
+            if (error == "ASIGNACION_CON_HORAS")
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "No se pudo editar",
+                    text = "La asignación no se puede editar, debido a que el usuario ya programó sus tareas.",
+                    confirmButtonText = "Entendido",
+                    customClass = new
+                    {
+                        popup = "swal-top-layer"
+                    }
+                });
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error",
+                    text = "Ocurrió un error al intentar editar la asignación.",
+                    confirmButtonText = "Entendido",
+                    customClass = new
+                    {
+                        popup = "swal-top-layer"
+                    }
+                });
+            }
+
+            editando = false;
             return;
         }
 
-        await JS.InvokeVoidAsync("alertaReasignacionExitosa");
+        await JS.InvokeVoidAsync("Swal.fire", new
+        {
+            icon = "success",
+            title = "Actualizado",
+            text = "La asignación se actualizó correctamente.",
+            confirmButtonText = "Entendido",
+            customClass = new
+            {
+                popup = "swal-top-layer"
+            }
+        });
 
-
-        CerrarModalReasignar();
         await CargarHistorialAsignaciones();
+
+        editando = false;
     }
 
-    private void MostrarListaEmpleados()
+    private void ToggleActividad(int actividadId)
     {
-        empleadosFiltradosReasignar = empleados.ToList();
-        mostrarListaReasignar = true;
+        if (selectedActivitiesEditar.Contains(actividadId))
+            selectedActivitiesEditar.Remove(actividadId);
+        else
+            selectedActivitiesEditar.Add(actividadId);
     }
+
+
+
 
     private void AbrirModalEliminar(HistorialAsignacionDTO item)
     {

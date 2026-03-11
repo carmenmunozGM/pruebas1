@@ -2467,7 +2467,6 @@
         {
             Name = "Servicio a Cliente",
             ColorClass = "azul-morado",
-            Icon = "🤝",
             Subtasks = new()
         };
 
@@ -2497,11 +2496,10 @@
                 HorasProgramadas = sc.HorasProgramadas,
         IsDone = sc.Completada ?? false,
                 FechaCompletada = sc.Completada == true
-            ? sc.FechaCompletada
-            : null,
-        Icon = "🤝",
-        Prioridad = 0,
-        Subtasks = new()
+                    ? sc.FechaCompletada
+                    : null,
+                Prioridad = 0,
+                Subtasks = new()
     });
 }
 
@@ -2595,7 +2593,6 @@ MasterCategories.Add(servicioClienteCategory);
             Subtareas = new List<EditableSubtask>()
         };
 
-        // ... (resto del mapeo de participantes)
         return model;
     }
     private void OnUbicacionChanged(ChangeEventArgs e)

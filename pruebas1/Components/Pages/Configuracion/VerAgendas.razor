@@ -62,7 +62,7 @@
 
                 <div class="stats-container">
                     <div class="stat-box pending-stat">
-                        <span class="stat-label">Actividades Pendientes</span>
+                        <span class="stat-label">Tareas Pendientes</span>
                         <span class="stat-value @GetPendienteClass(employee.ActividadesPendientes)">
                             @employee.ActividadesPendientes
                         </span>
@@ -72,6 +72,12 @@
                         <span class="stat-label">Autoevaluación Pendiente</span>
                         <span class="stat-value @GetPendienteClass(employee.AutoevaluacionesPendientes)">
                             @employee.AutoevaluacionesPendientes
+                        </span>
+                    </div>
+                    <div class="stat-box cliente-stat">
+                        <span class="stat-label">Actividades Pendientes</span>
+                        <span class="stat-value @GetPendienteClass(employee.ServicioClientePendiente)">
+                            @employee.ServicioClientePendiente
                         </span>
                     </div>
                 </div>
@@ -87,7 +93,6 @@
                 </button>
             </div>
         }
-
     </div>
 
     @if (selectedEmployee != null)
@@ -427,35 +432,92 @@
                     </div>
 
                     <!-- SERVICIO A CLIENTE -->
-                    <div class="block service-block">
-                        <div class="block-header" @onclick="() => ServiceCollapsed = !ServiceCollapsed">
-                            <span class="block-title">
-                                <span>🏢 Servicio a Cliente</span>
-                            </span>
-                            <span class="block-actions">
-                                <span class="items-count">@SCPendiente pendiente(s)</span>
-                                <svg class="chevron @(ServiceCollapsed ? "" : "open")"
-                                     xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                     fill="none" stroke="currentColor" stroke-width="2"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="m9 18 6-6-6-6" />
-                                </svg>
-                            </span>
-                        </div>
-                        @if (!ServiceCollapsed)
-                        {
-                            <div class="block-content block-scroll">
-                                @foreach (var item in ServiciosDelDia)
-                                {
-                                    <div class="service-item @(item.Completada ? "completed" : "")">
-                                        <span class="service-text">
-                                            @item.Texto
-                                        </span>
-                                    </div>
-                                }
+                        <div class="block service-block">
+                            <div class="block-header" @onclick="() => ServiceCollapsed = !ServiceCollapsed">
+                                <span class="block-title">
+                                    <span>🏢 Servicio a Cliente</span>
+                                </span>
+                                <span class="block-actions">
+                                    <span class="items-count">@SCPendiente pendiente(s)</span>
+                                    <svg class="chevron @(ServiceCollapsed ? "" : "open")"
+                                         xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m9 18 6-6-6-6" />
+                                    </svg>
+                                </span>
                             </div>
-                        }
-                    </div>
+
+                            @if (!ServiceCollapsed)
+                            {
+                                <div class="block-content block-scroll">
+
+                                    @foreach (var grupoE in ServiciosDelDia
+                                                            .GroupBy(s => s.Texto.Contains(" - ")
+                                                            ? s.Texto.Split(" - ")[0]
+                                                            : s.Texto))
+                                    {
+                                        var nombreEmpresa = grupoE.Key;
+
+                                        <div class="empresa-seccion">
+                                            <!-- NIVEL 1: EMPRESA -->
+                                            <div class="n-empresa" @onclick="() => AlternarE(nombreEmpresa)">
+                                                <i class="fas @(MenuE.Contains(nombreEmpresa) ? "fa-caret-down" : "fa-caret-right")"></i>
+                                                <span>@nombreEmpresa</span>
+                                            </div>
+
+                                            @if (MenuE.Contains(nombreEmpresa))
+                                            {
+                                                @foreach (var grupoS in grupoE.GroupBy(s =>
+                                                                            s.Texto.Split(" - ").Length > 1
+                                                                            ? s.Texto.Split(" - ")[1]
+                                                                            : "General"))
+                                                {
+                                                    var claveServicio = $"{nombreEmpresa}-{grupoS.Key}";
+
+                                                    <div class="servicio-seccion">
+                                                        <!-- NIVEL 2: SERVICIO -->
+                                                        <div class="n-servicio" @onclick="() => AlternarS(claveServicio)">
+                                                            <i class="fas @(MenuS.Contains(claveServicio) ? "fa-caret-down" : "fa-caret-right")"></i>
+                                                            <span>@grupoS.Key</span>
+                                                        </div>
+
+                                                        @if (MenuS.Contains(claveServicio))
+                                                        {
+                                                            <div class="actividades-contenedor">
+
+                                                                @foreach (var item in grupoS)
+                                                                {
+                                                                    var partes = item.Texto.Split(" - ");
+
+                                                                    <div class="actividad-fila
+                                            @(item.Completada ? "es-completada" : "")
+                                            @(item.Vencida ? "es-vencida" : "")">
+
+                                                                        <span class="actividad-txt">
+                                                                            @(partes.Length > 2 ? partes[2] : item.Texto)
+
+                                                                            @if (item.Vencida)
+                                                                            {
+                                                                                <span class="vencida-label">
+                                                                                    ⚠️ Esta tarea venció el @item.Fecha.ToString("dd/MM/yyyy")
+                                                                                </span>
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                }
+
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    }
+
+                                </div>
+                            }
+                        </div>
                     }
                 </div>
             </div>
@@ -489,7 +551,7 @@
 
                         <section class="vermodal-card">
                             <h4>Descripción</h4>
-                            <p>@ActividadSeleccionada.Descripcion</p>
+                            <p>@ActividadSeleccionada.Descripcion </p>
                         </section>
                         @if (ActividadSeleccionada.EsEvento)
                         {
@@ -923,7 +985,8 @@
             Area = e.Area,
             Puesto = e.Puesto,
             ActividadesPendientes = e.ActividadesPendientes,
-            AutoevaluacionesPendientes = e.AutoevaluacionesPendientes
+            AutoevaluacionesPendientes = e.AutoevaluacionesPendientes,
+            ServicioClientePendiente = e.ServicioClientePendiente
         }).ToList();
     }
 
@@ -940,6 +1003,7 @@
 
         public int ActividadesPendientes { get; set; }
         public int AutoevaluacionesPendientes { get; set; }
+        public int ServicioClientePendiente { get; set; }
     }
 
     private string[] colors = new string[] 
@@ -1298,7 +1362,21 @@
 
     <!-- SERVICIO A CLIENTE -->
     bool ServiceCollapsed = false;
-    
+    HashSet<string> MenuE = new();
+    HashSet<string> MenuS = new();
+
+    void AlternarE(string key)
+    {
+        if (!MenuE.Add(key))
+            MenuE.Remove(key);
+    }
+
+    void AlternarS(string key)
+    {
+        if (!MenuS.Add(key))
+            MenuS.Remove(key);
+    }
+
     public class ServiceItemUI
     {
         public int Id { get; set; }
@@ -1306,6 +1384,7 @@
         public DateOnly FechaAsig { get; set; }
         public DateOnly Fecha { get; set; }
         public bool Completada { get; set; }
+        public bool Vencida { get; set; }
     }
 
     List<ServiceItemUI> ObtenerServiciosDelDia(
@@ -1315,19 +1394,33 @@
         if (servicios == null)
             return new();
 
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+
         return servicios
             .Where(s =>
                 s.FechaConclusion != default &&
                 DateOnly.FromDateTime(s.FechaAsignacion) <= diaSeleccionado &&
-                DateOnly.FromDateTime(s.FechaConclusion) >= diaSeleccionado
+                (
+                    // Activas para el día
+                    DateOnly.FromDateTime(s.FechaConclusion) >= diaSeleccionado
+                    ||
+                    // Vencidas antes de hoy
+                    (DateOnly.FromDateTime(s.FechaConclusion) < hoy && s.Completada != true)
+                )
             )
-            .Select(s => new ServiceItemUI
+            .Select(s =>
             {
-                Id = s.IdHorasProgramaTrabajo,
-                Texto = $"{s.NombreEmpresa} - {s.NombreServicio} - {s.NombreActividad}",
-                FechaAsig = DateOnly.FromDateTime(s.FechaAsignacion),
-                Fecha = DateOnly.FromDateTime(s.FechaConclusion),
-                Completada = s.Completada == true
+                var fechaFin = DateOnly.FromDateTime(s.FechaConclusion);
+
+                return new ServiceItemUI
+                {
+                    Id = s.IdHorasProgramaTrabajo,
+                    Texto = $"{s.NombreEmpresa} - {s.NombreServicio} - {s.NombreActividad}",
+                    FechaAsig = DateOnly.FromDateTime(s.FechaAsignacion),
+                    Fecha = fechaFin,
+                    Completada = s.Completada == true,
+                    Vencida = fechaFin < hoy && s.Completada != true
+                };
             })
             .ToList();
     }
@@ -1338,8 +1431,7 @@
     );
 
     int SCPendiente =>
-    ServiciosDelDia.Count(s =>
-        !s.Completada);
+    ServiciosDelDia.Count(s => !s.Completada);
 
     <!-- DIAS INHABILES -->
     List<DiaNoLaboralDto> DiasNoLaborales = new();
@@ -1438,7 +1530,7 @@
         public bool EsEvento { get; set; }
 
         public string Titulo { get; set; } = "";
-        public string Descripcion { get; set; } = "";
+        public string? Descripcion { get; set; } = "";
 
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
@@ -1459,7 +1551,9 @@
         {
             EsEvento = false,
             Titulo = t.titulo,
-            Descripcion = t.descripcion,
+            Descripcion = string.IsNullOrWhiteSpace(t.descripcion)
+            ? "Sin descripción detallada disponible."
+            : t.descripcion,
             FechaInicio = t.fechaInicio,
             FechaFin = t.fechaFin,
             Prioridad = t.prioridadTitulo,
@@ -1477,7 +1571,9 @@
         {
             EsEvento = true,
             Titulo = e.titulo,
-            Descripcion = e.descripcion,
+            Descripcion = string.IsNullOrWhiteSpace(e.descripcion)
+            ? "Sin descripción detallada disponible."
+            : e.descripcion,
             FechaInicio = e.fechaInicio,
             FechaFin = e.fechaFin,
             Prioridad = ResolverPrioridad(e.idPrioridad),
