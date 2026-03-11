@@ -14,7 +14,6 @@
         <p>Genera y descarga reportes de actividad</p>
     </div>
 
-    <!-- Report Type Selection -->
     <div class="report-type-selector">
         <button class="type-button @(reportType == "autoevaluacion" ? "active" : "")"
                 @onclick='() => reportType = "autoevaluacion"'>
@@ -35,22 +34,35 @@
             </svg>
             <span>Clientes Asignados</span>
         </button>
+
+
+        <button class="type-button @(reportType == "especiales" ? "active" : "")"
+                @onclick='() => reportType = "especiales"'>
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#10B981" stroke-width="2" stroke-linejoin="round" />
+                <path d="M14 2V8H20" stroke="#10B981" stroke-width="2" stroke-linejoin="round" />
+                <path d="M8 13L9 14L12 11" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M8 17H16" stroke="#10B981" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>Reportes Especiales</span>
+        </button>
     </div>
 
-    <!-- Search Section -->
     <div class="search-section">
-        <div class="search-bar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input type="text"
-                   @bind="searchName"
-                   @bind:event="oninput"
-                   placeholder="Buscar por nombre..." />
-        </div>
+        @if (reportType != "especiales")
+        {
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text"
+                       @bind="searchName"
+                       @bind:event="oninput"
+                       placeholder="Buscar por nombre..." />
+            </div>
+        }
 
-        <!-- SELECT MES - AÑO (NUEVO) -->
         <select class="area-filter" @bind="selectedMonth">
             @foreach (var m in monthOptions)
             {
@@ -58,7 +70,8 @@
             }
         </select>
 
-        @if (puedeVerFiltroArea){
+        @if (puedeVerFiltroArea)
+        {
             <select class="area-filter" @bind="selectedArea">
                 <option value="">Todas las áreas</option>
                 @foreach (var area in areaList)
@@ -69,53 +82,87 @@
         }
     </div>
 
-    <!-- Report Content -->
     <div class="reportes-table-container">
         <table class="reportes-table">
             <thead>
                 <tr>
-                    <th>Usuario</th>
-                    <th>Área</th>
-@*                     <th>@GetReportColumnName()</th> *@
-                    <th class="text-right">Descargar</th>
+                    <th>@(reportType == "especiales" ? "Tipo de reporte" : "Usuario")</th>
+                    <th>@(reportType == "especiales" ? "Acción" : "Área")</th>
+                    <th class="text-right">Descargas Excel </th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var user in filteredUsers)
+                @if (reportType == "especiales")
                 {
-                    <tr>
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar">
-                                    @GetInitials(user.NetName)
-                                </div>
-                                <span class="user-name">@user.Name</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="area-badge">@user.Area</span>
-                        </td>
-                   @*      <td>
-                            <span class="activity-badge">@GetReportValue(user)</span>
-                        </td> *@
-                        <td class="text-right">
-                            <button class="download-button" @onclick="() => HandleDownload(user)">
+                    @foreach (var rep in new[] { "Reporte por actividad", "Reporte registro de actividades", "Reporte horas programadas" })
+                    {
+                        <tr>
+                            <td style="vertical-align: middle;"><strong>@rep</strong></td>
+                            <td style="vertical-align: middle; padding-left: 20px;">
+                                @if (rep == "Reporte por actividad")
+                                {
+                                    <div style="display: flex; flex-direction: column; gap: 8px; width: fit-content;">
+                                        <select class="area-filter" style="width: 280px; margin: 0; padding: 6px 10px; font-size: 0.9rem;"
+                                                @onchange="OnServicioChanged">
+                                            <option value="">-- Seleccione un Servicio --</option>
+                                            @foreach (var serv in serviciosEjemplo)
+                                            {
+                                                <option value="@serv">@serv</option>
+                                            }
+                                        </select>
 
-                                <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                                <span>Descargar Excel</span>
-                                <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
+                                        @if (!string.IsNullOrEmpty(servicioSeleccionado))
+                                        {
+                                            <select class="area-filter" style="width: 280px; margin: 0; padding: 6px 10px; font-size: 0.9rem;">
+                                                <option value="">-- Seleccione una Actividad --</option>
+                                                @foreach (var act in actividadesFiltradas)
+                                                {
+                                                    <option value="@act">@act</option>
+                                                }
+                                            </select>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-right" style="vertical-align: middle;">
+                                <button class="download-button" >
+                                    <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span>Descargar Excel</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    @foreach (var user in filteredUsers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar">@GetInitials(user.NetName)</div>
+                                    <span class="user-name">@user.Name</span>
+                                </div>
+                            </td>
+                            <td><span class="area-badge">@user.Area</span></td>
+                            <td class="text-right">
+                                <button class="download-button" @onclick="() => HandleDownload(user)">
+                                    <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span>Descargar Excel</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -173,7 +220,23 @@
             puedeVerFiltroArea = false;
         }
     }
+    private string servicioSeleccionado = "";
+    private List<string> serviciosEjemplo = new() { "Soporte Técnico", "Desarrollo Software", "aNALISIS INFROMARTICOS DE SEGURIDAD" };
+    private List<string> actividadesFiltradas = new();
 
+    private void OnServicioChanged(ChangeEventArgs e)
+    {
+        servicioSeleccionado = e.Value?.ToString() ?? "";
+
+        // Ejemplos de actividades según el servicio
+        actividadesFiltradas = servicioSeleccionado switch
+        {
+            "Soporte Técnico" => new() { "Revisión de PC", "Instalación de Software", "Configuración de Red" },
+            "Desarrollo Software" => new() { "Corrección de Bugs", "Nueva Funcionalidad", "Code Review" },
+            "Mantenimiento" => new() { "Limpieza de Servidores", "Backup Semanal", "Cambio de Hardware" },
+            _ => new()
+        };
+    }
     private void GenerarMeses()
     {
         var cultura = new System.Globalization.CultureInfo("es-MX");
@@ -245,8 +308,9 @@
 
     private string GetInitials(string name)
     {
+        if (string.IsNullOrEmpty(name)) return "";
         var parts = name.Split(' ');
-        return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
+        return string.Join("", parts.Where(p => !string.IsNullOrEmpty(p)).Select(p => p.Substring(0, 1).ToUpper()));
     }
 
     private string GetReportColumnName()
@@ -275,20 +339,19 @@
     {
         try
         {
-            // 1️⃣ Extraer año y mes desde "yyyy-MM"
             var partes = selectedMonth.Split('-');
             int anio = int.Parse(partes[0]);
             int mes = int.Parse(partes[1]);
-
+            string areaParaReporte = string.IsNullOrEmpty(selectedArea) ? "TODAS" : selectedArea;
             string url;
             string filePrefix;
 
-            // 2️⃣ Elegir endpoint según tipo de reporte
             if (reportType == "autoevaluacion")
             {
                 url = $"api/Reportes/Autoevaluacion/{user.Id}/{anio}/{mes}";
                 filePrefix = "autoevaluación";
             }
+
             else if (reportType == "clientes")
             {
                 url = $"api/Reportes/ClientesAsignados/{user.Id}/{anio}/{mes}";
@@ -299,18 +362,15 @@
                 await ShowMessage("Tipo de reporte no soportado");
                 return;
             }
-
-            // 3️⃣ Llamada HTTP
+            
             var response = await Http.GetAsync(url);
 
-            // 🚫 NO CONTENT → no descargar
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
                 await ShowMessage($"Este usuario no cuenta con reportes de {filePrefix}");
                 return;
             }
 
-            // ❌ cualquier otro error
             if (!response.IsSuccessStatusCode)
             {
                 await ShowMessage($"Este usuario no cuenta con reportes de {filePrefix}");
@@ -318,12 +378,8 @@
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
+            var fileName = $"{filePrefix}_{user.Name}_{anio}_{mes}.xlsx".Replace(" ", "_");
 
-            // 4️⃣ Nombre de archivo
-            var fileName = $"{filePrefix}_{user.Name}_{anio}_{mes}.xlsx"
-                .Replace(" ", "_");
-
-            // 5️⃣ Descargar archivo usando JS
             await JS.InvokeVoidAsync(
                 "downloadFile",
                 fileName,
@@ -339,9 +395,15 @@
             Console.WriteLine(ex);
         }
     }
+    
 
+    private string ObtenerAreaUsuario()
+    {
+        var usuario = employees.FirstOrDefault(e =>
+            e.NetName.Equals(Environment.UserName, StringComparison.OrdinalIgnoreCase));
 
-
+        return usuario?.Area ?? "";
+    }
     private List<UserInfo> filteredUsers
     {
         get
