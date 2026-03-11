@@ -892,6 +892,62 @@
     opacity: 0.85;
 }
 
+.info-fecha-horas {
+    display: flex;
+    gap: 10px;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.info-fecha-horas {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* estilo general del pill */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+    /* iconos */
+    .pill svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
+/* fecha */
+.pill-fecha {
+    background: #f3f4f6;
+    color: #444;
+    border: 1px solid #d1d5db;
+}
+
+/* horas */
+.pill-horas {
+    background: #e6f3f5;
+    color: #2f7c86;
+    border: 1px solid #b7d9df;
+}
+
+
 /* VER TAREAS Y EVENTOS */
 .vermodal-backdrop {
     position: fixed;
@@ -2171,3 +2227,15 @@
     [data-theme="dark"] .block.service-block .vencida-label {
         color: #f87171 !important;
     }
+
+[data-theme="dark"] .pill-fecha {
+    background-color: rgba(139, 92, 246, 0.20); /* violeta suave */
+    color: #c4b5fd; /* violeta claro */
+    border: 1px solid #8b5cf6;
+}
+
+[data-theme="dark"] .pill-horas {
+    background-color: rgba(56, 189, 248, 0.18); /* azul cielo translúcido */
+    color: #7dd3fc;
+    border: 1px solid #38bdf8;
+}

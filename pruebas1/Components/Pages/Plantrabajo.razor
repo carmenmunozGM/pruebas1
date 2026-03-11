@@ -630,7 +630,6 @@ void MostrarAlertaSinFecha()
                     Motivo = h.Motivo
                 }).ToList();
 
-                ActividadSeleccionada.Fecha = fechaNeutral;
                 ActividadSeleccionada.FechaOriginalDesdeDB = true;
 
                 // 🔥 ALERTA SWAL DE ÉXITO
@@ -688,6 +687,7 @@ void MostrarAlertaSinFecha()
     await ServicioClienteService.GuardarFechaYMinutaAsync(
         new HorasProgramaTrabajoUpsertDTO
         {
+            // IdHorasProgramaTrabajo = actividad.IdHorasProgramaTrabajo,
             IdAsignacion = actividad.IdCheckListAsignacion,
             Fecha = actividad.Fecha.Value,
                 HorasProgramadas = actividad.HorasProgramadas
@@ -714,6 +714,8 @@ private async Task GuardarCambiosActividad(Actividad actividad)
         // Así permitimos guardar registros históricos si el usuario solo cambió la Minuta u Observaciones.
 
         await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO {
+            
+                // IdHorasProgramaTrabajo = actividad.IdHorasProgramaTrabajo,
             IdAsignacion = actividad.IdCheckListAsignacion,
             Fecha = actividad.Fecha.Value,
             HorasProgramadas = actividad.HorasProgramadas
@@ -791,6 +793,7 @@ private async Task GuardarCambiosActividad(Actividad actividad)
                     {
                         await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
                         {
+                            // IdHorasProgramaTrabajo = actividad.IdHorasProgramaTrabajo,
                             IdAsignacion = actividad.IdCheckListAsignacion,
                             Fecha = actividad.Fecha.Value,
                             HorasProgramadas = actividad.HorasProgramadas
@@ -850,6 +853,7 @@ private async Task GuardarCambiosActividad(Actividad actividad)
             {
                 await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
                 {
+                    // IdHorasProgramaTrabajo = actividad.IdHorasProgramaTrabajo,
                     IdAsignacion = actividad.IdCheckListAsignacion,
                     Fecha = actividad.Fecha.Value,
                     HorasProgramadas = actividad.HorasProgramadas
