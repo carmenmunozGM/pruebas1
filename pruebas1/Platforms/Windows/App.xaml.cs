@@ -1,27 +1,28 @@
 ﻿using Microsoft.UI.Xaml;
+using pruebas1.Servicios;
 using Velopack;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace pruebas1.WinUI
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : MauiWinUIApplication
     {
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
             VelopackApp.Build().Run();
             this.InitializeComponent();
         }
 
-        protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
-    }
+        protected override MauiApp CreateMauiApp()
+        {
+            var app = MauiProgram.CreateMauiApp();
 
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(5000); // deja que la app arranque
+                await Updater.CheckForUpdates();
+            });
+
+            return app;
+        }
+    }
 }
