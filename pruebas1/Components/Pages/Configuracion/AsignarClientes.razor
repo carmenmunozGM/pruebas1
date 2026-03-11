@@ -275,7 +275,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in historialAsignaciones)
+                        @foreach (var item in historialAsignaciones.Skip((paginaActual - 1) * registrosPorPagina).Take(registrosPorPagina))
+                        
                         {
                             <tr>
                                 <td class="td-bold">@item.Empleado</td>
@@ -343,10 +344,28 @@
                             </tr>
                         }
                     </tbody>
+                 
                 </table>
               
             </div>
+          
         </div>
+        <div class="pagination-container">
+            <button class="btn-pagination"
+                    disabled="@(paginaActual == 1)"
+                    @onclick="() => CambiarPagina(paginaActual - 1)">
+                Anterior
+            </button>
+
+            <span class="pagination-info">Página <strong>@paginaActual</strong> de @TotalPaginas</span>
+
+            <button class="btn-pagination"
+                    disabled="@(paginaActual == TotalPaginas)"
+                    @onclick="() => CambiarPagina(paginaActual + 1)">
+                Siguiente
+            </button>
+        </div>
+       
         @if (mostrarModalEditar && asignacionSeleccionada != null)
         {
             <div class="modal-overlay">
@@ -1296,5 +1315,13 @@
         {
             copiando = false;
         }
+    }
+    private int paginaActual = 1;
+    private int registrosPorPagina = 10;
+    private int TotalPaginas => (int)Math.Ceiling((double)historialAsignaciones.Count / registrosPorPagina);
+
+    private void CambiarPagina(int nuevaPagina)
+    {
+        paginaActual = nuevaPagina;
     }
 }

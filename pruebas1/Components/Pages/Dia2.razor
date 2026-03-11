@@ -678,6 +678,7 @@
     @foreach (var cat in Categories.Where(c => c.Name.Trim() == "Servicio a Cliente"))
     {
                 <div class="card block-card @cat.ColorClass">
+
                     @* Header de la categoría *@
                     <div class="block-header" @onclick="() => ToggleCollapse(cat)">
                         <div class="header-left">
@@ -691,7 +692,8 @@
 
                     @if (!cat.IsCollapsed)
                     {
-                        <div class="card-body block-body block-scroll p-0">
+
+                        <div class="card-body block-body block-scroll">
                             @foreach (var grupoE in cat.Subtasks.GroupBy(s => s.Title.Contains(" – ") ? s.Title.Split(" – ")[0] : s.Title))
                             {
                                 var nE = grupoE.Key;

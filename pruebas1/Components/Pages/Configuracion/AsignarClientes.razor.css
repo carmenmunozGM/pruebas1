@@ -692,7 +692,87 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
         .dark-mode .autocomplete-list li:hover {
             background-color: rgba(168, 85, 247, 0.2);
         }
+/* ================================================= */
+/* PAGINACIÓN UNIFICADA Y CENTRADA */
+/* ================================================= */
 
+/* Faltaba el "." al inicio de pagination-container */
+.pagination-container {
+    display: flex !important;
+    justify-content: center !important; /* Centra horizontalmente */
+    align-items: center !important; /* Centra verticalmente */
+    gap: 1.5rem; /* Espacio uniforme entre elementos */
+    padding: 1.5rem;
+    width: 100%; /* Crucial para que el centro sea el real */
+    background-color: #ffffff;
+    border-radius: 0 0 1rem 1rem;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Modo Oscuro Unificado */
+.dark-mode .pagination-container,
+[data-theme="dark"] .pagination-container {
+    background-color: transparent !important;
+    border-top: 1px solid #334155;
+    justify-content: center !important;
+}
+
+.pagination-info {
+    color: #4b5563;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.dark-mode .pagination-info,
+[data-theme="dark"] .pagination-info {
+    color: #f5f5f5 !important;
+}
+
+.pagination-info strong {
+    color: #663E94; /* Tu morado característico */
+}
+
+/* Botones de paginación */
+.btn-pagination {
+    min-width: 100px;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+/* Botones en Modo Oscuro */
+.dark-mode .btn-pagination,
+[data-theme="dark"] .btn-pagination {
+    background-color: #663E94 !important;
+    color: #ffffff !important;
+    border: 1px solid #7c3aed !important;
+}
+
+    .dark-mode .btn-pagination:hover:not(:disabled),
+    [data-theme="dark"] .btn-pagination:hover:not(:disabled) {
+        background-color: #7c3aed !important;
+        box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+    }
+
+.btn-pagination:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #e5e7eb;
+}
+
+.dark-mode .btn-pagination:disabled,
+[data-theme="dark"] .btn-pagination:disabled {
+    background-color: rgba(102, 62, 148, 0.2) !important;
+    border-color: #4b5563 !important;
+    color: #9ca3af !important;
+}
 /* ================================================= */
 /* RESPONSIVE */
 /* ================================================= */
