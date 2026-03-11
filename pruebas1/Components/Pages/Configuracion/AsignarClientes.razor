@@ -1139,7 +1139,9 @@
 
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = (await response.Content.ReadAsStringAsync())
+                            .Replace("\"", "")
+                            .Trim();
 
             if (error == "ASIGNACION_CON_HORAS")
             {
@@ -1160,13 +1162,8 @@
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
-                    title = "Error",
-                    text = "Ocurrió un error al intentar editar la asignación.",
-                    confirmButtonText = "Entendido",
-                    customClass = new
-                    {
-                        popup = "swal-top-layer"
-                    }
+                    title = "Error real",
+                    text = error
                 });
             }
 
