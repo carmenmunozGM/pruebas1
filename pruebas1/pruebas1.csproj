@@ -12,10 +12,10 @@
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
-		<!-- Velopack versioning (MUY IMPORTANTE) -->
-		<Version>1.0.9</Version>
-		<AssemblyVersion>1.0.9</AssemblyVersion>
-		<FileVersion>1.0.9</FileVersion>
+		<!-- Velopack versioning -->
+		<Version>1.1.0</Version>
+		<AssemblyVersion>1.1.0</AssemblyVersion>
+		<FileVersion>1.1.0</FileVersion>
 
 		<!-- Display name -->
 		<ApplicationTitle>Agenda GM</ApplicationTitle>
