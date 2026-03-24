@@ -47,6 +47,7 @@ namespace pruebas1
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddScoped<InfoPersonalService>();
             builder.Services.AddScoped<Updater>();
+            builder.Services.AddScoped<StartupService>();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
@@ -62,7 +63,15 @@ namespace pruebas1
             builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var startup = scope.ServiceProvider.GetRequiredService<StartupService>();
+                startup.RegisterStartup();
+            }
+
+            return app;
         }
     }
 }
