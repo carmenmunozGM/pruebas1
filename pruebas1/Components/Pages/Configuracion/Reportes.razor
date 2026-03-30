@@ -95,7 +95,7 @@
                 <tr>
                     <th>@(reportType == "especiales" ? "Tipo de reporte" : "Usuario")</th>
                     <th>@(reportType == "especiales" ? "Acción" : "Área")</th>
-                    <th class="text-right">Descargas Excel </th>
+                    <th class="text-right">Descargar en formato</th>
                 </tr>
             </thead>
             <tbody>
@@ -136,27 +136,82 @@
                                 }
                             </td>
                             <td class="text-right" style="vertical-align: middle;">
-                                @if (rep == "Reporte por actividad")
-                                {
-                                    <button class="download-button"
-                                            @onclick="HandleDownloadActividad">
-                                        <span>Descargar Excel</span>
-                                    </button>
-                                }
-                                else if (rep == "Reporte registro de actividades")
-                                {
-                                    <button class="download-button"
-                                            @onclick="HandleDownloadRegistroActividades">
-                                        <span>Descargar Excel</span>
-                                    </button> 
-                                }
-                                else if (rep == "Reporte horas programadas")
-                                {
-                                     <button class="download-button"
-                                            @onclick="HandleDownloadHorasProgramadas">
-                                        <span>Descargar Excel</span>
-                                    </button>
-                                }
+                                <div style="display:flex; gap:8px; justify-content:flex-end;">
+
+                                    @if (rep == "Reporte por actividad")
+                                    {
+                                        <!-- ESTILO -->
+                                        <button class="download-button"
+                                                @onclick='() => HandleDownloadActividad("visual")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                            <span>Con estilos</span>
+                                        </button>
+
+                                        <!-- PLANO -->
+                                        <button class="download-button plano-button"
+                                                @onclick='() => HandleDownloadActividad("plano")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                            </svg>
+                                            <span>Plano</span>
+                                        </button>
+                                    }
+                                    else if (rep == "Reporte registro de actividades")
+                                    {
+                                        <!-- ESTILO -->
+                                        <button class="download-button"
+                                                @onclick='() => HandleDownloadRegistroActividades("visual")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                            <span>Con estilos</span>
+                                        </button>
+
+                                        <!-- PLANO -->
+                                        <button class="download-button plano-button"
+                                                @onclick='() => HandleDownloadRegistroActividades("plano")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                            </svg>
+                                            <span>Plano</span>
+                                        </button>
+                                    }
+                                    else if (rep == "Reporte horas programadas")
+                                    {
+                                        <!-- ESTILO -->
+                                        <button class="download-button"
+                                                @onclick='() => HandleDownloadHorasProgramadas("visual")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                            <span>Con estilos</span>
+                                        </button>
+
+                                        <!-- PLANO -->
+                                        <button class="download-button plano-button"
+                                                @onclick='() => HandleDownloadHorasProgramadas("plano")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                            </svg>
+                                            <span>Plano</span>
+                                        </button>
+                                    }
+
+                                </div>
                             </td>
                         </tr>
                     }
@@ -174,15 +229,50 @@
                             </td>
                             <td><span class="area-badge">@user.Area</span></td>
                             <td class="text-right">
-                                <button class="download-button" @onclick="() => HandleDownload(user)">
-                                    <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    </svg>
-                                    <span>Descargar Excel</span>
-                                </button>
+
+                                @if (reportType == "clientes")
+                                {
+                                    <div style="display:flex; gap:8px; justify-content:flex-end;">
+
+                                        <!-- FORMATO ESTILO -->
+                                        <button class="download-button"
+                                                @onclick='() => HandleDownload(user, "visual")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                            <span>Con estilos</span>
+                                        </button>
+
+                                        <!-- FORMATO PLANO -->
+                                        <button class="download-button plano-button"
+                                                @onclick='() => HandleDownload(user, "plano")'>
+                                            <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                            </svg>
+                                            <span>Plano</span>
+                                        </button>
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- AUTOEVALUACION -->
+                                    <button class="download-button"
+                                            @onclick='() => HandleDownload(user, "visual")'>
+                                        <svg class="excel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                        <span>Autoevaluación</span>
+                                    </button>
+                                }
+
                             </td>
                         </tr>
                     }
@@ -276,7 +366,7 @@
         actividadSeleccionadaId = null;
     }
 
-    private async Task HandleDownloadActividad()
+    private async Task HandleDownloadActividad(string formato)
     {
         try
         {
@@ -290,7 +380,7 @@
             int anio = int.Parse(partes[0]);
             int mes = int.Parse(partes[1]);
 
-            var url = $"api/Reportes/ReporteActividad/{actividadSeleccionadaId}/{anio}/{mes}";
+            var url = $"api/Reportes/ReporteActividad/{actividadSeleccionadaId}/{anio}/{mes}?formato={formato}";
 
             var response = await Http.GetAsync(url);
 
@@ -311,8 +401,10 @@
             var nombreActividad = actividadesFiltradas
                 .FirstOrDefault(a => a.IdActividad == actividadSeleccionadaId)?.Actividad ?? "actividad";
 
-            var fileName = $"ReporteActividad_{nombreActividad}_{mes}_{anio}.xlsx"
+            var fallback = $"ReporteActividad_{nombreActividad}_{mes}_{anio}.xlsx"
                 .Replace(" ", "_");
+
+            var fileName = ObtenerNombreArchivo(response, fallback);
 
             await JS.InvokeVoidAsync(
                 "downloadFile",
@@ -330,7 +422,7 @@
         }
     }
 
-    private async Task HandleDownloadRegistroActividades()
+    private async Task HandleDownloadRegistroActividades(string formato)
     {
         try
         {
@@ -342,7 +434,7 @@
                 ? ObtenerAreaUsuario()
                 : selectedArea;
 
-            var url = $"/api/Reportes/MinutasArea/{anio}/{mes}?area={Uri.EscapeDataString(area)}";
+            var url = $"/api/Reportes/MinutasArea/{anio}/{mes}?area={Uri.EscapeDataString(area)}&formato={formato}";
 
             var response = await Http.GetAsync(url);
 
@@ -360,8 +452,10 @@
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
 
-            var fileName = $"REPORTE_REGISTRO_ACTIVIDADES_{area}_{mes}_{anio}.xlsx"
+            var fallback = $"REPORTE_REGISTRO_ACTIVIDADES_{area}_{mes}_{anio}.xlsx"
                 .Replace(" ", "_");
+
+            var fileName = ObtenerNombreArchivo(response, fallback);
 
             await JS.InvokeVoidAsync(
                 "downloadFile",
@@ -379,7 +473,7 @@
         }
     }
 
-    private async Task HandleDownloadHorasProgramadas()
+    private async Task HandleDownloadHorasProgramadas(string formato)
     {
         try
         {
@@ -391,7 +485,7 @@
                 ? ObtenerAreaUsuario()
                 : selectedArea;
 
-            var url = $"api/Reportes/HorasProgramadas/{anio}/{mes}?area={Uri.EscapeDataString(area)}";
+            var url = $"api/Reportes/HorasProgramadas/{anio}/{mes}?area={Uri.EscapeDataString(area)}&formato={formato}";
 
             var response = await Http.GetAsync(url);
 
@@ -409,8 +503,10 @@
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
 
-            var fileName = $"REPORTE_HORAS_PROGRAMADAS_{area}_{mes}_{anio}.xlsx"
+            var fallback = $"REPORTE_HORAS_PROGRAMADAS_{area}_{mes}_{anio}.xlsx"
                 .Replace(" ", "_");
+
+            var fileName = ObtenerNombreArchivo(response, fallback);
 
             await JS.InvokeVoidAsync(
                 "downloadFile",
@@ -426,6 +522,21 @@
             Console.WriteLine(ex);
             await ShowMessage("Error al descargar el reporte");
         }
+    }
+
+    private string ObtenerNombreArchivo(HttpResponseMessage response, string fallback)
+    {
+        var contentDisposition = response.Content.Headers.ContentDisposition;
+
+        if (contentDisposition != null)
+        {
+            var fileName = contentDisposition.FileNameStar ?? contentDisposition.FileName;
+
+            if (!string.IsNullOrEmpty(fileName))
+                return fileName.Trim('"');
+        }
+
+        return fallback;
     }
 
     protected override async Task OnInitializedAsync()
@@ -555,7 +666,7 @@
         StateHasChanged();
     }
 
-    private async Task HandleDownload(UserInfo user)
+    private async Task HandleDownload(UserInfo user, string formato)
     {
         try
         {
@@ -574,8 +685,8 @@
 
             else if (reportType == "clientes")
             {
-                url = $"api/Reportes/ClientesAsignados/{user.Id}/{anio}/{mes}";
-                filePrefix = "CLIENTES";
+                url = $"api/Reportes/ClientesAsignados/{user.Id}/{anio}/{mes}?formato={formato}";
+                filePrefix = formato == "plano" ? "CLIENTES_PLANO" : "CLIENTES_ESTILO";
             }
             else
             {

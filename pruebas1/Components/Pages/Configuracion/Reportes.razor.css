@@ -482,3 +482,13 @@
 [data-theme="dark"] .toast-content p {
     color: #a7f3d0 !important; /* Texto secundario más legible */
 }
+
+.plano-button {
+    background-color: #c33131;
+    color: white;
+    border: none;
+}
+
+    .plano-button:hover {
+        background-color: #b02a37;
+    }
