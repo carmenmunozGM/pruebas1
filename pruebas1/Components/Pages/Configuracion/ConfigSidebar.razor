@@ -69,7 +69,7 @@
             </button>
             }
 
-            @if (Admin || superAdmin)
+            @if (Admin || superAdmin || gestor)
             {
                 <button class="nav-item @(CurrentSection == "reportes" ? "active" : "")" 
                 @onclick='() => OnSectionChange.InvokeAsync("reportes")'>
@@ -124,6 +124,7 @@
     PermisosDTO? permisos;
     bool Admin = false;
     bool superAdmin = false;
+    bool gestor = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -155,6 +156,21 @@
         catch
         {
             superAdmin = false;
+        }
+
+        try
+        {
+            permisos = await PerfilesService.GetPermisos();
+
+            if (permisos != null)
+            {
+                gestor =
+                    permisos.PerfilId == 4;
+            }
+        }
+        catch
+        {
+            gestor = false;
         }
     }
 }

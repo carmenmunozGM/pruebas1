@@ -227,8 +227,8 @@
                         @if (!TasksCollapsed)
                         {
                             <div class="tasks-section block-scroll">
-                                @foreach (var task in TareasAgenda
-                                                        .Where(t => GetFechaVisualizacion(t) == SelectedDate.Date))
+                                    @foreach (var task in TareasAgenda
+                                                            .Where(t => EsVisibleEnDia(t, SelectedDate.Date)))
                                 {
                                     <div class="task-item @(task.completada ? "completed" : "")">
                                         <div>
@@ -251,8 +251,9 @@
 
                                 @if (EventosAgenda.Any())
                                 {
-                                    @foreach (var evento in EventosAgenda
-                                                            .Where(e => GetFechaVisualizacion(e) == SelectedDate.Date))
+                                        @foreach (var evento in EventosAgenda
+                                                                .Where(e => SelectedDate.Date >= e.fechaInicio.Date &&
+                                                                SelectedDate.Date <= e.fechaFin.Date))
                                     {
                                         <div class="task-item event @(evento.completada ? "completed" : "")">
                                             <div>
@@ -1144,30 +1145,33 @@
 
     List<TareaApi> TareasDelDia =>
     TareasAgenda
-        .Where(t => GetFechaVisualizacion(t) == SelectedDate.Date)
+        .Where(t => EsVisibleEnDia(t, SelectedDate.Date))
         .ToList();
 
     List<EventoApiDTO> EventosDelDia =>
-        EventosAgenda
-            .Where(e => GetFechaVisualizacion(e) == SelectedDate.Date)
-            .ToList();
+    EventosAgenda
+        .Where(e => SelectedDate.Date >= e.fechaInicio.Date &&
+                    SelectedDate.Date <= e.fechaFin.Date)
+        .ToList();
+
+    bool EsVisibleEnDia(TareaApi t, DateTime dia)
+    {
+        var hoy = DateTime.Today;
+
+        if (t.completada && t.fechaCompletada.HasValue)
+            return t.fechaCompletada.Value.Date == dia;
+
+        if (!t.completada && t.fechaFin.Date < hoy)
+            return dia >= t.fechaInicio.Date && dia <= hoy;
+
+        return dia >= t.fechaInicio.Date && dia <= t.fechaFin.Date;
+    }
 
     void ToggleTasks()
     {
         TasksCollapsed = !TasksCollapsed;
     }
-    DateTime GetFechaVisualizacion(TareaApi t)
-    {
-        var hoy = DateTime.Today;
 
-        if (t.completada && t.fechaCompletada.HasValue)
-            return t.fechaCompletada.Value.Date;
-
-        if (!t.completada && t.fechaFin.Date < hoy)
-            return hoy;
-
-        return t.fechaFin.Date;
-    }
     DateTime GetFechaVisualizacion(EventoApiDTO e)
     {
         return e.fechaFin.Date;
@@ -1182,14 +1186,15 @@
     }
 
     int TareasPendientesDelDia =>
-    TareasAgenda.Count(t =>
-        !t.completada &&
-        GetFechaVisualizacion(t) == SelectedDate.Date);
+TareasAgenda.Count(t =>
+    !t.completada &&
+    EsVisibleEnDia(t, SelectedDate.Date));
 
     int EventosPendientesDelDia =>
-    EventosAgenda.Count(e =>
-        !e.completada &&
-        GetFechaVisualizacion(e) == SelectedDate.Date);
+EventosAgenda.Count(e =>
+    !e.completada &&
+    SelectedDate.Date >= e.fechaInicio.Date &&
+    SelectedDate.Date <= e.fechaFin.Date);
 
     int TotalPendientesDelDia =>
     TareasPendientesDelDia + EventosPendientesDelDia;

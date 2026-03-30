@@ -77,13 +77,38 @@
                             {
                                 <tr>
                                     <td class="col-cliente">
-                                        <select @bind="fila.ClienteId" class="cell-input select-limitado">
-                                            <option value="0">Seleccionar empresa</option>
-                                            @foreach (var cliente in listaClientes)
+                                        <div class="cliente-autocomplete">
+
+                                            <input type="text"
+                                                   placeholder="Buscar empresa..."
+                                                   @bind="fila.BusquedaCliente"
+                                                   @oninput="() => MostrarDropdown(fila)"
+                                                   @onfocus="() => MostrarDropdown(fila)" 
+                                                   @onblur="() => OcultarDropdownConDelay(fila)"
+                                                   class="input-busqueda" />
+
+                                            @if (fila.MostrarResultados)
                                             {
-                                                <option value="@cliente.Id">@cliente.Clave - @cliente.RazonSocial</option>
+                                                <div class="dropdown-clientes">
+
+                                                    @foreach (var cliente in FiltrarClientes(fila.BusquedaCliente))
+                                                    {
+                                                        <div class="dropdown-item"
+                                                             @onclick="() => SeleccionarCliente(fila, cliente)">
+                                                            @cliente.Clave - @cliente.RazonSocial
+                                                        </div>
+                                                    }
+
+                                                    @if (!FiltrarClientes(fila.BusquedaCliente).Any())
+                                                    {
+                                                        <div class="dropdown-empty">
+                                                            Sin resultados
+                                                        </div>
+                                                    }
+                                                </div>
                                             }
-                                        </select>
+
+                                        </div>
                                     </td>
                                     <td class="col-servicio">
                                         <select @bind="fila.IdServicio" class="cell-input">
@@ -192,17 +217,68 @@
         private List<ServicioConActividadesDTO> ListaServicios = new();
         private List<CatalogoLugarDTO> ListaLugares = new();
 
-        public class FilaMinuta
-        {
-            public int ClienteId { get; set; }
-            public int IdServicio { get; set; }
-            public int IdActividad { get; set; }
-            public int IdLugar { get; set; }
-            public string? OtraActividad { get; set; }   
-            public string Periodo { get; set; } = "";
-            public TimeOnly? Horas { get; set; }
-        }
+    public class FilaMinuta
+    {
+        public int ClienteId { get; set; }
+        public int IdServicio { get; set; }
+        public int IdActividad { get; set; }
+        public int IdLugar { get; set; }
+        public string BusquedaCliente { get; set; } = "";
+        public bool MostrarResultados { get; set; } = false;
+        public string? OtraActividad { get; set; }
+        public string Periodo { get; set; } = "";
+        public TimeOnly? Horas { get; set; }
+    }
 
+
+    private IEnumerable<ClientesDTO> FiltrarClientes(string busqueda)
+    {
+        if (string.IsNullOrWhiteSpace(busqueda))
+            return listaClientes;
+
+        return listaClientes
+            .Where(c =>
+                (c.RazonSocial ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                c.Clave.ToString().Contains(busqueda)
+            )
+            .Take(20);
+    }
+
+
+    private void MostrarDropdown(FilaMinuta fila)
+    {
+        fila.MostrarResultados = true;
+    }
+
+    private void SeleccionarCliente(FilaMinuta fila, ClientesDTO cliente)
+    {
+        fila.ClienteId = cliente.Id;    
+        fila.BusquedaCliente = $"{cliente.Clave} - {cliente.RazonSocial}";
+        fila.MostrarResultados = false;
+    }
+
+    private async void OcultarDropdownConDelay(FilaMinuta fila)
+    {
+        await Task.Delay(150); // 🔥 permite click en opción antes de cerrar
+        fila.MostrarResultados = false;
+        StateHasChanged();
+    }
+
+    private CancellationTokenSource _cts = new();
+
+    private async Task OnBuscarCliente(FilaMinuta fila)
+    {
+        _cts.Cancel();
+        _cts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(200, _cts.Token); // 🔥 debounce 200ms
+            fila.MostrarResultados = true;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException) { }
+    }
 
         private void OnFechaInicioChanged(DateTime? nuevaFecha)
         {
@@ -959,6 +1035,84 @@
 
     .col-realizado{
         max-width: 80px;
+    }
+
+    .cliente-autocomplete {
+        position: relative;
+        width: 100%;
+    }
+
+    .input-busqueda {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    .dropdown-clientes {
+        position: absolute;
+        top: calc(100% + 2px);
+        left: 0;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        z-index: 9999;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    .dropdown-item {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+        .dropdown-item:hover {
+            background: #f8fafc;
+        }
+
+    .dropdown-empty {
+        padding: 8px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.8rem;
+    }
+
+    .cliente-autocomplete input {
+        margin-bottom: 4px;
+    }
+
+    /* ================= DARK MODE AUTOCOMPLETE ================= */
+    [data-theme="dark"] .input-busqueda {
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+        [data-theme="dark"] .input-busqueda::placeholder {
+            color: #64748b !important;
+        }
+
+    [data-theme="dark"] .dropdown-clientes {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+    }
+
+    [data-theme="dark"] .dropdown-item {
+        color: #e2e8f0 !important;
+    }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+    [data-theme="dark"] .dropdown-empty {
+        color: #64748b !important;
     }
 
 </style>
