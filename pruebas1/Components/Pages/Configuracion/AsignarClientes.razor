@@ -1136,44 +1136,197 @@
             return;
 
         if (!selectedActivitiesEditar.Any())
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Faltan actividades",
+                text = "Debes seleccionar al menos una actividad."
+            });
             return;
+        }
+
+        // 🔥 VALIDACIÓN 1: IDs válidos
+        if (asignacionSeleccionada.IdUsuarioEntidadAgenda == null ||
+            !asignacionSeleccionada.IdUsuarioEntidadAgenda.Any())
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "La asignación no es válida (IDs vacíos)."
+            });
+            return;
+        }
+
+        // 🔥 VALIDACIÓN 2: evitar IDs corruptos
+        var idsLimpios = asignacionSeleccionada.IdUsuarioEntidadAgenda
+            .Where(x => x > 0)
+            .Distinct()
+            .ToList();
+
+        if (!idsLimpios.Any())
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Error",
+                text = "Los identificadores de la asignación son inválidos."
+            });
+            return;
+        }
+
+        // 🔥 VALIDACIÓN 3: evitar edición parcial
+        if (idsLimpios.Count != asignacionSeleccionada.IdUsuarioEntidadAgenda.Count)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "error",
+                title = "Edición inválida",
+                text = "La asignación está incompleta o corrupta. Recarga la pantalla."
+            });
+            return;
+        }
+
+        // 🔥 LIMPIEZA DE ACTIVIDADES
+        var actividadesLimpias = selectedActivitiesEditar
+            .Where(x => x > 0)
+            .Distinct()
+            .ToList();
+
+        if (!actividadesLimpias.Any())
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Sin actividades",
+                text = "Selecciona al menos una actividad válida."
+            });
+            return;
+        }
 
         editando = true;
 
-        await Task.Delay(900);
+        // 🔥 cerrar modal
         mostrarModalEditar = false;
         await InvokeAsync(StateHasChanged);
 
+        await Task.Delay(500);
+
         var dto = new EditarAsignacionDTO
         {
-            IdUsuarioEntidadAgenda = asignacionSeleccionada.IdUsuarioEntidadAgenda,
+            IdUsuarioEntidadAgenda = idsLimpios,
             IdEmpleado = empleadoEditarSeleccionado.Id,
-            ActividadesIds = selectedActivitiesEditar.ToList()
+            ActividadesIds = actividadesLimpias
         };
+
+        // ===== DEBUG FRONT =====
+        Debug.WriteLine("====================================");
+        Debug.WriteLine("🔥 EDITAR ASIGNACION - FRONT DEBUG");
+        Debug.WriteLine("====================================");
+
+        Debug.WriteLine("----- ORIGINAL -----");
+        Debug.WriteLine($"Ids originales: {string.Join(", ", asignacionSeleccionada.IdUsuarioEntidadAgenda)}");
+        Debug.WriteLine($"Empleado original: {asignacionSeleccionada.IdEmpleado}");
+        Debug.WriteLine($"Actividades originales: {string.Join(", ", asignacionSeleccionada.ActividadesIds)}");
+
+        Debug.WriteLine("----- LIMPIOS -----");
+        Debug.WriteLine($"Ids limpios: {string.Join(", ", idsLimpios)}");
+        Debug.WriteLine($"Actividades limpias: {string.Join(", ", actividadesLimpias)}");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(dto, new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        Debug.WriteLine("----- JSON PARA POSTMAN -----");
+        Debug.WriteLine(json);
+        Debug.WriteLine("====================================");
 
         var response = await Http.PutAsJsonAsync(
             "/api/servicio-cliente/admin/editar-asignacion",
             dto
         );
 
+        Debug.WriteLine($"StatusCode: {response.StatusCode}");
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        Debug.WriteLine("----- RESPONSE BACKEND -----");
+        Debug.WriteLine(responseBody);
+        Debug.WriteLine("====================================");
+
         if (!response.IsSuccessStatusCode)
         {
-            var error = (await response.Content.ReadAsStringAsync())
-                            .Replace("\"", "")
-                            .Trim();
+            var errorRaw = responseBody.Replace("\"", "").Trim();
 
-            if (error == "ASIGNACION_CON_HORAS")
+            // 🔥 ACTIVIDADES CON HORAS (PARSEO BONITO)
+            if (errorRaw.StartsWith("NO_SE_PUEDE_ELIMINAR_ACTIVIDADES_CON_HORAS"))
+            {
+                var partes = errorRaw.Split(':');
+
+                var actividades = partes.Length > 1
+                    ? partes[1]
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(a => $"• {a.Trim()}")
+                        .ToList()
+                    : new List<string>();
+
+                var mensajeHtml = actividades.Any()
+                    ? string.Join("<br>", actividades)
+                    : "Existen actividades con horas registradas.";
+
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "No se pueden eliminar algunas actividades",
+                    html = $@"
+                    <div style='text-align:left'>
+                        Las siguientes actividades ya tienen horas registradas:<br><br>
+                        {mensajeHtml}<br><br>
+                        <b>Sugerencia:</b> Desmárcalas o crea una nueva asignación.
+                    </div>",
+                    confirmButtonText = "Entendido",
+                    customClass = new { popup = "swal-top-layer" }
+                });
+            }
+            // 🔥 ERROR LEGACY (por si aún aparece)
+            else if (errorRaw.Contains("ASIGNACION_CON_HORAS"))
             {
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
                     title = "No se pudo editar",
-                    text = "La asignación no se puede editar, debido a que el usuario ya programó sus tareas.",
+                    text = "La asignación no se puede editar porque ya tiene horas registradas.",
                     confirmButtonText = "Entendido",
-                    customClass = new
-                    {
-                        popup = "swal-top-layer"
-                    }
+                    customClass = new { popup = "swal-top-layer" }
+                });
+            }
+            else if (errorRaw.Contains("IDS_INVALIDOS"))
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Asignación inválida",
+                    text = "Algunos registros ya no existen. Recarga la pantalla."
+                });
+            }
+            else if (errorRaw.Contains("MEZCLA_DE_ASIGNACIONES"))
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Error de consistencia",
+                    text = "La asignación está corrupta o mezclada. Recarga la página."
+                });
+            }
+            else if (errorRaw.Contains("EMPLEADO_INVALIDO"))
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "error",
+                    title = "Empleado inválido",
+                    text = "El empleado seleccionado no es válido."
                 });
             }
             else
@@ -1181,8 +1334,8 @@
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
-                    title = "Error real",
-                    text = error
+                    title = "Error al editar",
+                    text = "Ocurrió un problema inesperado al actualizar la asignación."
                 });
             }
 
@@ -1196,10 +1349,7 @@
             title = "Actualizado",
             text = "La asignación se actualizó correctamente.",
             confirmButtonText = "Entendido",
-            customClass = new
-            {
-                popup = "swal-top-layer"
-            }
+            customClass = new { popup = "swal-top-layer" }
         });
 
         await CargarHistorialAsignaciones();
