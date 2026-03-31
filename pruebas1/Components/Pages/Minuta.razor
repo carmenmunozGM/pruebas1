@@ -4,6 +4,7 @@
     @using System.Text.Json
     @using pruebas1.Components.DTOs
     @inject pruebas1.Servicios.AreasService AreasService
+@using pruebas1.Components.Layout
     @inject pruebas1.Servicios.LoginService LoginService
     @inject HttpClient Http
     @inject IJSRuntime JS
@@ -231,6 +232,21 @@
         private List<ServicioConActividadesDTO> ListaServicios = new();
         private List<CatalogoLugarDTO> ListaLugares = new();
     private List<AreaDTO> ListaAreas = new();
+@code {
+    [Parameter] public EventCallback OnSave { get; set; }
+    private List<ClientesDTO> listaClientes = new();
+    private bool IsVisible = false;
+    private string NombreAsesor = "";
+    private int ClaveAsesor = 0;
+    private DateTime FechaSeleccionada = DateTime.Now;
+    private string Observaciones = "";
+    private List<ActividadMinutaDTO> ListadoActividades = new();
+    private bool MostrarAlerta = false;
+    private string MensajeAlerta = "";
+    private string TipoAlerta = "error"; 
+    private List<ServicioConActividadesDTO> ListaServicios = new();
+    private List<CatalogoLugarDTO> ListaLugares = new();
+
     public class FilaMinuta
     {
         public int ClienteId { get; set; }
@@ -246,7 +262,6 @@
         public TimeOnly? Horas { get; set; }
     }
 
-
     private IEnumerable<ClientesDTO> FiltrarClientes(string busqueda)
     {
         if (string.IsNullOrWhiteSpace(busqueda))
@@ -259,7 +274,6 @@
             )
             .Take(20);
     }
-
 
     private void MostrarDropdown(FilaMinuta fila)
     {
@@ -300,11 +314,11 @@
         catch (TaskCanceledException) { }
     }
 
-        private void OnFechaInicioChanged(DateTime? nuevaFecha)
-        {
-            FechaSeleccionada = nuevaFecha ?? DateTime.Now;
-        }
-        private List<FilaMinuta> FilasMinuta = new();
+    private void OnFechaInicioChanged(DateTime? nuevaFecha)
+    {
+        FechaSeleccionada = nuevaFecha ?? DateTime.Now;
+    }
+    private List<FilaMinuta> FilasMinuta = new();
 
     private async Task AbrirModal()
     {
@@ -407,29 +421,29 @@
     }
 
 
-        private void Cerrar() => IsVisible = false;
+    private void Cerrar() => IsVisible = false;
 
-        private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
+    private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
 
-        private void EliminarFila(FilaMinuta fila)
+    private void EliminarFila(FilaMinuta fila)
+    {
+        if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
+    }
+
+    private string CalcularTotalHoras()
+    {
+        TimeSpan total = TimeSpan.Zero;
+        foreach (var f in FilasMinuta)
         {
-            if (FilasMinuta.Count > 1) FilasMinuta.Remove(fila);
-        }
-
-        private string CalcularTotalHoras()
-        {
-            TimeSpan total = TimeSpan.Zero;
-            foreach (var f in FilasMinuta)
+            if (f.Horas.HasValue)
             {
-                if (f.Horas.HasValue)
-                {
-                    total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
-                }
+                total = total.Add(new TimeSpan(f.Horas.Value.Hour, f.Horas.Value.Minute, 0));
             }
-            return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
         }
+        return $"{(int)total.TotalHours} Horas, {total.Minutes} Minutos";
+    }
 
-        private bool Guardando = false;
+    private bool Guardando = false;
     private string? ErrorGuardar;
 
     private async Task Guardar()
@@ -531,8 +545,6 @@
         }
     }
 
-
-
     private void LanzarAlerta(string mensaje, string tipo)
     {
         MensajeAlerta = mensaje;
@@ -540,8 +552,7 @@
         MostrarAlerta = true;
         StateHasChanged();
     }
-
-    }
+}
 
 <style>
     /* ================= ESTILOS BASE ================= */

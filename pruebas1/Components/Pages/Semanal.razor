@@ -2,6 +2,7 @@
 @using System.Globalization
 @using System.Diagnostics
 @using Newtonsoft.Json
+@using pruebas1.Components.Layout
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
@@ -36,9 +37,6 @@
             Semana siguiente <span class="arrow">&#9654;</span>
         </button>
     </header>
-    @* <div style="color:red;font-weight:bold">
-        Días inhábiles cargados: @DiasNoLaboralesMes.Count
-    </div> *@
 
     <div class="days-grid weekly">
         @foreach (var day in Days.Where(d => d.Date.DayOfWeek != DayOfWeek.Sunday))
@@ -698,7 +696,25 @@
     protected override void OnInitialized()
     {
         var usuario = LoginService.obtenerUsuarioLogueado();
-        UsuarioActualId = usuario.IdUsuario;        
+        UsuarioActualId = usuario.IdUsuario;
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (IsModalOpen)
+            IsModalOpen = false;
+        else if (IsClientModalOpen)
+            IsClientModalOpen = false;
+        else if (IsOTModalOpen)
+            IsOTModalOpen = false;
+        else if (IsTramiteModalOpen)
+            IsTramiteModalOpen = false;
     }
 
     public List<ParticipanteDTO> ParticipantesEdit { get; set; } = new();

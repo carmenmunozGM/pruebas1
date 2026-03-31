@@ -1,6 +1,7 @@
 ﻿@page "/calendario"
 @using System.Globalization
 @using System
+@using pruebas1.Components.Layout
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
 @using System.Collections.Generic
@@ -507,7 +508,6 @@
 }
 
 
-
 @code {
     List<pruebas1.Entidades.TareaApi> TareasApi = new();
     List<EventoApiDTO> EventosApi = new();
@@ -651,7 +651,7 @@
             listaVacaciones = resultado;
         }
         await CargarAutoevaluaciones();
-       
+
         var agendas = await AgendaService.ObtenerAgendaAsignadasAsync();
         var idAgenda = agendas.FirstOrDefault();
 
@@ -663,6 +663,22 @@
 
         await CargarDiasNoLaborales();
         BuildMonth();
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (ShowBirthdayModal)
+            ShowBirthdayModal = false;
+        if (ShowVacationModal)
+            ShowVacationModal = false;
+        if (SelectedBlock != null)
+            CloseBlockModal();
     }
 
     async Task CargarDiasNoLaborales()
