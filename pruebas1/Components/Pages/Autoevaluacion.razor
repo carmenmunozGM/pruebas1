@@ -1,4 +1,5 @@
 ﻿@page "/autoevaluacion"
+@using pruebas1.Components.Layout
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -413,6 +414,28 @@
     {
         Bloques = new List<Bloque>();
         await CargarAutoevaluacionAsync();
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (!ShowModal) return;
+
+        if (IsMonthly)
+            IsMonthly = false;
+        else if (IsEventual)
+            IsEventual = false;
+        else if (IsAnnual)
+            IsAnnual = false;
+        else if (IsQuincenal)
+            IsQuincenal = false;
+
+        ShowModal = false;
     }
 
     private async Task CargarAutoevaluacionAsync()

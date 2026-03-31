@@ -1,4 +1,5 @@
 @using pruebas1.Components.DTOs
+@using pruebas1.Components.Layout
 @using pruebas1.Servicios
 @inject AdministrarAgendasService AdministrarAgendasService
 @inject AreasService AreasService
@@ -232,7 +233,6 @@
         }
     }
 
-
     bool empleadoValido => clavePersonalInt is not null;
 
     private int usuarioActualId;
@@ -246,6 +246,18 @@
 
         areas = await AreasService.GetAreasConPuestos();
         puestos = await AreasService.GetPuestosFiltrados();
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (mostrarLista)
+            mostrarLista = false;
     }
 
     private async Task OnPuestoChange(ChangeEventArgs e)
