@@ -10,6 +10,7 @@
 @using System.Diagnostics
 @using Newtonsoft.Json
 @using pruebas1.Components.DTOs
+@using pruebas1.Components.Layout
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components
@@ -18,6 +19,7 @@
 <div class="action-button-wrapper">
     <button class="action-button-floating" @onclick="@OpenModal"><span style="font-size: 18px; line-height: 5;"> +</span> Crear Actividad</button>
 </div>
+
 @if (ShowModal)
 {
     <div class="backdrop-overlay" >
@@ -212,7 +214,7 @@
 
     </script>
 
-@code {
+    @code {
     [Parameter] public EventCallback<TareaCreada> OnSave { get; set; }
     // --- FECHAS ---
     private DateTime? FechaInicio { get; set; }
@@ -262,7 +264,24 @@
             empleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json);
         }
         catch { }
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
     }
+
+    void CloseModal() => ShowModal = false;
+
+    void CerrarModalActivo()
+    {
+        if (ShowModal = true){
+            LimpiarCampos();
+            CloseModal();
+        }
+    }
+
     private string ObtenerNombreFrecuencia(int? idFrecuencia)
     {
         if (idFrecuencia == null)

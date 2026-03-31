@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace pruebas1.Entidades
 {
     public class TareaApi
-    {
+    { 
         public int id { get; set; }
         public int idAgenda { get; set; }
         public string titulo { get; set; }

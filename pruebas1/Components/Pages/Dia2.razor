@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Newtonsoft.Json
 @using pruebas1.Components.DTOs
+@using pruebas1.Components.Layout
 @using pruebas1.Entidades
 @using pruebas1.Components
 @using pruebas1.Servicios
@@ -1578,7 +1579,7 @@
     private CumpleaniosDTO? miCumple;
     private bool esMiCumple = false;
 
-   
+
     private async Task CargarCumpleanios()
     {
         try
@@ -1600,7 +1601,7 @@
     }
     private async Task CargarVacaciones()
     {
-      
+
         listaVacaciones = await InfoService.GetMisVacaciones();
     }
     private void AlternarE(string nombre)
@@ -1617,19 +1618,19 @@
 
     private async Task ValidarYGuardar(SubtaskModel st)
     {
-        
+
         bool esFechaPasada = FechaSeleccionada.Date < DateTime.Today.Date;
         bool esServicio = st.Tipo == "ServicioCliente";
 
         if (esServicio && esFechaPasada)
         {
-    
+
             if (st.IsDone)
             {
-              
+
                 st.IsDone = false;
 
-             
+
                 await JSRuntime.InvokeVoidAsync("alert", "⚠️ BLOQUEO DE SEGURIDAD: \n\nNo puedes modificar tareas de 'Servicio a Cliente' de días anteriores. \n\nPor favor, cambia la fecha en el Historial para poder registrar esta actividad.");
 
                 return; 
@@ -1655,7 +1656,7 @@
     private void IrA_Historias(SubtaskModel st)
     {
         NavManager.NavigateTo($"/plantrabajo?tareaId={st.Id}");
-       
+
     }
 
     public void Dispose()
@@ -1791,13 +1792,7 @@
         tarea.subTareas.Remove(s);
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
-    // async Task AbrirModalTareas(int idTramite)
-    // {
-    //     TramiteSeleccionado =
-    //         await OrdenTramiteService.GetTramiteDetalle(idTramite);
 
-    //     ShowTareasModal = true;
-    // }
     private async Task AbrirModalTareas(int idTramite)
     {
         try
@@ -1816,15 +1811,6 @@
         }
     }
 
-   
-
-    // async Task AbrirModalDetalle(int idTramite)
-    // {
-    //     TramiteSeleccionado =
-    //         await OrdenTramiteService.GetTramiteDetalle(idTramite);
-
-    //     ShowDetalleModal = true;
-    // }
     private async Task AbrirModalDetalle(int id)
     {
         Console.WriteLine("ID RECIBIDO EN MODAL: " + id);
@@ -1844,12 +1830,14 @@
     {
         ShowTareasModal = false;
         TramiteSeleccionado = null;
+
     }
 
     void CerrarModalDetalle()
     {
         ShowDetalleModal = false;
         TramiteSeleccionado = null;
+
     }
     private bool ShowViewModal { get; set; } = false;
 
@@ -1929,6 +1917,7 @@
     {
         SelectedViewItem = null;
         ShowViewModal = false;
+
     }
 
     bool EsAutoevaluacionHoy(SubtaskModel st)
@@ -1986,31 +1975,7 @@
         catch { }
         return null;
     }
-    // private async Task ToggleSubtaskAsync(SubtaskModel st)
-    // {
-    //     bool ok = st.Tipo == "Evento"
-    //         ? await AgendaService.CambiarEstadoEventoAsync(st.ApiId, st.IsDone)
-    //         : await AgendaService.CambiarEstadoTareaAsync(st.ApiId, st.IsDone);
-    //     if (ok)
-    //     {
-    //         st.FechaCompletada = st.IsDone ? DateTime.Now : null;
-    //         foreach (var cat in MasterCategories)
-    //         {
-    //             var task = cat.Subtasks.FirstOrDefault(x => x.ApiId == st.ApiId);
-    //             if (task != null)
-    //             {
-    //                 task.IsDone = st.IsDone;
-    //                 task.FechaCompletada = st.FechaCompletada;
-    //                 break;
-    //             }
-    //         }
-    //     }
-    //     else
-    //     {
-    //         st.IsDone = !st.IsDone;
-    //     }
-    //     await CargarTareasPorFecha();
-    // }
+
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
         bool ok = false;
@@ -2036,7 +2001,7 @@
                 {
                     task.IsDone = st.IsDone;
                     task.FechaCompletada = st.FechaCompletada;
-                 
+
                 }
             }
         }
@@ -2223,87 +2188,40 @@
 
         // 5. Renderizado final
         GenerarDiasCalendario();
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
     }
-    // protected override async Task OnInitializedAsync()
-    // {
-      
-    //     var usuario = LoginService.obtenerUsuarioLogueado();
-    //     if (usuario != null)
-    //     {
-    //         usuarioActualId = usuario.IdUsuario;
-    //         Debug.WriteLine($"👤 usuarioActualId (IdUsuario) = {usuarioActualId}");
-    //     }
-    //     // 1. Cargar datos desde el servicio corregido
-    //     miCumple = await InfoService.GetMiCumpleanios();
-    //     listaVacaciones = await InfoService.GetMisVacaciones();
 
-    //     // 2. Lógica de comparación
-    //     if (miCumple != null)
-    //     {
-    //         string hoy = DateTime.Now.ToString("dd/MM");
-    //         // El Trim es vital por si la API manda espacios
-    //         esMiCumple = (miCumple.Cumpleanios?.Trim() == hoy);
-    //     }
-    //     // Cargamos también la lista general
-    //     listaTodosCumple = await InfoService.GetTodosLosCumpleanios();
+    void CloseEditModal() => ShowEditModal = false;
+    void CloseTaskDetailsModal() => ShowTaskDetailsModal = false;
+    void CloseTareasModal() => ShowTareasModal = false;
+    void CloseDetalleModal() => ShowDetalleModal = false;
 
-    //     var salas = await SalasService.GetSalas();
-
-    //     salasLookup = salas.ToDictionary(
-    //         s => s.Id,
-    //         s => s.Salas
-    //     );
-
-   
-    //     var prioridades = await ReglasService.GetPrioridad();
-    //     prioridadesLookup = prioridades.ToDictionary(
-    //         p => p.Id,
-    //         p => p.Titulo
-    //     );
-
-    //     var frecuencias = await ReglasService.GetFrecuencia();
-    //     frecuenciaLookup = frecuencias.ToDictionary(
-    //         f => f.Id,
-    //         f => f.Nombre
-    //     );
-    //     try
-    //     {
-    //         using var client = new HttpClient();
-    //         var json = await client.GetStringAsync("https://redgm.site:9096/empleado");
-    //         todosLosEmpleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json) ?? new();
-    //         ActualizarDatosParticipantesExistentes();
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error cargando empleados: {ex.Message}");
-    //     }
-    
-  
-       
-    //     var usuarioLogueado = LoginService.obtenerUsuarioLogueado();
-    //     if (usuarioLogueado != null)
-    //     {
-    //         // Nota: Si tu DTO no tiene .Id, usa .NombreUsuario o la propiedad que identifique al usuario
-    //         string userKey = $"userViewMode_{usuarioLogueado.NombreUsuario}";
-    //         string modoGuardado = Microsoft.Maui.Storage.Preferences.Get(userKey, "horizontal");
-    //         Settings.SetViewMode(modoGuardado);
-    //     }
-
-    //     Settings.OnChange += StateHasChanged;
-
-
-    //     await VerificarDiaNoLaboralAsync();
-    //     await InitializeMasterCategoriesAsync();
-    //     await CargarTareasPorFecha();
-    //     await PrepararOrdenesVisuales();
-
-    //     GenerarDiasCalendario();
-    // }
-
+    void CerrarModalActivo()
+    {
+        if (ShowTareasModal)
+            CerrarModalTareas(); 
+        else if (ShowTaskDetailsModal)
+            ShowTaskDetailsModal = false;
+        else if (ShowDetalleModal)
+            CloseDetalleModal();
+        else if (ShowTramiteModal)
+            CloseTramiteModal();
+        else if (ShowViewModal)
+            CloseViewModal();
+        else if (ShowEditModal)
+            CloseEditModal();
+        else if (ShowOrderModal)
+            CloseOrderModal();
+        else if (MostrarModal)
+            CerrarCalendario();
+    }
 
     [CascadingParameter] public string ViewMode { get; set; } = "grid";
-
-  
    
     async Task RecargarVista()
     {
@@ -2354,7 +2272,10 @@
             Name = "Tareas",
             ColorClass = "rosa-administrativa",
             Icon = "📝",
-            Subtasks = tareasApi.Select(t => new SubtaskModel
+            Subtasks = tareasApi
+            .OrderBy(t => t.idPrioridad)
+            .ThenBy(t => t.fechaInicio)
+            .Select(t => new SubtaskModel
             {
                 ApiId = t.id,
                 IdAgenda = t.idAgenda,
@@ -3183,6 +3104,7 @@ MasterCategories.Add(servicioClienteCategory);
     {
         SelectedOrdenTramite = null;
         ShowTramiteModal = false;
+
     }
     private void OpenOrderModal(OrdenTrabajoModel orden) { SelectedOrden = orden; ShowOrderModal = true; StateHasChanged(); }
     private void CloseOrderModal() { SelectedOrden = null; ShowOrderModal = false; }
