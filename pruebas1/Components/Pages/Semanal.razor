@@ -44,12 +44,15 @@
         @foreach (var day in Days.Where(d => d.Date.DayOfWeek != DayOfWeek.Sunday))
         {
             bool esNoLaboral = EsDiaNoLaboral(day.Date);
-
-            <div class="day-card @(esNoLaboral ? "dia-no-laboral" : "")">
-
+            bool esHoy = day.Date.Date == DateTime.Now.Date;
+            <div class="day-card @(esNoLaboral ? "dia-no-laboral" : "") @(esHoy ? "hoy" : "")">
                 <div class="day-header">
                     <span class="day-name">@day.Date.ToString("dddd", new CultureInfo("es-ES"))</span>
-                    <span class="day-date">@day.Date.ToString("dd")</span>
+                    <span class="day-date">
+                        <span class="@(esHoy ? "circle-today" : "")">
+                            @day.Date.ToString("dd")
+                        </span>
+                    </span>
                 </div>
                 @if (esNoLaboral)
                 {
@@ -64,6 +67,7 @@
                     <div class="blocks-list">
                         @foreach (var block in day.Blocks)
                         {
+
                             <div class="list-item" style="background-color:@block.Color">
                                 <div class="list-title" @onclick="() => ToggleBlock(block)">
                                     <span>@block.Title</span>
@@ -220,6 +224,20 @@
         }
     </div>
 </div>
+<style>
+    .circle-today {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background-color: #FCDE64;
+        color: black;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 14px;
+    }
+</style>
 
 <!-- Modal de Tarea (editar/ver) -->
 @if (IsModalOpen && SelectedTaskObject != null)

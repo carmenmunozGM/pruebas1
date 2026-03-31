@@ -41,7 +41,7 @@
         {
             @if (day != null)
             {
-
+                bool esHoy = day.Date.Date == DateTime.Now.Date;
                 <div class="day-card @(EsNoLaboral(day.Date) ? "no-laboral" : "")"
                      title="@DescripcionNoLaboral(day.Date)">
                     <div class="day-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -81,15 +81,19 @@
                         }
                     </div>
                     </div>
-                    <div class="day-header">
+                   @*  <div class="day-header">
                         @day.Date.ToString("dd")
                         @if (day.Date.DayOfWeek == DayOfWeek.Sunday)
                         {
 
                         }
 
+                    </div> *@
+                    <div class="day-header">
+                        <span class="@(esHoy ? "circle-today" : "")">
+                            @day.Date.ToString("dd")
+                        </span>
                     </div>
-                        
                  
                     @if (EsNoLaboral(day.Date))
                     {
@@ -963,3 +967,17 @@
         _ => "📋"
     };
 }
+<style>
+    .circle-today {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background-color: #FCDE64;
+        color: black;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 20px;
+    }
+</style>

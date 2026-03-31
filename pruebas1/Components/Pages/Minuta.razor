@@ -3,9 +3,10 @@
     @using System.Diagnostics
     @using System.Text.Json
     @using pruebas1.Components.DTOs
+    @inject pruebas1.Servicios.AreasService AreasService
     @inject pruebas1.Servicios.LoginService LoginService
     @inject HttpClient Http
-@inject IJSRuntime JS
+    @inject IJSRuntime JS
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -64,6 +65,10 @@
                         <thead>
                             <tr>
                                 <th class="col-cliente">Cliente (Clave y Nombre)</th>
+                                @if (FilasMinuta.Any(f => f.ClienteId == 3))
+                                {
+                                    <th style="width: 150px;">Área</th>
+                                }
                                 <th class="col-servicio">Servicio</th>
                                 <th class="col-actividad">Actividad</th>
                                 <th style="width: 110px;">Periodo</th>
@@ -78,38 +83,47 @@
                                 <tr>
                                     <td class="col-cliente">
                                         <div class="cliente-autocomplete">
-
                                             <input type="text"
                                                    placeholder="Buscar empresa..."
                                                    @bind="fila.BusquedaCliente"
                                                    @oninput="() => MostrarDropdown(fila)"
-                                                   @onfocus="() => MostrarDropdown(fila)" 
+                                                   @onfocus="() => MostrarDropdown(fila)"
                                                    @onblur="() => OcultarDropdownConDelay(fila)"
                                                    class="input-busqueda" />
 
                                             @if (fila.MostrarResultados)
                                             {
                                                 <div class="dropdown-clientes">
-
                                                     @foreach (var cliente in FiltrarClientes(fila.BusquedaCliente))
                                                     {
-                                                        <div class="dropdown-item"
-                                                             @onclick="() => SeleccionarCliente(fila, cliente)">
+                                                        <div class="dropdown-item" @onclick="() => SeleccionarCliente(fila, cliente)">
                                                             @cliente.Clave - @cliente.RazonSocial
-                                                        </div>
-                                                    }
-
-                                                    @if (!FiltrarClientes(fila.BusquedaCliente).Any())
-                                                    {
-                                                        <div class="dropdown-empty">
-                                                            Sin resultados
                                                         </div>
                                                     }
                                                 </div>
                                             }
+                                        </div> 
+                                    </td> 
+                                    @if (fila.ClienteId == 295)
+                                    {
+                                        <td class="col-area">
+                                            <select @bind="fila.IdArea" class="cell-input">
+                                                <option value="0">-- Seleccionar Área --</option>
+                                                @if (ListaAreas != null)
+                                                {
+                                                    @foreach (var area in ListaAreas)
+                                                    {
+                                                        <option value="@area.Clave">@area.Area</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </td>
+                                    }
+                                    else if (FilasMinuta.Any(f => f.ClienteId == 295))
+                                    {
+                                        <td></td> @* Celda vacía para mantener la alineación *@
+                                    }
 
-                                        </div>
-                                    </td>
                                     <td class="col-servicio">
                                         <select @bind="fila.IdServicio" class="cell-input">
                                             <option value="0">Seleccionar servicio</option>
@@ -216,12 +230,14 @@
         private string TipoAlerta = "error"; 
         private List<ServicioConActividadesDTO> ListaServicios = new();
         private List<CatalogoLugarDTO> ListaLugares = new();
-
+    private List<AreaDTO> ListaAreas = new();
     public class FilaMinuta
     {
         public int ClienteId { get; set; }
         public int IdServicio { get; set; }
         public int IdActividad { get; set; }
+        public int IdArea { get; set; }
+      
         public int IdLugar { get; set; }
         public string BusquedaCliente { get; set; } = "";
         public bool MostrarResultados { get; set; } = false;
@@ -255,6 +271,10 @@
         fila.ClienteId = cliente.Id;    
         fila.BusquedaCliente = $"{cliente.Clave} - {cliente.RazonSocial}";
         fila.MostrarResultados = false;
+        if (fila.ClienteId != 295)
+        {
+            fila.IdArea = 0;
+        }
     }
 
     private async void OcultarDropdownConDelay(FilaMinuta fila)
@@ -289,6 +309,7 @@
     private async Task AbrirModal()
     {
         var usuario = LoginService.obtenerUsuarioLogueado();
+      
 
         NombreAsesor = !string.IsNullOrWhiteSpace(usuario.NombreRed)
             ? usuario.NombreRed
@@ -304,7 +325,8 @@
             // 1️⃣ Cargar clientes
             // =============================
             var respClientes = await Http.GetAsync("/api/servicio-cliente/admin/clientes");
-
+            ListaAreas = await AreasService.GetAreas();
+            Debug.WriteLine("Áreas cargadas desde servicio: " + ListaAreas.Count);
             if (respClientes.IsSuccessStatusCode)
             {
                 listaClientes = await respClientes.Content
@@ -466,6 +488,7 @@
             {
                 ClaveCliente = f.ClienteId,
                 IdActividad = f.IdActividad,
+                IdArea = f.IdArea,
                 IdLugar = f.IdLugar,
                 Periodo = f.Periodo,
                 HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute

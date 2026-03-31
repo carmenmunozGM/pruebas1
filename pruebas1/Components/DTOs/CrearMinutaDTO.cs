@@ -15,6 +15,7 @@ namespace pruebas1.Components.DTOs
     public class CrearActividadMinutaDTO
     {
         public int ClaveCliente { get; set; }
+        public int IdArea { get; set; }
         public int IdActividad { get; set; }
         public string Periodo { get; set; }
         public int HorasInvertidas { get; set; }
