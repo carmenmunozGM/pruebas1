@@ -1,5 +1,6 @@
 @using System.Diagnostics
 @using System.Text.Json
+@using pruebas1.Components.Layout
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @using pruebas1.Components.DTOs
@@ -994,6 +995,24 @@
         {
             puedeVerFiltroArea = false;
         }
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (MostrarSubModal)
+            CerrarSubModal();
+        else if (MostrarModalDetalle)
+            CerrarModal();
+        else if (MostrarOrden)
+            CerrarOrden();
+        else if (selectedEmployee != null)
+            CloseModal();
     }
 
     async Task RefreshAgenda()
