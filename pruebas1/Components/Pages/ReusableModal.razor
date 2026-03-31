@@ -116,8 +116,8 @@
                                        placeholder="Agregar participante..."
                                        value="@searchText"
                                        @oninput="FiltrarEmpleados"
-                                       disabled="@(FormType != FormTypes.Evento)" />
-                            </div>
+                                       disabled="@(FormType != FormTypes.Evento)" />           
+   </div>
                             @if (mostrarLista && empleadosFiltrados?.Count > 0)
                             {
                                 <ul class="autocomplete-list">
@@ -265,11 +265,11 @@
         }
         catch { }
 
-        MainLayout.OnEscPressed = async () =>
-        {
-            CerrarModalActivo();
-            await InvokeAsync(StateHasChanged);
-        };
+        // MainLayout.OnEscPressed = async () =>
+        // {
+        //     CerrarModalActivo();
+        //     await InvokeAsync(StateHasChanged);
+        // };
     }
 
     void CloseModal() => ShowModal = false;
@@ -559,36 +559,39 @@
 
         FechaFin = value;
     }
-    private void LimpiarCampos()
-    {
-        titulo = "";
-        descripcion = "";
-        subtasks.Clear();
-        newSubtask = "";
+    // private void LimpiarCampos()
+    // {
+    //     titulo = "";
+    //     descripcion = "";
+    //     subtasks.Clear();
+    //     newSubtask = "";
 
-        FechaInicio = null;
-        FechaFin = null;
-        HoraInicio = null;
-        HoraFin = null;
+    //     FechaInicio = null;
+    //     FechaFin = null;
+    //     HoraInicio = null;
+    //     HoraFin = null;
 
-        ubicacionOtra = "";
-        mostrarOtraUbicacion = false;
+    //     ubicacionOtra = "";
+    //     mostrarOtraUbicacion = false;
 
-        selectedSalaId = null;
+    //     selectedSalaId = null;
 
-        selectedPrioridadId = null;
-        selectedFrecuenciaId = null;
+    //     selectedPrioridadId = null;
+    //     selectedFrecuenciaId = null;
 
-        participantesSeleccionados.Clear();
+    //     participantesSeleccionados.Clear();
 
-        FormType = FormTypes.Tareas;
-    }
+    //     FormType = FormTypes.Tareas;
+    // }
 
     private void SetFormType(FormTypes type)
     {
+        // 1. Cambiamos el tipo
         FormType = type;
-        if (type == FormTypes.Evento) subtasks.Clear();
-        LimpiarCamposNoTipo(); 
+
+        LimpiarCampos();
+
+        StateHasChanged();
     }
     private void LimpiarCamposNoTipo()
     {
@@ -610,6 +613,31 @@
         selectedFrecuenciaId = null;
 
         participantesSeleccionados.Clear();
+    }
+    private void LimpiarCampos()
+    {
+        titulo = "";
+        descripcion = "";
+        subtasks.Clear();
+        newSubtask = "";
+
+        FechaInicio = null;
+        FechaFin = null;
+        HoraInicio = null;
+        HoraFin = null;
+
+        ubicacionOtra = "";
+        mostrarOtraUbicacion = false;
+        selectedSalaId = null;
+
+        selectedPrioridadId = null;
+        selectedFrecuenciaId = null;
+
+        // IMPORTANTISIMO: Limpiar la búsqueda de participantes
+        participantesSeleccionados.Clear();
+        searchText = "";       // Limpia el texto del input
+        mostrarLista = false;  // Oculta la lista desplegable
+        empleadosFiltrados?.Clear();
     }
     private void AddSubtask()
     {

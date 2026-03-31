@@ -232,20 +232,7 @@
         private List<ServicioConActividadesDTO> ListaServicios = new();
         private List<CatalogoLugarDTO> ListaLugares = new();
     private List<AreaDTO> ListaAreas = new();
-@code {
-    [Parameter] public EventCallback OnSave { get; set; }
-    private List<ClientesDTO> listaClientes = new();
-    private bool IsVisible = false;
-    private string NombreAsesor = "";
-    private int ClaveAsesor = 0;
-    private DateTime FechaSeleccionada = DateTime.Now;
-    private string Observaciones = "";
-    private List<ActividadMinutaDTO> ListadoActividades = new();
-    private bool MostrarAlerta = false;
-    private string MensajeAlerta = "";
-    private string TipoAlerta = "error"; 
-    private List<ServicioConActividadesDTO> ListaServicios = new();
-    private List<CatalogoLugarDTO> ListaLugares = new();
+
 
     public class FilaMinuta
     {
