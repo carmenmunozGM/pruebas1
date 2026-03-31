@@ -57,6 +57,14 @@
         }
     }
 
+    public static Func<Task>? OnEscPressed { get; set; }
+
+    [JSInvokable]
+    public static async Task HandleEsc()
+    {
+        if (OnEscPressed != null)
+            await OnEscPressed.Invoke();
+    }
 }
 
 <style>

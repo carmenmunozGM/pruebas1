@@ -1,5 +1,6 @@
 ﻿@page "/plantrabajo"
 @using pruebas1.Components.DTOs
+@using pruebas1.Components.Layout
 @using pruebas1.Servicios
 @inject ServicioClienteService ServicioClienteService
 @inject IJSRuntime JS
@@ -283,7 +284,7 @@
     }
     private async Task RefrescarDatos()
     {
-       
+
         StateHasChanged(); 
     }
     private int idEmpresaAbierta;
@@ -305,23 +306,23 @@
     }
 
     private string? ErrorServidor = null;
-private bool Procesando = false; 
+    private bool Procesando = false; 
 
     public class Actividad
-{
-    public int IdCheckListAsignacion { get; set; }
-    public int IdActividadGeneral { get; set; }
+    {
+        public int IdCheckListAsignacion { get; set; }
+        public int IdActividadGeneral { get; set; }
 
-    // 🔑 CLAVE PARA HISTORIAL
-    public int IdHorasProgramaTrabajo { get; set; }
+        // 🔑 CLAVE PARA HISTORIAL
+        public int IdHorasProgramaTrabajo { get; set; }
 
-    public string Nombre { get; set; } = string.Empty;
-    public DateTime? Fecha { get; set; }
-    public int HorasProgramadas { get; set; }
-    public string? Observaciones { get; set; }
-    public bool FechaOriginalDesdeDB { get; set; }
-    public List<CambioFecha> HistorialFechas { get; set; } = new();
-}
+        public string Nombre { get; set; } = string.Empty;
+        public DateTime? Fecha { get; set; }
+        public int HorasProgramadas { get; set; }
+        public string? Observaciones { get; set; }
+        public bool FechaOriginalDesdeDB { get; set; }
+        public List<CambioFecha> HistorialFechas { get; set; } = new();
+    }
     public class Empresa
     {
         public int IdUsuarioEntidadAgenda { get; set; }
@@ -389,7 +390,22 @@ private bool Procesando = false;
                 await OpenModal(idEntidad);
             }
         }
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
     }
+
+    void CerrarModalActivo()
+    {
+        if (ShowSubModal)
+            ShowSubModal = false;
+        else if (ShowModal)
+            ShowModal = false;
+    }
+
     private int ObtenerIdEmpresaPorTarea(string tareaIdStr)
     {
         if (int.TryParse(tareaIdStr, out int tId))

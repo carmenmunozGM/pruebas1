@@ -35,6 +35,23 @@
 
     <!-- Tu inicializador -->
     <script src="flatpickr-init.js"></script>
+
+    <script>
+        if (!window.__escListenerRegistered) {
+
+            window.__escListenerRegistered = true;
+
+            document.addEventListener("keydown", function (e) {
+                const tag = document.activeElement?.tagName;
+
+                if (e.key === "Escape" && tag !== "INPUT" && tag !== "TEXTAREA") {
+                    DotNet.invokeMethodAsync('pruebas1', 'HandleEsc');
+                }
+            });
+
+            console.log("ESC listener registrado ✅");
+        }
+    </script>
 </head>
 
 <body>

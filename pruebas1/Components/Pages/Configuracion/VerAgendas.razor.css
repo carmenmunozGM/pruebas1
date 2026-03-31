@@ -23,16 +23,12 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-
-
 .search-bar svg {
     width: 20px;
     height: 20px;
     color: #9ca3af;
     flex-shrink: 0;
 }
-
-
 
 .search-bar input {
     flex: 1;
@@ -112,7 +108,6 @@
     color: #1f2937;
     margin-bottom: 4px;
 }
-
 
 .employee-details p {
     font-size: 12px;
@@ -430,9 +425,10 @@
 }
 
 .block-scroll {
-    max-height: 220px; /* aprox 4–5 items */
+    max-height: 220px;
     overflow-y: auto;
-    padding-right: 4px; /* evita que el scroll pegue al borde */
+    padding-right: 4px;
+    background-color: inherit;
 }
 
 /* TASKS */
@@ -519,6 +515,17 @@
 .task-item.completed .task-title span {
     text-decoration: line-through;
     opacity: 0.6;
+}
+
+.task-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.priority-text {
+    margin: 0;
+    font-size: 12px;
 }
 
 /* OT Y TRA */
@@ -1405,8 +1412,7 @@
         /* 5. Etiquetas de Estado (Vencidas / Alerta) */
         [data-theme="dark"] .order-item.red {
             background: linear-gradient(180deg, rgba(140, 25, 25, 0.2), #1e293b) !important;
-        }
-        
+        }       
 
 [data-theme="dark"] .order-item.yellow {
     background: linear-gradient(180deg, rgba(146, 130, 22, 0.2), #1e293b) !important;
@@ -1618,18 +1624,17 @@
         flex-direction: column !important;
     }
 
-    [data-theme="dark"] .block-content,
-    [data-theme="dark"] .tasks-section,
-    [data-theme="dark"] .orders-section,
-    [data-theme="dark"] .selfeval-content {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 10px !important; /* Gap igual al modo claro */
-        height: auto !important;
-        max-height: none !important; /* Rompe el límite de los 220px */
-        overflow: visible !important;
-        padding: 12px !important;
-    }
+[data-theme="dark"] .block-content,
+[data-theme="dark"] .tasks-section,
+[data-theme="dark"] .orders-section,
+[data-theme="dark"] .selfeval-content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important; /* Gap igual al modo claro */
+    height: auto !important;
+    padding: 12px !important;
+    background-color: var(--bg-deep) !important;
+}
 
     [data-theme="dark"] .task-item,
     [data-theme="dark"] .order-item,
