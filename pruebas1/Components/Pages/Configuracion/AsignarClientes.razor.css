@@ -958,8 +958,8 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 
 .modal-content {
     width: 100%;
-    max-width: 520px;
-    max-height: 300px;
+    max-width: 600px;
+    max-height: 400px;
     background-color: #ffffff;
     border: 2px solid rgba(168, 85, 247, 0.3);
     border-radius: 1rem;
@@ -1107,7 +1107,7 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     background: white;
     width: 600px;
     max-width: 90%;
-    max-height: 80vh; /* 🔥 límite vertical */
+    max-height: 85vh; /* 🔥 límite vertical */
     overflow-y: auto; /* 🔥 scroll interno */
     border-radius: 20px;
     padding: 30px;
@@ -1115,7 +1115,7 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 }
 
 .actividades-container {
-    max-height: 300px;
+    max-height: 25vh;
     overflow-y: auto;
     margin-bottom: 20px;
 }
@@ -1138,3 +1138,78 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     overflow: hidden;
     padding: 24px;
 }
+
+.dropdown-list {
+    max-height: 500px; 
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: white;
+    margin-top: 5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+    .dropdown-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .dropdown-list::-webkit-scrollbar-thumb {
+        background: #cbd5f5;
+        border-radius: 10px;
+    }
+
+        .dropdown-list::-webkit-scrollbar-thumb:hover {
+            background: #a5b4fc;
+        }
+
+.service-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    overflow: hidden;
+}
+
+.service-header {
+    background: #f9fafb;
+    padding: 6px 10px;
+    font-size:13px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px;
+    padding: 8px;
+}
+
+.activity-chip {
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* 🔥 más compacto */
+    gap: 6px; /* menos espacio */
+    padding: 8px; /* menos padding */
+}
+
+
+
+
+
+
+
+
+
+
+

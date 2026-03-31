@@ -1,6 +1,7 @@
 @using Models
 @using System.Diagnostics
 @using pruebas1.Components.DTOs
+@using pruebas1.Components.Layout
 @using pruebas1.Components.UI
 @using pruebas1.Servicios
 @inject HttpClient Http
@@ -388,17 +389,26 @@
                            @oninput="FiltrarEmpleadosEditar"
                            @onfocus="MostrarTodosEmpleadosEditar" />
 
-                    @if (mostrarListaEditar && empleadosFiltradosEditar.Any())
+                    @if (mostrarListaEditar)
                     {
                         <div class="dropdown-list">
-                            @foreach (var emp in empleadosFiltradosEditar)
+                            @if (!empleadosFiltradosEditar.Any())
                             {
-                                <div class="dropdown-item"
-                                     @onclick="() => SeleccionarEmpleadoEditar(emp)">
-                                    <strong>@emp.Nombre</strong> — @emp.ClavePersonal
-                                    <br />
-                                    <small>@emp.Area</small>
+                                <div class="dropdown-empty">
+                                    Sin resultados
                                 </div>
+                            }
+                            else
+                            {
+                                @foreach (var emp in empleadosFiltradosEditar)
+                                {
+                                    <div class="dropdown-item"
+                                         @onclick="() => SeleccionarEmpleadoEditar(emp)">
+                                        <strong>@emp.Nombre</strong> — @emp.ClavePersonal
+                                        <br />
+                                        <small>@emp.Area</small>
+                                    </div>
+                                }
                             }
                         </div>
                     }
@@ -419,16 +429,30 @@
                     <div class="actividades-container">
                         @foreach (var servicio in serviciosEditar)
                         {
-                            <div style="margin-bottom:10px;">
-                                <strong>@servicio.Servicio</strong>
+                            <div class="service-card">
 
-                                @foreach (var actividad in servicio.Actividades)
+                                <div class="service-header"
+                                     @onclick="() => ToggleServicioExpandido(servicio.IdServicio)">
+
+                                    <span>@servicio.Servicio</span>
+
+                                    <span>
+                                        @(ServiciosExpandidos.Contains(servicio.IdServicio) ? "−" : "+")
+                                    </span>
+                                </div>
+
+                                @if (ServiciosExpandidos.Contains(servicio.IdServicio))
                                 {
-                                    <div>
-                                        <input type="checkbox"
-                                               checked="@selectedActivitiesEditar.Contains(actividad.IdActividad)"
-                                               @onchange="() => ToggleActividad(actividad.IdActividad)" />
-                                        @actividad.Actividad
+                                    <div class="activities-grid">
+                                        @foreach (var actividad in servicio.Actividades)
+                                        {
+                                            <label class="activity-chip">
+                                                <input type="checkbox"
+                                                       checked="@selectedActivitiesEditar.Contains(actividad.IdActividad)"
+                                                       @onchange="() => ToggleActividad(actividad.IdActividad)" />
+                                                @actividad.Actividad
+                                            </label>
+                                        }
                                     </div>
                                 }
                             </div>
@@ -539,8 +563,18 @@
 
         await CargarEmpleados();
         await CargarHistorialAsignaciones();
+        MainLayout.OnEscPressed = async () =>
+     {
+         CerrarModalActivo();
+         await InvokeAsync(StateHasChanged);
+     };
     }
 
+    void CerrarModalActivo()
+    {
+        if (mostrarModalEditar)
+            CerrarModalEditar();
+    }
 
     private async Task SetAssignmentType(string type)
     {
@@ -559,8 +593,8 @@
             await CargarClientes();
         else
             await CargarGruposClientes();
-         sinServiciosOActividades = false;
-            serviciosCargados = false;
+        sinServiciosOActividades = false;
+        serviciosCargados = false;
     }
 
 
@@ -871,7 +905,18 @@
         LimpiarEmpleado();
     }
 
+    private void ResetEditarState()
+    {
+        empleadoEditarSeleccionado = null;
+        searchEditar = "";
+        empleadosFiltradosEditar.Clear();
+        mostrarListaEditar = false;
 
+        serviciosEditar.Clear();
+        selectedActivitiesEditar.Clear();
+
+        asignacionSeleccionada = null;
+    }
     // Models
     public class Employee { public string Id { get; set; } = ""; public string Name { get; set; } = ""; }
     public class Activity { public string Id { get; set; } = ""; public string Name { get; set; } = ""; }
@@ -1061,7 +1106,7 @@
         empleadosFiltradosEditar = empleados.ToList();
         mostrarListaEditar = empleadosFiltradosEditar.Any();
     }
-    
+
     private void FiltrarEmpleadosEditar(ChangeEventArgs e)
     {
         searchEditar = e.Value?.ToString() ?? "";
@@ -1087,7 +1132,7 @@
         empleadoEditarSeleccionado = emp;
         searchEditar = emp.Nombre;
         mostrarListaEditar = false;
-
+        selectedActivitiesEditar.Clear();
         // 🔥 Recargar servicios según nueva área
         await CargarServiciosPorAreaEditar(emp.Area);
     }
@@ -1098,11 +1143,12 @@
         empleadoEditarSeleccionado = null;
         searchEditar = "";
         mostrarListaEditar = false;
+        ResetEditarState();
     }
 
     private async Task AbrirModalEditar(HistorialAsignacionDTO asignacion)
     {
-         Debug.WriteLine("Entro en el metodo editar");
+        Debug.WriteLine("Entro en el metodo editar");
         asignacionSeleccionada = asignacion;
 
         // 🔥 Buscar el empleado real en memoria
@@ -1283,7 +1329,7 @@
                     html = $@"
                     <div style='text-align:left'>
                         Las siguientes actividades ya tienen horas registradas:<br><br>
-                        {mensajeHtml}<br><br>
+                    {mensajeHtml}<br><br>
                         <b>Sugerencia:</b> Desmárcalas o crea una nueva asignación.
                     </div>",
                     confirmButtonText = "Entendido",
@@ -1353,7 +1399,7 @@
         });
 
         await CargarHistorialAsignaciones();
-
+        ResetEditarState();
         editando = false;
     }
 
@@ -1417,6 +1463,15 @@
         await CargarHistorialAsignaciones();
     }
 
+    private HashSet<int> ServiciosExpandidos = new();
+
+    private void ToggleServicioExpandido(int id)
+    {
+        if (ServiciosExpandidos.Contains(id))
+            ServiciosExpandidos.Remove(id);
+        else
+            ServiciosExpandidos.Add(id);
+    }
 
     private bool copiando = false;
     private async Task CopiarAsignacion(HistorialAsignacionDTO item)
