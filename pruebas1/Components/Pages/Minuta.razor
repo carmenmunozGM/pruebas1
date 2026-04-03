@@ -4,14 +4,13 @@
     @using System.Text.Json
     @using pruebas1.Components.DTOs
     @inject pruebas1.Servicios.AreasService AreasService
-@using pruebas1.Components.Layout
+    @using pruebas1.Components.Layout
     @inject pruebas1.Servicios.LoginService LoginService
     @inject HttpClient Http
     @inject IJSRuntime JS
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-@* Botón disparador *@
 <div class="d-flex justify-content-end">
     <button type="button" class="action-button-slender" style="margin-right: 40px; float: right;" @onclick="AbrirModal">
         <span style="font-size: 18px; line-height: 1;">+</span>
@@ -61,7 +60,8 @@
                 </div>
 
                 @* Tabla de Actividades *@
-                <div class="table-wrapper">
+                <div class="table-wrapper"
+                     style="@(FilasMinuta.Count > 3 ? "max-height: 280px; overflow-y: auto;" : "max-height: none; overflow: visible;")">
                     <table class="custom-table">
                         <thead>
                             <tr>
@@ -122,7 +122,7 @@
                                     }
                                     else if (FilasMinuta.Any(f => f.ClienteId == 295))
                                     {
-                                        <td></td> @* Celda vacía para mantener la alineación *@
+                                        <td></td> 
                                     }
 
                                     <td class="col-servicio">
@@ -611,15 +611,16 @@
         width: 100%;
     }
 
-    /* ================= TABLA ================= */
     .table-wrapper {
+        position: relative; /* Para que los hijos se posicionen respecto a esto */
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        /* Cambiamos hidden por visible para que el panel no se corte */
-        overflow: visible !important;
         background: #ffffff;
+        /* Quitamos el overflow fijo de aquí, ya lo controla el Razor arriba */
     }
-
+ 
+    /* ================= TABLA ================= */
+ 
     .custom-table {
         width: 100%;
         border-collapse: collapse;
