@@ -53,7 +53,7 @@ namespace pruebas1
             {
                 return new HttpClient
                 {
-             //BaseAddress = new Uri("https://redgm.site:9096/")
+           //  BaseAddress = new Uri("https://redgm.site:9096/")
             BaseAddress = new Uri("http://localhost:5231/")
                 };
             });
@@ -63,7 +63,7 @@ namespace pruebas1
             builder.Logging.AddDebug();
 #endif
 
-            var app = builder.Build();
+            var app = builder.Build();  
 
             using (var scope = app.Services.CreateScope())
             {

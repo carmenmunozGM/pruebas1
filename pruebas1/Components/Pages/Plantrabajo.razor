@@ -25,64 +25,68 @@
     <div class="column">
         <h3 class="section-title">Grupos de Clientes</h3>
 
-        @foreach (var grupo in GruposClientes)
-        {
-            <div class="group-block">
-                <div class="group-header" @onclick="() => ToggleGrupo(grupo)">
-                    <span>@grupo.Nombre</span>
-                    <span class="arrow">@(grupo.Expandido ? "⯆" : "⯈")</span>
-                </div>
+            @foreach (var grupo in GruposClientes)
+            {
+                <div class="group-block">
+                    <div class="group-header" @onclick="() => ToggleGrupo(grupo)">
+                        <span>@grupo.Nombre</span>
+                        <span class="arrow">@(grupo.Expandido ? "⯆" : "⯈")</span>
+                    </div>
 
-                @if (grupo.Expandido)
-                {
-                    <ul class="empresa-list">
-                        @foreach (var empresa in grupo.Empresas)
-                        {
-                            <li @onclick="() => OpenModal(empresa.IdUsuarioEntidadAgenda)" class="empresa-item">
-                                <div class="d-flex justify-content-between align-items-center w-100">
-                                    <span>🏢 @empresa.Nombre</span>
+                    @if (grupo.Expandido)
+                    {
+                        <ul class="empresa-list">
+                            @foreach (var empresa in grupo.Empresas)
+                            {
+                                <li @onclick="() => OpenModal(empresa.IdUsuarioEntidadAgenda)" class="empresa-item">
+                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                        <span>🏢 @empresa.Nombre</span>
 
                                     @if (empresa.TotalHoras > 0)
                                     {
-                                        <span class="badge-horas">@empresa.TotalHoras hrs</span>
+                                        <span class="badge-horas">
+                                            @FormatearMinutos(empresa.TotalHoras)
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="badge-sin-horas">0 hrs</span>
+                                        <span class="badge-sin-horas">00:00</span>
                                     }
-                                </div>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        }
-    </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        </div>
 
  
-    <div class="column">
-        <h3 class="section-title">Clientes Individuales</h3>
+        <div class="column">
+            <h3 class="section-title">Clientes Individuales</h3>
 
-        <ul class="empresa-list">
-            @foreach (var cliente in ClientesIndividuales)
-            {
-                <li @onclick="() => OpenModal(cliente.IdUsuarioEntidadAgenda)">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <span>🧾 @cliente.Nombre</span>
+            <ul class="empresa-list">
+                @foreach (var cliente in ClientesIndividuales)
+                {
+                    <li @onclick="() => OpenModal(cliente.IdUsuarioEntidadAgenda)">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <span>🧾 @cliente.Nombre</span>
 
-                      
+
                         @if (cliente.TotalHoras > 0)
                         {
-                            <span class="badge-horas">@cliente.TotalHoras hrs</span>
+                            <span class="badge-horas">
+                                @FormatearMinutos(cliente.TotalHoras)
+                            </span>
                         }
                         else
                         {
-                            <span class="badge-sin-horas">0 hrs</span>
+                            <span class="badge-sin-horas">00:00</span>
                         }
-                    </div>
-                </li>
-            }
-        </ul>
+                        </div>
+                    </li>
+                }
+            </ul>
     </div>
 </div>
 <br />
@@ -93,7 +97,8 @@
         <div class="modal large" @onclick:stopPropagation="true">
             <h3 class="modal-title">@ModalEmpresa</h3>
             <div class="total-horas-badge">
-                Total horas programadas: <strong>@CalcularTotalHoras() hrs</strong>
+                Total horas programadas:
+                <strong>@FormatearMinutos(CalcularTotalHoras())</strong>
             </div>
 
             @if (MostrarAlerta)
@@ -163,23 +168,18 @@
                                      
                                             <input type="text"
                                                    class="form-control text-center bg-light"
-                                                   value="@actividad.HorasProgramadas hrs"
+                                                   value="@(actividad.HorasProgramadas > 0
+                                                       ? TimeSpan.FromMinutes(actividad.HorasProgramadas).ToString(@"hh\:mm")
+                                                       : "--:--")"
                                                    disabled
                                                    style="cursor: not-allowed; font-weight: bold; border: 1px solid #ced4da;" />
                                         }
                                         else
                                         {
 
-                                            <select class="form-control @(actividad.Fecha.HasValue && actividad.HorasProgramadas <= 0 ? "border-danger" : "")"
-                                                    value="@actividad.HorasProgramadas"
-                                                    @onchange="@((e) => OnHorasChanged(actividad, e))">
-
-                                                <option value="0">-- Horas --</option>
-                                                @for (int i = 1; i <= 25; i++)
-                                                {
-                                                    <option value="@i">@i @(i == 1 ? "hr" : "hrs")</option>
-                                                }
-                                            </select>
+                                            <TimePickerList Value="actividad.DuracionTime"
+                                                            ValueChanged="@(async (TimeOnly? t) => await OnDuracionChanged(actividad, t))" />
+                                            
                                         }
                                     </div>
                                 </td>
@@ -315,7 +315,7 @@
 
         // 🔑 CLAVE PARA HISTORIAL
         public int IdHorasProgramaTrabajo { get; set; }
-
+        public TimeOnly? DuracionTime { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public DateTime? Fecha { get; set; }
         public int HorasProgramadas { get; set; }
@@ -483,29 +483,70 @@
 
         ModalEmpresa = data.NombreEmpresa;
         ServiciosModal = data.Servicios
-            .Select(s => new ServicioModal
-            {
-                NombreServicio = s.NombreServicio,
-                Actividades = s.Actividades
-                    .OrderBy(a => a.IdActividadGeneral)
-                    .Select(a => new Actividad
-                    {
-                        IdCheckListAsignacion = a.IdCheckListAsignacion,
-                        IdActividadGeneral = a.IdActividadGeneral,
-                        IdHorasProgramaTrabajo = a.IdHorasProgramaTrabajo,
-                        Nombre = a.NombreActividad,
-                        Fecha = a.Fecha,
-                        // Si ya tiene fecha en la DB, bloqueamos el input directo
-                        FechaOriginalDesdeDB = a.Fecha.HasValue, 
-                        HorasProgramadas = a.HorasProgramadas,
-                        Observaciones = a.Observaciones
-                    })
-                    .ToList()
-            })
-            .ToList();
+     .Select(s => new ServicioModal
+     {
+         NombreServicio = s.NombreServicio,
+         Actividades = s.Actividades
+             .OrderBy(a => a.IdActividadGeneral)
+             .Select(a => new Actividad
+             {
+                 IdCheckListAsignacion = a.IdCheckListAsignacion,
+                 IdActividadGeneral = a.IdActividadGeneral,
+                 IdHorasProgramaTrabajo = a.IdHorasProgramaTrabajo,
+                 Nombre = a.NombreActividad,
+                 Fecha = a.Fecha,
+                 FechaOriginalDesdeDB = a.Fecha.HasValue,
+
+                 // 🔥 AQUÍ ESTÁ LA CLAVE
+                 HorasProgramadas = a.HorasProgramadas,
+
+                 DuracionTime = a.HorasProgramadas > 0
+                     ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(a.HorasProgramadas))
+                     : null,
+
+                 Observaciones = a.Observaciones
+             })
+             .ToList()
+     })
+     .ToList();
     }
 
+    private async Task OnDuracionChanged(Actividad actividad, TimeOnly? time)
+    {
+        if (time == null) return;
 
+        int minutos = (time.Value.Hour * 60) + time.Value.Minute;
+
+        // 🚨 VALIDACIÓN: mínimo 5 minutos
+        if (minutos < 5)
+        {
+            actividad.DuracionTime = null;
+            actividad.HorasProgramadas = 0;
+
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Duración inválida",
+                text = "La duración mínima es de 5 minutos."
+            });
+
+            return;
+        }
+
+        actividad.DuracionTime = time;
+        actividad.HorasProgramadas = minutos;
+
+        if (actividad.Fecha.HasValue)
+        {
+            await ServicioClienteService.GuardarFechaYMinutaAsync(
+                new HorasProgramaTrabajoUpsertDTO
+                {
+                    IdAsignacion = actividad.IdCheckListAsignacion,
+                    Fecha = actividad.Fecha.Value,
+                    HorasProgramadas = actividad.HorasProgramadas
+                });
+        }
+    }
 
 
     private void GuardarActividades()
@@ -783,6 +824,17 @@ private async Task GuardarCambiosActividad(Actividad actividad)
                         return; // CORTA EL FLUJO: No guarda nada de ninguna actividad
                     }
 
+                    if (tieneHoras && actividad.HorasProgramadas < 5)
+                    {
+                        await JS.InvokeVoidAsync("Swal.fire", new
+                        {
+                            title = "Duración inválida",
+                            text = $"La actividad '{actividad.Nombre}' debe tener al menos 5 minutos.",
+                            icon = "error"
+                        });
+                        return;
+                    }
+
                     // Validación extra: Que no pongan fechas pasadas en registros nuevos
                     if (!actividad.FechaOriginalDesdeDB && tieneFecha && actividad.Fecha.Value.Date < DateTime.Today)
                     {
@@ -859,28 +911,18 @@ private async Task GuardarCambiosActividad(Actividad actividad)
             );
         }
 
-    private async Task OnHorasChanged(Actividad actividad, ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out int nuevasHoras))
-        {
-            actividad.HorasProgramadas = nuevasHoras;
-
-            if (actividad.Fecha.HasValue)
-            {
-                await ServicioClienteService.GuardarFechaYMinutaAsync(new HorasProgramaTrabajoUpsertDTO
-                {
-                    // IdHorasProgramaTrabajo = actividad.IdHorasProgramaTrabajo,
-                    IdAsignacion = actividad.IdCheckListAsignacion,
-                    Fecha = actividad.Fecha.Value,
-                    HorasProgramadas = actividad.HorasProgramadas
-                });
-            }
-        }
-    }
-
     private int CalcularTotalHoras()
     {
-        return ServiciosModal.SelectMany(s => s.Actividades).Sum(a => a.HorasProgramadas);
+        return ServiciosModal
+            .SelectMany(s => s.Actividades)
+            .Sum(a => a.HorasProgramadas); // 🔥 sigue en minutos
+    }
+
+    private string FormatearMinutos(int minutosTotales)
+    {
+        var horas = minutosTotales / 60;
+        var minutos = minutosTotales % 60;
+        return $"{horas:D2}:{minutos:D2}";
     }
 
 }

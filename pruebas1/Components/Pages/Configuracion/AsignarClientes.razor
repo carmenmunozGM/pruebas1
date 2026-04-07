@@ -213,13 +213,23 @@
                                             @foreach (var activity in service.Activities)
                                             {
                                                 <div class="activity-item">
-                                                    <label class="checkbox-wrapper">
+                                                    <label class="checkbox-wrapper activity-left">
                                                         <input type="checkbox"
-                                                               checked="@selectedActivities.Contains(activity.Id)"
-                                                               @onchange="() => ToggleActivity(activity.Id)" />
+                                                               checked="@selectedActivities.ContainsKey(int.Parse(activity.Id))"
+                                                               @onchange="() => ToggleActivity(int.Parse(activity.Id))" />
+
                                                         <span class="checkbox-custom"></span>
                                                         <span class="activity-name">@activity.Name</span>
                                                     </label>
+
+                                                    @if (selectedActivities.ContainsKey(int.Parse(activity.Id)))
+                                                    {
+                                                        <input type="number"
+                                                               min="1"
+                                                               value="@selectedActivities[int.Parse(activity.Id)]"
+                                                               @onchange="(e) => CambiarCantidad(activity.Id, e.Value)"
+                                                               class="input-cantidad" />
+                                                    }
                                                 </div>
                                             }
                                         </div>
@@ -446,11 +456,25 @@
                                     <div class="activities-grid">
                                         @foreach (var actividad in servicio.Actividades)
                                         {
-                                            <label class="activity-chip">
-                                                <input type="checkbox"
-                                                       checked="@selectedActivitiesEditar.Contains(actividad.IdActividad)"
-                                                       @onchange="() => ToggleActividad(actividad.IdActividad)" />
-                                                @actividad.Actividad
+                                            <label class="activity-chip activity-chip-edit">
+
+                                                <div class="chip-left">
+                                                    <input type="checkbox"
+                                                           checked="@selectedActivitiesEditar.ContainsKey(actividad.IdActividad)"
+                                                           @onchange="() => ToggleActividad(actividad.IdActividad)" />
+
+                                                    <span>@actividad.Actividad</span>
+                                                </div>
+
+                                                @if (selectedActivitiesEditar.ContainsKey(actividad.IdActividad))
+                                                {
+                                                    <input type="number"
+                                                           class="chip-input"
+                                                           min="1"
+                                                           value="@selectedActivitiesEditar[actividad.IdActividad]"
+                                                           @onchange="(e) => CambiarCantidadEditar(actividad.IdActividad, e.Value)" />
+                                                }
+
                                             </label>
                                         }
                                     </div>
@@ -520,7 +544,7 @@
     private string? selectedEmployee = null;
     private string? selectedClient = null;
     private List<string> selectedServices = new();
-    private List<string> selectedActivities = new();
+    private Dictionary<int, int> selectedActivities = new();
     private List<ClientesDTO> clientes = new();
     private List<GrupoClientesDTO> gruposClientes = new();
     private List<EmpleadoDTO> empleados = new();
@@ -550,7 +574,7 @@
     private bool mostrarListaEditar = false;
 
     private List<ServicioConActividadesDTO> serviciosEditar = new();
-    private HashSet<int> selectedActivitiesEditar = new();
+    private Dictionary<int, int> selectedActivitiesEditar = new();
 
     private bool editando = false;
 
@@ -782,7 +806,7 @@
             {
                 foreach (var activity in service.Activities)
                 {
-                    selectedActivities.Remove(activity.Id);
+                    selectedActivities.Remove(int.Parse(activity.Id));
                 }
             }
         }
@@ -794,20 +818,29 @@
         Debug.WriteLine($"SERVICIOS SELECCIONADOS: {string.Join(", ", selectedServices)}");
     }
 
-    private void ToggleActivity(string activityId)
+    private void ToggleActivity(int activityId)
     {
-
-        Debug.WriteLine($"ACTIVITY TOGGLE: {activityId}");
-        if (selectedActivities.Contains(activityId))
+        if (selectedActivities.ContainsKey(activityId))
         {
             selectedActivities.Remove(activityId);
         }
         else
         {
-            selectedActivities.Add(activityId);
+            selectedActivities[activityId] = 1; // default
         }
+    }
 
-        Debug.WriteLine($"ACTIVIDADES SELECCIONADAS: {string.Join(", ", selectedActivities)}");
+    private void CambiarCantidad(string activityIdStr, object? value)
+    {
+        int activityId = int.Parse(activityIdStr);
+
+        if (int.TryParse(value?.ToString(), out int cantidad))
+        {
+            if (cantidad < 1)
+                cantidad = 1;
+
+            selectedActivities[activityId] = cantidad;
+        }
     }
 
     private bool IsFormComplete()
@@ -815,7 +848,7 @@
         return !string.IsNullOrEmpty(selectedEmployee) &&
                !string.IsNullOrEmpty(selectedClient) &&
                selectedServices.Any() &&
-               selectedActivities.Any();
+               selectedActivities.Any(x => x.Value > 0);
     }
 
     private async Task SaveAssignment()
@@ -869,7 +902,14 @@
             TipoEntidad = assignmentType == "client" ? "Cliente" : "Grupo",
             IdEmpleado = empleadoSeleccionado.Id,
             ClientesIds = entidadesIds,
-            ActividadesIds = selectedActivities.Select(int.Parse).ToList()
+            Actividades = selectedActivities
+            .Select(x => new pruebas1.Components.DTOs.ActividadCantidadDTO
+            {
+                IdActividad = x.Key,
+                Cantidad = x.Value
+            })
+    .ToList()
+
         };
 
         // 3️⃣ POST al backend
@@ -1080,7 +1120,7 @@
     private bool IsServiceFullySelected(Service service)
     {
         return service.Activities.Any() &&
-               service.Activities.All(a => selectedActivities.Contains(a.Id));
+               service.Activities.All(a => selectedActivities.ContainsKey(int.Parse(a.Id)));
     }
 
     private void ToggleAllActivitiesForService(Service service)
@@ -1089,14 +1129,16 @@
 
         foreach (var activity in service.Activities)
         {
+            int id = int.Parse(activity.Id);
+
             if (allSelected)
             {
-                selectedActivities.Remove(activity.Id);
+                selectedActivities.Remove(id);
             }
             else
             {
-                if (!selectedActivities.Contains(activity.Id))
-                    selectedActivities.Add(activity.Id);
+                if (!selectedActivities.ContainsKey(id))
+                    selectedActivities[id] = 1; // 👈 default
             }
         }
     }
@@ -1158,7 +1200,9 @@
         if (empleadoEditarSeleccionado == null)
             return;
 
-        selectedActivitiesEditar = asignacion.ActividadesIds.ToHashSet();
+        selectedActivitiesEditar = asignacion.ActividadesIds
+            .GroupBy(x => x)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         // 🔥 Usar el área del empleado encontrado
         await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
@@ -1236,9 +1280,8 @@
 
         // 🔥 LIMPIEZA DE ACTIVIDADES
         var actividadesLimpias = selectedActivitiesEditar
-            .Where(x => x > 0)
-            .Distinct()
-            .ToList();
+    .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
+    .ToList();
 
         if (!actividadesLimpias.Any())
         {
@@ -1405,13 +1448,22 @@
 
     private void ToggleActividad(int actividadId)
     {
-        if (selectedActivitiesEditar.Contains(actividadId))
+        if (selectedActivitiesEditar.ContainsKey(actividadId))
             selectedActivitiesEditar.Remove(actividadId);
         else
-            selectedActivitiesEditar.Add(actividadId);
+            selectedActivitiesEditar[actividadId] = 1; // default
     }
 
+    private void CambiarCantidadEditar(int actividadId, object? value)
+    {
+        if (int.TryParse(value?.ToString(), out int cantidad))
+        {
+            if (cantidad < 1)
+                cantidad = 1;
 
+            selectedActivitiesEditar[actividadId] = cantidad;
+        }
+    }
 
 
     private void AbrirModalEliminar(HistorialAsignacionDTO item)
@@ -1496,7 +1548,14 @@
                 TipoEntidad = item.TipoEntidad,
                 IdEmpleado = item.IdEmpleado,
                 ClientesIds = item.EntidadesExternasIds,
-                ActividadesIds = item.ActividadesIds
+                Actividades = item.ActividadesIds
+    .GroupBy(id => id)
+    .Select(g => new pruebas1.Components.DTOs.ActividadCantidadDTO
+    {
+        IdActividad = g.Key,
+        Cantidad = g.Count()
+    })
+    .ToList()
             };
 
             var response = await Http.PostAsJsonAsync(
@@ -1525,5 +1584,11 @@
     private void CambiarPagina(int nuevaPagina)
     {
         paginaActual = nuevaPagina;
+    }
+
+    public class ActividadCantidadDTO
+    {
+        public int IdActividad { get; set; }
+        public int Cantidad { get; set; }
     }
 }
