@@ -1017,6 +1017,17 @@
 
     async Task RefreshAgenda()
     {
+        cargando = true;
+        await InvokeAsync(StateHasChanged);
+
+        await CargarEmpleados();
+
+        if (selectedEmployee != null)
+        {
+            await ShowAgenda(selectedEmployee);
+        }
+
+        cargando = false;
         await InvokeAsync(StateHasChanged);
     }
 
