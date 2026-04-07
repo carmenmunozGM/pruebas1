@@ -264,22 +264,6 @@
             empleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json);
         }
         catch { }
-
-        // MainLayout.OnEscPressed = async () =>
-        // {
-        //     CerrarModalActivo();
-        //     await InvokeAsync(StateHasChanged);
-        // };
-    }
-
-    void CloseModal() => ShowModal = false;
-
-    void CerrarModalActivo()
-    {
-        if (ShowModal = true){
-            LimpiarCampos();
-            CloseModal();
-        }
     }
 
     private string ObtenerNombreFrecuencia(int? idFrecuencia)
@@ -328,6 +312,18 @@
     {
         LimpiarCampos();
         ShowModal = true;
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    void CerrarModalActivo()
+    {
+        if (ShowModal)
+            CheckClose();
     }
    
     private void CheckClose()

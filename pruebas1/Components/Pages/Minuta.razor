@@ -217,20 +217,20 @@
     </div>
 }
 
-    @code {
-        [Parameter] public EventCallback OnSave { get; set; }
-        private List<ClientesDTO> listaClientes = new();
-        private bool IsVisible = false;
-        private string NombreAsesor = "";
-        private int ClaveAsesor = 0;
-        private DateTime FechaSeleccionada = DateTime.Now;
-        private string Observaciones = "";
-        private List<ActividadMinutaDTO> ListadoActividades = new();
-        private bool MostrarAlerta = false;
-        private string MensajeAlerta = "";
-        private string TipoAlerta = "error"; 
-        private List<ServicioConActividadesDTO> ListaServicios = new();
-        private List<CatalogoLugarDTO> ListaLugares = new();
+@code {
+    [Parameter] public EventCallback OnSave { get; set; }
+    private List<ClientesDTO> listaClientes = new();
+    private bool IsVisible = false;
+    private string NombreAsesor = "";
+    private int ClaveAsesor = 0;
+    private DateTime FechaSeleccionada = DateTime.Now;
+    private string Observaciones = "";
+    private List<ActividadMinutaDTO> ListadoActividades = new();
+    private bool MostrarAlerta = false;
+    private string MensajeAlerta = "";
+    private string TipoAlerta = "error"; 
+    private List<ServicioConActividadesDTO> ListaServicios = new();
+    private List<CatalogoLugarDTO> ListaLugares = new();
     private List<AreaDTO> ListaAreas = new();
 
 
@@ -240,7 +240,7 @@
         public int IdServicio { get; set; }
         public int IdActividad { get; set; }
         public int IdArea { get; set; }
-      
+
         public int IdLugar { get; set; }
         public string BusquedaCliente { get; set; } = "";
         public bool MostrarResultados { get; set; } = false;
@@ -299,6 +299,12 @@
             StateHasChanged();
         }
         catch (TaskCanceledException) { }
+    }
+
+    void CerrarModalActivo()
+    {
+        if (IsVisible)
+            IsVisible = false ;
     }
 
     private void OnFechaInicioChanged(DateTime? nuevaFecha)
@@ -403,6 +409,12 @@
 
         // 🔥 Mostrar modal SOLO cuando todo esté cargado
         IsVisible = true;
+
+        MainLayout.OnEscPressed = async () =>
+        {
+            CerrarModalActivo();
+            await InvokeAsync(StateHasChanged);
+        };
 
         StateHasChanged();
     }

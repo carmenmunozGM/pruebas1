@@ -41,6 +41,7 @@ namespace pruebas1
             builder.Services.AddScoped<AdministrarAgendasService>();
             builder.Services.AddScoped<PerfilesService>();
             builder.Services.AddScoped<EmpleadosService>();
+            builder.Services.AddScoped<HorariosService>();
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddScoped<AppSettingsService>();
             builder.Services.AddScoped<ThemeService>();
@@ -53,8 +54,9 @@ namespace pruebas1
             {
                 return new HttpClient
                 {
-             BaseAddress = new Uri("https://redgm.site:9096/")
-             //BaseAddress = new Uri("http://localhost:5231/")
+                //BaseAddress = new Uri("https://redgm.site:9096/")
+                //BaseAddress = new Uri("http://localhost:5231/")
+                BaseAddress = new Uri("http://redgm.site:9097/")
                 };
             });
 
