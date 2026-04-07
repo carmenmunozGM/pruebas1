@@ -7,6 +7,7 @@
 @inject ReglasRecurrenciaServices reglasRecurrenciaServices
 @inject IJSRuntime JSRuntime
 @inject UsuarioState UsuarioState
+@inject HorariosService HorariosService
 @using System.Diagnostics
 @using Newtonsoft.Json
 @using pruebas1.Components.DTOs
@@ -246,6 +247,8 @@
     private TareaCreada TareaCreada { get; set; } = new();
     private TareaCreada nuevaTarea = new TareaCreada();
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -264,6 +267,23 @@
             empleados = JsonConvert.DeserializeObject<List<EmpleadoDTO>>(json);
         }
         catch { }
+    }
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
     }
 
     private string ObtenerNombreFrecuencia(int? idFrecuencia)
@@ -347,6 +367,9 @@
     // ----------------- GUARDAR -----------------
     private async Task Guardar()
     {
+        if (!await ValidarHora())
+        return;
+
         string alertMessage = "";
         if (string.IsNullOrWhiteSpace(titulo))
             alertMessage += "Debes completar el título.\n";
@@ -555,30 +578,6 @@
 
         FechaFin = value;
     }
-    // private void LimpiarCampos()
-    // {
-    //     titulo = "";
-    //     descripcion = "";
-    //     subtasks.Clear();
-    //     newSubtask = "";
-
-    //     FechaInicio = null;
-    //     FechaFin = null;
-    //     HoraInicio = null;
-    //     HoraFin = null;
-
-    //     ubicacionOtra = "";
-    //     mostrarOtraUbicacion = false;
-
-    //     selectedSalaId = null;
-
-    //     selectedPrioridadId = null;
-    //     selectedFrecuenciaId = null;
-
-    //     participantesSeleccionados.Clear();
-
-    //     FormType = FormTypes.Tareas;
-    // }
 
     private void SetFormType(FormTypes type)
     {
@@ -1305,3 +1304,7 @@
         color: #64748b !important;
     }
 </style>
+
+<ReusableHorarioAlert @key="mostrarAlerta" 
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
