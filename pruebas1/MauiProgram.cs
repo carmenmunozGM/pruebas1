@@ -54,9 +54,9 @@ namespace pruebas1
             {
                 return new HttpClient
                 {
-                //BaseAddress = new Uri("https://redgm.site:9096/")
-                //BaseAddress = new Uri("http://localhost:5231/")
-                BaseAddress = new Uri("http://redgm.site:9097/")
+                //BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
+                BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
+                //BaseAddress = new Uri("http://redgm.site:9097/")  //SERVIDOR PRUEBAS
                 };
             });
 
