@@ -8,6 +8,7 @@
 @inject HttpClient _http
 @using pruebas1.Components.Pages
 @inject IJSRuntime JS
+@inject HorariosService HorariosService
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>-
 <br />
@@ -291,6 +292,26 @@
     [Parameter]
     [SupplyParameterFromQuery]
     public string? tareaId { get; set; }
+
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
     // Clase para historial de cambios
     public class CambioFecha
     {
@@ -470,6 +491,9 @@
 
     private async Task OpenModal(int idUsuarioEntidadAgenda)
     {
+        if (!await ValidarHora())
+            return;
+
         ShowModal = true;
         ServiciosModal.Clear();
         idEmpresaAbierta = idUsuarioEntidadAgenda;
@@ -547,7 +571,6 @@
                 });
         }
     }
-
 
     private void GuardarActividades()
     {
@@ -649,6 +672,9 @@ void MostrarAlertaSinFecha()
 
     private async Task GuardarCambioFecha()
     {
+        if (!await ValidarHora())
+        return;
+
         MostrarErrorFecha = false;
         MostrarErrorMotivo = false;
         ErrorServidor = null;
@@ -733,7 +759,6 @@ void MostrarAlertaSinFecha()
         }
     }
 
-
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {
         actividad.HorasProgramadas = (int)e.Value!;
@@ -762,6 +787,9 @@ private async Task OnFechaChanged(Actividad actividad, DateTime? nuevaFecha)
 
 private async Task GuardarCambiosActividad(Actividad actividad)
 {
+        if (!await ValidarHora())
+            return;
+
     if (actividad.Fecha == null) return;
 
     try 
@@ -796,6 +824,9 @@ private async Task GuardarCambiosActividad(Actividad actividad)
 
     private async Task GuardarTodo()
     {
+        if (!await ValidarHora())
+            return;
+
         try
         {
             // --- PASO 1: VALIDACIÓN "CERO TOLERANCIA" ---
@@ -924,6 +955,9 @@ private async Task GuardarCambiosActividad(Actividad actividad)
         var minutos = minutosTotales % 60;
         return $"{horas:D2}:{minutos:D2}";
     }
-
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
 

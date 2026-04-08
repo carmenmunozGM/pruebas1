@@ -31,6 +31,7 @@
 @inject AppSettingsService Settings
 @implements IDisposable
 @inject NavigationManager NavManager
+@inject HorariosService HorariosService
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -505,13 +506,6 @@
 
                                         else if (cat.Name.Trim() != "Órdenes de Trabajo")
                                         {
-
-                                        @* 
-                                        <input type="checkbox"
-                                               @bind="st.IsDone"
-                                               @bind:after="() => ToggleSubtaskAsync(st)"
-                                               disabled="@(st.Tipo == "Tarea" && st.Subtasks.Any(s => !s.IsDone))" /> *@
-
                                         }
 
                                         <span class="subtask-text">@st.Title</span>
@@ -1579,6 +1573,25 @@
     private CumpleaniosDTO? miCumple;
     private bool esMiCumple = false;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
 
     private async Task CargarCumpleanios()
     {
@@ -1601,7 +1614,6 @@
     }
     private async Task CargarVacaciones()
     {
-
         listaVacaciones = await InfoService.GetMisVacaciones();
     }
     private void AlternarE(string nombre)
@@ -1618,6 +1630,8 @@
 
     private async Task ValidarYGuardar(SubtaskModel st)
     {
+        if (!await ValidarHora())
+            return;
 
         bool esFechaPasada = FechaSeleccionada.Date < DateTime.Today.Date;
         bool esServicio = st.Tipo == "ServicioCliente";
@@ -1760,6 +1774,9 @@
 
     async Task ToggleTareaApi(TareaApi t)
     {
+        if (!await ValidarHora())
+return;
+
         t.completada = !t.completada;
 
 
@@ -1771,6 +1788,8 @@
 
     async Task DeleteTareaApi(TareaApi t)
     {
+        if (!await ValidarHora())
+            return;
         await Http.DeleteAsync($"tareas/eliminar/{t.id}");
         await CargarTareas();
     }
@@ -1783,6 +1802,8 @@
 
     async Task ToggleSubTareaApi(TareaApi tarea, SubTareaApi s)
     {
+        if (!await ValidarHora())
+            return;
         s.completada = !s.completada;
         await Http.PutAsJsonAsync($"tareas/editar/{tarea.id}", tarea);
     }
@@ -1795,6 +1816,8 @@
 
     private async Task AbrirModalTareas(int idTramite)
     {
+        if (!await ValidarHora())
+return;
         try
         {
             TramiteSeleccionado = await OrdenTramiteService.GetTramiteDetalle(idTramite);
@@ -1978,6 +2001,9 @@
 
     private async Task ToggleSubtaskAsync(SubtaskModel st)
     {
+        if (!await ValidarHora())
+return;
+
         bool ok = false;
         if (st.Tipo == "Evento")
         {
@@ -2013,6 +2039,9 @@
     }
     private async Task ToggleParentSubtaskAsync(SubtaskModel parent)
     {
+        if (!await ValidarHora())
+            return;
+
         await AgendaService.CambiarEstadoTareaAsync(parent.ApiId, parent.IsDone);
 
         foreach (var sub in parent.Subtasks)
@@ -2042,6 +2071,9 @@
 
     private async Task ToggleInnerSubtask(CategoryModel category, SubtaskModel parent, SubtaskModel subtask)
     {
+        if (!await ValidarHora())
+return;
+
         await AgendaService.CambiarEstadoSubtareaAsync(subtask.ApiId, subtask.IsDone);
         if (subtask.Tipo == "Tarea")
             subtask.FechaCompletada= subtask.IsDone ? FechaSeleccionada.Date : null;
@@ -2102,6 +2134,8 @@
     AutoevaluacionDiaModel item,
     ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+return;
 
         if (FechaSeleccionada.Date != DateTime.Today)
             return;
@@ -2448,6 +2482,8 @@ MasterCategories.Add(servicioClienteCategory);
     // --- MÉTODOS DE EDICIÓN ---
     private async Task OpenEditModal(SubtaskModel st)
     {
+        if (!await ValidarHora())
+            return;
         if (st == null) return;
         searchText = "";
         mostrarLista = false;
@@ -2538,6 +2574,9 @@ MasterCategories.Add(servicioClienteCategory);
     
     private async Task HandleSave()
 {
+    if (!await ValidarHora())
+return;
+
     if (EditItem == null) return;
     var fInicio = EditItem.FechaInicio.Date.Add(EditItem.HoraInicio.ToTimeSpan());
     var fFin = EditItem.FechaFin.Date.Add(EditItem.HoraFin.ToTimeSpan());
@@ -2631,6 +2670,9 @@ MasterCategories.Add(servicioClienteCategory);
 }
     private async Task EliminarSubtask(SubtaskModel st)
     {
+        if (!await ValidarHora())
+return;
+
     
         bool isDark = await JS.InvokeAsync<bool>("eval", "document.documentElement.getAttribute('data-theme') === 'dark'");
         string bgColor = isDark ? "#1e293b" : "#ffffff";
@@ -2709,6 +2751,7 @@ MasterCategories.Add(servicioClienteCategory);
     private List<EmpleadoDTO> todosLosEmpleados = new();
     private void ActualizarDatosParticipantesExistentes()
     {
+
         if (EditItem?.Participantes != null && todosLosEmpleados.Any())
         {
             foreach (var p in EditItem.Participantes)
@@ -2744,6 +2787,7 @@ MasterCategories.Add(servicioClienteCategory);
     }
     private void SeleccionarParticipante(EmpleadoDTO emp)
     {
+
         if (EditItem != null)
         {
             if (EditItem.Participantes == null) EditItem.Participantes = new List<EmpleadoDTO>();
@@ -2760,6 +2804,7 @@ MasterCategories.Add(servicioClienteCategory);
     }
     private void QuitarParticipante(EmpleadoDTO emp)
     {
+
         EditItem?.Participantes.Remove(emp);
         StateHasChanged();
     }
@@ -2779,6 +2824,7 @@ MasterCategories.Add(servicioClienteCategory);
     }
     void EliminarSubtarea(EditableSubtask sub)
     {
+
         if (EditItem.Subtareas.Contains(sub))
         {
             EditItem.Subtareas.Remove(sub);
@@ -3117,6 +3163,9 @@ MasterCategories.Add(servicioClienteCategory);
 
     private async Task DiaSiguiente()
     {
+        if (!await ValidarHora())
+        return;
+
         FechaSeleccionada = FechaSeleccionada.AddDays(1);
         await VerificarDiaNoLaboralAsync();
         await CargarTareasPorFecha();
@@ -3125,6 +3174,9 @@ MasterCategories.Add(servicioClienteCategory);
 
     private async Task DiaAnterior()
     {
+        if (!await ValidarHora())
+        return;
+
         FechaSeleccionada = FechaSeleccionada.AddDays(-1);
         await VerificarDiaNoLaboralAsync();
         await CargarTareasPorFecha();
@@ -3132,6 +3184,9 @@ MasterCategories.Add(servicioClienteCategory);
     }
     private async Task SeleccionarFecha(DateTime nuevaFecha)
     {
+        if (!await ValidarHora())
+return;
+
         FechaSeleccionada = nuevaFecha;
         CerrarCalendario();
         await VerificarDiaNoLaboralAsync();
@@ -3247,3 +3302,7 @@ MasterCategories.Add(servicioClienteCategory);
         }
     }
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
