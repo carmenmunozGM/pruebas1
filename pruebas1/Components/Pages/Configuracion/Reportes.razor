@@ -680,7 +680,7 @@
             if (reportType == "autoevaluacion")
             {
                 url = $"api/Reportes/Autoevaluacion/{user.Id}/{anio}/{mes}";
-                filePrefix = "autoevaluación";
+                filePrefix = "AE";
             }
 
             else if (reportType == "clientes")
@@ -709,7 +709,8 @@
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
-            var fileName = $"{filePrefix}_{user.Name}_{anio}_{mes}.xlsx".Replace(" ", "_");
+            // Cambia la línea del nombre del archivo por esta:
+            var fileName = $"{filePrefix}_{mes:D2}_{anio}_{user.Name}.xlsx".Replace(" ", "_");
 
             await JS.InvokeVoidAsync(
                 "downloadFile",
