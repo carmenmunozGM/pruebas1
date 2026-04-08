@@ -8,6 +8,7 @@
 @inject EmpleadosService EmpleadosService
 @inject PerfilesService PerfilesService
 @inject LoginService LoginService
+@inject HorariosService HorariosService
 
 <div class="reportes-section">
     <div class="section-header">
@@ -322,6 +323,25 @@
 
     bool puedeVerReportesAvanzados = false;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
 
     private async Task CargarServiciosUsuario()
     {
@@ -368,6 +388,9 @@
 
     private async Task HandleDownloadActividad(string formato)
     {
+        if (!await ValidarHora())
+            return;
+
         try
         {
             if (actividadSeleccionadaId == null)
@@ -424,6 +447,9 @@
 
     private async Task HandleDownloadRegistroActividades(string formato)
     {
+        if (!await ValidarHora())
+            return;
+
         try
         {
             var partes = selectedMonth.Split('-');
@@ -475,6 +501,9 @@
 
     private async Task HandleDownloadHorasProgramadas(string formato)
     {
+        if (!await ValidarHora())
+        return;
+
         try
         {
             var partes = selectedMonth.Split('-');
@@ -668,6 +697,9 @@
 
     private async Task HandleDownload(UserInfo user, string formato)
     {
+        if (!await ValidarHora())
+            return;
+
         try
         {
             var partes = selectedMonth.Split('-');
@@ -771,3 +803,7 @@
         }
     }
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

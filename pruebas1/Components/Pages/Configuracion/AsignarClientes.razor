@@ -10,6 +10,7 @@
 @inject LoginService LoginService
 @inject IJSRuntime JS
 @inject EmpleadosService EmpleadosService
+@inject HorariosService HorariosService
 
 <div class="asignar-container">
     <div class="section-header">
@@ -586,6 +587,9 @@
     private bool editando = false;
     private List<ClientesDTO> clientesSeleccionadosGrupo = new();
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
     protected override async Task OnInitializedAsync()
     {
         var cultura = new CultureInfo("es-MX");
@@ -599,6 +603,23 @@
          CerrarModalActivo();
          await InvokeAsync(StateHasChanged);
      };
+    }
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
     }
 
     void CerrarModalActivo()
@@ -869,6 +890,8 @@
 
     private async Task SaveAssignment()
     {
+        if (!await ValidarHora())
+            return;
 
         var usuario = LoginService.obtenerUsuarioLogueado();
 
@@ -950,9 +973,6 @@
             Debug.WriteLine($"❌ Error al guardar asignación: {error}");
             return;
         }
-
-
-
 
         await CargarHistorialAsignaciones();
 
@@ -1216,6 +1236,9 @@
 
     private async Task AbrirModalEditar(HistorialAsignacionDTO asignacion)
     {
+        if (!await ValidarHora())
+            return;
+
         Debug.WriteLine("Entro en el metodo editar");
         asignacionSeleccionada = asignacion;
 
@@ -1245,6 +1268,9 @@
 
     private async Task ConfirmarEditar()
     {
+        if (!await ValidarHora())
+        return;
+
         if (asignacionSeleccionada == null)
             return;
 
@@ -1554,6 +1580,9 @@
     private bool copiando = false;
     private async Task CopiarAsignacion(HistorialAsignacionDTO item)
     {
+        if (!await ValidarHora())
+            return;
+
         if (copiando)
             return;
 
@@ -1618,3 +1647,7 @@
         public int Cantidad { get; set; }
     }
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

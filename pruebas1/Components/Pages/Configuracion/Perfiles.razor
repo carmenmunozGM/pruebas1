@@ -4,6 +4,7 @@
 @inject AreasService AreasService
 @inject PerfilesService PerfilesService
 @inject HttpClient Http
+@inject HorariosService HorariosService
 
 <div class="perfiles-section">
     <div class="section-header">
@@ -99,11 +100,31 @@
 
     string? selectedPerfil;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
         perfilesList = await PerfilesService.GetPerfiles();
         await CargarEmpleados();
+    }
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
     }
 
     private async Task CargarEmpleados()
@@ -178,6 +199,9 @@
 
     private async Task HandleSave()
     {
+        if (!await ValidarHora())
+            return;
+
         var cambios = employees
             .Where(e => e.Modificado)
             .Select(e => new EditarPerfilDTO
@@ -218,5 +242,8 @@
         message = "";
         await InvokeAsync(StateHasChanged);
     }
-
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

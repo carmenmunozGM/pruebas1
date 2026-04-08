@@ -15,6 +15,7 @@
 @inject OrdenTramiteService OrdenTramiteService
 @inject EmpleadosService EmpleadosService
 @inject PerfilesService PerfilesService
+@inject HorariosService HorariosService
 
 <div class="ver-agendas-section">
     <div class="section-header">
@@ -971,6 +972,25 @@
     PermisosDTO? permisos;
     bool puedeVerFiltroArea = false;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -1085,6 +1105,9 @@
 
     private async Task ShowAgenda(EmployeeInfo employee)
     {
+        if (!await ValidarHora())
+        return;
+
         selectedEmployee = employee;
         cargandoAgenda = true;
         errorAgenda = null;
@@ -1731,3 +1754,7 @@ EventosAgenda.Count(e =>
         SubModalData = null;
     }
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
