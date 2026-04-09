@@ -1435,3 +1435,25 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 [data-theme="dark"] .modal-content .activities-grid {
     background-color: #16181e !important;
 }
+
+.company-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.remove-client-btn {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+    .remove-client-btn:hover {
+        color: #ef4444;
+    }

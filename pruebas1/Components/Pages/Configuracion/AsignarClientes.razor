@@ -135,9 +135,16 @@
                             <div class="group-companies">
                                 <p class="group-label">Empresas en este grupo:</p>
                                 <div class="company-tags">
-                                    @foreach (var cli in grupo.Clientes)
+                                    @foreach (var cli in clientesSeleccionadosGrupo)
                                     {
-                                        <span class="company-tag">@cli.RazonSocial</span>
+                                        <span class="company-tag">
+                                            @cli.RazonSocial
+
+                                            <button class="remove-client-btn"
+                                                    @onclick="() => QuitarClienteDelGrupo(cli.Id)">
+                                                ✕
+                                            </button>
+                                        </span>
                                     }
                                 </div>
                             </div>
@@ -577,7 +584,7 @@
     private Dictionary<int, int> selectedActivitiesEditar = new();
 
     private bool editando = false;
-
+    private List<ClientesDTO> clientesSeleccionadosGrupo = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -769,21 +776,30 @@
     }
 
     private async Task SeleccionarCliente((int Id, string Nombre) item)
-
     {
         selectedClient = item.Id.ToString();
         searchTextCliente = item.Nombre;
         mostrarClientes = false;
 
-        Debug.WriteLine("===== CLIENTE / GRUPO =====");
-        Debug.WriteLine($"ID SELECCIONADO: {selectedClient}");
-        Debug.WriteLine($"NOMBRE: {item.Nombre}");
-        Debug.WriteLine("===========================");
-
         selectedServices.Clear();
         selectedActivities.Clear();
 
+        // 🔥 NUEVO: cargar clientes del grupo en lista editable
+        if (assignmentType == "group")
+        {
+            var grupo = gruposClientes.FirstOrDefault(g => g.Id == item.Id);
+            if (grupo != null)
+            {
+                clientesSeleccionadosGrupo = grupo.Clientes.ToList(); // copia
+            }
+        }
+
         await CargarServiciosPorArea();
+    }
+
+    private void QuitarClienteDelGrupo(int clienteId)
+    {
+        clientesSeleccionadosGrupo.RemoveAll(c => c.Id == clienteId);
     }
 
     private void OnClientChanged()
@@ -882,15 +898,25 @@
         if (assignmentType == "client")
         {
             entidadesIds = new List<int>
-        {
-            int.Parse(selectedClient!)
-        };
+    {
+        int.Parse(selectedClient!)
+    };
         }
         else // group
         {
-            entidadesIds = gruposClientes
-                .First(g => g.Id == int.Parse(selectedClient!))
-                .Clientes
+            // 🔥 VALIDACIÓN AQUÍ
+            if (!clientesSeleccionadosGrupo.Any())
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "warning",
+                    title = "Grupo vacío",
+                    text = "Debes dejar al menos un cliente en el grupo."
+                });
+                return;
+            }
+
+            entidadesIds = clientesSeleccionadosGrupo
                 .Select(c => c.Id)
                 .ToList();
         }
