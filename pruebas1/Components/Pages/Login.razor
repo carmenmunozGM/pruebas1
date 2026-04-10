@@ -8,8 +8,7 @@
 @inject UsuarioService UsuarioService   
 @inject AgendaService AgendaService
 @inject UsuarioState UsuarioState
-
-
+@inject HorariosService HorariosService
 
 <EditForm Model="@loginDTO" OnValidSubmit="Ingresar" class="login-container">
     <DataAnnotationsValidator />
@@ -148,27 +147,30 @@
     private bool Loading { get; set; } = false;
     private string mensajeError = string.Empty;
 
-        /*private async Task Ingresar()
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
         {
-            Loading = true;
-            mensajeError = string.Empty; // Limpia mensaje anterior
+            alertaHora = resultado;
+            mostrarAlerta = true;
 
-            var usuariologin = await loginService.login(loginDTO);
+            await InvokeAsync(StateHasChanged);
 
-            if (usuariologin.IdUsuario == 0)
-            {
-                Loading = false;
-                mensajeError = "Usuario o contraseña incorrectos.";
-            }
-            else
-            {
-                Loading = false;
-                loginService.guardarUsuario(usuariologin);
-                navigate.NavigateTo("/dia2");
-            }
-        }*/
-        private async Task Ingresar()
-{
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task Ingresar()
+    {
+        if (!await ValidarHora())
+            return;
 
     Loading = true;
     mensajeError = string.Empty;
@@ -203,5 +205,9 @@
     {
         Loading = false;
     }
+    }
 }
-}
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
