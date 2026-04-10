@@ -520,7 +520,7 @@
         // Construir DTO
         var dto = new
         {
-            Fecha = FechaSeleccionada,
+            Fecha = DateOnly.FromDateTime(FechaSeleccionada),
             Comentarios = Observaciones,
             Actividades = FilasMinuta.Select(f => new
             {
@@ -550,11 +550,15 @@
             }
             else
             {
+                // Leer el contenido del error enviado por el API
+                var errorContent = await response.Content.ReadAsStringAsync();
+
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
                     title = "Error al guardar",
-                    text = "Ocurrió un error al intentar guardar la minuta."
+                    // Aquí verás el error real (ej: "El campo X es requerido" o un StackTrace)
+                    text = $"Código {response.StatusCode}: {errorContent}"
                 });
             }
         }

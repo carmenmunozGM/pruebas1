@@ -12,7 +12,8 @@ namespace pruebas1.Components.DTOs
         public string TipoEntidad { get; set; } = "";
         public int IdEmpleado { get; set; }
         public List<int> ClientesIds { get; set; } = new();
-
+        
+        public int? idArea { get; set; }
         public List<ActividadCantidadDTO> Actividades { get; set; } = new();
     }
 
