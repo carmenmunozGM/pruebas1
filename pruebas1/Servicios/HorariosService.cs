@@ -19,7 +19,7 @@ namespace pruebas1.Servicios
 
         public async Task<HoraSistemaDTO> GetHorario()
         {
-            var horaCliente = DateTime.Now.AddHours(1);
+            var horaCliente = DateOnly.FromDateTime(DateTime.Now);
 
             var respuesta = await _http.GetFromJsonAsync<HoraSistemaDTO>(
                 $"/Horarios?cliente={horaCliente:o}");

@@ -8,8 +8,8 @@ namespace pruebas1.Components.DTOs
 {
     public class HoraSistemaDTO
     {
-        public DateTime Servidor { get; set; }
-        public DateTime Sistema { get; set; }
+        public DateOnly Servidor { get; set; }
+        public DateOnly Sistema { get; set; }
         public bool Desfase { get; set; }
     }
 }
