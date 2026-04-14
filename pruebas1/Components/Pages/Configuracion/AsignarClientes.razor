@@ -11,7 +11,7 @@
 @inject IJSRuntime JS
 @inject EmpleadosService EmpleadosService
 @inject HorariosService HorariosService
-
+@inject AreasService AreasService
 <div class="asignar-container">
     <div class="section-header">
         <h2 class="section-title">Asignar Clientes</h2>
@@ -153,6 +153,27 @@
                     }
                 </div>
             </div>
+            @if (MostrarSelectArea)
+            {
+                <div class="form-step">
+                    <div class="step-header">
+                        <div class="step-number @(selectedAreaId != null ? "step-completed" : "")">4</div>
+                        <label class="step-label">Seleccionar Área</label>
+                    </div>
+
+                    <div class="step-content">
+                        <select class="form-select" @bind="selectedAreaId">
+                            <option value="">Seleccione un área</option>
+
+                            @foreach (var area in areas)
+                            {
+                                <option value="@area.Clave">@area.Area</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+
             @if (serviciosCargados && sinServiciosOActividades)
             {
                 <div class="alert-warning">
@@ -389,7 +410,7 @@
         {
             <div class="modal-overlay">
                 <div class="modal-content">
-
+                    <div class="modal-body">
                     <h3>Editar Asignación</h3>
 
                     <p><strong>Empleado actual:</strong> @asignacionSeleccionada.Empleado</p>
@@ -397,8 +418,20 @@
 
                     <hr />
 
+                    @if (MostrarSelectAreaEditar)
+                    {
+                        <div class="form-group">
+                                <h3>Cambiar Área</h3>
+                            <select class="form-control" @bind="selectedAreaEditarId">
+                                @foreach (var area in areas)
+                                {
+                                    <option value="@area.Clave">@area.Area</option>
+                                }
+                            </select>
+                        </div>
+                    }
                     <!-- 🔵 CAMBIAR EMPLEADO -->
-                    <h4>Cambiar empleado</h4>
+                    <h3>Cambiar empleado</h3>
 
                     <input type="text"
                            class="form-control"
@@ -440,9 +473,9 @@
                     }
 
                     <hr />
-
+                   
                     <!-- 🔵 ACTIVIDADES -->
-                    <h4>Actividades</h4>
+                    <h3>Actividades</h3>
 
                     <div class="actividades-container">
                         @foreach (var servicio in serviciosEditar)
@@ -505,6 +538,7 @@
                     </div>
 
                 </div>
+            </div>
             </div>
         }
         @if (mostrarModalEliminar && asignacionEliminar != null)
@@ -589,6 +623,14 @@
 
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
+    private List<AreaDTO> areas = new();
+    private int? selectedAreaId = null;
+    private int? selectedAreaEditarId = null;
+    private bool MostrarSelectArea =>
+    assignmentType == "client" &&
+    selectedClient != null &&
+    int.TryParse(selectedClient, out var id) &&
+    id == 295;
 
     protected override async Task OnInitializedAsync()
     {
@@ -598,11 +640,12 @@
 
         await CargarEmpleados();
         await CargarHistorialAsignaciones();
+        areas = await AreasService.GetAreas();
         MainLayout.OnEscPressed = async () =>
      {
          CerrarModalActivo();
          await InvokeAsync(StateHasChanged);
-     };
+     }; 
     }
 
     private async Task<bool> ValidarHora()
@@ -801,7 +844,7 @@
         selectedClient = item.Id.ToString();
         searchTextCliente = item.Nombre;
         mostrarClientes = false;
-
+        selectedAreaId = null;
         selectedServices.Clear();
         selectedActivities.Clear();
 
@@ -817,6 +860,7 @@
 
         await CargarServiciosPorArea();
     }
+
 
     private void QuitarClienteDelGrupo(int clienteId)
     {
@@ -882,10 +926,13 @@
 
     private bool IsFormComplete()
     {
+        bool areaValida = !MostrarSelectArea || selectedAreaId != null;
+
         return !string.IsNullOrEmpty(selectedEmployee) &&
                !string.IsNullOrEmpty(selectedClient) &&
                selectedServices.Any() &&
-               selectedActivities.Any(x => x.Value > 0);
+               selectedActivities.Any(x => x.Value > 0) &&
+               areaValida;
     }
 
     private async Task SaveAssignment()
@@ -951,6 +998,7 @@
             TipoEntidad = assignmentType == "client" ? "Cliente" : "Grupo",
             IdEmpleado = empleadoSeleccionado.Id,
             ClientesIds = entidadesIds,
+            idArea = selectedAreaId, 
             Actividades = selectedActivities
             .Select(x => new pruebas1.Components.DTOs.ActividadCantidadDTO
             {
@@ -1248,7 +1296,7 @@
 
         if (empleadoEditarSeleccionado == null)
             return;
-
+        selectedAreaEditarId = asignacion.IdArea;
         selectedActivitiesEditar = asignacion.ActividadesIds
             .GroupBy(x => x)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -1258,7 +1306,9 @@
 
         mostrarModalEditar = true;
     }
-
+    private bool MostrarSelectAreaEditar =>
+    asignacionSeleccionada?.TipoEntidad == "Cliente" &&
+    asignacionSeleccionada.IdArea != null;
     private async Task CargarServiciosPorAreaEditar(string area)
     {
         serviciosEditar = await Http.GetFromJsonAsync<List<ServicioConActividadesDTO>>(
@@ -1276,6 +1326,17 @@
 
         if (empleadoEditarSeleccionado == null)
             return;
+
+        if (MostrarSelectAreaEditar && selectedAreaEditarId == null)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Área requerida",
+                text = "Debes seleccionar un área."
+            });
+            return;
+        }
 
         if (!selectedActivitiesEditar.Any())
         {
@@ -1358,7 +1419,8 @@
         {
             IdUsuarioEntidadAgenda = idsLimpios,
             IdEmpleado = empleadoEditarSeleccionado.Id,
-            ActividadesIds = actividadesLimpias
+            ActividadesIds = actividadesLimpias,
+            IdArea = selectedAreaEditarId 
         };
 
         // ===== DEBUG FRONT =====
