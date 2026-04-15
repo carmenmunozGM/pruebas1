@@ -606,7 +606,7 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 }
 
 .td-services {
-    max-width: 15rem;
+    max-width: 12rem;
 }
 
 .td-cliente {

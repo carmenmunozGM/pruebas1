@@ -18,7 +18,7 @@ namespace pruebas1.Components.DTOs
         public string Entidad { get; set; } = "";
         public string TipoEntidad { get; set; } = "";
         public string Servicios { get; set; } = "";
-        public int TotalActividades { get; set; }
+        public string AsignadoPor { get; set; } = "";
         public DateTime FechaAsignacion { get; set; }
         public int? IdArea { get; set; }
         public int IdEntidadAgenda { get; set; }

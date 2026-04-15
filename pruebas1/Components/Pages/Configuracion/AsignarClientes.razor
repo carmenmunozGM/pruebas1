@@ -309,7 +309,7 @@
                             <th>Cliente / Grupo</th>
                             <th>Tipo</th>
                             <th>Servicios</th>
-                            <th>Actividades</th>
+                            <th>Asignado por</th>
                             <th>Fecha</th>
                             <th>Acciones</th>
                         </tr>
@@ -330,7 +330,7 @@
                                     @item.Servicios
                                 </td>
                                 <td>
-                                    @item.TotalActividades actividad@(item.TotalActividades != 1 ? "es" : "")
+                                    @item.AsignadoPor
                                 </td>
                                 <td>
                                     @item.FechaAsignacion.ToString("dd/MM/yyyy")
