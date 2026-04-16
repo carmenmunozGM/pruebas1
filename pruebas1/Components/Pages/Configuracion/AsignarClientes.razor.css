@@ -1486,3 +1486,21 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     .remove-client-btn:hover {
         color: #ef4444;
     }
+
+.table-filter {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+data-theme="dark"].table-filter {
+    background-color: #1e293b;
+    color: #fff;
+    border: 1px solid #444;
+}
+
+.filters-row th {
+    padding: 6px;
+}

@@ -300,10 +300,32 @@
             <h3 class="table-title">
                 Historial de Asignaciones (@historialAsignaciones.Count)
             </h3>
-
+          
             <div class="table-wrapper">
                 <table class="assignments-grid">
                     <thead>
+                        <tr class="filters-row">
+                            <th>
+                                <input type="text"
+                                       class="table-filter"
+                                       placeholder="Buscar empleado..."
+                                       @bind="filtroEmpleado"
+                                       @bind:event="oninput" />
+                            </th>
+                            <th>
+                                <input type="text"
+                                       class="table-filter"
+                                       placeholder="Buscar cliente / grupo..."
+                                       @bind="filtroCliente"
+                                       @bind:event="oninput" />
+                            </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+
                         <tr>
                             <th>Empleado</th>
                             <th>Cliente / Grupo</th>
@@ -315,7 +337,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in historialAsignaciones.Skip((paginaActual - 1) * registrosPorPagina).Take(registrosPorPagina))
+                        @foreach (var item in historialFiltrado
+                                            .Skip((paginaActual - 1) * registrosPorPagina)
+                                            .Take(registrosPorPagina))
                         
                         {
                             <tr>
@@ -626,11 +650,25 @@
     private List<AreaDTO> areas = new();
     private int? selectedAreaId = null;
     private int? selectedAreaEditarId = null;
+
+    private string filtroEmpleado = "";
+    private string filtroCliente = "";
+
     private bool MostrarSelectArea =>
     assignmentType == "client" &&
     selectedClient != null &&
     int.TryParse(selectedClient, out var id) &&
     id == 295;
+
+    private IEnumerable<HistorialAsignacionDTO> historialFiltrado =>
+    historialAsignaciones.Where(x =>
+        (string.IsNullOrWhiteSpace(filtroEmpleado) ||
+         (x.Empleado?.Contains(filtroEmpleado, StringComparison.OrdinalIgnoreCase) ?? false)) &&
+
+        (string.IsNullOrWhiteSpace(filtroCliente) ||
+         (x.Entidad?.Contains(filtroCliente, StringComparison.OrdinalIgnoreCase) ?? false))
+    );
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -1696,7 +1734,7 @@
     }
     private int paginaActual = 1;
     private int registrosPorPagina = 10;
-    private int TotalPaginas => (int)Math.Ceiling((double)historialAsignaciones.Count / registrosPorPagina);
+    private int TotalPaginas => (int)Math.Ceiling((double)historialFiltrado.Count() / registrosPorPagina);
 
     private void CambiarPagina(int nuevaPagina)
     {

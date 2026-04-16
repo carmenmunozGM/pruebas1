@@ -759,7 +759,7 @@
                                                                             @if (st.HorasProgramadas > 0)
                                                                             {
                                                                                 <span class="ms-1 badge border" style="font-size: 0.75rem; font-weight: normal; color: #0c5460; background-color: #e3f2fd; border-color: #bee5eb !important; padding: 4px 8px;">
-                                                                                    <i class="far fa-clock me-1"></i> @st.HorasProgramadas hrs
+                                                                                    <i class="far fa-clock me-1"></i> @FormatearHoras(st.HorasProgramadas) hrs
                                                                                 </span>
                                                                             }
                                                                         </span>
@@ -3277,6 +3277,14 @@ return;
     }
 
     private bool isRefreshing = false;
+
+    string FormatearHoras(int minutos)
+    {
+        var horas = minutos / 60;
+        var mins = minutos % 60;
+
+        return $"{horas:D2}:{mins:D2}";
+    }
 
     private async Task RefreshData()
     {
