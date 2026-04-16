@@ -240,7 +240,10 @@
 
                                         </div>
                                             <div class="task-actions">
-                                                <small class="priority-text">@task.prioridadTitulo</small>
+                                                <small class="priority-text prioridad-@task.idPrioridad">
+                                                    <span class="prioridad-dot"></span>
+                                                    @task.prioridadTitulo
+                                                </small>
 
                                                 <button class="icon-btn" title="Ver actividad" @onclick="() => VerTarea(task)">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
@@ -525,7 +528,7 @@
                                                                                         <path d="M12 6v6H8" />
                                                                                     </svg>
 
-                                                                                    @item.HorasProgramadas hrs
+                                                                                    @FormatearHoras(item.HorasProgramadas) hrs
                                                                                 </span>
 
                                                                             </div>
@@ -592,19 +595,28 @@
                                 <p>@ActividadSeleccionada.Organizador</p>
                             </section>
                         }
-                    <section class="vermodal-card">
-                        <h4>
-                            @(ActividadSeleccionada.EsEvento
-                                                        ? "Participantes"
-                                                        : "Subtareas")
-                        </h4>
-                        <ul class="modal-list">
-                            @foreach (var item in
-                                                        ActividadSeleccionada.EsEvento
-                                                        ? ActividadSeleccionada.Participantes
-                                                        : ActividadSeleccionada.SubTareas)
+                        <section class="vermodal-card">
+                            <h4>
+                                @(ActividadSeleccionada.EsEvento ? "Participantes" : "Subtareas")
+                            </h4>
+
+                            <ul class="modal-list">
+
+                                @if (ActividadSeleccionada.EsEvento)
                                 {
-                                    <li>@item</li>
+                                    @foreach (var item in ActividadSeleccionada.Participantes)
+                                    {
+                                        <li>@item</li>
+                                    }
+                                }
+                                else
+                                {
+                                    @foreach (var item in ActividadSeleccionada.SubTareas)
+                                    {
+                                        <li class="@(item.completada ? "subtarea-ok" : "")">
+                                            @item.titulo
+                                        </li>
+                                    }
                                 }
                             </ul>
                         </section>
@@ -1528,6 +1540,14 @@ EventosAgenda.Count(e =>
     int SCPendiente =>
     ServiciosDelDia.Count(s => !s.Completada);
 
+    string FormatearHoras(int minutos)
+    {
+        var horas = minutos / 60;
+        var mins = minutos % 60;
+
+        return $"{horas:D2}:{mins:D2}";
+    }
+
     <!-- DIAS INHABILES -->
     List<DiaNoLaboralDto> DiasNoLaborales = new();
 
@@ -1638,7 +1658,7 @@ EventosAgenda.Count(e =>
         public List<string> Participantes { get; set; } = new();
 
         // Tarea
-        public List<string> SubTareas { get; set; } = new();
+        public List<SubTareaApi> SubTareas { get; set; } = new();
     }
     void VerTarea(TareaApi t)
     {
@@ -1653,9 +1673,8 @@ EventosAgenda.Count(e =>
             FechaFin = t.fechaFin,
             Prioridad = t.prioridadTitulo,
             SubTareas = t.subTareas?
-                .OrderBy(s => s.orden)
-                .Select(s => s.titulo)
-                .ToList() ?? new()
+            .OrderBy(s => s.orden)
+            .ToList() ?? new()
         };
 
         MostrarModalDetalle = true;

@@ -69,7 +69,7 @@
                         <thead>
                             <tr>
                                 <th class="col-cliente">Cliente (Clave y Nombre)</th>
-                                @if (FilasMinuta.Any(f => f.ClienteId == 3))
+                                @if (FilasMinuta.Any(f => f.ClienteId == 295))
                                 {
                                     <th style="width: 150px;">Área</th>
                                 }
@@ -90,7 +90,7 @@
                                             <input type="text"
                                                    placeholder="Buscar empresa..."
                                                    @bind="fila.BusquedaCliente"
-                                                   @oninput="() => MostrarDropdown(fila)"
+                                                   @bind:event="oninput"
                                                    @onfocus="() => MostrarDropdown(fila)"
                                                    @onblur="() => OcultarDropdownConDelay(fila)"
                                                    class="input-busqueda" />

@@ -2450,7 +2450,7 @@ return;
         Tipo = "ServicioCliente",
         FechaInicio = sc.FechaAsignacion.Date,
         FechaFin = sc.FechaConclusion.Date,
-                HorasProgramadas = sc.HorasProgramadas,
+                HorasProgramadas = sc.HorasProgramadas/60,
         IsDone = sc.Completada ?? false,
                 FechaCompletada = sc.Completada == true
                     ? sc.FechaCompletada
