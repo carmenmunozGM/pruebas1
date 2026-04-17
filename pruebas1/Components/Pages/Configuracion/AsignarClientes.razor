@@ -1306,8 +1306,7 @@
         empleadoEditarSeleccionado = emp;
         searchEditar = emp.Nombre;
         mostrarListaEditar = false;
-        selectedActivitiesEditar.Clear();
-        // 🔥 Recargar servicios según nueva área
+
         await CargarServiciosPorAreaEditar(emp.Area);
     }
 
