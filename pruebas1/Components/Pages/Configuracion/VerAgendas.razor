@@ -460,10 +460,7 @@
                             {
                                 <div class="block-content block-scroll">
 
-                                    @foreach (var grupoE in ServiciosDelDia
-                                                            .GroupBy(s => s.Texto.Contains(" - ")
-                                                            ? s.Texto.Split(" - ")[0]
-                                                            : s.Texto))
+                                    @foreach (var grupoE in ServiciosDelDia.GroupBy(s => s.Empresa))
                                     {
                                         var nombreEmpresa = grupoE.Key;
 
@@ -476,10 +473,7 @@
 
                                             @if (MenuE.Contains(nombreEmpresa))
                                             {
-                                                @foreach (var grupoS in grupoE.GroupBy(s =>
-                                                                            s.Texto.Split(" - ").Length > 1
-                                                                            ? s.Texto.Split(" - ")[1]
-                                                                            : "General"))
+                                                @foreach (var grupoS in grupoE.GroupBy(s => s.Servicio))
                                                 {
                                                     var claveServicio = $"{nombreEmpresa}-{grupoS.Key}";
 
@@ -496,14 +490,13 @@
 
                                                                 @foreach (var item in grupoS)
                                                                 {
-                                                                    var partes = item.Texto.Split(" - ");
-
                                                                     <div class="actividad-fila
-                                            @(item.Completada ? "es-completada" : "")
-                                            @(item.Vencida ? "es-vencida" : "")">
+                                                                            @(item.Completada ? "es-completada" : "")
+                                                                            @(item.Vencida ? "es-vencida" : "")">
 
                                                                         <span class="actividad-txt">
-                                                                            @(partes.Length > 2 ? partes[2] : item.Texto)
+                                                                            @item.Actividad
+
                                                                             <div class="info-fecha-horas">
 
                                                                                 <span class="pill pill-fecha">
@@ -529,6 +522,7 @@
                                                                                 </span>
 
                                                                             </div>
+
                                                                             @if (item.Vencida)
                                                                             {
                                                                                 <span class="vencida-label">
@@ -1473,11 +1467,17 @@ EventosAgenda.Count(e =>
     public class ServiceItemUI
     {
         public int Id { get; set; }
-        public string Texto { get; set; } = "";
+
+        public string Empresa { get; set; } = "";
+        public string Servicio { get; set; } = "";
+        public string Actividad { get; set; } = "";
+
         public DateOnly FechaAsig { get; set; }
         public DateOnly Fecha { get; set; }
+
         public bool Completada { get; set; }
         public bool Vencida { get; set; }
+
         public int HorasProgramadas { get; set; }
     }
 
@@ -1509,7 +1509,9 @@ EventosAgenda.Count(e =>
                 return new ServiceItemUI
                 {
                     Id = s.IdHorasProgramaTrabajo,
-                    Texto = $"{s.NombreEmpresa} - {s.NombreServicio} - {s.NombreActividad}",
+                    Empresa = s.NombreEmpresa,
+                    Servicio = s.NombreServicio,
+                    Actividad = s.NombreActividad,
                     FechaAsig = DateOnly.FromDateTime(s.FechaAsignacion),
                     Fecha = fechaFin,
                     Completada = s.Completada == true,

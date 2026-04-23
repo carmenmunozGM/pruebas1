@@ -1306,8 +1306,6 @@
         empleadoEditarSeleccionado = emp;
         searchEditar = emp.Nombre;
         mostrarListaEditar = false;
-        selectedActivitiesEditar.Clear();
-        // 🔥 Recargar servicios según nueva área
         await CargarServiciosPorAreaEditar(emp.Area);
     }
 
@@ -1364,7 +1362,21 @@
 
         if (empleadoEditarSeleccionado == null)
             return;
+        Debug.WriteLine("===== DEBUG IDS CRUDOS =====");
 
+        if (asignacionSeleccionada.IdUsuarioEntidadAgenda == null)
+        {
+            Debug.WriteLine("❌ IdUsuarioEntidadAgenda = NULL");
+        }
+        else
+        {
+            foreach (var id in asignacionSeleccionada.IdUsuarioEntidadAgenda)
+            {
+                Debug.WriteLine($"ID RAW: {id}");
+            }
+        }
+
+        Debug.WriteLine("================================");
         if (MostrarSelectAreaEditar && selectedAreaEditarId == null)
         {
             await JS.InvokeVoidAsync("Swal.fire", new
