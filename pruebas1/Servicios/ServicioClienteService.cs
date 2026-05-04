@@ -52,11 +52,21 @@ namespace pruebas1.Servicios
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task CrearHistorialFechaAsync(HistorialFechaCreateDTO dto)
+        public async Task<string?> CrearHistorialFechaAsync(HistorialFechaCreateDTO dto)
         {
-            await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+            var response = await _http.PostAsJsonAsync("entidadAgenda/historial-fecha", dto);
+
+            if (response.IsSuccessStatusCode)
+                return null;
+
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+            return error?.Mensaje ?? "Error desconocido";
         }
 
+        public class ErrorResponse
+        {
+            public string? Mensaje { get; set; }
+        }
         public async Task<List<HistorialItemDTO>> ObtenerHistorialFechasAsync(int idHoras)
         {
             return await _http.GetFromJsonAsync<List<HistorialItemDTO>>(

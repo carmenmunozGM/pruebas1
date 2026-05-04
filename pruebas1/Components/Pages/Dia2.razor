@@ -38,7 +38,6 @@
 <br />
 <br />
 <br />
-  
 
 <div class="agenda-container">
     <div class="top-bar-container">
@@ -730,7 +729,8 @@
                                                                        @bind:after="() => st.Subtasks.Any() ? ToggleParentSubtaskAsync(st) : ToggleSubtaskAsync(st)"
                                                                        disabled="@bloqueado"
                                                                        style="@(bloqueado ? "cursor: not-allowed; opacity: 0.6;" : "")" />
-                                                                <span class="actividad-txt">
+                                                                <span class="actividad-txt"
+                                                                      title="@(!string.IsNullOrWhiteSpace(st.Observaciones) ? st.Observaciones : "")">
                                                                     @(p.Length > 2 ? p[2] : st.Title)
 
                                                                     @if (bloqueado)
@@ -1502,8 +1502,6 @@
 
 @code {
     string DebugMsg = "";
-
-
     // ---- FECHAS Y CALENDARIO ----
     private DateTime FechaSeleccionada { get; set; } = DateTime.Now.Date;
     private DateTime MesActual { get; set; } = DateTime.Now.Date;
@@ -2451,6 +2449,7 @@ return;
         FechaInicio = sc.FechaAsignacion.Date,
         FechaFin = sc.FechaConclusion.Date,
                 HorasProgramadas = sc.HorasProgramadas,
+                Observaciones = sc.Observaciones,
         IsDone = sc.Completada ?? false,
                 FechaCompletada = sc.Completada == true
                     ? sc.FechaCompletada

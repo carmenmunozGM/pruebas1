@@ -72,6 +72,8 @@ namespace pruebas1.Entidades
         public DateTime? FechaSolicitud { get; set; }
         public TimeOnly? HoraInicio { get; set; }
         public TimeOnly? HoraFin { get; set; }
+
+        public string? Observaciones { get; set; }
         public string Autor { get; set; }
         public string Cliente { get; set; }
         public string Objetivo { get; set; }
@@ -89,7 +91,7 @@ namespace pruebas1.Entidades
         public List<SubtaskModel> Subtasks { get; set; } = new();
 
         [JsonPropertyName("fechaCompletada")]
-        public DateTime? FechaCompletada { get; set; } // Terminando en 'a'
+        public DateTime? FechaCompletada { get; set; }
     }
 
 

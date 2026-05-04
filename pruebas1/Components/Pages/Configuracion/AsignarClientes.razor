@@ -1306,8 +1306,6 @@
         empleadoEditarSeleccionado = emp;
         searchEditar = emp.Nombre;
         mostrarListaEditar = false;
-        selectedActivitiesEditar.Clear();
-        // 🔥 Recargar servicios según nueva área
         await CargarServiciosPorAreaEditar(emp.Area);
     }
 
@@ -1590,7 +1588,7 @@
                 {
                     icon = "error",
                     title = "Error al editar",
-                    text = "Ocurrió un problema inesperado al actualizar la asignación."
+                    text = "No puedes reducir actividades que ya tienen horas programadas       "
                 });
             }
 

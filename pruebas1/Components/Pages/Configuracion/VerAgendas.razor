@@ -497,7 +497,7 @@
                                                                             @(item.Completada ? "es-completada" : "")
                                                                             @(item.Vencida ? "es-vencida" : "")">
 
-                                                                        <span class="actividad-txt">
+                                                                        <span class="actividad-txt" title="@item.Observacion">
                                                                             @item.Actividad
 
                                                                             <div class="info-fecha-horas">
@@ -1489,7 +1489,7 @@ EventosAgenda.Count(e =>
 
         public bool Completada { get; set; }
         public bool Vencida { get; set; }
-
+        public string? Observacion { get; set; }
         public int HorasProgramadas { get; set; }
     }
 
@@ -1528,7 +1528,8 @@ EventosAgenda.Count(e =>
                     Fecha = fechaFin,
                     Completada = s.Completada == true,
                     Vencida = fechaFin < hoy && s.Completada != true,
-                    HorasProgramadas = s.HorasProgramadas
+                    HorasProgramadas = s.HorasProgramadas,
+                    Observacion = s.Observaciones
                 };
             })
             .ToList();
@@ -1541,7 +1542,7 @@ EventosAgenda.Count(e =>
 
     int SCPendiente =>
     ServiciosDelDia.Count(s => !s.Completada);
-
+    
     string FormatearHoras(int minutos)
     {
         var horas = minutos / 60;
