@@ -320,6 +320,7 @@
                                        @bind="filtroEmpleado"
                                        @bind:event="oninput" />
                             </th>
+
                             <th>
                                 <input type="text"
                                        class="table-filter"
@@ -327,10 +328,28 @@
                                        @bind="filtroCliente"
                                        @bind:event="oninput" />
                             </th>
+
                             <th></th>
+
                             <th></th>
+
                             <th></th>
-                            <th></th>
+
+                            <th>
+                                <select class="table-filter"
+                                        @bind="filtroPeriodo">
+
+                                    <option value="">Todos</option>
+
+                                    @foreach (var item in ultimos12Meses)
+                                    {
+                                        <option value="@item.Valor">
+                                            @item.Texto
+                                        </option>
+                                    }
+                                </select>
+                            </th>
+
                             <th></th>
                         </tr>
 
@@ -710,14 +729,56 @@
     int.TryParse(selectedClient, out var id) &&
     id == 295;
 
-    private IEnumerable<HistorialAsignacionDTO> historialFiltrado =>
-    historialAsignaciones.Where(x =>
-        (string.IsNullOrWhiteSpace(filtroEmpleado) ||
-         (x.Empleado?.Contains(filtroEmpleado, StringComparison.OrdinalIgnoreCase) ?? false)) &&
+    private string filtroPeriodo = "";
 
-        (string.IsNullOrWhiteSpace(filtroCliente) ||
-         (x.Entidad?.Contains(filtroCliente, StringComparison.OrdinalIgnoreCase) ?? false))
-    );
+    private List<(int Mes, int Anio, string Valor, string Texto)> ultimos12Meses = new();
+
+    private void GenerarUltimos12Meses()
+    {
+        var hoy = DateTime.Now;
+
+        ultimos12Meses = Enumerable.Range(0, 12)
+            .Select(i =>
+            {
+                var fecha = hoy.AddMonths(-i);
+
+                return (
+                    fecha.Month,
+                    fecha.Year,
+                    $"{fecha.Month}-{fecha.Year}",
+                    $"{ObtenerNombreMes(fecha.Month)} {fecha.Year}"
+                );
+            })
+            .ToList();
+    }
+
+    private string ObtenerNombreMes(int mes)
+    {
+        var nombreMes = new DateTime(2000, mes, 1)
+            .ToString("MMMM", new System.Globalization.CultureInfo("es-MX"));
+
+        return char.ToUpper(nombreMes[0]) + nombreMes.Substring(1);
+    }
+
+    private IEnumerable<HistorialAsignacionDTO> historialFiltrado =>
+    historialAsignaciones
+        .Where(x =>
+            (string.IsNullOrWhiteSpace(filtroEmpleado) ||
+             x.Empleado.Contains(filtroEmpleado, StringComparison.OrdinalIgnoreCase))
+            &&
+
+            (string.IsNullOrWhiteSpace(filtroCliente) ||
+             x.Entidad.Contains(filtroCliente, StringComparison.OrdinalIgnoreCase))
+            &&
+
+            (
+                string.IsNullOrWhiteSpace(filtroPeriodo)
+                ||
+                filtroPeriodo ==
+                $"{x.FechaAsignacion.Month}-{x.FechaAsignacion.Year}"
+            )
+        )
+        .OrderByDescending(x => x.FechaAsignacion);
 
 
     protected override async Task OnInitializedAsync()
@@ -725,7 +786,7 @@
         var cultura = new CultureInfo("es-MX");
         CultureInfo.CurrentCulture = cultura;
         CultureInfo.CurrentUICulture = cultura;
-
+        GenerarUltimos12Meses();
         await CargarEmpleados();
         await CargarHistorialAsignaciones();
         areas = await AreasService.GetAreas();
