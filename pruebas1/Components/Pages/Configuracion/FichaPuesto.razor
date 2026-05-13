@@ -1,0 +1,111 @@
+﻿@inject HttpClient Http
+
+@if (loading)
+{
+    <div class="loading-container">
+        <p>Cargando ficha de puesto...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="empty-state">
+
+        <div class="empty-icon">
+            📄
+        </div>
+
+        <h3>
+            Ficha no disponible
+        </h3>
+
+        <p>
+            @errorMessage
+        </p>
+
+    </div>
+}
+else
+{
+    <div class="ficha-container">
+
+        <div class="ficha-header">
+
+            <div class="header-icon">
+                📄
+            </div>
+
+            <div class="header-info">
+
+                <h2>
+                    Ficha de Puesto
+                </h2>
+
+                <p>
+                    Consulta la información correspondiente a tu puesto actual.
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="pdf-container">
+
+            <iframe src="@documentUrl"></iframe>
+
+        </div>
+
+    </div>
+}
+
+@code {
+
+    private string? documentUrl;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            loading = true;
+
+            var response = await Http.GetAsync(
+                "fichasPuesto/sharepoint/fichaPuesto");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage =
+                    "No se encontró una ficha de puesto asignada.";
+                return;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage =
+                    "Ocurrió un error al cargar la ficha de puesto.";
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+
+            var base64 = Convert.ToBase64String(bytes);
+
+            documentUrl =
+                $"data:application/pdf;base64,{base64}#toolbar=0";
+        }
+        catch
+        {
+            errorMessage =
+                "No fue posible cargar la ficha de puesto.";
+        }
+        finally
+        {
+            loading = false;
+
+            StateHasChanged();
+        }
+    }
+}
