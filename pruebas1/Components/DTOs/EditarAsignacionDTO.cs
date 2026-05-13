@@ -13,7 +13,7 @@ namespace pruebas1.Components.DTOs
 
         public int IdEmpleado { get; set; }
         public int? IdArea { get; set; }
-        public List<int> ActividadesIds { get; set; } = new();
-        }
+        public List<ActividadCantidadDTO> Actividades { get; set; } = new();
+    }
     
 }

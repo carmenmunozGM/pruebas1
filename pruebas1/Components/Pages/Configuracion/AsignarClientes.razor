@@ -236,6 +236,14 @@
                                                 </svg>
 
                                                 <strong>@service.Name</strong>
+                                                <div class="texto-servicio-container">
+                                                    <textarea class="form-textarea"
+                                                              maxlength="255"
+                                                              placeholder="Especificar nombre del servicio"
+                                                              value="@ObtenerTextoServicio(service.Id)"
+                                                              @oninput="(e) => CambiarTextoServicio(service.Id, e.Value?.ToString())">
+                                                        </textarea>
+                                                </div>
                                             </label>
                                         </p>
                                         <div class="activities-list">
@@ -351,7 +359,40 @@
                                     </span>
                                 </td>
                                 <td class="td-services">
-                                    @item.Servicios
+
+                                    <span class="tooltip-servicios">
+
+                                        @string.Join(", ",
+                                        item.Servicios
+                                        .Select(x => x.Servicio)
+                                        .Distinct()
+                                        .OrderBy(x => x))
+
+                                <span class="tooltip-servicios-content">
+
+                                    @foreach (var servicio in item.Servicios
+                                                                        .GroupBy(x => x.Servicio))
+                                            {
+                                                <div class="tooltip-servicio-item">
+
+                                                    <strong>@servicio.Key</strong>
+
+                                                    <ul>
+                                                        @foreach (var texto in servicio
+                                                                                                    .Select(x => x.TextoServicio)
+                                                                                                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                                                                                                    .Distinct())
+                                                        {
+                                                            <li>@texto</li>
+                                                        }
+                                                    </ul>
+
+                                                </div>
+                                            }
+
+                                        </span>
+                                    </span>
+
                                 </td>
                                 <td>
                                     @item.AsignadoPor
@@ -506,19 +547,27 @@
                         {
                             <div class="service-card">
 
-                                <div class="service-header"
-                                     @onclick="() => ToggleServicioExpandido(servicio.IdServicio)">
+                                    <div class="service-header">
 
-                                    <span>@servicio.Servicio</span>
+                                        <div class="service-header-left"
+                                             @onclick="() => ToggleServicioExpandido(servicio.IdServicio)">
 
-                                    <span>
-                                        @(ServiciosExpandidos.Contains(servicio.IdServicio) ? "−" : "+")
-                                    </span>
-                                </div>
+                                            <span>@servicio.Servicio</span>
 
-                                @if (ServiciosExpandidos.Contains(servicio.IdServicio))
-                                {
-                                    <div class="activities-grid">
+                                        </div>
+
+                                        <textarea class="form-textarea-inline"
+                                                  maxlength="255"
+                                                  placeholder="Especificar nombre del servicio"
+                                                  value="@ObtenerTextoServicioEditar(servicio.IdServicio)"
+                                                  @oninput="(e) => CambiarTextoServicioEditar(servicio.IdServicio, e.Value?.ToString())">
+                </textarea>
+
+                                    </div>
+
+                                    @if (ServiciosExpandidos.Contains(servicio.IdServicio))
+                                    {
+                                        <div class="activities-grid">
                                         @foreach (var actividad in servicio.Actividades)
                                         {
                                             <label class="activity-chip activity-chip-edit">
@@ -641,7 +690,8 @@
 
     private List<ServicioConActividadesDTO> serviciosEditar = new();
     private Dictionary<int, int> selectedActivitiesEditar = new();
-
+    private Dictionary<int, string> textosPorServicio = new();
+    private Dictionary<int, string> textosPorServicioEditar = new();
     private bool editando = false;
     private List<ClientesDTO> clientesSeleccionadosGrupo = new();
 
@@ -1038,12 +1088,28 @@
             ClientesIds = entidadesIds,
             idArea = selectedAreaId, 
             Actividades = selectedActivities
-            .Select(x => new pruebas1.Components.DTOs.ActividadCantidadDTO
-            {
-                IdActividad = x.Key,
-                Cantidad = x.Value
-            })
-    .ToList()
+.Select(x =>
+{
+    var actividadId = x.Key;
+
+    var servicio = servicios
+        .FirstOrDefault(s =>
+            s.Activities.Any(a => int.Parse(a.Id) == actividadId));
+
+    int idServicio = servicio != null
+        ? int.Parse(servicio.Id)
+        : 0;
+
+    textosPorServicio.TryGetValue(idServicio, out var texto);
+
+    return new pruebas1.Components.DTOs.ActividadCantidadDTO
+    {
+        IdActividad = actividadId,
+        Cantidad = x.Value,
+        TextoServicio = texto
+    };
+})
+.ToList()
 
         };
 
@@ -1070,7 +1136,7 @@
         assignmentType = null;
         selectedServices.Clear();
         selectedActivities.Clear();
-
+        textosPorServicio.Clear();
 
 
         LimpiarCliente();
@@ -1086,7 +1152,7 @@
 
         serviciosEditar.Clear();
         selectedActivitiesEditar.Clear();
-
+        textosPorServicioEditar.Clear();
         asignacionSeleccionada = null;
     }
     // Models
@@ -1332,13 +1398,23 @@
 
         if (empleadoEditarSeleccionado == null)
             return;
+
         selectedAreaEditarId = asignacion.IdArea;
+
         selectedActivitiesEditar = asignacion.ActividadesIds
             .GroupBy(x => x)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        // 🔥 Usar el área del empleado encontrado
         await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
+
+        textosPorServicioEditar = asignacion.Servicios
+            .Where(x => !string.IsNullOrWhiteSpace(x.TextoServicio))
+            .GroupBy(x => x.Servicio)
+            .ToDictionary(
+                g => serviciosEditar
+                    .FirstOrDefault(s => s.Servicio == g.Key)?.IdServicio ?? 0,
+                g => g.First().TextoServicio ?? ""
+            );
 
         mostrarModalEditar = true;
     }
@@ -1443,7 +1519,25 @@
 
         // 🔥 LIMPIEZA DE ACTIVIDADES
         var actividadesLimpias = selectedActivitiesEditar
-    .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
+    .Select(x =>
+    {
+        var actividadId = x.Key;
+
+        var servicio = serviciosEditar
+            .FirstOrDefault(s =>
+                s.Actividades.Any(a => a.IdActividad == actividadId));
+
+        int idServicio = servicio?.IdServicio ?? 0;
+
+        textosPorServicioEditar.TryGetValue(idServicio, out var texto);
+
+        return new ActividadCantidadDTO
+        {
+            IdActividad = actividadId,
+            Cantidad = x.Value,
+            TextoServicio = texto
+        };
+    })
     .ToList();
 
         if (!actividadesLimpias.Any())
@@ -1469,8 +1563,8 @@
         {
             IdUsuarioEntidadAgenda = idsLimpios,
             IdEmpleado = empleadoEditarSeleccionado.Id,
-            ActividadesIds = actividadesLimpias,
-            IdArea = selectedAreaEditarId 
+            Actividades = actividadesLimpias,
+            IdArea = selectedAreaEditarId
         };
 
         // ===== DEBUG FRONT =====
@@ -1628,7 +1722,19 @@
             selectedActivitiesEditar[actividadId] = cantidad;
         }
     }
+    
+    private string ObtenerTextoServicioEditar(int idServicio)
+    {
+        return textosPorServicioEditar.TryGetValue(idServicio, out var texto) ? texto : string.Empty;
+    }
 
+    private void CambiarTextoServicioEditar(int idServicio, string? texto)
+    {
+        if (texto == null)
+            textosPorServicioEditar.Remove(idServicio);
+        else
+            textosPorServicioEditar[idServicio] = texto;
+    }
 
     private void AbrirModalEliminar(HistorialAsignacionDTO item)
     {
@@ -1690,6 +1796,7 @@
     }
 
     private bool copiando = false;
+    
     private async Task CopiarAsignacion(HistorialAsignacionDTO item)
     {
         if (!await ValidarHora())
@@ -1715,14 +1822,37 @@
                 TipoEntidad = item.TipoEntidad,
                 IdEmpleado = item.IdEmpleado,
                 ClientesIds = item.EntidadesExternasIds,
+                idArea = item.IdArea,
+
                 Actividades = item.ActividadesIds
-    .GroupBy(id => id)
-    .Select(g => new pruebas1.Components.DTOs.ActividadCantidadDTO
-    {
-        IdActividad = g.Key,
-        Cantidad = g.Count()
-    })
-    .ToList()
+                    .GroupBy(id => id)
+                    .Select(g =>
+                    {
+                        var actividadId = g.Key;
+
+                        // 🔥 Buscar el servicio al que pertenece la actividad
+                        var servicio = servicios
+                            .FirstOrDefault(s =>
+                                s.Activities.Any(a => int.Parse(a.Id) == actividadId));
+
+                        string? textoServicio = null;
+
+                        // 🔥 Buscar texto personalizado del servicio
+                        if (servicio != null)
+                        {
+                            textoServicio = item.Servicios
+                                .FirstOrDefault(x => x.Servicio == servicio.Name)
+                                ?.TextoServicio;
+                        }
+
+                        return new pruebas1.Components.DTOs.ActividadCantidadDTO
+                        {
+                            IdActividad = actividadId,
+                            Cantidad = g.Count(),
+                            TextoServicio = textoServicio
+                        };
+                    })
+                    .ToList()
             };
 
             var response = await Http.PostAsJsonAsync(
@@ -1744,6 +1874,7 @@
             copiando = false;
         }
     }
+
     private int paginaActual = 1;
     private int registrosPorPagina = 10;
     private int TotalPaginas => (int)Math.Ceiling((double)historialFiltrado.Count() / registrosPorPagina);
@@ -1753,11 +1884,30 @@
         paginaActual = nuevaPagina;
     }
 
-    public class ActividadCantidadDTO
+    // public class ActividadCantidadDTO
+    // {
+    //     public int IdActividad { get; set; }
+    //     public int Cantidad { get; set; }
+    //     public string? TextoServicio { get; set; }
+    // }
+
+    private string ObtenerTextoServicio(string serviceId)
     {
-        public int IdActividad { get; set; }
-        public int Cantidad { get; set; }
+        int id = int.Parse(serviceId);
+
+        return textosPorServicio.TryGetValue(id, out var texto)
+            ? texto
+            : "";
     }
+
+    private void CambiarTextoServicio(string serviceId, string? texto)
+    {
+        int id = int.Parse(serviceId);
+
+        textosPorServicio[id] = texto ?? "";
+    }
+
+
 }
 
 <ReusableHorarioAlert @key="mostrarAlerta"
