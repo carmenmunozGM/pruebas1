@@ -1374,6 +1374,7 @@ EventosAgenda.Count(e =>
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
                     Estado = "hoy",
+                    bitMultiple = o.bitMultiple,
                     Original = o
                 })
             )
@@ -1385,6 +1386,7 @@ EventosAgenda.Count(e =>
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
                     Estado = "proxima",
+                    bitMultiple = o.bitMultiple,
                     Original = o
                 })
             )
@@ -1396,6 +1398,7 @@ EventosAgenda.Count(e =>
                     Fecha = o.fechaFinal.Date,
                     Tipo = "OT",
                     Estado = "vencida",
+                    bitMultiple = o.bitMultiple,
                     Original = o
                 })
             )
