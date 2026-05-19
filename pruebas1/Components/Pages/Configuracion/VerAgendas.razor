@@ -323,7 +323,28 @@
                                                         @FormatoFechaOrden(o.Fecha)
                                                     </small>
                                                 </div>
-                                                <span>@(o.Tipo == "OT" ? "vencida" : "vencida")</span>
+                                                <span>@(o.Tipo == "OT" ? "vencida" : "vencida")
+                                                        @if (o.bitMultiple == true)
+                                                        {
+                                                            <span class="workers-icon-container" title="Multiple">
+                                                                <svg class="workers-icon" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg">
+                                                                    <g class="workers-fill">
+                                                                        <circle cx="24" cy="10" r="5.5" />
+                                                                        <path d="M16.5,19 C16.5,16 31.5,16 31.5,19 L29.5,29 C29,31 19,31 18.5,29 Z" />
+
+                                                                        <circle cx="12" cy="12" r="5" />
+                                                                        <path d="M5,20 C5,17 18.5,17 18.5,20 L17.5,29 C17.3,30.5 6.2,30.5 6,29 Z" />
+
+                                                                        <circle cx="36" cy="12" r="5" />
+                                                                        <path d="M29.5,20 C29.5,17 43,17 43,20 L42,29 C41.8,30.5 30.7,30.5 30.5,29 Z" />
+                                                                    </g>
+
+                                                                    <line class="workers-line" x1="16" y1="16" x2="18" y2="30" />
+                                                                    <line class="workers-line" x1="32" y1="16" x2="30" y2="30" />
+                                                                </svg>
+                                                            </span>
+                                                        }
+                                                    </span>
 
                                                     <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -350,7 +371,28 @@
                                                         @FormatoFechaOrden(o.Fecha)
                                                     </small>
                                                 </div>
-                                                <span>@(o.Tipo == "OT" ? "próxima" : "próxima")</span>
+                                                <span>@(o.Tipo == "OT" ? "próxima" : "próxima")
+                                                        @if (o.bitMultiple == true)
+                                                        {
+                                                            <span class="workers-icon-container" title="Multiple">
+                                                                <svg class="workers-icon" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg">
+                                                                    <g class="workers-fill">
+                                                                        <circle cx="24" cy="10" r="5.5" />
+                                                                        <path d="M16.5,19 C16.5,16 31.5,16 31.5,19 L29.5,29 C29,31 19,31 18.5,29 Z" />
+
+                                                                        <circle cx="12" cy="12" r="5" />
+                                                                        <path d="M5,20 C5,17 18.5,17 18.5,20 L17.5,29 C17.3,30.5 6.2,30.5 6,29 Z" />
+
+                                                                        <circle cx="36" cy="12" r="5" />
+                                                                        <path d="M29.5,20 C29.5,17 43,17 43,20 L42,29 C41.8,30.5 30.7,30.5 30.5,29 Z" />
+                                                                    </g>
+
+                                                                    <line class="workers-line" x1="16" y1="16" x2="18" y2="30" />
+                                                                    <line class="workers-line" x1="32" y1="16" x2="30" y2="30" />
+                                                                </svg>
+                                                            </span>
+                                                        }
+                                                </span>
 
                                                     <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -377,7 +419,28 @@
                                                         @FormatoFechaOrden(o.Fecha)
                                                     </small>
                                                 </div>
-                                                <span>@(o.Tipo == "OT" ? "hoy" : "hoy")</span>
+                                                <span>@(o.Tipo == "OT" ? "hoy" : "hoy")
+                                                        @if (o.bitMultiple == true)
+                                                        {
+                                                            <span class="workers-icon-container" title="Multiple">
+                                                                <svg class="workers-icon" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg">
+                                                                    <g class="workers-fill">
+                                                                        <circle cx="24" cy="10" r="5.5" />
+                                                                        <path d="M16.5,19 C16.5,16 31.5,16 31.5,19 L29.5,29 C29,31 19,31 18.5,29 Z" />
+
+                                                                        <circle cx="12" cy="12" r="5" />
+                                                                        <path d="M5,20 C5,17 18.5,17 18.5,20 L17.5,29 C17.3,30.5 6.2,30.5 6,29 Z" />
+
+                                                                        <circle cx="36" cy="12" r="5" />
+                                                                        <path d="M29.5,20 C29.5,17 43,17 43,20 L42,29 C41.8,30.5 30.7,30.5 30.5,29 Z" />
+                                                                    </g>
+
+                                                                    <line class="workers-line" x1="16" y1="16" x2="18" y2="30" />
+                                                                    <line class="workers-line" x1="32" y1="16" x2="30" y2="30" />
+                                                                </svg>
+                                                            </span>
+                                                        }
+                                                </span>
 
                                                     <button class="icon-btn" @onclick="() => VerOrden(o)">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -1295,6 +1358,7 @@ EventosAgenda.Count(e =>
         public string Tipo { get; set; } = "";
         public string Estado { get; set; } = "";
         public object Original { get; set; } = default!;
+        public bool? bitMultiple { get; set; }
     }
 
     List<OrdenAgendaVM> OrdenesAgenda =>

@@ -3,41 +3,47 @@ using System.Net.Http.Json;
 
 namespace pruebas1.Servicios
 {
+
     public class OrdenTrabajoService
     {
         private readonly HttpClient httpClient;
-
         public OrdenTrabajoService(HttpClient httpClient)
         {
             this.httpClient = httpClient;
         }
+
         public async Task<OrdenTrabajoDTO?> GetDetalle(int idOrden)
         {
             return await httpClient.GetFromJsonAsync<OrdenTrabajoDTO>(
-                $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}");
+                $"/ordenTrabajo/ordenTrabajo/orden/{idOrden}");
         }
+
         public async Task<List<OrdenTrabajoDTO>> GetOrdenesVencidas()
         {
-            return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
-                "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/vencidas");
+            var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
+                "/ordenTrabajo/ordenTrabajo/vencidas");
+            return respuesta ?? new();
         }
 
         public async Task<List<OrdenTrabajoDTO>> GetOrdenesProximas()
         {
-            return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
-                "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/proximas");
+            var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
+                "/ordenTrabajo/ordenTrabajo/proximas");
+            return respuesta ?? new();
         }
 
         public async Task<List<OrdenTrabajoDTO>> GetOrdenesHoy()
         {
-            return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
-                "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/hoy");
+            var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
+                "/ordenTrabajo/ordenTrabajo/hoy");
+            return respuesta ?? new();
         }
 
         public async Task<List<OrdenTrabajoDTO>> GetOrdenesPendntes()
         {
-            return await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
-                "https://redgm.site:9096/ordenTrabajo/ordenTrabajo/pendientes");
+            var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
+                "/ordenTrabajo/ordenTrabajo/pendientes");
+            return respuesta ?? new();
         }
     }
 }

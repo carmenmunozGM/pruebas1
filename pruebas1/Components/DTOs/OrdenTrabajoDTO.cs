@@ -18,6 +18,7 @@ namespace pruebas1.Components.DTOs
         public string nombreCliente { get; set; }
         public DateTime fechaFinal { get; set; }
         public string estado { get; set; }
+        public bool? bitMultiple { get; set; }
         public List<TareaDTO> tareas { get; set; } = new();
     }
 
@@ -28,6 +29,6 @@ namespace pruebas1.Components.DTOs
         public string avance { get; set; }
         public string strObservacion { get; set; }
         public string strDescripcionReceptor { get; set; }
+        public string NombreResponsable { get; set; }
     }
-
 }

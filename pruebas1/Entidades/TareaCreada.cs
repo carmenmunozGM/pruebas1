@@ -108,6 +108,7 @@ namespace pruebas1.Entidades
         public string ObjetivoOtro { get; set; }
         public OrdenStatus Status { get; set; }
         public TipoOrden Tipo { get; set; }
+        public bool? bitMultiple { get; set; }
 
         public List<TareaOrdenModel> Tareas { get; set; } = new();
     }
