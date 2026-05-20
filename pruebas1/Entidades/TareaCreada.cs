@@ -119,6 +119,7 @@ namespace pruebas1.Entidades
         public string DescripcionReceptor { get; set; }
         public string Valor { get; set; }
         public string Observacion { get; set; }
+        public string? NombreResponsable { get; set; } = "";
     }
     public enum OrdenStatus
     {

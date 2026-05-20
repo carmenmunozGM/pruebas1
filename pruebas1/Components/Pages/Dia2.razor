@@ -939,16 +939,26 @@
                             <thead style="background:#f0f0f0; text-align:left;">
                                 <tr>
                                     <th style="padding:8px; width:30%;">Nombre de la tarea</th>
-                                    <th style="padding:8px; width:45%;">Descripción</th>
+                                    <th style="padding:8px; width:33%;">Descripción</th>
+                                    @if (SelectedOrden.bitMultiple == true)
+                                    {
+                                        <th style="padding:8px; width:27%;">Responsable</th>
+                                    }
                                     <th style="padding:8px; width:15%;">Avance</th>
                                     <th style="padding:8px; width:10%;">Ver</th>
                                 </tr>
                             </thead>
+
                             <tbody>
                                 @foreach (var t in SelectedOrden.Tareas)
                                 {
                                     <tr style="border-bottom:1px solid #ddd;">
-                                        <td style="padding:8px;">@t.Nombre</td>
+
+                                        <td style="padding:8px;">
+                                            <div style="display:flex; flex-direction:column;">
+                                                <span>@t.Nombre</span>
+                                            </div>
+                                        </td>
 
                                         <td style="padding:8px;">
                                             @{
@@ -956,16 +966,29 @@
                                                 ?? t.DescripcionReceptor
                                                 ?? "-";
                                             }
+
                                             @desc
                                         </td>
+                                        @if (SelectedOrden.bitMultiple == true &&
+                                                                        !string.IsNullOrWhiteSpace(t.NombreResponsable))
+                                        {
+                                            <td style="border-bottom:1px solid #ddd;">
+                                            <div style="display:flex; flex-direction:column;">
+                                                @t.NombreResponsable
+                                            </div>
+                                            </td>
+                                        }
 
-                                        <td style="padding:8px;">@($"{t.Valor}")</td>
+                                        <td style="padding:8px;">
+                                            @($"{t.Valor}")
+                                        </td>
 
                                         <td style="padding:8px; text-align:center;">
                                             <button class="btn-eye" @onclick="() => ShowTaskModal(t)">
                                                 <i class="fa fa-eye"></i>
                                             </button>
                                         </td>
+
                                     </tr>
                                 }
                             </tbody>
@@ -2996,6 +3019,7 @@
             DescripcionReceptor = t.strDescripcionReceptor,
             Valor = t.avance,
             Observacion = t.strObservacion,
+            NombreResponsable = t.NombreResponsable,
         }).ToList() ?? new List<TareaOrdenModel>()
     };
 
@@ -3086,8 +3110,7 @@
     {
         try
         {
-            var url = $"https://redgm.site:9096/ordenTrabajo/ordenTrabajo/orden/{idOrden}";
-            var apiOrden = await Http.GetFromJsonAsync<OrdenTrabajoDTO>(url);
+            var apiOrden = await OrdenTrabajoService.GetDetalle(idOrden);
 
             if (apiOrden != null)
             {

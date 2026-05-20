@@ -29,6 +29,6 @@ namespace pruebas1.Components.DTOs
         public string avance { get; set; }
         public string strObservacion { get; set; }
         public string strDescripcionReceptor { get; set; }
-        public string NombreResponsable { get; set; }
+        public string? NombreResponsable { get; set; } = "";
     }
 }

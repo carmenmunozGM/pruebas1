@@ -588,6 +588,10 @@
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
+                                    @if (OrdenTrabajoDetalle.bitMultiple == true)
+                                    {
+                                        <th>Responsable</th>
+                                    }
                                     <th>Avance</th>
                                 </tr>
                             </thead>
@@ -597,6 +601,10 @@
                                     <tr>
                                         <td>@t.strNombreTarea</td>
                                         <td>@t.strDescripcionAutor</td>
+                                        @if(OrdenTrabajoDetalle.bitMultiple == true)
+                                        {
+                                            <td>@t.NombreResponsable</td>
+                                        }
                                         <td>@t.avance </td>
                                     </tr>
                                 }

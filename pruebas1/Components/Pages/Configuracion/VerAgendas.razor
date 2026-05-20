@@ -775,6 +775,10 @@
                                         <tr>
                                             <th>Nombre</th>
                                             <th>Descripción</th>
+                                            @if (DetalleOT.bitMultiple == true)
+                                            {
+                                                <th>Responsable</th>
+                                            }
                                             <th>Avance</th>
                                             <th></th>
                                         </tr>
@@ -785,6 +789,10 @@
                                             <tr>
                                                 <td>@tarea.strNombreTarea</td>
                                                 <td>@tarea.strDescripcionAutor</td>
+                                                @if(DetalleOT.bitMultiple == true)
+                                                {
+                                                    <td>@tarea.NombreResponsable</td>
+                                                }
                                                 <td>@tarea.avance</td>
                                                 <td>
                                                     <button class="icon-btn"
