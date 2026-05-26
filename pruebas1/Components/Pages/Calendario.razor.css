@@ -1337,3 +1337,34 @@ body {
 [data-theme="dark"] .btn-close-vacation {
     background: #0d9488 !important;
 }
+
+.workers-icon-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.workers-icon {
+    width: 18px;
+    height: auto;
+    display: block;
+}
+
+.workers-fill {
+    fill: #455A64;
+}
+
+.workers-line {
+    stroke: #FFFFFF;
+    stroke-width: 0.5;
+}
+
+[data-theme="dark"] .workers-fill {
+    fill: #B0BEC5;
+}
+
+[data-theme="dark"] .workers-line {
+    stroke: #263238;
+}

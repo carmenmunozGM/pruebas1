@@ -3,10 +3,10 @@ using System.Net.Http.Json;
 
 namespace pruebas1.Servicios
 {
+
     public class OrdenTrabajoService
     {
         private readonly HttpClient httpClient;
-
         public OrdenTrabajoService(HttpClient httpClient)
         {
             this.httpClient = httpClient;
@@ -22,7 +22,6 @@ namespace pruebas1.Servicios
         {
             var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
                 "/ordenTrabajo/ordenTrabajo/vencidas");
-
             return respuesta ?? new();
         }
 
@@ -30,7 +29,6 @@ namespace pruebas1.Servicios
         {
             var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
                 "/ordenTrabajo/ordenTrabajo/proximas");
-
             return respuesta ?? new();
         }
 
@@ -38,7 +36,6 @@ namespace pruebas1.Servicios
         {
             var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
                 "/ordenTrabajo/ordenTrabajo/hoy");
-
             return respuesta ?? new();
         }
 
@@ -46,7 +43,6 @@ namespace pruebas1.Servicios
         {
             var respuesta = await httpClient.GetFromJsonAsync<List<OrdenTrabajoDTO>>(
                 "/ordenTrabajo/ordenTrabajo/pendientes");
-
             return respuesta ?? new();
         }
     }
