@@ -1,8 +1,10 @@
 @using System.Diagnostics
+@using pruebas1.Components.DTOs
 @using pruebas1.Entidades
 @using pruebas1.Servicios
 @inject CalendarioService CalendarioService
 @inject IJSRuntime JS
+@inject HorariosService HorariosService
 
 
 <div class="dias-inhabiles-section">
@@ -163,6 +165,26 @@
 
     private List<DiaNoLaboral> dias = new();
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
+
     private class DiaInhabilForm
     {
         public int Id { get; set; }
@@ -216,6 +238,9 @@
 
     private async Task HandleSubmit()
     {
+        if (!await ValidarHora())
+            return;
+
         if (isSaving)
             return;
 
@@ -292,6 +317,9 @@
 
     private async Task EliminarDia(int id)
     {
+        if (!await ValidarHora())
+            return;
+
         if (isDeleting)
             return;
 
@@ -324,5 +352,8 @@
             isDeleting = false;
         }
     }
-
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

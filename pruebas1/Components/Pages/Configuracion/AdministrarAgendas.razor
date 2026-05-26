@@ -5,6 +5,7 @@
 @inject AreasService AreasService
 @inject LoginService LoginService
 @inject NavigationManager Nav
+@inject HorariosService HorariosService
 
 <div class="administrar-section">
     <div class="section-header">
@@ -220,6 +221,26 @@
     private int? selectedAgenda = null;
     private int? _selectedPuesto;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
+
     private int? selectedPuesto
     {
         get => _selectedPuesto;
@@ -330,6 +351,9 @@
 
     private async Task HandleRegistrar()
     {
+        if (!await ValidarHora())
+        return;
+
         if (clavePersonalInt is null || selectedPuesto is null)
             return;
 
@@ -358,6 +382,9 @@
 
     private async Task HandleDesvincular()
     {
+        if (!await ValidarHora())
+            return;
+
         if (selectedAgenda is null)
             return;
 
@@ -436,5 +463,8 @@
     {
         SetMode("limpiar");
     }
-
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

@@ -18,6 +18,7 @@
 @inject LoginService LoginService
 @inject HttpClient Http
 @inject ServicioClienteService ServicioClienteService
+@inject HorariosService HorariosService
 
 <br />
 <br />
@@ -693,6 +694,26 @@
 
     int UsuarioActualId;
 
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
+
     protected override void OnInitialized()
     {
         var usuario = LoginService.obtenerUsuarioLogueado();
@@ -755,13 +776,13 @@
         StateHasChanged();
     }
 
-
-
-
     // ---------- DÍAS NO LABORALES / ----------
     List<DiaNoLaboralDto> DiasNoLaboralesMes = new();
     async Task AbrirDetalle(BaseTask task)
     {
+        if (!await ValidarHora())
+            return;
+
         SelectedTask = task;
 
         if (task.Tipo.Equals("WorkOrder", StringComparison.OrdinalIgnoreCase))
@@ -778,6 +799,9 @@
     }
     private async Task ToggleCompleteDynamic(BaseTask bt, ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+            return;
+
         bool nuevoEstado = false;
 
         if (e?.Value is bool b) nuevoEstado = b;
@@ -1036,7 +1060,6 @@
         public List<EditableSubtask> subTareas { get; set; } = new();
     }
 
-
     class SelfAssessment
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -1070,7 +1093,6 @@
 
         public Block ParentBlock { get; set; }
     }
-
 
     // ---------- Estado del componente ----------
     List<DayColumn> Days = new();
@@ -1160,15 +1182,20 @@
 
     async Task PrevWeek()
     {
+        if (!await ValidarHora())
+            return;
         CurrentDate = CurrentDate.AddDays(-7);
         await LoadWeek(CurrentDate);
     }
 
     async Task NextWeek()
     {
+        if (!await ValidarHora())
+            return;
         CurrentDate = CurrentDate.AddDays(7);
         await LoadWeek(CurrentDate);
     }
+
     async Task CargarDiasNoLaborales(DateTime referencia)
     {
         DiasNoLaboralesMes.Clear();
@@ -1754,6 +1781,9 @@
 
     async Task ToggleComplete(BaseTask bt, ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+            return;
+
         if (e?.Value is bool b) bt.IsCompleted = b;
         else
         {
@@ -1768,6 +1798,9 @@
 
     async Task ToggleCompleteSelf(SelfAssessment sa, ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+return;
+
         bool nuevoValor;
 
         if (e?.Value is bool b)
@@ -1806,6 +1839,9 @@
 
     async Task ToggleCompleteClient(ClientServiceTask cs, ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+            return;
+
         if (e?.Value is bool b) cs.IsCompleted = b;
         else
         {
@@ -1819,8 +1855,6 @@
 
     void RecalcularEstadoServicioCliente(Block bloque)
     {
-
-
         var all = bloque.SubTasks
             .OfType<ClientServiceTask>()
             .ToList();
@@ -1904,6 +1938,9 @@
     ClientServiceTask cs,
     ChangeEventArgs e)
     {
+        if (!await ValidarHora())
+return;
+
         var nuevoEstado = (bool)e.Value;
 
         // Optimistic UI
@@ -1940,9 +1977,6 @@
 
         StateHasChanged();
     }
-
-
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -2005,37 +2039,6 @@
             };
     }
 
-    // void OpenTaskModal(BaseTask task, bool editMode)
-    // {
-    //     OriginalTask = task;
-    //     SelectedTask = CreateSnapshot(task);
-    //     SelectedTask.SubTasks = task.SubTasks;
-
-    //     SelectedTaskObject = task;
-    //     IsEditMode = editMode;
-    //     IsModalOpen = true;
-
-    //     salaSeleccionada = SelectedTask.IdSala.HasValue && SelectedTask.IdSala > 0
-    //         ? SelectedTask.IdSala
-    //         : null;
-
-    //     InicializarUbicacion(task);
-    //     if (task.EsEvento)
-    //     {
-    //         ParticipantesEdit = todosLosEmpleados
-    //             .Where(e => task.Participantes.Contains(e.Nombre))
-    //             .Select(e => new ParticipanteDTO
-    //             {
-    //                 idEmpleado = e.Id,
-    //                 nombreEmpleado = e.Nombre
-    //             })
-    //             .ToList();
-    //     }
-    //     else
-    //     {
-    //         ParticipantesEdit.Clear();
-    //     }
-    // }
     void OpenTaskModal(object item, bool editMode) // Cambiamos BaseTask por object para aceptar ambos
     {
         // 1. Limpieza total preventiva (Reset)
@@ -2090,15 +2093,6 @@
         IsModalOpen = true;
     }
 
-    // void CloseTaskModal()
-    // {
-    //     SelectedTask = null;
-    //     OriginalTask = null;
-    //     salaSeleccionada = null;
-
-    //     IsModalOpen = false;
-    //     IsEditMode = false;
-    // }
     void CloseTaskModal()
     {
         // Limpia las referencias específicas
@@ -2152,6 +2146,9 @@
 
     async Task DeleteConfirmedAsync()
     {
+        if (!await ValidarHora())
+return;
+
         if (TaskToDelete is not BaseTask bt || bt.ApiId <= 0)
             return;
 
@@ -2174,6 +2171,9 @@
 
     async Task SaveTask()
     {
+        if (!await ValidarHora())
+return;
+
         if (SelectedTask is not BaseTask bt || OriginalTask == null)
             return;
 
@@ -2228,6 +2228,9 @@
 
     async Task GuardarTarea(BaseTask bt)
     {
+        if (!await ValidarHora())
+return;
+
         if (bt.Recurrence == "No repetir" || string.IsNullOrWhiteSpace(bt.Recurrence))
         {
             bt.EsRecurrente = false;
@@ -2261,6 +2264,9 @@
  
     async Task GuardarEvento(BaseTask bt)
     {
+        if (!await ValidarHora())
+return;
+
         if (salaSeleccionada.HasValue && salaSeleccionada > 0)
         {
             bt.IdSala = salaSeleccionada.Value;
@@ -4193,3 +4199,7 @@
             color: white !important;
         }
 </style>
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

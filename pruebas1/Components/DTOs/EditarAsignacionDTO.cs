@@ -9,11 +9,11 @@ namespace pruebas1.Components.DTOs
    
         public class EditarAsignacionDTO
         {
-            public List<int> IdUsuarioEntidadAgenda { get; set; } = new();
+        public List<int> IdUsuarioEntidadAgenda { get; set; } = new();
 
-            public int IdEmpleado { get; set; }
-
-            public List<int> ActividadesIds { get; set; } = new();
+        public int IdEmpleado { get; set; }
+        public int? IdArea { get; set; }
+        public List<int> ActividadesIds { get; set; } = new();
         }
     
 }

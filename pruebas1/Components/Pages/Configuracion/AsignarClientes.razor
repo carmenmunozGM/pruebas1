@@ -10,7 +10,8 @@
 @inject LoginService LoginService
 @inject IJSRuntime JS
 @inject EmpleadosService EmpleadosService
-
+@inject HorariosService HorariosService
+@inject AreasService AreasService
 <div class="asignar-container">
     <div class="section-header">
         <h2 class="section-title">Asignar Clientes</h2>
@@ -135,9 +136,16 @@
                             <div class="group-companies">
                                 <p class="group-label">Empresas en este grupo:</p>
                                 <div class="company-tags">
-                                    @foreach (var cli in grupo.Clientes)
+                                    @foreach (var cli in clientesSeleccionadosGrupo)
                                     {
-                                        <span class="company-tag">@cli.RazonSocial</span>
+                                        <span class="company-tag">
+                                            @cli.RazonSocial
+
+                                            <button class="remove-client-btn"
+                                                    @onclick="() => QuitarClienteDelGrupo(cli.Id)">
+                                                ✕
+                                            </button>
+                                        </span>
                                     }
                                 </div>
                             </div>
@@ -145,6 +153,27 @@
                     }
                 </div>
             </div>
+            @if (MostrarSelectArea)
+            {
+                <div class="form-step">
+                    <div class="step-header">
+                        <div class="step-number @(selectedAreaId != null ? "step-completed" : "")">4</div>
+                        <label class="step-label">Seleccionar Área</label>
+                    </div>
+
+                    <div class="step-content">
+                        <select class="form-select" @bind="selectedAreaId">
+                            <option value="">Seleccione un área</option>
+
+                            @foreach (var area in areas)
+                            {
+                                <option value="@area.Clave">@area.Area</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+
             @if (serviciosCargados && sinServiciosOActividades)
             {
                 <div class="alert-warning">
@@ -213,13 +242,23 @@
                                             @foreach (var activity in service.Activities)
                                             {
                                                 <div class="activity-item">
-                                                    <label class="checkbox-wrapper">
+                                                    <label class="checkbox-wrapper activity-left">
                                                         <input type="checkbox"
-                                                               checked="@selectedActivities.Contains(activity.Id)"
-                                                               @onchange="() => ToggleActivity(activity.Id)" />
+                                                               checked="@selectedActivities.ContainsKey(int.Parse(activity.Id))"
+                                                               @onchange="() => ToggleActivity(int.Parse(activity.Id))" />
+
                                                         <span class="checkbox-custom"></span>
                                                         <span class="activity-name">@activity.Name</span>
                                                     </label>
+
+                                                    @if (selectedActivities.ContainsKey(int.Parse(activity.Id)))
+                                                    {
+                                                        <input type="number"
+                                                               min="1"
+                                                               value="@selectedActivities[int.Parse(activity.Id)]"
+                                                               @onchange="(e) => CambiarCantidad(activity.Id, e.Value)"
+                                                               class="input-cantidad" />
+                                                    }
                                                 </div>
                                             }
                                         </div>
@@ -261,22 +300,46 @@
             <h3 class="table-title">
                 Historial de Asignaciones (@historialAsignaciones.Count)
             </h3>
-
+          
             <div class="table-wrapper">
                 <table class="assignments-grid">
                     <thead>
+                        <tr class="filters-row">
+                            <th>
+                                <input type="text"
+                                       class="table-filter"
+                                       placeholder="Buscar empleado..."
+                                       @bind="filtroEmpleado"
+                                       @bind:event="oninput" />
+                            </th>
+                            <th>
+                                <input type="text"
+                                       class="table-filter"
+                                       placeholder="Buscar cliente / grupo..."
+                                       @bind="filtroCliente"
+                                       @bind:event="oninput" />
+                            </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+
                         <tr>
                             <th>Empleado</th>
                             <th>Cliente / Grupo</th>
                             <th>Tipo</th>
                             <th>Servicios</th>
-                            <th>Actividades</th>
+                            <th>Asignado por</th>
                             <th>Fecha</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in historialAsignaciones.Skip((paginaActual - 1) * registrosPorPagina).Take(registrosPorPagina))
+                        @foreach (var item in historialFiltrado
+                                            .Skip((paginaActual - 1) * registrosPorPagina)
+                                            .Take(registrosPorPagina))
                         
                         {
                             <tr>
@@ -291,7 +354,7 @@
                                     @item.Servicios
                                 </td>
                                 <td>
-                                    @item.TotalActividades actividad@(item.TotalActividades != 1 ? "es" : "")
+                                    @item.AsignadoPor
                                 </td>
                                 <td>
                                     @item.FechaAsignacion.ToString("dd/MM/yyyy")
@@ -371,7 +434,7 @@
         {
             <div class="modal-overlay">
                 <div class="modal-content">
-
+                    <div class="modal-body">
                     <h3>Editar Asignación</h3>
 
                     <p><strong>Empleado actual:</strong> @asignacionSeleccionada.Empleado</p>
@@ -379,8 +442,20 @@
 
                     <hr />
 
+                    @if (MostrarSelectAreaEditar)
+                    {
+                        <div class="form-group">
+                                <h3>Cambiar Área</h3>
+                            <select class="form-control" @bind="selectedAreaEditarId">
+                                @foreach (var area in areas)
+                                {
+                                    <option value="@area.Clave">@area.Area</option>
+                                }
+                            </select>
+                        </div>
+                    }
                     <!-- 🔵 CAMBIAR EMPLEADO -->
-                    <h4>Cambiar empleado</h4>
+                    <h3>Cambiar empleado</h3>
 
                     <input type="text"
                            class="form-control"
@@ -422,9 +497,9 @@
                     }
 
                     <hr />
-
+                   
                     <!-- 🔵 ACTIVIDADES -->
-                    <h4>Actividades</h4>
+                    <h3>Actividades</h3>
 
                     <div class="actividades-container">
                         @foreach (var servicio in serviciosEditar)
@@ -446,11 +521,25 @@
                                     <div class="activities-grid">
                                         @foreach (var actividad in servicio.Actividades)
                                         {
-                                            <label class="activity-chip">
-                                                <input type="checkbox"
-                                                       checked="@selectedActivitiesEditar.Contains(actividad.IdActividad)"
-                                                       @onchange="() => ToggleActividad(actividad.IdActividad)" />
-                                                @actividad.Actividad
+                                            <label class="activity-chip activity-chip-edit">
+
+                                                <div class="chip-left">
+                                                    <input type="checkbox"
+                                                           checked="@selectedActivitiesEditar.ContainsKey(actividad.IdActividad)"
+                                                           @onchange="() => ToggleActividad(actividad.IdActividad)" />
+
+                                                    <span>@actividad.Actividad</span>
+                                                </div>
+
+                                                @if (selectedActivitiesEditar.ContainsKey(actividad.IdActividad))
+                                                {
+                                                    <input type="number"
+                                                           class="chip-input"
+                                                           min="1"
+                                                           value="@selectedActivitiesEditar[actividad.IdActividad]"
+                                                           @onchange="(e) => CambiarCantidadEditar(actividad.IdActividad, e.Value)" />
+                                                }
+
                                             </label>
                                         }
                                     </div>
@@ -473,6 +562,7 @@
                     </div>
 
                 </div>
+            </div>
             </div>
         }
         @if (mostrarModalEliminar && asignacionEliminar != null)
@@ -520,7 +610,7 @@
     private string? selectedEmployee = null;
     private string? selectedClient = null;
     private List<string> selectedServices = new();
-    private List<string> selectedActivities = new();
+    private Dictionary<int, int> selectedActivities = new();
     private List<ClientesDTO> clientes = new();
     private List<GrupoClientesDTO> gruposClientes = new();
     private List<EmpleadoDTO> empleados = new();
@@ -550,9 +640,34 @@
     private bool mostrarListaEditar = false;
 
     private List<ServicioConActividadesDTO> serviciosEditar = new();
-    private HashSet<int> selectedActivitiesEditar = new();
+    private Dictionary<int, int> selectedActivitiesEditar = new();
 
     private bool editando = false;
+    private List<ClientesDTO> clientesSeleccionadosGrupo = new();
+
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+    private List<AreaDTO> areas = new();
+    private int? selectedAreaId = null;
+    private int? selectedAreaEditarId = null;
+
+    private string filtroEmpleado = "";
+    private string filtroCliente = "";
+
+    private bool MostrarSelectArea =>
+    assignmentType == "client" &&
+    selectedClient != null &&
+    int.TryParse(selectedClient, out var id) &&
+    id == 295;
+
+    private IEnumerable<HistorialAsignacionDTO> historialFiltrado =>
+    historialAsignaciones.Where(x =>
+        (string.IsNullOrWhiteSpace(filtroEmpleado) ||
+         (x.Empleado?.Contains(filtroEmpleado, StringComparison.OrdinalIgnoreCase) ?? false)) &&
+
+        (string.IsNullOrWhiteSpace(filtroCliente) ||
+         (x.Entidad?.Contains(filtroCliente, StringComparison.OrdinalIgnoreCase) ?? false))
+    );
 
 
     protected override async Task OnInitializedAsync()
@@ -563,11 +678,29 @@
 
         await CargarEmpleados();
         await CargarHistorialAsignaciones();
+        areas = await AreasService.GetAreas();
         MainLayout.OnEscPressed = async () =>
      {
          CerrarModalActivo();
          await InvokeAsync(StateHasChanged);
-     };
+     }; 
+    }
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
     }
 
     void CerrarModalActivo()
@@ -745,21 +878,31 @@
     }
 
     private async Task SeleccionarCliente((int Id, string Nombre) item)
-
     {
         selectedClient = item.Id.ToString();
         searchTextCliente = item.Nombre;
         mostrarClientes = false;
-
-        Debug.WriteLine("===== CLIENTE / GRUPO =====");
-        Debug.WriteLine($"ID SELECCIONADO: {selectedClient}");
-        Debug.WriteLine($"NOMBRE: {item.Nombre}");
-        Debug.WriteLine("===========================");
-
+        selectedAreaId = null;
         selectedServices.Clear();
         selectedActivities.Clear();
 
+        // 🔥 NUEVO: cargar clientes del grupo en lista editable
+        if (assignmentType == "group")
+        {
+            var grupo = gruposClientes.FirstOrDefault(g => g.Id == item.Id);
+            if (grupo != null)
+            {
+                clientesSeleccionadosGrupo = grupo.Clientes.ToList(); // copia
+            }
+        }
+
         await CargarServiciosPorArea();
+    }
+
+
+    private void QuitarClienteDelGrupo(int clienteId)
+    {
+        clientesSeleccionadosGrupo.RemoveAll(c => c.Id == clienteId);
     }
 
     private void OnClientChanged()
@@ -782,7 +925,7 @@
             {
                 foreach (var activity in service.Activities)
                 {
-                    selectedActivities.Remove(activity.Id);
+                    selectedActivities.Remove(int.Parse(activity.Id));
                 }
             }
         }
@@ -794,32 +937,46 @@
         Debug.WriteLine($"SERVICIOS SELECCIONADOS: {string.Join(", ", selectedServices)}");
     }
 
-    private void ToggleActivity(string activityId)
+    private void ToggleActivity(int activityId)
     {
-
-        Debug.WriteLine($"ACTIVITY TOGGLE: {activityId}");
-        if (selectedActivities.Contains(activityId))
+        if (selectedActivities.ContainsKey(activityId))
         {
             selectedActivities.Remove(activityId);
         }
         else
         {
-            selectedActivities.Add(activityId);
+            selectedActivities[activityId] = 1; // default
         }
+    }
 
-        Debug.WriteLine($"ACTIVIDADES SELECCIONADAS: {string.Join(", ", selectedActivities)}");
+    private void CambiarCantidad(string activityIdStr, object? value)
+    {
+        int activityId = int.Parse(activityIdStr);
+
+        if (int.TryParse(value?.ToString(), out int cantidad))
+        {
+            if (cantidad < 1)
+                cantidad = 1;
+
+            selectedActivities[activityId] = cantidad;
+        }
     }
 
     private bool IsFormComplete()
     {
+        bool areaValida = !MostrarSelectArea || selectedAreaId != null;
+
         return !string.IsNullOrEmpty(selectedEmployee) &&
                !string.IsNullOrEmpty(selectedClient) &&
                selectedServices.Any() &&
-               selectedActivities.Any();
+               selectedActivities.Any(x => x.Value > 0) &&
+               areaValida;
     }
 
     private async Task SaveAssignment()
     {
+        if (!await ValidarHora())
+            return;
 
         var usuario = LoginService.obtenerUsuarioLogueado();
 
@@ -849,15 +1006,25 @@
         if (assignmentType == "client")
         {
             entidadesIds = new List<int>
-        {
-            int.Parse(selectedClient!)
-        };
+    {
+        int.Parse(selectedClient!)
+    };
         }
         else // group
         {
-            entidadesIds = gruposClientes
-                .First(g => g.Id == int.Parse(selectedClient!))
-                .Clientes
+            // 🔥 VALIDACIÓN AQUÍ
+            if (!clientesSeleccionadosGrupo.Any())
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "warning",
+                    title = "Grupo vacío",
+                    text = "Debes dejar al menos un cliente en el grupo."
+                });
+                return;
+            }
+
+            entidadesIds = clientesSeleccionadosGrupo
                 .Select(c => c.Id)
                 .ToList();
         }
@@ -869,7 +1036,15 @@
             TipoEntidad = assignmentType == "client" ? "Cliente" : "Grupo",
             IdEmpleado = empleadoSeleccionado.Id,
             ClientesIds = entidadesIds,
-            ActividadesIds = selectedActivities.Select(int.Parse).ToList()
+            idArea = selectedAreaId, 
+            Actividades = selectedActivities
+            .Select(x => new pruebas1.Components.DTOs.ActividadCantidadDTO
+            {
+                IdActividad = x.Key,
+                Cantidad = x.Value
+            })
+    .ToList()
+
         };
 
         // 3️⃣ POST al backend
@@ -884,9 +1059,6 @@
             Debug.WriteLine($"❌ Error al guardar asignación: {error}");
             return;
         }
-
-
-
 
         await CargarHistorialAsignaciones();
 
@@ -1080,7 +1252,7 @@
     private bool IsServiceFullySelected(Service service)
     {
         return service.Activities.Any() &&
-               service.Activities.All(a => selectedActivities.Contains(a.Id));
+               service.Activities.All(a => selectedActivities.ContainsKey(int.Parse(a.Id)));
     }
 
     private void ToggleAllActivitiesForService(Service service)
@@ -1089,14 +1261,16 @@
 
         foreach (var activity in service.Activities)
         {
+            int id = int.Parse(activity.Id);
+
             if (allSelected)
             {
-                selectedActivities.Remove(activity.Id);
+                selectedActivities.Remove(id);
             }
             else
             {
-                if (!selectedActivities.Contains(activity.Id))
-                    selectedActivities.Add(activity.Id);
+                if (!selectedActivities.ContainsKey(id))
+                    selectedActivities[id] = 1; // 👈 default
             }
         }
     }
@@ -1132,8 +1306,7 @@
         empleadoEditarSeleccionado = emp;
         searchEditar = emp.Nombre;
         mostrarListaEditar = false;
-        selectedActivitiesEditar.Clear();
-        // 🔥 Recargar servicios según nueva área
+
         await CargarServiciosPorAreaEditar(emp.Area);
     }
 
@@ -1148,6 +1321,9 @@
 
     private async Task AbrirModalEditar(HistorialAsignacionDTO asignacion)
     {
+        if (!await ValidarHora())
+            return;
+
         Debug.WriteLine("Entro en el metodo editar");
         asignacionSeleccionada = asignacion;
 
@@ -1157,15 +1333,19 @@
 
         if (empleadoEditarSeleccionado == null)
             return;
-
-        selectedActivitiesEditar = asignacion.ActividadesIds.ToHashSet();
+        selectedAreaEditarId = asignacion.IdArea;
+        selectedActivitiesEditar = asignacion.ActividadesIds
+            .GroupBy(x => x)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         // 🔥 Usar el área del empleado encontrado
         await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
 
         mostrarModalEditar = true;
     }
-
+    private bool MostrarSelectAreaEditar =>
+    asignacionSeleccionada?.TipoEntidad == "Cliente" &&
+    asignacionSeleccionada.IdArea != null;
     private async Task CargarServiciosPorAreaEditar(string area)
     {
         serviciosEditar = await Http.GetFromJsonAsync<List<ServicioConActividadesDTO>>(
@@ -1175,11 +1355,25 @@
 
     private async Task ConfirmarEditar()
     {
+        if (!await ValidarHora())
+        return;
+
         if (asignacionSeleccionada == null)
             return;
 
         if (empleadoEditarSeleccionado == null)
             return;
+
+        if (MostrarSelectAreaEditar && selectedAreaEditarId == null)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Área requerida",
+                text = "Debes seleccionar un área."
+            });
+            return;
+        }
 
         if (!selectedActivitiesEditar.Any())
         {
@@ -1236,9 +1430,8 @@
 
         // 🔥 LIMPIEZA DE ACTIVIDADES
         var actividadesLimpias = selectedActivitiesEditar
-            .Where(x => x > 0)
-            .Distinct()
-            .ToList();
+    .SelectMany(x => Enumerable.Repeat(x.Key, x.Value))
+    .ToList();
 
         if (!actividadesLimpias.Any())
         {
@@ -1263,7 +1456,8 @@
         {
             IdUsuarioEntidadAgenda = idsLimpios,
             IdEmpleado = empleadoEditarSeleccionado.Id,
-            ActividadesIds = actividadesLimpias
+            ActividadesIds = actividadesLimpias,
+            IdArea = selectedAreaEditarId 
         };
 
         // ===== DEBUG FRONT =====
@@ -1405,13 +1599,22 @@
 
     private void ToggleActividad(int actividadId)
     {
-        if (selectedActivitiesEditar.Contains(actividadId))
+        if (selectedActivitiesEditar.ContainsKey(actividadId))
             selectedActivitiesEditar.Remove(actividadId);
         else
-            selectedActivitiesEditar.Add(actividadId);
+            selectedActivitiesEditar[actividadId] = 1; // default
     }
 
+    private void CambiarCantidadEditar(int actividadId, object? value)
+    {
+        if (int.TryParse(value?.ToString(), out int cantidad))
+        {
+            if (cantidad < 1)
+                cantidad = 1;
 
+            selectedActivitiesEditar[actividadId] = cantidad;
+        }
+    }
 
 
     private void AbrirModalEliminar(HistorialAsignacionDTO item)
@@ -1476,6 +1679,9 @@
     private bool copiando = false;
     private async Task CopiarAsignacion(HistorialAsignacionDTO item)
     {
+        if (!await ValidarHora())
+            return;
+
         if (copiando)
             return;
 
@@ -1496,7 +1702,14 @@
                 TipoEntidad = item.TipoEntidad,
                 IdEmpleado = item.IdEmpleado,
                 ClientesIds = item.EntidadesExternasIds,
-                ActividadesIds = item.ActividadesIds
+                Actividades = item.ActividadesIds
+    .GroupBy(id => id)
+    .Select(g => new pruebas1.Components.DTOs.ActividadCantidadDTO
+    {
+        IdActividad = g.Key,
+        Cantidad = g.Count()
+    })
+    .ToList()
             };
 
             var response = await Http.PostAsJsonAsync(
@@ -1520,10 +1733,20 @@
     }
     private int paginaActual = 1;
     private int registrosPorPagina = 10;
-    private int TotalPaginas => (int)Math.Ceiling((double)historialAsignaciones.Count / registrosPorPagina);
+    private int TotalPaginas => (int)Math.Ceiling((double)historialFiltrado.Count() / registrosPorPagina);
 
     private void CambiarPagina(int nuevaPagina)
     {
         paginaActual = nuevaPagina;
     }
+
+    public class ActividadCantidadDTO
+    {
+        public int IdActividad { get; set; }
+        public int Cantidad { get; set; }
+    }
 }
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />

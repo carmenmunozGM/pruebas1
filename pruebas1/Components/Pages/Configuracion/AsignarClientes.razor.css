@@ -375,10 +375,6 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     margin: 0;
 }
 
-.dark-mode .service-header {
-    color: #c084fc; /* var(--color-purple-400) */
-}
-
 .activities-list {
     display: flex;
     flex-direction: column;
@@ -386,16 +382,65 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     margin-left: 1.5rem;
 }
 
-.activity-item {
-    padding: 0.5rem;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.75rem; /* var(--radius-lg) */
+/* CONTENEDOR GENERAL DE ACTIVIDADES */
+.activities-list {
+    background-color: transparent;
 }
 
-.dark-mode .activity-item {
-    background-color: #374151;
+/* ITEM INDIVIDUAL */
+.activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* 👈 clave para alinear input a la derecha */
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+/* DARK MODE FIX REAL */
+.dark-mode .activity-item,
+[data-theme="dark"] .activity-item {
+    background-color: #2a2e39 !important; /* 👈 ya no gris claro */
+    border-color: #374151 !important;
+}
+
+/* IZQUIERDA (checkbox + nombre) */
+.activity-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+}
+
+/* INPUT DE CANTIDAD */
+.input-cantidad {
+    width: 70px;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    color: #1f2937;
+    text-align: center;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+    /* HOVER MÁS PRO */
+    .input-cantidad:focus {
+        outline: none;
+        border-color: #a855f7;
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+    }
+
+/* DARK MODE */
+.dark-mode .input-cantidad,
+[data-theme="dark"] .input-cantidad {
+    background-color: #1a1c23;
     border-color: #4b5563;
+    color: #f5f5f5;
 }
 
 .activity-name {
@@ -561,7 +606,7 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 }
 
 .td-services {
-    max-width: 15rem;
+    max-width: 12rem;
 }
 
 .td-cliente {
@@ -955,19 +1000,57 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     justify-content: center;
     z-index: 100;
 }
-
+.modal-body {
+    overflow-y: auto;
+    padding-right: 4px;
+}
 .modal-content {
     width: 100%;
     max-width: 600px;
-    max-height: 400px;
+    max-height: 85vh;
+    overflow: hidden;
     background-color: #ffffff;
     border: 2px solid rgba(168, 85, 247, 0.3);
     border-radius: 1rem;
     padding: 1.75rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
     animation: modalFade 0.2s ease-out;
+    scroll-behavior: smooth;
 }
 
+/* SELECT BASE */
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: #ffffff;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    border-radius: 1rem;
+    color: #1f2937;
+    cursor: pointer;
+    appearance: none; /* 👈 quita estilo nativo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all 0.3s ease;
+    /* flechita custom */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%239ca3af' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #1a1c23; /* 👈 más profundo que el form */
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #f5f5f5;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23d1d5db' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5z'/></svg>");
+}
+
+    [data-theme="dark"] .form-control option {
+        background-color: #1a1c23;
+        color: #f5f5f5;
+    }
 @keyframes modalFade {
     from {
         opacity: 0;
@@ -1011,6 +1094,79 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
         color: #bbbbbb !important;
     }
 
+
+[data-theme="dark"] .service-card {
+    background-color: #2a2e39 !important;
+    border-color: rgba(168, 85, 247, 0.4) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+    /* Encabezado del Servicio (Interactivo) */
+    [data-theme="dark"] .service-card .service-header .service-activities {
+        background-color: black !important;
+        color: #f5f5f5 !important;
+        border-bottom-color: rgba(168, 85, 247, 0.2) !important;
+    }
+
+        [data-theme="dark"] .service-card .service-header:hover {
+            background-color: rgba(102, 62, 148, 0.3) !important;
+        }
+
+/* Área de Actividades (Grid) */
+[data-theme="dark"] .activities-grid {
+    background-color: #1a1c23 !important;
+}
+
+/* Chips de Actividad Individual */
+[data-theme="dark"] .activity-chip {
+    background-color: #242731 !important;
+    border-color: #4b5563 !important;
+    color: #d1d5db !important;
+}
+
+    [data-theme="dark"] .activity-chip:hover {
+        border-color: #9333ea !important;
+        background-color: rgba(147, 51, 234, 0.1) !important;
+    }
+
+    /* Estado Activo (Checkbox seleccionado) */
+    [data-theme="dark"] .activity-chip:has(input:checked) {
+        background-color: rgba(147, 51, 234, 0.2) !important;
+        border-color: #a855f7 !important;
+        color: #ffffff !important;
+    }
+
+/* Dropdown de empleados dentro del modal */
+[data-theme="dark"] .dropdown-list {
+    background-color: #1f2937 !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #f5f5f5 !important;
+    border-bottom-color: #374151 !important;
+}
+
+    [data-theme="dark"] .dropdown-item:hover {
+        background-color: rgba(168, 85, 247, 0.1) !important;
+    }
+
+/* Tipografía y Separadores */
+[data-theme="dark"] .modal-content h4 {
+    color: #d8b4fe !important; /* Tono lila suave para subtítulos */
+}
+[data-theme="dark"]  h3 {
+    color: #d8b4fe !important; /* Tono lila suave para subtítulos */
+}
+[data-theme="dark"] .modal-content hr {
+    border-top-color: #374151 !important;
+    opacity: 0.5;
+}
+
+[data-theme="dark"] .dropdown-empty {
+    color: #9ca3af !important;
+    background-color: #1a1c23 !important;
+}
 /* Info actual */
 .modal-content p {
     margin: 0.25rem 0;
@@ -1024,20 +1180,21 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
 
 .autocomplete-container {
     position: relative;
+    width: 100%;
 }
 
 .autocomplete-list {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 0.75rem;
-    max-height: 200px;
+    max-height: 260px;
     overflow-y: auto;
-    z-index: 999;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    background-color: #ffffff;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
 }
 
     .autocomplete-list li {
@@ -1103,21 +1260,9 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     z-index: 999;
 }
 
-.modal-content {
-    background: white;
-    width: 600px;
-    max-width: 90%;
-    max-height: 85vh; /* 🔥 límite vertical */
-    overflow-y: auto; /* 🔥 scroll interno */
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-}
-
 .actividades-container {
-    max-height: 25vh;
-    overflow-y: auto;
-    margin-bottom: 20px;
+    max-height: none;
+    overflow: visible;
 }
 
 .swal-top-layer {
@@ -1203,13 +1348,159 @@ input[type="checkbox"]:checked + .checkbox-custom::after {
     padding: 8px; /* menos padding */
 }
 
+/* CHIP EN MODO EDICIÓN */
+.activity-chip-edit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    /* 👇 clave: que NO se estire */
+    width: auto;
+    max-width: 100%;
+}
+
+    /* IZQUIERDA (checkbox + texto) */
+    .activity-chip-edit .chip-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+/* INPUT PEQUEÑO INLINE */
+.chip-input {
+    width: 55px;
+    padding: 0.2rem 0.3rem;
+    border-radius: 0.4rem;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+    /* FOCUS PRO */
+    .chip-input:focus {
+        outline: none;
+        border-color: #a855f7;
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+    }
+
+/* DARK MODE */
+[data-theme="dark"] .chip-input {
+    background-color: #1a1c23;
+    border-color: #4b5563;
+    color: #f5f5f5;
+}
+
+/* ============================= */
+/* FIX MODO OSCURO SERVICIOS */
+/* ============================= */
+
+/* Paso 4 - Lista de servicios */
+[data-theme="dark"] .services-list .service-item {
+    background-color: #242731 !important;
+    border-color: #334155 !important;
+}
+
+/* Nombre del servicio */
+[data-theme="dark"] .service-item .service-name {
+    color: #f5f5f5 !important;
+}
+
+/* Icono flechita */
+[data-theme="dark"] .service-item svg {
+    color: #9ca3af !important;
+}
 
 
+/* ============================= */
+/* Paso 5 - HEADER DEL SERVICIO */
+/* ============================= */
+
+[data-theme="dark"] .service-activities {
+    background-color: #1f2937 !important; /* 👈 el gris oscuro correcto */
+    border: 1px solid #334155 !important;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+
+    /* Header clickeable */
+    [data-theme="dark"] .service-activities .service-header {
+        background-color: transparent !important;
+        color: #e5e7eb !important;
+    }
+
+    /* Hover más elegante */
+    [data-theme="dark"] .service-activities:hover {
+        background-color: rgba(168, 85, 247, 0.08) !important;
+    }
 
 
+/* ============================= */
+/* MODAL EDITAR - SERVICE CARD */
+/* ============================= */
+
+[data-theme="dark"] .modal-content .service-card {
+    background-color: #242731 !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Header del servicio en modal */
+[data-theme="dark"] .modal-content .service-header {
+    background-color: #1a1c23 !important;
+    color: #f5f5f5 !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+    /* Hover */
+    [data-theme="dark"] .modal-content .service-header:hover {
+        background-color: rgba(168, 85, 247, 0.15) !important;
+    }
 
 
+/* ============================= */
+/* GRID DE ACTIVIDADES (modal) */
+/* ============================= */
 
+[data-theme="dark"] .modal-content .activities-grid {
+    background-color: #16181e !important;
+}
 
+.company-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
 
+.remove-client-btn {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 14px;
+}
 
+    .remove-client-btn:hover {
+        color: #ef4444;
+    }
+
+.table-filter {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+data-theme="dark"].table-filter {
+    background-color: #1e293b;
+    color: #fff;
+    border: 1px solid #444;
+}
+
+.filters-row th {
+    padding: 6px;
+}

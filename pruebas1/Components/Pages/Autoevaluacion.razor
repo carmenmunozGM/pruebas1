@@ -5,6 +5,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @inject IJSRuntime JS
 @inject AutoevaluacionService AutoService
+@inject HorariosService HorariosService
 
 <br />
 <br />
@@ -284,6 +285,26 @@
 @code {
     private bool IsSaving = false;
     public List<DateTime?> FechasQuincenales { get; set; } = new() { null, null };
+
+    HoraSistemaDTO? alertaHora;
+    bool mostrarAlerta = false;
+
+    private async Task<bool> ValidarHora()
+    {
+        var resultado = await HorariosService.GetHorario();
+
+        if (resultado.Desfase)
+        {
+            alertaHora = resultado;
+            mostrarAlerta = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            return false;
+        }
+
+        return true;
+    }
 
     private async Task CambiarMes(int cantidad)
     {
@@ -625,6 +646,9 @@
     private async Task GuardarAutoevaluacionFinal()
     {
         if (IsSaving) return;
+
+        if (!await ValidarHora())
+            return;
 
         // Validación de obligatorios (Mantenida)
         foreach (var b in Bloques)
@@ -1288,3 +1312,7 @@
     }
 
 </style>
+
+<ReusableHorarioAlert @key="mostrarAlerta"
+                      HoraSistema="alertaHora"
+                      Visible="mostrarAlerta" />
