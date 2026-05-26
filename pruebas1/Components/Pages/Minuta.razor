@@ -78,6 +78,7 @@
                                 <th style="width: 110px;">Periodo</th>
                                 <th class="col-realizado">Realizado en</th>
                                 <th style="width: 110px;">Hrs. Invertidas</th>
+                                <th style="width: 200px;">Observación individual</th>
                                 <th style="width: 90px;">Acción</th>
                             </tr>
                         </thead>
@@ -180,6 +181,13 @@
                                             <TimePickerList @bind-Value="fila.Horas" />
                                         </div>
                                     </td>
+                                    <td class="col-observacion">
+                                        <textarea @bind="fila.ObservacionIndividual"
+                                                  class="cell-textarea observacion-textarea"
+                                                  placeholder="Observación individual..."
+                                                  rows="1">
+            </textarea>
+                                    </td>
                                     <td>
                                         <div class="cell-actions">
                                             @if (fila == FilasMinuta.Last())
@@ -235,7 +243,7 @@
     private List<ServicioConActividadesDTO> ListaServicios = new();
     private List<CatalogoLugarDTO> ListaLugares = new();
     private List<AreaDTO> ListaAreas = new();
-
+    private bool EsTecnologiasInformacion = false;
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
 
@@ -269,6 +277,7 @@
         public string? OtraActividad { get; set; }
         public string Periodo { get; set; } = "";
         public TimeOnly? Horas { get; set; }
+        public string? ObservacionIndividual { get; set; } = "";
     }
 
     private IEnumerable<ClientesDTO> FiltrarClientes(string busqueda)
@@ -338,15 +347,12 @@
     private async Task AbrirModal()
     {
         var usuario = LoginService.obtenerUsuarioLogueado();
-      
 
         NombreAsesor = !string.IsNullOrWhiteSpace(usuario.NombreRed)
             ? usuario.NombreRed
             : usuario.NombreUsuario;
 
         ClaveAsesor = usuario.IdEmpleado;
-
-        FilasMinuta = new List<FilaMinuta> { new FilaMinuta() };
 
         try
         {
@@ -381,7 +387,21 @@
 
             var empleado = await respEmpleado.Content.ReadFromJsonAsync<EmpleadoDTO>();
 
-            if (empleado == null || string.IsNullOrWhiteSpace(empleado.Area))
+            if (empleado == null)
+            {
+                Debug.WriteLine("Empleado no encontrado");
+                return;
+            }
+
+            // Detectar TI por IdArea o nombre
+            EsTecnologiasInformacion =
+                string.Equals(
+                    empleado.Area?.Trim(),
+                    "TECNOLOGIAS DE INFORMACION",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            if (string.IsNullOrWhiteSpace(empleado.Area))
             {
                 Debug.WriteLine("Empleado sin área");
                 return;
@@ -428,6 +448,10 @@
         {
             Debug.WriteLine("ERROR GENERAL: " + ex.Message);
         }
+        FilasMinuta = new List<FilaMinuta>
+                {
+                    CrearFilaInicial()
+                };
 
         // 🔥 Mostrar modal SOLO cuando todo esté cargado
         IsVisible = true;
@@ -444,7 +468,7 @@
 
     private void Cerrar() => IsVisible = false;
 
-    private void AgregarFila() => FilasMinuta.Add(new FilaMinuta());
+    private void AgregarFila() => FilasMinuta.Add(CrearFilaInicial());
 
     private void EliminarFila(FilaMinuta fila)
     {
@@ -529,7 +553,8 @@
                 IdArea = f.IdArea,
                 IdLugar = f.IdLugar,
                 Periodo = f.Periodo,
-                HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute
+                HorasInvertidas = f.Horas!.Value.Hour * 60 + f.Horas.Value.Minute,
+                ObservacionIndividual = f.ObservacionIndividual
             }).ToList()
         };
 
@@ -580,6 +605,28 @@
         MostrarAlerta = true;
         StateHasChanged();
     }
+
+    private FilaMinuta CrearFilaInicial()
+    {
+        var fila = new FilaMinuta();
+
+        if (EsTecnologiasInformacion)
+        {
+            fila.ClienteId = 295;
+            fila.Periodo = DateTime.Now.Year.ToString();
+            fila.IdLugar = 2;
+
+            var clienteTI = listaClientes.FirstOrDefault(c => c.Id == 295);
+
+            if (clienteTI != null)
+            {
+                fila.BusquedaCliente =
+                    $"{clienteTI.Clave} - {clienteTI.RazonSocial}";
+            }
+        }
+
+        return fila;
+    }
 }
 
 <style>
@@ -596,8 +643,8 @@
 
     .modal-container {
         background: #ffffff;
-        width: 90%;
-        max-width: 1500px;
+        width: 95%;
+        /* max-width: 1500px; */
         border-radius: 12px;
         overflow: hidden;
         display: flex;
@@ -1177,6 +1224,145 @@
     [data-theme="dark"] .dropdown-empty {
         color: #64748b !important;
     }
+
+    /* ================= OBSERVACIÓN INDIVIDUAL ================= */
+
+.col-observacion {
+    min-width: 220px;
+    max-width: 280px;
+    vertical-align: top;
+}
+
+.observacion-textarea {
+    width: 100%;
+    min-height: 38px;
+
+    /* crecimiento vertical */
+    height: auto;
+    resize: vertical;
+
+    /* límite antes de scroll */
+    max-height: 120px;
+
+    overflow-y: auto;
+
+    padding: 8px 10px !important;
+
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    font-size: 0.88rem;
+    line-height: 1.4;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+/* Focus bonito */
+.observacion-textarea:focus {
+    outline: none;
+    border-color: #22c55e;
+
+    box-shadow:
+        0 0 0 3px rgba(34,197,94,0.15);
+}
+
+/* Scroll elegante */
+.observacion-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.observacion-textarea::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.observacion-textarea::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}/* ================= OBSERVACIÓN INDIVIDUAL ================= */
+
+.col-observacion {
+    min-width: 220px;
+    max-width: 280px;
+    vertical-align: top;
+}
+
+.observacion-textarea {
+    width: 100%;
+    min-height: 38px;
+
+    /* crecimiento vertical */
+    height: auto;
+    resize: vertical;
+
+    /* límite antes de scroll */
+    max-height: 120px;
+
+    overflow-y: auto;
+
+    padding: 8px 10px !important;
+
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    font-size: 0.88rem;
+    line-height: 1.4;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+/* Focus bonito */
+.observacion-textarea:focus {
+    outline: none;
+    border-color: #22c55e;
+
+    box-shadow:
+        0 0 0 3px rgba(34,197,94,0.15);
+}
+
+/* Scroll elegante */
+.observacion-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.observacion-textarea::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.observacion-textarea::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+    /* ================= DARK MODE OBSERVACIÓN ================= */
+
+    [data-theme="dark"] .observacion-textarea {
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+
+        [data-theme="dark"] .observacion-textarea::placeholder {
+            color: #64748b !important;
+        }
+
+        [data-theme="dark"] .observacion-textarea:focus {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important;
+        }
+
+        [data-theme="dark"] .observacion-textarea::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
 
 </style>
 

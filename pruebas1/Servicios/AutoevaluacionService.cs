@@ -76,6 +76,27 @@ namespace pruebas1.Servicios
 
 
         // ------------------------------------------
+        // GET - Obtener Autoevaluación por dia
+        // ------------------------------------------
+        public async Task<List<AutoevaluacionDTO>> ObtenerAutoevaluacionDiaria()
+        {
+            try
+            {
+                string url = $"{_baseApi}/vistaAutoevaluacion/vista-autoevaluacion/AutoevaluacionPorFecha";
+
+                var result = await _http.GetFromJsonAsync<List<AutoevaluacionDTO>>(url);
+
+                return result ?? new List<AutoevaluacionDTO>();
+            }
+            catch (Exception ex)
+            {
+                // 👇 IMPORTANTE: no romper la app si no hay datos
+                Console.WriteLine($"[AutoevaluacionService] ObtenerAutoevaluacion: {ex.Message}");
+                return new List<AutoevaluacionDTO>();
+            }
+        }
+
+        // ------------------------------------------
         // POST - Guardar autoevaluación completa
         // ------------------------------------------
         public async Task<bool> GuardarAutoevaluacion(GuardarAutoevaluacionEmpleadoDTO dto)
