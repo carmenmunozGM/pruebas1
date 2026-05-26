@@ -102,12 +102,12 @@
             <tbody>
                 @if (reportType == "especiales")
                 {
-                    @foreach (var rep in new[] { "Reporte por actividad", "Reporte registro de actividades", "Reporte horas programadas" })
+                    @foreach (var rep in new[] { "Reporte por actividad (clientes asignados)", "Reporte registro de actividades por área", "Reporte horas programadas (clientes asignados)" })
                     {
                         <tr>
                             <td style="vertical-align: middle;"><strong>@rep</strong></td>
                             <td style="vertical-align: middle; padding-left: 20px;">
-                                @if (rep == "Reporte por actividad")
+                                @if (rep == "Reporte por actividad (clientes asignados)")
                                 {
                                     <div style="display: flex; flex-direction: column; gap: 8px; width: fit-content;">
                                         <select class="area-filter" style="width: 280px; margin: 0; padding: 6px 10px; font-size: 0.9rem;"
@@ -139,7 +139,7 @@
                             <td class="text-right" style="vertical-align: middle;">
                                 <div style="display:flex; gap:8px; justify-content:flex-end;">
 
-                                    @if (rep == "Reporte por actividad")
+                                    @if (rep == "Reporte por actividad (clientes asignados)")
                                     {
                                         <!-- ESTILO -->
                                         <button class="download-button"
@@ -163,7 +163,7 @@
                                             <span>Plano</span>
                                         </button>
                                     }
-                                    else if (rep == "Reporte registro de actividades")
+                                    else if (rep == "Reporte registro de actividades por área")
                                     {
                                         <!-- ESTILO -->
                                         <button class="download-button"
@@ -187,7 +187,7 @@
                                             <span>Plano</span>
                                         </button>
                                     }
-                                    else if (rep == "Reporte horas programadas")
+                                    else if (rep == "Reporte horas programadas (clientes asignados)")
                                     {
                                         <!-- ESTILO -->
                                         <button class="download-button"

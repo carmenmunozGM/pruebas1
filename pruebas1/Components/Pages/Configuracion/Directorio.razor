@@ -56,66 +56,116 @@
     {
         new DepartmentInfo
         {
-            Name = "Socios",
+            Name = "Asesoría Contable (AC)",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "CPC. Alberto Méndez", Extension = "601" },
-                new RoleInfo { Role = "CPC. Rosalía López", Extension = "602" },
-                new RoleInfo { Role = "CPC. Rosalía Ortega", Extension = "605" },
-                new RoleInfo { Role = "CPC. Tere Rodríguez Limón", Extension = "603" },
-                new RoleInfo { Role = "LCC. Rosalía Méndez", Extension = "604" },
-                new RoleInfo { Role = "LIC. Xavier González", Extension = "606" }
+                new RoleInfo { Role = "Asistente AC", Extension = "101" },
+                new RoleInfo { Role = "Auxiliar admvo AC", Extension = "102" },
+                new RoleInfo { Role = "Gerente de AC", Extension = "111" },
+                new RoleInfo { Role = "Asesor Jr/Contador", Extension = "112" },
+                new RoleInfo { Role = "Contador", Extension = "114" },
+                new RoleInfo { Role = "Asesor Sr/Contador", Extension = "115" },
+                new RoleInfo { Role = "Asesor Jr/Contador", Extension = "116" },
             }
         },
         new DepartmentInfo
+        {
+            Name = "Auditoría (AU)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente AU", Extension = "201" },
+                new RoleInfo { Role = "Auxiliar admvo AU", Extension = "202" },
+                new RoleInfo { Role = "Gerente AU", Extension = "203" },
+                new RoleInfo { Role = "Encargado Sr. AU SS", Extension = "211" },
+                new RoleInfo { Role = "Auditor SS", Extension = "212" },
+                new RoleInfo { Role = "Auditor fiscal Aux. PM", Extension = "213" },
+                new RoleInfo { Role = "Encargado Sr/Jr AU", Extension = "214" },
+                new RoleInfo { Role = "Encargado Sr/Sr AU", Extension = "215" },
+                new RoleInfo { Role = "Auditor fiscal Aux. Mas", Extension = "216" },
+                new RoleInfo { Role = "Auditor fiscal Aux. PM", Extension = "217" },
+                new RoleInfo { Role = "Maquila de nómina", Extension = "218/219" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Consultoría Organizacional (CO)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente CO", Extension = "301" },
+                new RoleInfo { Role = "Consultor", Extension = "311" },
+                new RoleInfo { Role = "Consultor", Extension = "312" },
+                new RoleInfo { Role = "Gerente CO", Extension = "313" }
+            }
+        },
+        new DepartmentInfo
+        {
+            Name = "Asesoria Fiscal y Gestoría (AF y GE)",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente AF", Extension = "401" },
+                new RoleInfo { Role = "Gerente AF", Extension = "411" },
+                new RoleInfo { Role = "Asesor fiscal Jr.", Extension = "412" },
+                new RoleInfo { Role = "Asesor Jr/Gestoría", Extension = "413" }
+            }
+        },
+          new DepartmentInfo
         {
             Name = "Administración",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asistente RLA", Extension = "710" },
-                new RoleInfo { Role = "Asistente RLA 2", Extension = "709" },
-                new RoleInfo { Role = "Aux. CxC", Extension = "517" },
-                new RoleInfo { Role = "Aux. Contabilidad", Extension = "501" },
+                new RoleInfo { Role = "Asistente admvo RLA 2", Extension = "709" },
+                new RoleInfo { Role = "Asistente admvo RLA 1", Extension = "710" },
+                new RoleInfo { Role = "Auxiliar admvo RLA", Extension = "723" },
+                new RoleInfo { Role = "Auxiliar contable", Extension = "501" },
                 new RoleInfo { Role = "Cobranza", Extension = "511" },
-                new RoleInfo { Role = "Contabilidad", Extension = "513" },
                 new RoleInfo { Role = "Control de nóminas", Extension = "512" },
+                new RoleInfo { Role = "Contador general", Extension = "513" },
                 new RoleInfo { Role = "Servicios de oficina", Extension = "514" },
-                new RoleInfo { Role = "Recepción 1", Extension = "701" },
-                new RoleInfo { Role = "Recepción 2", Extension = "702" },
-                new RoleInfo { Role = "Aux. Servicios de oficina", Extension = "723" },
+                new RoleInfo { Role = "Aux. cobranza", Extension = "517" }
+
+            }
+        },
+                new DepartmentInfo
+        {
+            Name = "Dirección",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Asistente AMS", Extension = "708" },
+                new RoleInfo { Role = "Asistente tecnico de direccion", Extension = "117" },
+                new RoleInfo { Role = "Auditor de gestión", Extension = "721" },
             }
         },
         new DepartmentInfo
         {
-            Name = "Auditoria Fiscal e IMSS (AUFF y AUSS)",
+            Name = "Socios",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asistente AU", Extension = "201" },
-                new RoleInfo { Role = "Auditores AUFF 3", Extension = "217" },
-                new RoleInfo { Role = "Auditores AUFF 2", Extension = "216" },
-                new RoleInfo { Role = "Auditores IMSS", Extension = "212" },
-                new RoleInfo { Role = "Auditores AUFF 1", Extension = "213" },
-                new RoleInfo { Role = "Aux. AU", Extension = "202" },
-                new RoleInfo { Role = "M Nom", Extension = "219" },
-                new RoleInfo { Role = "Encargado M Nom", Extension = "218" },
-                new RoleInfo { Role = "Encargado Jr. AUFF", Extension = "214" },
-                new RoleInfo { Role = "Encargado Sr. AUFF", Extension = "215" },
-                new RoleInfo { Role = "Encargado Sr. AUSS", Extension = "211" },
-                new RoleInfo { Role = "Gerente AU", Extension = "203" }
+                new RoleInfo { Role = "CPC. Alberto Méndez (AMS)", Extension = "601" },
+                new RoleInfo { Role = "CPC. Rosalía López (RLA)", Extension = "602" },
+                new RoleInfo { Role = "CPC. Tere Rodríguez Limón (TRL)", Extension = "603" },
+                new RoleInfo { Role = "LCC. Rosalía Méndez (RMR)", Extension = "604" },
+                new RoleInfo { Role = "CPC. Rosalía Ortega (ROL)", Extension = "605" },
+                new RoleInfo { Role = "LIC. Xavier González (XGL)", Extension = "606" }
             }
         },
-        new DepartmentInfo
+      
+            new DepartmentInfo
         {
-            Name = "Asesoría Contable (AC)",
+            Name = "Recepción",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asesoría AC", Extension = "112" },
-                new RoleInfo { Role = "Asesoría AC", Extension = "114" },
-                new RoleInfo { Role = "Asesoría AC", Extension = "115" },
-                new RoleInfo { Role = "Asesoría AC", Extension = "116" },
-                new RoleInfo { Role = "Asistente AC", Extension = "101" },
-                new RoleInfo { Role = "Aux. AC", Extension = "102" },
-                new RoleInfo { Role = "Gerente de AC", Extension = "111" }
+                new RoleInfo { Role = "Recepción conmutador", Extension = "701" },
+                new RoleInfo { Role = "Recepción", Extension = "702" },
+            }
+        },
+                new DepartmentInfo
+        {
+            Name = "Sala de Juntas",
+            Roles = new List<RoleInfo>
+            {
+                new RoleInfo { Role = "Sala Deverona", Extension = "703" },
+                new RoleInfo { Role = "Sala El Reloj", Extension = "704" },
+                new RoleInfo { Role = "Meeting", Extension = "705" }
             }
         },
         new DepartmentInfo
@@ -125,21 +175,11 @@
             {
                 new RoleInfo { Role = "Gerente TI", Extension = "711" },
                 new RoleInfo { Role = "Asistente TI", Extension = "722" },
-                new RoleInfo { Role = "Soporte técnico (MTTO)", Extension = "716" },
-                new RoleInfo { Role = "Captura AUFF", Extension = "717" },
+                new RoleInfo { Role = "Soporte técnico", Extension = "716" },
+                new RoleInfo { Role = "Captura AU", Extension = "717" },
                 new RoleInfo { Role = "Captura AC", Extension = "113" },
-                new RoleInfo { Role = "Programadores ⭐", Extension = "718" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Asesoria Fiscal y Gestoría (AF y GE)",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Asistente AF", Extension = "401" },
-                new RoleInfo { Role = "Asesor Fiscal Jr.", Extension = "412" },
-                new RoleInfo { Role = "Gerente AF", Extension = "411" },
-                new RoleInfo { Role = "Gestoría", Extension = "413" }
+                new RoleInfo { Role = "Programadores ⭐", Extension = "718" },
+                new RoleInfo { Role = "Soporte técnico 2", Extension = "719" }
             }
         },
         new DepartmentInfo
@@ -147,22 +187,20 @@
             Name = "Recursos Humanos (RH)",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asistente RH", Extension = "713" },
-                new RoleInfo { Role = "Técnico RH 1 ", Extension = "712" },
-                new RoleInfo { Role = "Técnico RH 2", Extension = "714" },
                 new RoleInfo { Role = "Anfitrión RH", Extension = "707" },
+                new RoleInfo { Role = "Asistente RH", Extension = "713" },
+                new RoleInfo { Role = "Técnico RH", Extension = "712" },
+                new RoleInfo { Role = "Técnico RH", Extension = "714" },
                 new RoleInfo { Role = "Gerente RH", Extension = "715" }
             }
         },
-        new DepartmentInfo
+                new DepartmentInfo
         {
-            Name = "Consultoría Organizacional (CO)",
+            Name = "Capacitación",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asistente CO", Extension = "301" },
-                new RoleInfo { Role = "Consultores", Extension = "311" },
-                new RoleInfo { Role = "Consultores", Extension = "312" },
-                new RoleInfo { Role = "Gerente CO", Extension = "313" }
+                new RoleInfo { Role = "Asistente cap", Extension = "801" },
+                new RoleInfo { Role = "Encargado cap", Extension = "811" }
             }
         },
         new DepartmentInfo
@@ -170,37 +208,8 @@
             Name = "Legal",
             Roles = new List<RoleInfo>
             {
-                new RoleInfo { Role = "Asistente Legal", Extension = "901" },
-                new RoleInfo { Role = "Legal", Extension = "912" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Capacitación UNICA",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Auxiliar de UNICA", Extension = "801" },
-                new RoleInfo { Role = "Gerente de UNICA", Extension = "811" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Dirección",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Auditoría de Gestión", Extension = "721" },
-                new RoleInfo { Role = "Asistente AMS", Extension = "708" },
-                new RoleInfo { Role = "Asistente Tec Dir", Extension = "117" }
-            }
-        },
-        new DepartmentInfo
-        {
-            Name = "Sala de Juntas",
-            Roles = new List<RoleInfo>
-            {
-                new RoleInfo { Role = "Meeting", Extension = "705" },
-                new RoleInfo { Role = "Sala Deverona", Extension = "703" },
-                new RoleInfo { Role = "Sala El Reloj", Extension = "704" }
+                new RoleInfo { Role = "Asistente legal", Extension = "901" },
+                new RoleInfo { Role = "Legal", Extension = "913" },
             }
         },
         new DepartmentInfo
@@ -208,8 +217,8 @@
             Name = "Otros",
             Roles = new List<RoleInfo>
             {
+                new RoleInfo { Role = "Vigilancia", Extension = "720" },
                 new RoleInfo { Role = "Comedor", Extension = "812" },
-                new RoleInfo { Role = "Vigilancia", Extension = "720" }
             }
         }
     };

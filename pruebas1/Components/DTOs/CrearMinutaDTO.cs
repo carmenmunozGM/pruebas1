@@ -19,6 +19,7 @@ namespace pruebas1.Components.DTOs
         public int IdActividad { get; set; }
         public string Periodo { get; set; }
         public int HorasInvertidas { get; set; }
+        public string? ObservacionIndividual { get; set; } 
     }
 
 }

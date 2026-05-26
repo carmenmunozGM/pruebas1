@@ -955,7 +955,7 @@
     async Task CargarAutoevaluaciones()
     {
         Autoevaluaciones.Clear();
-        var data = await AutoevaluacionService.ObtenerAutoevaluacion();
+        var data = await AutoevaluacionService.ObtenerAutoevaluacionDiaria();
 
         foreach (var bloque in data)
         {
