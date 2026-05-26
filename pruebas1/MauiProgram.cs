@@ -42,6 +42,7 @@ namespace pruebas1
             builder.Services.AddScoped<PerfilesService>();
             builder.Services.AddScoped<EmpleadosService>();
             builder.Services.AddScoped<HorariosService>();
+            builder.Services.AddScoped<FichaPuestoService>();
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddScoped<AppSettingsService>();
             builder.Services.AddScoped<ThemeService>();
@@ -49,6 +50,7 @@ namespace pruebas1
             builder.Services.AddScoped<InfoPersonalService>();
             builder.Services.AddScoped<Updater>();
             builder.Services.AddScoped<StartupService>();
+
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
@@ -56,7 +58,7 @@ namespace pruebas1
                 {
                 //BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
                 BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
-                //BaseAddress = new Uri("http://redgm.site:9097/")  //SERVIDOR PRUEBAS
+              //  BaseAddress = new Uri("http://redgm.site:9097/")  //SERVIDOR PRUEBAS
                 };
             });
 

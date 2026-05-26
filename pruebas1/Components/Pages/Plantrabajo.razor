@@ -732,16 +732,25 @@ void MostrarAlertaSinFecha()
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
+                string mensaje = "Error desconocido";
 
+                try
+                {
+                    var errorObj = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                    if (!string.IsNullOrWhiteSpace(errorObj?.Mensaje))
+                        mensaje = errorObj.Mensaje;
+                }
+                catch
+                {
+                    mensaje = await response.Content.ReadAsStringAsync();
+                }
                 await JS.InvokeVoidAsync("Swal.fire", new
                 {
                     icon = "error",
                     title = "Error al guardar",
-                    text = string.IsNullOrEmpty(errorContent)
-                        ? $"La fecha seleccionada no puede ser anterior al dia actual ni a la ultima fecha de cambio (Código: {(int)response.StatusCode})."
-                        : errorContent
+                    text = mensaje
                 });
+             
             }
         }
         catch (Exception ex)
@@ -759,6 +768,10 @@ void MostrarAlertaSinFecha()
         }
     }
 
+    public class ErrorResponse
+    {
+        public string? Mensaje { get; set; }
+    }
     private async Task OnMinutaChanged(Actividad actividad, ChangeEventArgs e)
 {
         actividad.HorasProgramadas = (int)e.Value!;

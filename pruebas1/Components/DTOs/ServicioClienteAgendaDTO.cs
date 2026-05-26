@@ -16,6 +16,7 @@ namespace pruebas1.Components.DTOs
         public DateTime FechaConclusion { get; set; }
         
         public int HorasProgramadas { get; set; }
+        public string? Observaciones { get; set; }
         public bool? Completada { get; set; }
         public DateTime? FechaCompletada { get; set; }
     }

@@ -21,6 +21,8 @@ namespace pruebas1.Components.DTOs
     {
         public int IdActividad { get; set; }
         public int Cantidad { get; set; }
+        public string? TextoServicio { get; set; }
+
     }
 
 }
