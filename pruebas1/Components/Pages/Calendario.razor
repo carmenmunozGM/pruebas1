@@ -47,41 +47,83 @@
                      title="@DescripcionNoLaboral(day.Date)">
                     <div class="day-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong style="font-size: 1.2rem; color: #d9534f;"></strong>
-                        <div class="badges-container">
-                        @{
-                            var festejadosHoy = ObtenerCumpleaniosDelDia(day.Date.Day);
-                        }
+                      
+                            <div class="badges-container">
 
-                        @if (festejadosHoy.Any())
-                        {
-                            <div class="birthday-badge"
-                                 @onclick="() => OpenBirthdayModal(day.Date)"
-                                 @onclick:stopPropagation="true"
-                                 title="Cumpleaños de: @(string.Join(", ", festejadosHoy.Select(f => f.Nombre)))">
-                                <span class ="emoji">🎂</span>
-                            </div>
-                        }
-                        @if (listaVacaciones != null && EsDiaDeVacaciones(day.Date))
-                        {
-                            var totalHoy = listaVacaciones.Count(v =>
-                            DateTime.TryParse(v.Desde, out var d) && DateTime.TryParse(v.Hasta, out var h) &&
-                            day.Date >= d.Date && day.Date <= h.Date);
-                                <div class="badge-custom vacation-badge"
-                                     @onclick="() => OpenVacationModal(day.Date)"
-                                     @onclick:stopPropagation="true"
-                                     style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%);"
-                                     title="Ver periodo de vacaciones">
-                                <span  class="emoji">🏖️</span>
-                                @if (totalHoy > 1)
+                                @* 📖 CURSOS *@
+                            @{
+                                var totalCursos = ListaCursos.Count(c =>
+                                DateTime.TryParseExact(c.FechaInicio, "dd/MM/yyyy", null,
+                                System.Globalization.DateTimeStyles.None, out var f) &&
+                                f.Date == day.Date
+                                );
+                            }
+
+                            @if (totalCursos > 0)
+                            {
+                                <div class="badge-custom course-badge"
+                                     @onclick="() => OpenCursosModal(day.Date)"
+                                     @onclick:stopPropagation="true">
+
+                                    <span class="emoji">📖</span>
+
+                                    <div class="notification-count">
+                                        @totalCursos
+                                    </div>
+
+                                </div>
+                            }
+                            
+                                @* 🏖️ VACACIONES *@
+                                @if (listaVacaciones != null && EsDiaDeVacaciones(day.Date))
                                 {
-                                        <div class="notification-count">
-                                            @totalHoy
-                                        </div>
+                                    var totalHoy = listaVacaciones.Count(v =>
+                                    DateTime.TryParse(v.Desde, out var d) &&
+                                    DateTime.TryParse(v.Hasta, out var h) &&
+                                    day.Date >= d.Date && day.Date <= h.Date);
+
+                                    <div class="badge-custom vacation-badge"
+                                         @onclick="() => OpenVacationModal(day.Date)"
+                                         @onclick:stopPropagation="true">
+
+                                        <span class="emoji">🏖️</span>
+
+                                        @if (totalHoy > 1)
+                                        {
+                                            <div class="notification-count">
+                                                @totalHoy
+                                            </div>
+                                        }
+                                    </div>
                                 }
+
+                                @* 🎂 CUMPLEAÑOS *@
+                                @{
+                                    var festejadosHoy = ObtenerCumpleaniosDelDia(day.Date.Day);
+                                }
+
+                                @if (festejadosHoy.Any())
+                                {
+                                    <div class="badge-custom birthday-badge"
+                                         @onclick="() => OpenBirthdayModal(day.Date)"
+                                         @onclick:stopPropagation="true">
+                                        <span class="emoji">🎂</span>
+
+                                    @if (festejadosHoy.Count > 0)
+                                    {
+                                        <div class="notification-count">
+                                            @festejadosHoy.Count
+                                        </div>
+                                    }
+
+                                    </div>
+                                }
+
                             </div>
-                        }
+
+                       
                     </div>
-                    </div>
+               
                     <div class="day-header">
                         <span class="@(esHoy ? "circle-today" : "")">
                             @day.Date.ToString("dd")
@@ -137,6 +179,71 @@
         }
     </div>
 </div>
+@if (ShowCursosModal)
+{
+    <div class="modal-backdrop-custom" @onclick="() => ShowCursosModal = false">
+
+        <div class="modal-vacation-card" @onclick:stopPropagation="true">
+
+            <div class="vacation-emoji">📖</div>
+
+            <h3 class="vacation-title">Cursos del día</h3>
+
+            <p class="vacation-count">
+                @CursosDelDia.Count cursos disponibles
+            </p>
+
+            <div class="vacation-list-container">
+
+                @if (CursosDelDia.Any())
+                {
+                    @foreach (var curso in CursosDelDia)
+                    {
+                        <div class="curso-card">
+
+                            <div class="curso-header">
+                                <h4>@curso.TituloCurso</h4>
+                                <span class="curso-clave">@curso.ClaveCurso</span>
+                            </div>
+
+                            <div class="curso-grid">
+
+                                <div><b>📅 Fecha:</b> @curso.FechaInicio</div>
+                                <div><b>🎓 Modalidad:</b> @curso.Modalidad</div>
+
+                                <div><b>👨‍🏫 Expositor:</b> @curso.Expositor</div>
+
+                                <div><b>👥 Participantes:</b> @curso.NumeroParticipantes</div>
+                                <div><b>🪑 Disponibles:</b> @curso.LugaresDisponibles</div>
+
+                            </div>
+
+                            <div class="curso-estado @(curso.LugaresDisponibles <= 0 ? "lleno" : "disponible")">
+                                @curso.EstadoCurso
+                            </div>
+
+                            <div class="curso-desc">
+                                @curso.Observaciones
+                            </div>
+
+                        </div>
+
+                    }
+
+                }
+                else
+                {
+                    <p>No hay cursos este día 😢</p>
+                }
+            </div>
+
+            <button class="btn-close-vacation"
+                    @onclick="() => ShowCursosModal = false">
+                Cerrar
+            </button>
+        </div>
+    </div>
+}
 @* --- MODAL DE CUMPLEAÑOS --- *@
 @if (ShowBirthdayModal)
 {
@@ -240,6 +347,7 @@
         </div>
     </div>
 }
+
 
 <!-- Modal -->
 @if (SelectedBlock != null)
@@ -551,7 +659,13 @@
     private List<VacacionesDTO> EmpleadosEnVacaciones = new();
     public string desde { get; set; }
     public string hasta { get; set; }
+    private List<CursoDTO> ListaCursos = new();
+    private List<CursoDTO> CursosDelDia = new();
+    private bool ShowCursosModal = false;
+    private DateTime FechaCursosSeleccionada;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
+
     {
         if (firstRender)
         {
@@ -672,6 +786,8 @@
     {
         listaTodosCumple = await infoPersonalService.GetTodosLosCumpleanios() ?? new();
         var resultado = await infoPersonalService.GetVacacionesTodos();
+        ListaCursos = await infoPersonalService.GetCursos();
+
         if (resultado != null && resultado.Any())
         {
             listaVacaciones = resultado;
@@ -706,6 +822,27 @@
         if (SelectedBlock != null)
             CloseBlockModal();
     }
+   bool TieneCursosEnDia(DateTime fecha)
+    {
+        return ListaCursos.Any(c =>
+            DateTime.TryParseExact(c.FechaInicio, "dd/MM/yyyy", null,
+            System.Globalization.DateTimeStyles.None, out var f) &&
+            f.Date == fecha.Date
+        );
+    }
+
+    void OpenCursosModal(DateTime fecha)
+    {
+        FechaCursosSeleccionada = fecha;
+
+        CursosDelDia = ListaCursos.Where(c =>
+            DateTime.TryParse(c.FechaInicio, out var f) &&
+            f.Date == fecha.Date
+        ).ToList();
+
+        ShowCursosModal = true;
+    }
+
 
     async Task CargarDiasNoLaborales()
     {

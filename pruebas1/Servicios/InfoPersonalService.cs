@@ -109,5 +109,37 @@ namespace pruebas1.Servicios
                 return new List<VacacionesDTO>();
             }
         }
+        public async Task<List<CursoDTO>> GetCursos()
+        {
+            try
+            {
+                var token = Preferences.Get("token", "");
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _http.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var opciones = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                return await _http.GetFromJsonAsync<List<CursoDTO>>(
+                    $"{_baseApi}/infoPersonal/personal/cursos",
+                    opciones
+                ) ?? new List<CursoDTO>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR CURSOS: {ex.Message}");
+                return new List<CursoDTO>();
+            }
+        }
+        public async Task<List<CursoDTO>> ObtenerCursos()
+        {
+            return await _http.GetFromJsonAsync<List<CursoDTO>>("http://localhost:5231/infoPersonal/personal/cursos");
+        }
     }
 }
