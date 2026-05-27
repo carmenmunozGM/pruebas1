@@ -14,12 +14,20 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="d-flex justify-content-end">
-    <button type="button" class="action-button-slender" style="margin-right: 40px; float: right;" @onclick="AbrirModal">
-        <span style="font-size: 18px; line-height: 1;">+</span>
-        Registro de actividades
-    </button>
-</div> 
+<div class="minuta-container">
+
+    @if (!SoloTI || EsTecnologiasInformacion)
+    {
+        <div class="d-flex justify-content-end">
+            <button type="button" class="minuta-action-button"
+                    style="margin-right: 40px; float: right;"
+                    @onclick="AbrirModal">
+                <span style="font-size: 18px; line-height: 1;">+</span>
+                Registro de actividades
+            </button>
+        </div>
+    }
+
 
 @if (IsVisible)
 {
@@ -228,6 +236,7 @@
     </div>
 }
 
+</div>
 @code {
     [Parameter] public EventCallback OnSave { get; set; }
     private List<ClientesDTO> listaClientes = new();
@@ -246,7 +255,7 @@
     private bool EsTecnologiasInformacion = false;
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
-
+    [Parameter] public bool SoloTI { get; set; } = false;
     private async Task<bool> ValidarHora()
     {
         var resultado = await HorariosService.GetHorario();
@@ -393,14 +402,6 @@
                 return;
             }
 
-            // Detectar TI por IdArea o nombre
-            EsTecnologiasInformacion =
-                string.Equals(
-                    empleado.Area?.Trim(),
-                    "TECNOLOGIAS DE INFORMACION",
-                    StringComparison.OrdinalIgnoreCase
-                );
-
             if (string.IsNullOrWhiteSpace(empleado.Area))
             {
                 Debug.WriteLine("Empleado sin área");
@@ -465,6 +466,27 @@
         StateHasChanged();
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        var usuario = LoginService.obtenerUsuarioLogueado();
+
+        var respEmpleado = await Http.GetAsync($"/empleado/Obtener/{usuario.IdUsuario}");
+
+        if (respEmpleado.IsSuccessStatusCode)
+        {
+            var empleado = await respEmpleado.Content.ReadFromJsonAsync<EmpleadoDTO>();
+
+            if (empleado != null)
+            {
+                EsTecnologiasInformacion =
+                    string.Equals(
+                        empleado.Area?.Trim(),
+                        "TECNOLOGIAS DE INFORMACION",
+                        StringComparison.OrdinalIgnoreCase
+                    );
+            }
+        }
+    }
 
     private void Cerrar() => IsVisible = false;
 
@@ -727,7 +749,9 @@
             /*  border-bottom: 1px solid #f1f5f9; */
         }
 
-    .cell-input, select, textarea {
+    .minuta-container .cell-input,
+    .minuta-container select,
+    .minuta-container textarea {
         width: 100%;
         padding: 6px 10px !important;
         border: 1px solid #e5e7eb;
@@ -751,9 +775,12 @@
     }
 
     /* ================= BOTONES ACCIÓN ================= */
-    .action-button-slender {
-        background: #0284c7;
-        color: white;
+    .minuta-action-button {
+        background: #c6e9f0;
+        color: black;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
         border: none;
         padding: 8px 16px;
         border-radius: 20px;
@@ -761,7 +788,14 @@
         align-items: center;
         gap: 8px;
         cursor: pointer;
+        height:32px
     }
+
+        .minuta-action-button:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
 
     .cell-actions {
         display: flex;
@@ -828,7 +862,7 @@
         }
 
     /* Hacemos los inputs de la tabla un poco más delgados verticalmente */
-    .cell-input, select {
+    .minuta-container .cell-input, .minuta-container select {
         padding: 6px 10px !important;
     }
 
@@ -979,7 +1013,7 @@
     }
 
     /* ================= MODO OSCURO ================= */
-    [data-theme="dark"] .action-button-slender {
+    [data-theme="dark"] .minuta-action-button {
         background-color: #03324a;
         color: #ffffff;
     }
@@ -1022,7 +1056,7 @@
         border-bottom: 1px solid #334155 !important;
     }
 
-    [data-theme="dark"] .cell-input, [data-theme="dark"] select, [data-theme="dark"] textarea, [data-theme="dark"] .timepicker-input {
+    [data-theme="dark"] .minuta-container .cell-input, [data-theme="dark"] .minuta-container select, [data-theme="dark"] .minuta-container textarea, [data-theme="dark"] .timepicker-input {
         background: #0f172a !important;
         border: 1px solid #334155 !important;
         color: #f1f5f9 !important;

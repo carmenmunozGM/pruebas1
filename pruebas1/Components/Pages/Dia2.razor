@@ -229,7 +229,10 @@
                     <span>Actualizar</span>
                 }
             </button>
-
+            <div>
+                <Minuta OnSave="RefrescarDesdeMinuta"
+                        SoloTI="true" />
+            </div>
             <div class="modal-button-container">
                 <ReusableModal OnSave="RefrescarTareas" />
             </div>
@@ -2514,6 +2517,12 @@
     private void OnHoraInicioChanged(TimeOnly value)
     {
         EditItem.HoraInicio = value;
+    }
+
+    private async Task RefrescarDesdeMinuta()
+    {
+        await InitializeMasterCategoriesAsync();
+        StateHasChanged();
     }
 
     private void OnHoraFinChanged(TimeOnly value)
