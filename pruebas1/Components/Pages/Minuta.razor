@@ -102,14 +102,20 @@
                                                    @bind:event="oninput"
                                                    @onfocus="() => MostrarDropdown(fila)"
                                                    @onblur="() => OcultarDropdownConDelay(fila)"
+                                                   @onkeydown="(e) => ManejarTeclas(e, fila)"
                                                    class="input-busqueda" />
 
                                             @if (fila.MostrarResultados)
                                             {
+                                                var clientes = FiltrarClientes(fila.BusquedaCliente).ToList();
+
                                                 <div class="dropdown-clientes">
-                                                    @foreach (var cliente in FiltrarClientes(fila.BusquedaCliente))
+                                                    @for (int i = 0; i < clientes.Count; i++)
                                                     {
-                                                        <div class="dropdown-item" @onclick="() => SeleccionarCliente(fila, cliente)">
+                                                        var cliente = clientes[i];
+
+                                                        <div class="dropdown-item @(i == fila.IndiceSeleccionado ? "seleccionado" : "")"
+                                                             @onclick="() => SeleccionarCliente(fila, cliente)">
                                                             @cliente.Clave - @cliente.RazonSocial
                                                         </div>
                                                     }
@@ -283,6 +289,7 @@
         public int IdLugar { get; set; }
         public string BusquedaCliente { get; set; } = "";
         public bool MostrarResultados { get; set; } = false;
+        public int IndiceSeleccionado { get; set; } = -1;
         public string? OtraActividad { get; set; }
         public string Periodo { get; set; } = "";
         public TimeOnly? Horas { get; set; }
@@ -305,6 +312,36 @@
     private void MostrarDropdown(FilaMinuta fila)
     {
         fila.MostrarResultados = true;
+        fila.IndiceSeleccionado = -1;
+    }
+
+    private void ManejarTeclas(KeyboardEventArgs e, FilaMinuta fila)
+    {
+        var clientes = FiltrarClientes(fila.BusquedaCliente).ToList();
+
+        if (!clientes.Any())
+            return;
+        switch (e.Key)
+        {
+            case "ArrowDown":
+
+                if (fila.IndiceSeleccionado < clientes.Count - 1)
+                    fila.IndiceSeleccionado++;
+                break;
+            case "ArrowUp":
+                if (fila.IndiceSeleccionado > 0)
+                    fila.IndiceSeleccionado--;
+                break;
+            case "Enter":
+                if (fila.IndiceSeleccionado >= 0 &&
+                    fila.IndiceSeleccionado < clientes.Count)
+                {
+                    SeleccionarCliente(
+                        fila,
+                        clientes[fila.IndiceSeleccionado]);
+                }
+                break;
+        }
     }
 
     private void SeleccionarCliente(FilaMinuta fila, ClientesDTO cliente)
@@ -312,6 +349,7 @@
         fila.ClienteId = cliente.Id;    
         fila.BusquedaCliente = $"{cliente.Clave} - {cliente.RazonSocial}";
         fila.MostrarResultados = false;
+        fila.IndiceSeleccionado = -1;
         if (fila.ClienteId != 295)
         {
             fila.IdArea = 0;
@@ -1397,6 +1435,10 @@
             background: #475569;
         }
 
+
+    .dropdown-item.seleccionado {
+        background-color: #e6f0ff;
+    }
 
 </style>
 
