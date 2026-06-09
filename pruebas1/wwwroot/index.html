@@ -28,13 +28,13 @@
           href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
           disabled>
 
-
     <!-- JS Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <!-- Tu inicializador -->
     <script src="flatpickr-init.js"></script>
+    <script src="dropdown.js"></script>
 
     <script>
         if (!window.__escListenerRegistered) {
@@ -66,27 +66,27 @@
         <a class="dismiss">🗙</a>
     </div>
 
+    <script>
+        window.scrollDropdownItemIntoView = function (elementId) {
+            const element = document.getElementById(elementId);
+
+            if (element) {
+                element.scrollIntoView({
+                    block: 'nearest'
+                });
+            }
+        };
+        console.log("Dropdown JS registrado ✅");
+    </script>
+
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 
 </body>
 <script>
-    //window.downloadFile = (fileName, contentType, bytes) => {
-    //    const blob = new Blob([new Uint8Array(bytes)], { type: contentType });
-    //    const url = window.URL.createObjectURL(blob);
-
-    //    const a = document.createElement("a");
-    //    a.href = url;
-    //    a.download = fileName;
-    //    a.click();
-
-    //    window.URL.revokeObjectURL(url);
-    //};
     window.downloadFile = (fileName, contentType, bytes) => {
-        // Convertimos los bytes a un Blob
         const blob = new Blob([new Uint8Array(bytes)], { type: contentType });
         const url = window.URL.createObjectURL(blob);
 
-        // Creamos el link de descarga
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
@@ -95,15 +95,12 @@
         document.body.appendChild(a);
         a.click();
 
-        // CORRECCIÓN: Limpieza profunda para permitir múltiples descargas sin errores
         setTimeout(() => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }, 200);
     };
 
-   
-    // Agrega este script en tu HTML principal
     window.setupSwalDark = () => {
         const observer = new MutationObserver(() => {
             const swalContainer = document.querySelector('.swal2-container');

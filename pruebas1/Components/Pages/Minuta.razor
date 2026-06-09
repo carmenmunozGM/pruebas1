@@ -114,8 +114,9 @@
                                                     {
                                                         var cliente = clientes[i];
 
-                                                        <div class="dropdown-item @(i == fila.IndiceSeleccionado ? "seleccionado" : "")"
-                                                             @onclick="() => SeleccionarCliente(fila, cliente)">
+                                                            <div id="cliente-@i"
+                                                                 class="dropdown-item @(i == fila.IndiceSeleccionado ? "seleccionado" : "")"
+                                                                 @onclick="() => SeleccionarCliente(fila, cliente)">
                                                             @cliente.Clave - @cliente.RazonSocial
                                                         </div>
                                                     }
@@ -315,24 +316,51 @@
         fila.IndiceSeleccionado = -1;
     }
 
-    private void ManejarTeclas(KeyboardEventArgs e, FilaMinuta fila)
+    private async Task ManejarTeclas(
+    KeyboardEventArgs e,
+    FilaMinuta fila)
     {
         var clientes = FiltrarClientes(fila.BusquedaCliente).ToList();
 
         if (!clientes.Any())
             return;
+
         switch (e.Key)
         {
             case "ArrowDown":
 
+                fila.MostrarResultados = true;
+
                 if (fila.IndiceSeleccionado < clientes.Count - 1)
+                {
                     fila.IndiceSeleccionado++;
+
+                    await InvokeAsync(StateHasChanged);
+
+                    await JS.InvokeVoidAsync(
+                        "scrollDropdownItemIntoView",
+                        $"cliente-{fila.IndiceSeleccionado}");
+                }
+
                 break;
+
             case "ArrowUp":
+
                 if (fila.IndiceSeleccionado > 0)
+                {
                     fila.IndiceSeleccionado--;
+
+                    await InvokeAsync(StateHasChanged);
+
+                    await JS.InvokeVoidAsync(
+                        "scrollDropdownItemIntoView",
+                        $"cliente-{fila.IndiceSeleccionado}");
+                }
+
                 break;
+
             case "Enter":
+
                 if (fila.IndiceSeleccionado >= 0 &&
                     fila.IndiceSeleccionado < clientes.Count)
                 {
@@ -340,6 +368,7 @@
                         fila,
                         clientes[fila.IndiceSeleccionado]);
                 }
+
                 break;
         }
     }
@@ -1438,6 +1467,10 @@
 
     .dropdown-item.seleccionado {
         background-color: #e6f0ff;
+    }
+
+    [data-theme="dark"] .dropdown-item.seleccionado {
+        background-color: #334155;
     }
 
 </style>
