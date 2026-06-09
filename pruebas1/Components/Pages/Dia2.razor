@@ -2655,6 +2655,7 @@
                     }).ToList()
                 };
 
+                //res = await Http.PutAsJsonAsync($"http://localhost:5231/tareas/editar/{EditItem.ApiId}", dtoTarea);
                 res = await Http.PutAsJsonAsync($"https://redgm.site:9096/tareas/editar/{EditItem.ApiId}", dtoTarea);
             }
             else
@@ -2698,6 +2699,7 @@
                     idsParticipantes = EditItem.Participantes?.Select(p => p.Id).Where(id => id > 0).ToList() ?? new List<int>()
                 };
 
+                //res = await Http.PutAsJsonAsync($"http://localhost:5231/eventos/{EditItem.ApiId}", dtoEvento);
                 res = await Http.PutAsJsonAsync($"https://redgm.site:9096/eventos/{EditItem.ApiId}", dtoEvento);
             }
             if (res.IsSuccessStatusCode)
