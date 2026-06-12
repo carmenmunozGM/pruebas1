@@ -1450,7 +1450,19 @@
         if (!await ValidarHora())
             return;
 
-        Debug.WriteLine("Entro en el metodo editar");
+        Debug.WriteLine("=== ABRIR MODAL EDITAR ===");
+        Debug.WriteLine($"Asignacion.IdEmpleado: {asignacion.IdEmpleado}");
+        Debug.WriteLine($"Asignacion.IdArea: {asignacion.IdArea}");
+        Debug.WriteLine($"Total empleados cargados: {empleados?.Count ?? 0}");
+
+        if (empleados != null)
+        {
+            foreach (var emp in empleados)
+            {
+                Debug.WriteLine($"Empleado en memoria -> Id: {emp.Id}, Nombre: {emp.Nombre}");
+            }
+        }
+
         asignacionSeleccionada = asignacion;
 
         // 🔥 Buscar el empleado real en memoria
@@ -1458,7 +1470,70 @@
             empleados.FirstOrDefault(e => e.Id == asignacion.IdEmpleado);
 
         if (empleadoEditarSeleccionado == null)
-            return;
+        {
+            Debug.WriteLine(
+                $"⚠️ Empleado histórico no activo. Id: {asignacion.IdEmpleado}"
+            );
+
+            Debug.WriteLine(
+                $"Nombre histórico recibido: [{asignacion.Empleado}]"
+            );
+
+            Debug.WriteLine("=== DATOS DE LA ASIGNACION HISTORICA ===");
+            Debug.WriteLine($"IdEmpleado: {asignacion.IdEmpleado}");
+            Debug.WriteLine($"IdArea: {asignacion.IdArea}");
+            Debug.WriteLine($"TipoEntidad: {asignacion.TipoEntidad}");
+            Debug.WriteLine($"ActividadesIds: {string.Join(", ", asignacion.ActividadesIds ?? new List<int>())}");
+
+            if (asignacion.Servicios != null)
+            {
+                Debug.WriteLine($"Servicios: {asignacion.Servicios.Count}");
+
+                foreach (var servicio in asignacion.Servicios)
+                {
+                    Debug.WriteLine(
+                        $"Servicio -> Nombre: {servicio.Servicio}, Texto: {servicio.TextoServicio}"
+                    );
+                }
+            }
+
+            Debug.WriteLine($"Objeto asignacion completo:");
+            Debug.WriteLine(
+                System.Text.Json.JsonSerializer.Serialize(
+                    asignacion,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    }
+                )
+            );
+
+            // ✅ Crear empleado temporal para permitir abrir el modal
+            empleadoEditarSeleccionado = new EmpleadoDTO
+            {
+                Id = asignacion.IdEmpleado,
+                Nombre = string.IsNullOrWhiteSpace(asignacion.Empleado)
+                    ? $"Empleado histórico ({asignacion.IdEmpleado})"
+                    : asignacion.Empleado,
+                ClavePersonal = 0,
+                NombreRed = "",
+                Area = "",
+                Puesto = "",
+                ActividadesPendientes = 0,
+                AutoevaluacionesPendientes = 0,
+                ServicioClientePendiente = 0
+            };
+
+            Debug.WriteLine(
+                $"✅ Empleado temporal creado: {empleadoEditarSeleccionado.Nombre}"
+            );
+        }
+        else
+        {
+            Debug.WriteLine(
+                $"✅ Empleado encontrado: {empleadoEditarSeleccionado.Nombre} (Id: {empleadoEditarSeleccionado.Id})"
+            );
+        }
 
         selectedAreaEditarId = asignacion.IdArea;
 
@@ -1466,7 +1541,21 @@
             .GroupBy(x => x)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
+        Debug.WriteLine($"Area seleccionada: {selectedAreaEditarId}");
+        Debug.WriteLine($"Actividades encontradas: {selectedActivitiesEditar.Count}");
+
+        if (!string.IsNullOrWhiteSpace(empleadoEditarSeleccionado.Area))
+        {
+            await CargarServiciosPorAreaEditar(empleadoEditarSeleccionado.Area);
+        }
+        else
+        {
+            Debug.WriteLine(
+                "⚠️ Empleado histórico sin área. Se omite carga por área."
+            );
+        }
+
+        Debug.WriteLine($"Servicios cargados: {serviciosEditar?.Count ?? 0}");
 
         textosPorServicioEditar = asignacion.Servicios
             .Where(x => !string.IsNullOrWhiteSpace(x.TextoServicio))
@@ -1477,7 +1566,12 @@
                 g => g.First().TextoServicio ?? ""
             );
 
+        Debug.WriteLine($"Textos por servicio: {textosPorServicioEditar.Count}");
+
         mostrarModalEditar = true;
+
+        Debug.WriteLine($"mostrarModalEditar = {mostrarModalEditar}");
+        Debug.WriteLine("=== FIN ABRIR MODAL EDITAR ===");
     }
     private bool MostrarSelectAreaEditar =>
     asignacionSeleccionada?.TipoEntidad == "Cliente" &&
