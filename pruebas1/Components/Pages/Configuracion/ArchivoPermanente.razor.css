@@ -1,0 +1,400 @@
+﻿.archivo-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+}
+
+/* ==========================
+   HEADER
+========================== */
+
+.archivo-header {
+    margin-bottom: 15px;
+}
+
+.header-info h2 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.header-info p {
+    margin-top: 4px;
+    opacity: .75;
+}
+
+/* ==========================
+   TOOLBAR
+========================== */
+
+.toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.input-busqueda {
+    flex: 1;
+    max-width: 450px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid #d6d6d6;
+    font-size: .95rem;
+    transition: .2s;
+}
+
+    .input-busqueda:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+
+.btn-subir {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .btn-subir:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+/* ==========================
+   LAYOUT
+========================== */
+
+.archivo-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ==========================
+   PANEL IZQUIERDO
+========================== */
+
+.tree-panel {
+    width: 32%;
+    min-width: 380px;
+    max-width: 500px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 12px;
+    background: white;
+}
+
+    .tree-panel::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .tree-panel::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,.25);
+        border-radius: 20px;
+    }
+
+.tree-node {
+    margin-bottom: 10px;
+}
+
+.tree-title {
+    color: white;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    transition: .15s;
+    user-select: none;
+}
+
+    .tree-title:hover {
+        filter: brightness(1.08);
+    }
+
+/* ==========================
+   COLORES PRINCIPALES
+========================== */
+
+.green {
+    background: #3d7d22;
+}
+
+.purple {
+    background: #8e2a8e;
+}
+
+.blue {
+    background: #0b7aa8;
+}
+
+.orange {
+    background: #d2691e;
+}
+
+.gray {
+    background: #8c8c8c;
+}
+
+.blue2 {
+    background: #1976d2;
+}
+
+/* ==========================
+   SUBNIVELES
+========================== */
+
+.purple-light {
+    background: #c56ac5;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.purple-lighter {
+    background: #e9c8e9;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.orange-light {
+    background: #e5a57c;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.orange-lighter {
+    background: #f6ddd0;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.blue-light {
+    background: #7fc7df;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.blue-lighter {
+    background: #d9f0f8;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.green-light {
+    background: #90c378;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+.green-lighter {
+    background: #d8edd0;
+    margin-left: 18px;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 6px;
+}
+
+/* ==========================
+   CARPETAS
+========================== */
+
+.tree-child {
+    margin-top: 5px;
+}
+
+.tree-folder {
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: .15s;
+    user-select: none;
+}
+
+    .tree-folder:hover {
+        background: rgba(0,0,0,.06);
+    }
+
+.tree-grandchild {
+    margin-top: 4px;
+}
+
+/* ==========================
+   ARCHIVOS
+========================== */
+
+.tree-file {
+    margin-left: 18px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: .15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .tree-file:hover {
+        background: rgba(37,99,235,.12);
+    }
+
+.level-4 {
+    margin-left: 35px;
+}
+
+/* ==========================
+   VISOR
+========================== */
+
+.viewer-panel {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    overflow: hidden;
+    background: white;
+}
+
+.pdf-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+    .pdf-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+.pdf-document-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* ==========================
+   EMPTY STATE
+========================== */
+
+.empty-state {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 70px;
+}
+
+.empty-state h3 {
+    margin: 0;
+}
+
+.empty-state p {
+    color: #666;
+}
+
+/* ==========================
+   DARK MODE
+========================== */
+
+[data-theme="dark"] .tree-panel,
+[data-theme="dark"] .viewer-panel,
+[data-theme="dark"] .input-busqueda {
+    background: #1f2937;
+    color: white;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .empty-state p {
+    color: #b8b8b8;
+}
+
+[data-theme="dark"] .tree-folder:hover,
+[data-theme="dark"] .tree-file:hover {
+    background: rgba(255,255,255,.08);
+}
+
+[data-theme="dark"] .purple-light {
+    background: #5f2d5f;
+}
+
+[data-theme="dark"] .purple-lighter {
+    background: #453045;
+}
+
+[data-theme="dark"] .orange-light {
+    background: #7d5133;
+}
+
+[data-theme="dark"] .orange-lighter {
+    background: #5c4438;
+}
+
+[data-theme="dark"] .blue-light {
+    background: #27566a;
+}
+
+[data-theme="dark"] .blue-lighter {
+    background: #213843;
+}
+
+[data-theme="dark"] .green-light {
+    background: #3e5f31;
+}
+
+[data-theme="dark"] .green-lighter {
+    background: #2f4230;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1200px) {
+
+    .archivo-layout {
+        flex-direction: column;
+    }
+
+    .tree-panel {
+        width: 100%;
+        max-width: none;
+        min-width: auto;
+        height: 350px;
+    }
+
+    .viewer-panel {
+        min-height: 600px;
+    }
+}
