@@ -1,0 +1,309 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@inject IJSRuntime JS
+
+<div class="archivo-container">
+
+    <div class="archivo-header">
+
+        <div class="header-info">
+            <h2>Archivo Permanente</h2>
+            <p>Consulta y administración documental.</p>
+        </div>
+
+    </div>
+
+    <div class="toolbar">
+
+        <InputFile id="fileInput"
+                   style="display:none"
+                   multiple
+                   OnChange="SubirArchivos" />
+
+        <label for="fileInput" class="btn-subir">
+            📤 Subir Archivos
+        </label>
+
+        <input class="input-busqueda"
+               placeholder="Buscar documento..." />
+
+    </div>
+
+    <div class="archivo-layout">
+
+        <!-- PANEL IZQUIERDO -->
+        <aside class="tree-panel">
+
+            <!-- ACTA CONSTITUTIVA -->
+            <div class="tree-node">
+
+                <div class="tree-title green"
+                     @onclick="() => actaConstitutiva = !actaConstitutiva">
+
+                    @(actaConstitutiva ? "▼" : "▶")
+                    📁 01 Acta Constitutiva & Modificaciones
+
+                </div>
+
+                @if (actaConstitutiva)
+                {
+                    <div class="tree-file level-2"
+                         @onclick='() => SeleccionarDocumento("Acta Constitutiva.pdf")'>
+                        📄 Acta Constitutiva.pdf
+                    </div>
+
+                    <div class="tree-file level-2"
+                         @onclick='() => SeleccionarDocumento("Modificacion.pdf")'>
+                        📄 Modificación.pdf
+                    </div>
+                }
+
+            </div>
+
+            <!-- PODERES -->
+            <div class="tree-node">
+
+                <div class="tree-title purple"
+                     @onclick="() => poderes = !poderes">
+
+                    @(poderes ? "▼" : "▶")
+                    📁 02 Poderes & Representación Legal
+
+                </div>
+
+                @if (poderes)
+                {
+                    <div class="tree-child purple-light">
+
+                        <div class="tree-folder"
+                             @onclick="() => poderesNotariales = !poderesNotariales">
+
+                            @(poderesNotariales ? "▼" : "▶")
+                            📂 01 Poderes Notariales
+
+                        </div>
+
+                        @if (poderesNotariales)
+                        {
+                            <div class="tree-grandchild purple-lighter">
+
+                                <div class="tree-folder"
+                                     @onclick="() => generales = !generales">
+
+                                    @(generales ? "▼" : "▶")
+                                    📂 01 Generales
+
+                                </div>
+
+                                @if (generales)
+                                {
+                                    <div class="tree-file level-4"
+                                         @onclick='() => SeleccionarDocumento("PoderGeneral2025.pdf")'>
+                                        📄 PoderGeneral2025.pdf
+                                    </div>
+
+                                    <div class="tree-file level-4"
+                                         @onclick='() => SeleccionarDocumento("PoderGeneral2024.pdf")'>
+                                        📄 PoderGeneral2024.pdf
+                                    </div>
+                                }
+
+                                <div class="tree-folder">
+                                    ▶ 📂 02 Especiales
+                                </div>
+
+                                <div class="tree-folder">
+                                    ▶ 📂 03 Corporativo
+                                </div>
+
+                                <div class="tree-folder">
+                                    ▶ 📂 04 Procesales
+                                </div>
+
+                            </div>
+                        }
+
+                        <div class="tree-folder">
+                            ▶ 📂 02 Representante Legal
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+            <!-- ACTAS -->
+            <div class="tree-node">
+
+                <div class="tree-title blue"
+                     @onclick="() => actas = !actas">
+
+                    @(actas ? "▼" : "▶")
+                    📁 03 Actas Asamblea
+
+                </div>
+
+            </div>
+
+            <!-- CONTRATOS -->
+            <div class="tree-node">
+
+                <div class="tree-title orange"
+                     @onclick="() => contratos = !contratos">
+
+                    @(contratos ? "▼" : "▶")
+                    📁 04 Contratos
+
+                </div>
+
+                @if (contratos)
+                {
+                    <div class="tree-child orange-light">
+
+                        <div class="tree-folder">
+                            ▶ 📂 01 Traslativos de Dominio
+                        </div>
+
+                        <div class="tree-folder"
+                             @onclick="() => usoGoceTemporal = !usoGoceTemporal">
+
+                            @(usoGoceTemporal ? "▼" : "▶")
+                            📂 02 Uso o Goce Temporal
+
+                        </div>
+
+                        @if (usoGoceTemporal)
+                        {
+                            <div class="tree-grandchild orange-lighter">
+
+                                <div class="tree-folder">
+                                    ▶ 📂 01 Arrendamiento
+                                </div>
+
+                                <div class="tree-folder">
+                                    ▶ 📂 02 Comodato
+                                </div>
+
+                            </div>
+                        }
+
+                        <div class="tree-folder">
+                            ▶ 📂 03 Prestación de Servicios
+                        </div>
+
+                        <div class="tree-folder">
+                            ▶ 📂 04 Colaboración & Asociación
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+            <!-- EXPEDIENTE -->
+            <div class="tree-node">
+
+                <div class="tree-title gray"
+                     @onclick="() => expediente = !expediente">
+
+                    @(expediente ? "▼" : "▶")
+                    📁 05 Expediente Integral del Contribuyente
+
+                </div>
+
+            </div>
+
+            <!-- SERVICIOS -->
+            <div class="tree-node">
+
+                <div class="tree-title blue2"
+                     @onclick="() => servicios = !servicios">
+
+                    @(servicios ? "▼" : "▶")
+                    📁 06 Servicios Profesionales Integrados
+
+                </div>
+
+            </div>
+
+        </aside>
+
+        <!-- VISOR PDF -->
+        <section class="viewer-panel">
+
+            @if (string.IsNullOrWhiteSpace(documentUrl))
+            {
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        📄
+                    </div>
+
+                    <h3>
+                        Ningún documento seleccionado
+                    </h3>
+
+                    <p>
+                        Selecciona un documento desde el árbol.
+                    </p>
+
+                </div>
+            }
+            else
+            {
+                <div class="pdf-container">
+
+                    <iframe src="@documentUrl"></iframe>
+
+                    <div class="pdf-document-overlay"></div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+</div>
+
+@code {
+
+    private string? documentUrl;
+
+    private bool actaConstitutiva;
+    private bool poderes;
+    private bool poderesNotariales;
+    private bool generales;
+    private bool contratos;
+    private bool usoGoceTemporal;
+    private bool actas;
+    private bool expediente;
+    private bool servicios;
+
+    private async Task SubirArchivos(InputFileChangeEventArgs e)
+    {
+        var archivos = e.GetMultipleFiles();
+
+        foreach (var archivo in archivos)
+        {
+            Console.WriteLine(archivo.Name);
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private void SeleccionarDocumento(string nombreArchivo)
+    {
+        documentUrl = null;
+
+        /*
+         * FUTURO:
+         *
+         * GET api/archivoPermanente/{id}
+         *
+         * var bytes = ...
+         * documentUrl =
+         * $"data:application/pdf;base64,{base64}#toolbar=0";
+         */
+    }
+
+}
