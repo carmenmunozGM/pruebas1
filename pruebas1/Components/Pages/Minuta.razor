@@ -11,8 +11,6 @@
     @inject IJSRuntime JS
     @inject HorariosService HorariosService
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="minuta-container">
 
@@ -43,9 +41,9 @@
         </div>
     }
 
-    <div class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
+        <div class="minuta-overlay">
+            <div class="minuta-modal">
+            <div class="minuta-header">
                 <div class="header-left">
                     <span class="header-title">Minuta de Trabajo Interna</span>
                 </div>
@@ -54,7 +52,7 @@
                 </button>
             </div>
 
-            <div class="modal-body">
+            <div class="minuta-body">
                 @* Sección de Asesor y Fecha *@
                 <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
                     <div class="field-box" style="flex: 2;">
@@ -228,7 +226,7 @@
                 </div>
             </div>
 
-            <div class="modal-footer">
+            <div class="minuta-footer">
                 <button type="button" class="btn-secondary" @onclick="Cerrar">Cancelar</button>
                 <button type="button" class="btn-primary" @onclick="Guardar">Guardar Minuta</button>
             </div>
@@ -653,28 +651,27 @@
 
 <style>
     /* ================= ESTILOS BASE ================= */
-    .modal-overlay {
+    .minuta-overlay {
         position: fixed;
         inset: 0;
         background: rgba(0,0,0,0.5);
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 2000;
     }
 
-    .modal-container {
+    .minuta-modal {
         background: #ffffff;
         width: 95%;
-        /* max-width: 1500px; */
         border-radius: 12px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        max-height: 90vh;
+        max-height: 85vh;
     }
 
-    .modal-header {
+    .minuta-header {
         padding: 16px 24px;
         background: #f8fafc;
         display: flex;
@@ -696,7 +693,7 @@
         cursor: pointer;
     }
 
-    .modal-body {
+    .minuta-body{
         padding: 24px;
         overflow-y: auto;
     }
@@ -1099,7 +1096,7 @@
             background: #334155 !important;
         }
 
-    .modal-footer {
+    .minuta-footer {
         padding: 16px 24px;
         display: flex;
         justify-content: flex-end;

@@ -140,7 +140,7 @@
                 filter: brightness(1.1);
                 transform: translateY(-1px);
             }
-        /* El contenedor que los mantiene alineados al raz sin bajarse */
+       
         .dashboard-actions-row {
             display: flex;
             justify-content: space-between;
@@ -229,7 +229,7 @@
                     <span>Actualizar</span>
                 }
             </button>
-            <div>
+            <div class="minuta-container" style="display: inline-block;">
                 <Minuta OnSave="RefrescarDesdeMinuta"
                         SoloTI="true" />
             </div>
@@ -350,8 +350,8 @@
                                         </div>
                                         @if (st.Subtasks != null && st.Subtasks.Any())
                                         {
-                                            <div class="table-wrapper block-scroll">
-                                                <ul class="subtask-list">
+                                            <div class=" block-scroll">
+                                                <ul class="subtask-list subtask-sublevel">
                                                     @foreach (var s2 in st.Subtasks)
                                                     {
                                                         <li class="subtask-item">
@@ -553,7 +553,7 @@
 
                                         @if ((cat.Name.Trim() == "Tareas" || cat.Name.Trim() == "Servicio a Cliente") && st.Subtasks.Any())
                                         {
-                                            <div class="table-wrapper block-scroll">
+                                            <div class=" block-scroll ">
                                                 @if (cat.Name.Trim() == "Servicio a Cliente")
                                                 {
                                                     <table class="subtask-table">
@@ -578,7 +578,8 @@
                                                 }
                                                 else
                                                 {
-                                                    <ul class="subtask-list">
+                                                    <ul class="subtask-list subtask-sublevel">
+                                                       
                                                         @foreach (var s2 in st.Subtasks)
                                                         {
                                                             <li class="subtask-item">
@@ -887,7 +888,7 @@
 @if (ShowOrderModal && SelectedOrden != null)
 {
     <div class="modal-container visible" @onclick="CloseOrderModal">
-        <div class="modal-content" @onclick:stopPropagation="true" style="max-width:1200px; width:95%; height:92vh;">
+        <div class="modal-content" @onclick:stopPropagation="true" style="max-width:1200px; width:95%; max-height:92vh;;">
             <div class="modal-header" style="background:#FFDAC1; color:#000;">
                 <h2 class="modal-title">ORDEN-@SelectedOrden.NumeroOrden</h2>
                 <span class="close-button" @onclick="CloseOrderModal">&times;</span>
@@ -1151,7 +1152,7 @@
     <div class="modal-container visible" @onclick="CloseTramiteModal">
         <div class="modal-content"
              @onclick:stopPropagation="true"
-             style="max-width:1200px; width:95%; height:92vh;">
+             style="max-width:1200px; width:95%; max-height:92vh;">
 
             <div class="modal-header" style="background:#FFDAC1; color:#000;">
                 <h2 class="modal-title">

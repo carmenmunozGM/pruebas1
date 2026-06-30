@@ -1,4 +1,4 @@
-﻿
+﻿﻿
 body {
     margin: 0;
     overflow-y: auto;
@@ -31,10 +31,12 @@ body {
         color: #a80000;
         font-weight: bold;
     }
+
 .dia-vacaciones {
-    background-color: #f0fdf4 !important; 
+    background-color: #f0fdf4 !important;
     border: 1px dashed #28a745 !important;
 }
+
 .no-laboral {
     font-size: 0.95rem;
     font-weight: 500;
@@ -62,6 +64,7 @@ body {
     opacity: 0.6;
     color: #000 !important;
 }
+
 .actividad-item {
     padding: 10px 14px;
     font-size: 16px;
@@ -188,20 +191,20 @@ body {
 
 
 
-    .day-card:hover {
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
+.day-card:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
 
-    .day-card.empty {
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
-    }
+.day-card.empty {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
 
-    .day-card.sunday {
-        background: #F9FAFB;
-        color: #9CA3AF;
-    }
+.day-card.sunday {
+    background: #F9FAFB;
+    color: #9CA3AF;
+}
 
 .day-header {
     display: flex;
@@ -238,7 +241,6 @@ body {
     .list-item:hover {
         filter: brightness(0.97);
         transform: translateY(-1px);
-     
     }
 
 .list-title {
@@ -304,10 +306,12 @@ body {
     background: linear-gradient(90deg, #ffffff, #f9f9f9);
     color: black;
 }
+
     .modal-header h2 {
         font-size: 1.4rem; /* Tamaño de fuente más balanceado */
         margin: 0;
     }
+
 .modal-icon {
     font-size: 26px;
 }
@@ -338,6 +342,7 @@ body {
     display: flex;
     justify-content: center;
 }
+
     .modal-footer .btn {
         min-width: 120px; /* Botón un poco más pequeño */
         padding: 8px 16px;
@@ -446,10 +451,10 @@ body {
     padding: 8px 0;
 }
 
-.task-item.realizado {
-    text-decoration: line-through;
-    opacity: 0.6;
-}
+    .task-item.realizado {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
 
 /* ================= ANIMATION ================= */
 @@keyframes modalFade {
@@ -562,7 +567,7 @@ body {
 /* 6. Colapsables y Detalles de Tarea dentro del Modal */
 [data-theme="dark"] .ot-card,
 [data-theme="dark"] .tramite-card {
-    background: 1f2937  !important;
+    background: 1f2937 !important;
     border-color: #374151 !important;
 }
 
@@ -742,11 +747,11 @@ body {
 
 
 
-/* El nombre del cumpleañero (suponiendo que hay un span o div al lado) */
-[data-theme="dark"] .birthday-item span {
-    color: #f1f5f9 !important;
-    font-weight: 600;
-}
+    /* El nombre del cumpleañero (suponiendo que hay un span o div al lado) */
+    [data-theme="dark"] .birthday-item span {
+        color: #f1f5f9 !important;
+        font-weight: 600;
+    }
 
 /* Badge en el calendario */
 [data-theme="dark"] .birthday-badge {
@@ -754,7 +759,6 @@ body {
     border: 1px solid rgba(255, 94, 120, 0.1) !important;
     border-radius: 6px;
     padding: 2px 6px;
-   
 }
 
     [data-theme="dark"] .birthday-badge:hover {
@@ -822,7 +826,7 @@ body {
 }
 
     .vacation-badge:hover {
-         transform: none;
+        transform: none;
         background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
         z-index: 10;
     }
@@ -923,20 +927,20 @@ body {
     color: white;
 }
 
-    /* =================================================
+/* =================================================
    MODAL DE CUMPLEAÑOS (STYLING COMPLETO)
    ================================================= */
-    /* --- COMÚN (Estructura Base) --- */
-    .modal-backdrop-custom {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        backdrop-filter: blur(4px);
-    }
+/* --- COMÚN (Estructura Base) --- */
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
 
 .modal-birthday-card {
     width: 90%;
@@ -1184,7 +1188,6 @@ body {
     padding: 15px;
     margin-bottom: 10px;
     border-bottom: 1px solid #f0f0f0;
-
 }
 
     .birthday-item:hover {
@@ -1236,7 +1239,6 @@ body {
     border-radius: 50px;
     font-weight: bold;
     cursor: pointer;
-    
 }
 
     .btn-close-modal:hover {
