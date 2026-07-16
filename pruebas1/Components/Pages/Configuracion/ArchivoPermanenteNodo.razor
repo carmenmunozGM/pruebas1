@@ -1,0 +1,70 @@
+﻿@using pruebas1.Components.DTOs
+
+<div class="tree-node">
+
+    @if (Nodo.EsCarpeta)
+    {
+        <div class="tree-folder"
+             @onclick="Toggle">
+
+            @if (Nodo.Hijos.Any())
+            {
+                <span class="arrow">
+                    @(Expandido ? "▼" : "▶")
+                </span>
+            }
+            else
+            {
+                <span class="arrow-empty"></span>
+            }
+
+            📁 <span class="tree-text" title="@Nodo.Nombre">@Nodo.Nombre</span>
+
+        </div>
+
+        @if (Expandido)
+        {
+            <div class="tree-children">
+
+                @foreach (var hijo in Nodo.Hijos)
+                {
+                    <ArchivoPermanenteNodo Nodo="hijo"
+                                           OnArchivoSeleccionado="OnArchivoSeleccionado" />
+                }
+
+            </div>
+        }
+    }
+    else
+    {
+        <div class="tree-file"
+             @onclick="Seleccionar">
+
+            📄 <span class="tree-text" title="@Nodo.Nombre">@Nodo.Nombre</span>
+
+        </div>
+    }
+
+</div>
+
+@code {
+
+    [Parameter]
+    public ArchivoPermanenteNodoDTO Nodo { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<ArchivoPermanenteNodoDTO> OnArchivoSeleccionado { get; set; }
+
+    private bool Expandido;
+
+    void Toggle()
+    {
+        Expandido = !Expandido;
+    }
+
+    async Task Seleccionar()
+    {
+        await OnArchivoSeleccionado.InvokeAsync(Nodo);
+    }
+
+}
