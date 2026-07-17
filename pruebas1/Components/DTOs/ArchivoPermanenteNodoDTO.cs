@@ -8,7 +8,11 @@ namespace pruebas1.Components.DTOs
 {
     public class ArchivoPermanenteNodoDTO
     {
-        public string Id { get; set; } = null!;
+        // Id en la base de datos
+        public int? IdBD { get; set; }
+
+        // Id del elemento en SharePoint
+        public string IdSharePoint { get; set; } = null!;
 
         public string Nombre { get; set; } = null!;
 

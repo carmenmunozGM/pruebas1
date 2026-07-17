@@ -1,117 +1,667 @@
-.archivo-header {
+.administrar-section {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 32px;
 }
 
-.header-info h2 {
-    margin: 0;
-    font-size: 28px;
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.mode-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 24px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 16px;
+    color: #374151;
+}
+
+.dark-mode .mode-button {
+    background: #262626;
+    border-color: #404040;
+    color: #d1d5db;
+}
+
+.mode-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.combo-results {
+    position: absolute;
+    z-index: 9999;
+    background: white;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+.mode-button:hover {
+    border-color: #9333ea;
+}
+
+.mode-button.active {
+    background: linear-gradient(to right, #fce7f3, #e9d5ff);
+    border-color: #9333ea;
+    color: #7c3aed;
+}
+
+.dark-mode .mode-button.active {
+    background: linear-gradient(to right, rgba(219, 39, 119, 0.3), rgba(168, 85, 247, 0.3));
+    border-color: #a855f7;
+    color: #c084fc;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .form-card {
+    background: #262626;
+    border-color: #404040;
+}
+
+.form-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 24px;
+}
+
+.dark-mode .form-card h3 {
+    color: #f5f5f5;
+}
+
+.form-step {
+    margin-bottom: 24px;
+}
+
+    .form-step label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+.dark-mode .form-step label {
+    color: #d1d5db;
+}
+
+.form-step input,
+.form-step select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #1f2937;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.dark-mode .form-step input,
+.dark-mode .form-step select {
+    background: #1a1a1a;
+    border-color: #404040;
+    color: #f5f5f5;
+}
+
+.form-step input:focus,
+.form-step select:focus {
+    border-color: #9333ea;
+}
+
+.action-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-option {
+    cursor: pointer;
+    padding: 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .action-option {
+    border-color: #404040;
+}
+
+.action-option:hover {
+    border-color: #c084fc;
+}
+
+.action-option.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .action-option.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.action-option svg {
+    width: 32px;
+    height: 32px;
+    color: #9333ea;
+}
+
+.dark-mode .action-option svg {
+    color: #c084fc;
+}
+
+.action-option span {
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+}
+
+.dark-mode .action-option span {
+    color: #f5f5f5;
+}
+
+/* Agenda Cards */
+.agenda-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.agenda-card {
+    cursor: pointer;
+    padding: 16px;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .agenda-card {
+    background: #1a1a1a;
+    border-color: #404040;
+}
+
+.agenda-card:hover {
+    border-color: #c084fc;
+}
+
+.agenda-card.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .agenda-card.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.agenda-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.agenda-card strong {
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.dark-mode .agenda-card strong {
+    color: #f5f5f5;
+}
+
+.agenda-card p {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.dark-mode .agenda-card p {
+    color: #9ca3af;
+}
+
+.badge {
+    padding: 4px 8px;
+    background: #e9d5ff;
+    color: #7c3aed;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 600;
 }
 
-.header-info p {
-    margin-top: 6px;
-    color: #777;
+.dark-mode .badge {
+    background: rgba(168, 85, 247, 0.3);
+    color: #c084fc;
 }
 
-.toolbar {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 18px;
-}
-
-.btn-subir {
-    background: #2d7ff9;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: .2s;
-}
-
-    .btn-subir:hover {
-        background: #1f69d5;
-    }
-
-.input-busqueda {
-    flex: 1;
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    outline: none;
-}
-
-.archivo-layout {
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 18px;
-    height: calc(100vh - 210px);
-}
-
-.tree-panel {
-    overflow: auto;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    padding: 12px;
-    background: white;
-}
-
-.viewer-panel {
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    overflow: hidden;
-    background: white;
-    position: relative;
-}
-
-.pdf-viewer {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.empty-state {
-    height: 100%;
+/* Agenda List */
+.agenda-list {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #888;
-    text-align: center;
+    gap: 12px;
 }
 
-.empty-icon {
-    font-size: 60px;
-    margin-bottom: 15px;
-}
-
-.loading {
+.agenda-list-item {
+    cursor: pointer;
+    padding: 16px;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100%;
-    color: #777;
+    gap: 16px;
+    transition: all 0.2s ease;
 }
 
-/* DARK MODE */
-
-[data-theme="dark"] .tree-panel,
-[data-theme="dark"] .viewer-panel {
-    background: #202225;
-    border-color: #444;
+.dark-mode .agenda-list-item {
+    background: #1a1a1a;
+    border-color: #404040;
 }
 
-[data-theme="dark"] .input-busqueda {
-    background: #2b2d31;
+.agenda-list-item:hover {
+    border-color: #c084fc;
+}
+
+.agenda-list-item.selected {
+    border-color: #9333ea;
+    background: #faf5ff;
+}
+
+.dark-mode .agenda-list-item.selected {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.agenda-list-item svg {
+    width: 24px;
+    height: 24px;
+    color: #9333ea;
+    flex-shrink: 0;
+}
+
+.dark-mode .agenda-list-item svg {
+    color: #c084fc;
+}
+
+.agenda-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .agenda-info strong {
+        color: #1f2937;
+    }
+
+.dark-mode .agenda-info strong {
+    color: #f5f5f5;
+}
+
+.agenda-info span {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark-mode .agenda-info span {
+    color: #9ca3af;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px 24px;
+    background: #9333ea;
     color: white;
-    border-color: #555;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 24px;
 }
 
-[data-theme="dark"] .header-info p,
-[data-theme="dark"] .loading,
-[data-theme="dark"] .empty-state {
-    color: #b7b7b7;
+    .submit-button:hover:not(:disabled) {
+        background: #7c3aed;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .submit-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .submit-button.desvincular-btn {
+        background: #dc2626;
+    }
+
+        .submit-button.desvincular-btn:hover:not(:disabled) {
+            background: #b91c1c;
+        }
+
+.message-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #10b981;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+    z-index: 100;
 }
+
+/* CONTENEDOR */
+.combo {
+    position: relative;
+}
+/* INPUT */
+.combo-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+}
+/* RESULTADOS */
+.combo-results {
+    position: absolute;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 4px;
+    border-radius: 8px;
+    z-index: 50;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 8px 18px rgba(0,0,0,.12);
+}
+/* ITEM */
+.combo-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    color: #111827;
+}
+
+    .combo-item small {
+        color: #6b7280;
+    }
+
+    .combo-item:hover {
+        background: #f1f5f9;
+    }
+
+.dark-mode .combo-input {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+}
+
+.dark-mode .combo-results {
+    background: #1f2937;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 22px rgba(0,0,0,.45);
+}
+
+.dark-mode .combo-item {
+    color: #e5e7eb;
+}
+
+    .dark-mode .combo-item small {
+        color: #9ca3af;
+    }
+
+    .dark-mode .combo-item:hover {
+        background: #374151;
+    }
+
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .action-options {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* MODIFICACIÓN EXCLUSIVA PARA MODO OSCURO */
+.dark-mode h2,
+.dark-mode .section-header h2 {
+    color: #f5f5f5;
+}
+
+.dark-mode p,
+.dark-mode .section-header p {
+    color: #9ca3af;
+}
+/* =================================================
+   SECCIÓN ADMINISTRAR (MODO OSCURO UNIFICADO)
+   ================================================= */
+
+/* 1. Botones de Modo (Cambio de Vista) */
+[data-theme="dark"] .mode-button {
+    background: #242731 !important;
+    border-color: #334155 !important;
+    color: #d1d5db !important;
+}
+
+    [data-theme="dark"] .mode-button.active {
+        background: linear-gradient(to right, rgba(219, 39, 119, 0.2), rgba(168, 85, 247, 0.2)) !important;
+        border-color: #a855f7 !important;
+        color: #c084fc !important;
+    }
+
+/* 2. Tarjetas de Formulario (Cards) */
+[data-theme="dark"] .form-card {
+    background: #242731 !important;
+    border-color: #334155 !important;
+}
+
+    [data-theme="dark"] .form-card h3 {
+        color: #f5f5f5 !important;
+    }
+
+/* 3. Inputs, Selects y Labels */
+[data-theme="dark"] .form-step label {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .form-step input,
+[data-theme="dark"] .form-step select {
+    background: #1a1c23 !important; /* Fondo más profundo para inputs */
+    border-color: #404040 !important;
+    color: #f5f5f5 !important;
+}
+
+    [data-theme="dark"] .form-step input:focus,
+    [data-theme="dark"] .form-step select:focus {
+        border-color: #a855f7 !important;
+    }
+
+/* 4. Opciones de Acción y Agendas (Grid/Lista) */
+[data-theme="dark"] .action-option,
+[data-theme="dark"] .agenda-card,
+[data-theme="dark"] .agenda-list-item {
+    background: #1a1c23 !important;
+    border-color: #334155 !important;
+}
+
+    [data-theme="dark"] .action-option.selected,
+    [data-theme="dark"] .agenda-card.selected,
+    [data-theme="dark"] .agenda-list-item.selected {
+        border-color: #a855f7 !important;
+        background: rgba(168, 85, 247, 0.1) !important;
+    }
+
+    /* 5. Textos dentro de Listas/Cards */
+    [data-theme="dark"] .action-option span,
+    [data-theme="dark"] .agenda-card strong,
+    [data-theme="dark"] .agenda-info strong {
+        color: #f5f5f5 !important;
+    }
+
+    [data-theme="dark"] .agenda-card p,
+    [data-theme="dark"] .agenda-info span {
+        color: #9ca3af !important;
+    }
+
+    /* 6. Iconos y Badges */
+    [data-theme="dark"] .action-option svg,
+    [data-theme="dark"] .agenda-list-item svg {
+        color: #c084fc !important;
+    }
+
+[data-theme="dark"] .badge {
+    background: rgba(168, 85, 247, 0.3) !important;
+    color: #c084fc !important;
+}
+
+/* 7. Textos Generales (H2 y P) */
+[data-theme="dark"] h2,
+[data-theme="dark"] .section-header h2 {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] .section-header p {
+    color: #9ca3af !important;
+}
+
+/* =================================================
+   MODO OSCURO: COMBO-BOX / BUSCADOR DE PUESTOS
+   ================================================= */
+
+/* Contenedor principal */
+[data-theme="dark"] .form-step.combo {
+    background-color: transparent !important;
+}
+
+    /* Label del buscador */
+    [data-theme="dark"] .form-step.combo label {
+        color: #94a3b8 !important; /* Gris azulado */
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+/* Input de búsqueda */
+[data-theme="dark"] .combo-input {
+    background-color: #1e293b !important; /* Gris pizarra */
+    color: #ffffff !important; /* Texto blanco */
+    border: 1px solid #334155 !important;
+    border-radius: 8px;
+    padding: 12px 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+    [data-theme="dark"] .combo-input::placeholder {
+        color: #64748b !important; /* Placeholder discreto */
+    }
+
+    [data-theme="dark"] .combo-input:focus {
+        border-color: #38bdf8 !important; /* Glow azul al escribir */
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+/* Contenedor de resultados (Dropdown) */
+[data-theme="dark"] .combo-results {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    margin-top: 5px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* Items de la lista */
+[data-theme="dark"] .combo-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+    [data-theme="dark"] .combo-item:last-child {
+        border-bottom: none;
+    }
+
+    [data-theme="dark"] .combo-item span {
+        color: #f1f5f9 !important; /* Texto del puesto */
+    }
+
+    [data-theme="dark"] .combo-item small {
+        color: #64748b !important; /* Clave en gris oscuro */
+        background: #0f172a; /* Pequeño badge oscuro para la clave */
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* Hover en los resultados */
+    [data-theme="dark"] .combo-item:hover {
+        background-color: #334155 !important;
+    }
+
+        [data-theme="dark"] .combo-item:hover span {
+            color: #38bdf8 !important; /* Resalte azul al pasar el mouse */
+        }

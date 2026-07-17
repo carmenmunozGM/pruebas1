@@ -31,6 +31,11 @@
     <ModalSubirArchivo Visible="@MostrarModalSubir"
                        OnClose="CerrarModalSubir"
                        OnGuardado="RecargarArbol" />
+
+    <ModalArchivoPermanente Visible="@MostrarModalOpciones"
+                            Nodo="@NodoSeleccionado"
+                            OnClose="CerrarModalOpciones"
+                            OnEliminado="RecargarArbol" />
 </div>
 
 <div class="archivo-layout">
@@ -56,7 +61,8 @@
             @foreach (var nodo in Arbol)
             {
                 <ArchivoPermanenteNodo Nodo="nodo"
-                                       OnArchivoSeleccionado="SeleccionarDocumento" />
+                                       OnArchivoSeleccionado="SeleccionarDocumento"
+                                       OnAbrirOpciones="AbrirOpcionesNodo" />
             }
         }
 
@@ -106,6 +112,10 @@
     private bool cargando;
     private bool MostrarModalSubir;
 
+    private bool MostrarModalOpciones;
+
+    private ArchivoPermanenteNodoDTO? NodoSeleccionado;
+
     protected override async Task OnInitializedAsync()
     {
         await CargarArbol();
@@ -152,6 +162,20 @@
          * documentUrl = ...
          */
 
+        return Task.CompletedTask;
+    }
+
+    private Task AbrirOpcionesNodo(ArchivoPermanenteNodoDTO nodo)
+    {
+        NodoSeleccionado = nodo;
+        MostrarModalOpciones = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CerrarModalOpciones()
+    {
+        MostrarModalOpciones = false;
+        NodoSeleccionado = null;
         return Task.CompletedTask;
     }
 }

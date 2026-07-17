@@ -5,7 +5,8 @@
     @if (Nodo.EsCarpeta)
     {
         <div class="tree-folder"
-             @onclick="Toggle">
+             @onclick="Toggle"
+             @ondblclick="AbrirOpciones">
 
             @if (Nodo.Hijos.Any())
             {
@@ -29,7 +30,8 @@
                 @foreach (var hijo in Nodo.Hijos)
                 {
                     <ArchivoPermanenteNodo Nodo="hijo"
-                                           OnArchivoSeleccionado="OnArchivoSeleccionado" />
+                                           OnArchivoSeleccionado="OnArchivoSeleccionado"
+                                           OnAbrirOpciones="OnAbrirOpciones" />
                 }
 
             </div>
@@ -38,7 +40,8 @@
     else
     {
         <div class="tree-file"
-             @onclick="Seleccionar">
+             @onclick="Seleccionar"
+             @ondblclick="AbrirOpciones">
 
             📄 <span class="tree-text" title="@Nodo.Nombre">@Nodo.Nombre</span>
 
@@ -55,6 +58,9 @@
     [Parameter]
     public EventCallback<ArchivoPermanenteNodoDTO> OnArchivoSeleccionado { get; set; }
 
+    [Parameter]
+    public EventCallback<ArchivoPermanenteNodoDTO> OnAbrirOpciones { get; set; }
+
     private bool Expandido;
 
     void Toggle()
@@ -67,4 +73,8 @@
         await OnArchivoSeleccionado.InvokeAsync(Nodo);
     }
 
+    private async Task AbrirOpciones()
+    {
+        await OnAbrirOpciones.InvokeAsync(Nodo);
+    }
 }

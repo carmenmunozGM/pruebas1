@@ -1,0 +1,138 @@
+﻿@using pruebas1.Components.DTOs
+@using pruebas1.Servicios
+
+@inject ArchivoPermanenteService ArchivoService
+@inject IJSRuntime JS
+
+@if (Visible && Nodo != null)
+{
+    <div class="modal-archivo-overlay">
+
+        <div class="modal-archivo">
+
+            <div class="modal-header">
+
+                <h3>
+                    @(Nodo.EsCarpeta ? "📁" : "📄")
+                    @Nodo.Nombre
+                </h3>
+
+                <button class="btn-cerrar"
+                        @onclick="Cerrar">
+                    ✕
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="tipo">
+                    @(Nodo.EsCarpeta ? "Carpeta" : "Archivo")
+                </div>
+
+                @if (!Nodo.EsCarpeta)
+                {
+                    <button class="accion descargar"
+                            @onclick="Descargar">
+
+                        ⬇ Descargar
+
+                    </button>
+                }
+
+            <button class="accion eliminar"
+                    @onclick="Eliminar">
+
+                🗑
+                @(Nodo.EsCarpeta
+                                ? "Eliminar carpeta"
+                                : "Eliminar archivo")
+
+            </button>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn-cancelar"
+                        @onclick="Cerrar">
+
+                    Cancelar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public ArchivoPermanenteNodoDTO? Nodo { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback OnEliminado { get; set; }
+
+    private bool ConfirmandoEliminar;
+
+    private async Task Descargar()
+    {
+        if (Nodo == null)
+            return;
+
+        await JS.InvokeVoidAsync(
+            "alert",
+            "Aquí irá la descarga.");
+    }
+
+    private async Task Eliminar()
+    {
+        if (Nodo == null)
+            return;
+
+        bool confirmar = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"¿Deseas eliminar {(Nodo.EsCarpeta ? "la carpeta" : "el archivo")} \"{Nodo.Nombre}\"?");
+
+        if (!confirmar)
+            return;
+
+        bool ok;
+
+        if (Nodo.EsCarpeta)
+        {
+            ok = await ArchivoService.EliminarCarpeta(Nodo.IdBD!.Value);
+        }
+        else
+        {
+            ok = await ArchivoService.EliminarArchivo(Nodo.IdBD!.Value);
+        }
+
+        if (!ok)
+        {
+            await JS.InvokeVoidAsync(
+                "alert",
+                "No fue posible eliminar.");
+
+            return;
+        }
+
+        await OnEliminado.InvokeAsync();
+
+        await Cerrar();
+    }
+
+    private async Task Cerrar()
+    {
+        await OnClose.InvokeAsync();
+    }
+}
