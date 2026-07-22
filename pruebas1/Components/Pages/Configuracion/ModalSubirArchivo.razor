@@ -49,7 +49,7 @@
                             {
                                 <option value="@item.Id"
                                         selected="@(Seleccionados.Count > indice &&
-                                                                                            Seleccionados[indice]?.Id == item.Id)">
+                                                                                                                                    Seleccionados[indice]?.Id == item.Id)">
                     @($"{item.Codigo} - {item.Nombre}")
                 </option>
                                 }
@@ -316,11 +316,9 @@
             if (!ok)
                 return;
 
-            await Limpiar();
-
-            await OnGuardado.InvokeAsync();
-
             GuardadoCorrectamente = true;
+
+            StateHasChanged();
 
             await Task.Delay(900);
 
@@ -361,6 +359,8 @@
         CreandoNuevaCarpeta = false;
 
         MostrarCrearCarpeta = false;
+
+        GuardadoCorrectamente = false;
 
         Niveles.Clear();
 

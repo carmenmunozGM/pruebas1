@@ -13,6 +13,8 @@ namespace pruebas1.Servicios
             _http = http;
         }
 
+        public string UrlBase => _http.BaseAddress!.ToString().TrimEnd('/');
+
         #region Sincronización
 
         public async Task<bool> InicializarEstructura()
@@ -125,6 +127,11 @@ namespace pruebas1.Servicios
                 null);
 
             return response.IsSuccessStatusCode;
+        }
+
+        public string ObtenerUrlDescarga(int idArchivo)
+        {
+            return $"{UrlBase}/archivoPermanente/archivo-permanente/descargar/{idArchivo}";
         }
         #endregion
 

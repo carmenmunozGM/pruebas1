@@ -17,26 +17,42 @@
 
 </div>
 
-<div class="toolbar">
+<div class="acciones">
 
     <button class="btn-subir"
             @onclick="AbrirModalSubir">
         📤 Subir archivos
     </button>
 
+    <button class="btn-sincronizar"
+            @onclick="ActualizarArchivoPermanente"
+            disabled="@Actualizando">
+
+        @if (Actualizando)
+        {
+            <span>🔄 Actualizando...</span>
+        }
+        else
+        {
+            <span>🔄 Actualizar estructura</span>
+        }
+
+    </button>
+
     <input class="input-busqueda"
            @bind="textoBusqueda"
            placeholder="Buscar documento..." />
 
-    <ModalSubirArchivo Visible="@MostrarModalSubir"
-                       OnClose="CerrarModalSubir"
-                       OnGuardado="RecargarArbol" />
-
-    <ModalArchivoPermanente Visible="@MostrarModalOpciones"
-                            Nodo="@NodoSeleccionado"
-                            OnClose="CerrarModalOpciones"
-                            OnEliminado="RecargarArbol" />
 </div>
+
+<ModalSubirArchivo Visible="@MostrarModalSubir"
+                   OnClose="CerrarModalSubir"
+                   OnGuardado="RecargarArbol" />
+
+<ModalArchivoPermanente Visible="@MostrarModalOpciones"
+                        Nodo="@NodoSeleccionado"
+                        OnClose="CerrarModalOpciones"
+                        OnEliminado="RecargarArbol" />
 
 <div class="archivo-layout">
 
@@ -151,18 +167,29 @@
         await CargarArbol();
     }
 
-    private Task SeleccionarDocumento(ArchivoPermanenteNodoDTO nodo)
+    private async Task SeleccionarDocumento(ArchivoPermanenteNodoDTO nodo)
     {
-        documentUrl = null;
+        if (nodo.EsCarpeta)
+            return;
 
-        /*
-         * Después aquí irá:
-         *
-         * var bytes = await ArchivoService.DescargarArchivo(nodo.IdArchivo);
-         * documentUrl = ...
-         */
+        if (nodo.IdBD == null)
+            return;
 
-        return Task.CompletedTask;
+        if (!nodo.Nombre.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            documentUrl = null;
+
+            await JS.InvokeVoidAsync(
+                "alert",
+                "Solo es posible visualizar archivos PDF.");
+
+            return;
+        }
+
+        documentUrl =
+            $"{ArchivoService.UrlBase}/archivoPermanente/archivo-permanente/visualizar/{nodo.IdBD}";
+
+        StateHasChanged();
     }
 
     private Task AbrirOpcionesNodo(ArchivoPermanenteNodoDTO nodo)
@@ -177,5 +204,47 @@
         MostrarModalOpciones = false;
         NodoSeleccionado = null;
         return Task.CompletedTask;
+    }
+
+    private bool Actualizando;
+
+    private async Task ActualizarArchivoPermanente()
+    {
+        try
+        {
+            Actualizando = true;
+            StateHasChanged();
+
+            bool ok = await ArchivoService.InicializarEstructura();
+
+            if (!ok)
+            {
+                await JS.InvokeVoidAsync(
+                    "alert",
+                    "No fue posible inicializar la estructura.");
+                return;
+            }
+
+            ok = await ArchivoService.SincronizarDesdeSharePoint();
+
+            if (!ok)
+            {
+                await JS.InvokeVoidAsync(
+                    "alert",
+                    "No fue posible sincronizar la estructura.");
+                return;
+            }
+
+            await RecargarArbol();
+
+            await JS.InvokeVoidAsync(
+                "alert",
+                "Archivo Permanente actualizado correctamente.");
+        }
+        finally
+        {
+            Actualizando = false;
+            StateHasChanged();
+        }
     }
 }

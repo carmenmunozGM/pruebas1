@@ -26,29 +26,85 @@
 
             <div class="modal-body">
 
-                <div class="tipo">
-                    @(Nodo.EsCarpeta ? "Carpeta" : "Archivo")
-                </div>
-
-                @if (!Nodo.EsCarpeta)
+                @if (!ConfirmandoEliminar)
                 {
-                    <button class="accion descargar"
-                            @onclick="Descargar">
+                    <div class="tipo">
+                        @(Nodo.EsCarpeta ? "Carpeta" : "Archivo")
+                    </div>
 
-                        ⬇ Descargar
+                    @if (!Nodo.EsCarpeta)
+                    {
+                        <button class="accion descargar"
+                                @onclick="Descargar">
 
-                    </button>
-                }
+                            ⬇ Descargar
 
-            <button class="accion eliminar"
-                    @onclick="Eliminar">
+                        </button>
+                    }
 
-                🗑
-                @(Nodo.EsCarpeta
-                                ? "Eliminar carpeta"
-                                : "Eliminar archivo")
+                <button class="accion eliminar"
+                        @onclick="() => ConfirmandoEliminar = true">
+
+                    🗑
+                    @(Nodo.EsCarpeta
+                                    ? "Eliminar carpeta"
+                                    : "Eliminar archivo")
 
             </button>
+                        }
+                else
+                {
+                    <div class="confirmacion">
+
+                        <div class="icono-alerta">
+                            ⚠️
+                        </div>
+
+                        <h3>
+                            ¿Eliminar @(Nodo.EsCarpeta ? "la carpeta" : "el archivo")?
+                        </h3>
+
+                        <p>
+                            <strong>@Nodo.Nombre</strong>
+                        </p>
+
+                        <span>
+                            Esta acción no se puede deshacer.
+                        </span>
+
+                        <div class="confirmacion-botones">
+
+                            <button class="btn-cancelar"
+                                    @onclick="CancelarEliminar">
+                                Cancelar
+                            </button>
+
+                            <button class="btn-eliminar-final"
+                                    disabled="@Eliminando"
+                                    @onclick="Eliminar">
+
+                                @if (Eliminando)
+                                {
+                                    <span>Eliminando...</span>
+                                }
+                                else
+                                {
+                                    <span>🗑 Sí, eliminar</span>
+                                }
+
+                            </button>
+
+                        </div>
+
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Mensaje))
+                {
+                    <div class="mensaje @(OperacionCorrecta ? "ok" : "error")">
+                        @Mensaje
+                    </div>
+                }
 
             </div>
 
@@ -84,14 +140,23 @@
 
     private bool ConfirmandoEliminar;
 
+    private bool Eliminando;
+
+    private string? Mensaje;
+
+    private bool OperacionCorrecta;
+
     private async Task Descargar()
     {
-        if (Nodo == null)
+        if (Nodo?.IdBD == null)
             return;
 
         await JS.InvokeVoidAsync(
-            "alert",
-            "Aquí irá la descarga.");
+            "open",
+            ArchivoService.ObtenerUrlDescarga(Nodo.IdBD.Value),
+            "_blank");
+
+        await Cerrar();
     }
 
     private async Task Eliminar()
@@ -99,12 +164,9 @@
         if (Nodo == null)
             return;
 
-        bool confirmar = await JS.InvokeAsync<bool>(
-            "confirm",
-            $"¿Deseas eliminar {(Nodo.EsCarpeta ? "la carpeta" : "el archivo")} \"{Nodo.Nombre}\"?");
+        Eliminando = true;
 
-        if (!confirmar)
-            return;
+        StateHasChanged();
 
         bool ok;
 
@@ -117,22 +179,46 @@
             ok = await ArchivoService.EliminarArchivo(Nodo.IdBD!.Value);
         }
 
+        Eliminando = false;
+
         if (!ok)
         {
-            await JS.InvokeVoidAsync(
-                "alert",
-                "No fue posible eliminar.");
+            OperacionCorrecta = false;
+            Mensaje = "No fue posible eliminar.";
+
+            StateHasChanged();
+
+            await Task.Delay(2500);
+
+            Mensaje = null;
 
             return;
         }
 
-        await OnEliminado.InvokeAsync();
+        OperacionCorrecta = true;
+        Mensaje = "Elemento eliminado correctamente.";
+
+        StateHasChanged();
+
+        await Task.Delay(900);
 
         await Cerrar();
+
+        await OnEliminado.InvokeAsync();
     }
 
     private async Task Cerrar()
     {
+        ConfirmandoEliminar = false;
+        Eliminando = false;
+        Mensaje = null;
+        OperacionCorrecta = false;
+
         await OnClose.InvokeAsync();
+    }
+
+    private void CancelarEliminar()
+    {
+        ConfirmandoEliminar = false;
     }
 }
