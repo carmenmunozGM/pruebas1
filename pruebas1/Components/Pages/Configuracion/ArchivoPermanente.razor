@@ -41,6 +41,7 @@
 
     <input class="input-busqueda"
            @bind="textoBusqueda"
+           @bind:event="oninput"
            placeholder="Buscar documento..." />
 
 </div>
@@ -120,10 +121,21 @@
 @code
 {
     private List<ArchivoPermanenteNodoDTO> Arbol = new();
+    private List<ArchivoPermanenteNodoDTO> ArbolOriginal = new();
 
     private string? documentUrl;
 
-    private string textoBusqueda = "";
+    private string _textoBusqueda = "";
+
+    private string textoBusqueda
+    {
+        get => _textoBusqueda;
+        set
+        {
+            _textoBusqueda = value;
+            Buscar();
+        }
+    }
 
     private bool cargando;
     private bool MostrarModalSubir;
@@ -141,9 +153,9 @@
     {
         cargando = true;
 
-        Arbol = await ArchivoService.ObtenerArbol();
+        ArbolOriginal = await ArchivoService.ObtenerArbol();
 
-        Debug.WriteLine($"Nodos: {Arbol.Count}");
+        Arbol = ArbolOriginal;
 
         cargando = false;
     }
@@ -246,5 +258,76 @@
             Actualizando = false;
             StateHasChanged();
         }
+    }
+
+    private void Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(textoBusqueda))
+        {
+            Arbol = ArbolOriginal;
+            return;
+        }
+
+        Arbol = FiltrarNodos(
+            ArbolOriginal,
+            textoBusqueda.Trim());
+    }
+
+    private List<ArchivoPermanenteNodoDTO> FiltrarNodos(
+    List<ArchivoPermanenteNodoDTO> origen,
+    string texto)
+    {
+        var resultado = new List<ArchivoPermanenteNodoDTO>();
+
+        foreach (var nodo in origen)
+        {
+            bool coincide = nodo.Nombre.Contains(
+                texto,
+                StringComparison.OrdinalIgnoreCase);
+
+            if (coincide)
+            {
+                resultado.Add(ClonarNodoCompleto(nodo));
+                continue;
+            }
+
+            var hijos = FiltrarNodos(nodo.Hijos, texto);
+
+            if (hijos.Any())
+            {
+                var copia = ClonarNodo(nodo);
+                copia.Hijos = hijos;
+
+                resultado.Add(copia);
+            }
+        }
+
+        return resultado;
+    }
+
+    private ArchivoPermanenteNodoDTO ClonarNodo(ArchivoPermanenteNodoDTO nodo)
+    {
+        return new ArchivoPermanenteNodoDTO
+        {
+            IdBD = nodo.IdBD,
+            IdSharePoint = nodo.IdSharePoint,
+            Nombre = nodo.Nombre,
+            EsCarpeta = nodo.EsCarpeta,
+            Hijos = new List<ArchivoPermanenteNodoDTO>()
+        };
+    }
+
+    private ArchivoPermanenteNodoDTO ClonarNodoCompleto(ArchivoPermanenteNodoDTO nodo)
+    {
+        return new ArchivoPermanenteNodoDTO
+        {
+            IdBD = nodo.IdBD,
+            IdSharePoint = nodo.IdSharePoint,
+            Nombre = nodo.Nombre,
+            EsCarpeta = nodo.EsCarpeta,
+            Hijos = nodo.Hijos
+                .Select(ClonarNodoCompleto)
+                .ToList()
+        };
     }
 }
