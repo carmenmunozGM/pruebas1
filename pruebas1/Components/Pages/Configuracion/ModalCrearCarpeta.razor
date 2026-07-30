@@ -1,0 +1,241 @@
+﻿@using pruebas1.Components.DTOs
+@using pruebas1.Servicios
+@inject IJSRuntime JS
+@inject ArchivoPermanenteService ArchivoService
+
+@if (Visible)
+{
+    <div class="modal-crear-overlay">
+        <div class="modal-crear">
+            <div class="modal-crear-header">
+                <h3>📁 Nueva carpeta</h3>
+                <button class="btn-cerrar-crear" @onclick="Cerrar">✕</button>
+            </div>
+
+            <div class="modal-crear-body">
+                @if (Cargando)
+                {
+                    <div class="loading-crear">
+                        Cargando estructura...
+                    </div>
+                }
+                else
+                {
+                    <h4>Ruta destino</h4>
+
+                    @for (int i = 0; i < Niveles.Count; i++)
+                    {
+                        int indice = i;
+
+                        <select class="combo-ruta-crear"
+                                @onchange="(e) => SeleccionarNivel(indice, e.Value?.ToString())">
+
+                            @* Si es el primer nivel, agregamos la opción explícita para la raíz *@
+                            @if (indice == 0)
+                            {
+                                <option value="root">📁 Carpeta Raíz (Principal)</option>
+                            }
+                            else
+                            {
+                                <option value="">Seleccione...</option>
+                            }
+
+                            @foreach (var item in Niveles[i])
+                            {
+                                <option value="@item.Id"
+                                        selected="@(Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id)">
+                                    @($"{item.Codigo} - {item.Nombre}")
+                                </option>
+                            }
+                        </select>
+                    }
+
+                    <div class="campo-crear">
+                        <label>Nombre de la carpeta</label>
+                        <input class="input-crear"
+                               type="text"
+                               @bind="NombreCarpeta"
+                               @bind:event="oninput"
+                               placeholder="Ej. Documentos 2026" />
+                    </div>
+
+                    @if (GuardadoCorrectamente)
+                    {
+                        <div class="mensaje-ok-crear">
+                            ✔ Carpeta creada correctamente
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="modal-crear-footer">
+                <button class="btn-cancelar-crear" @onclick="Cerrar">
+                    Cancelar
+                </button>
+
+                <button class="btn-guardar-crear"
+                        disabled="@(!PuedeGuardar || Guardando)"
+                        @onclick="GuardarCarpeta">
+                    @if (Guardando)
+                    {
+                        <span class="spinner-crear"></span>
+                        <span>Creando...</span>
+                    }
+                    else
+                    {
+                        <span>📁 Crear</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnCarpetaCreada { get; set; }
+
+    private bool Cargando;
+    private bool Guardando;
+    private bool GuardadoCorrectamente;
+    private List<UbicacionDTO> Ubicaciones = new();
+    private List<List<UbicacionDTO>> Niveles = new();
+    private List<UbicacionDTO?> Seleccionados = new();
+
+    private UbicacionDTO? CarpetaSeleccionada;
+    private string NombreCarpeta = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible)
+            return;
+
+        if (Ubicaciones.Any())
+            return;
+
+        Cargando = true;
+
+        Ubicaciones = await ArchivoService.ObtenerUbicaciones();
+
+        Niveles.Clear();
+        Seleccionados.Clear();
+        Niveles.Add(Ubicaciones);
+
+        // AQUÍ ESTABLECEMOS LA RAÍZ POR DEFECTO AL ABRIR
+        CarpetaSeleccionada = new UbicacionDTO
+        {
+            IdSharePoint = "root" // O el identificador que use tu backend para la raíz
+        };
+
+        Cargando = false;
+    }
+
+    private void SeleccionarNivel(int nivel, string? valor)
+    {
+        while (Niveles.Count > nivel + 1)
+            Niveles.RemoveAt(nivel + 1);
+
+        while (Seleccionados.Count > nivel)
+            Seleccionados.RemoveAt(nivel);
+
+        // Si el usuario selecciona la opción raíz explícitamente en el primer nivel
+        if (nivel == 0 && valor == "root")
+        {
+            CarpetaSeleccionada = new UbicacionDTO { IdSharePoint = "root" };
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            // Si des selecciona en niveles inferiores, regresa el apuntador al padre anterior o a la raíz
+            CarpetaSeleccionada = nivel == 0 ? new UbicacionDTO { IdSharePoint = "root" } : Seleccionados.LastOrDefault();
+            return;
+        }
+
+        var seleccionado = Niveles[nivel].First(x => x.Id == int.Parse(valor));
+
+        Seleccionados.Add(seleccionado);
+        CarpetaSeleccionada = seleccionado;
+
+        if (seleccionado.Hijos.Any())
+        {
+            Niveles.Add(seleccionado.Hijos);
+        }
+    }
+
+    private bool PuedeGuardar
+    {
+        get
+        {
+            // Ya no bloqueamos si CarpetaSeleccionada es null, porque ahora por defecto apunta a "root"
+            if (CarpetaSeleccionada == null || string.IsNullOrWhiteSpace(CarpetaSeleccionada.IdSharePoint))
+                return false;
+
+            return !string.IsNullOrWhiteSpace(NombreCarpeta);
+        }
+    }
+
+    private async Task GuardarCarpeta()
+    {
+        if (CarpetaSeleccionada == null || string.IsNullOrWhiteSpace(NombreCarpeta))
+            return;
+
+        try
+        {
+            Guardando = true;
+
+            // 🟢 SOLUCIÓN: Si la selección es "root", enviamos null (o cadena vacía) al backend
+            string? idPadreEnviar = CarpetaSeleccionada.IdSharePoint == "root"
+                                    ? null
+                                    : CarpetaSeleccionada.IdSharePoint;
+
+            var dto = new CrearCarpetaDTO
+            {
+                Nombre = NombreCarpeta,
+                IdCarpetaPadre = idPadreEnviar
+            };
+
+            bool exito = await ArchivoService.CrearCarpeta(dto);
+
+            if (exito)
+            {
+                GuardadoCorrectamente = true;
+                StateHasChanged();
+
+                await Task.Delay(900);
+                await Limpiar();
+                await OnCarpetaCreada.InvokeAsync();
+                await Cerrar();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"No fue posible crear la carpeta.\n\n{ex.Message}");
+        }
+        finally
+        {
+            Guardando = false;
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        await Limpiar();
+        await OnClose.InvokeAsync();
+    }
+
+    private Task Limpiar()
+    {
+        NombreCarpeta = string.Empty;
+        GuardadoCorrectamente = false;
+        Niveles.Clear();
+        Seleccionados.Clear();
+        Niveles.Add(Ubicaciones);
+
+        // 🟢 Agrega esto para que al limpiar siempre apunte a la raíz por defecto
+        CarpetaSeleccionada = new UbicacionDTO { IdSharePoint = "root" };
+
+        return Task.CompletedTask;
+    }               
+}

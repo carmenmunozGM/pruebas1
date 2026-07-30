@@ -1,7 +1,7 @@
-﻿.modal-subir-overlay {
+﻿.modal-crear-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.45);
+    background: rgba(0, 0, 0, .45);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -9,7 +9,7 @@
     backdrop-filter: blur(2px);
 }
 
-.modal-subir {
+.modal-crear {
     width: 700px;
     max-width: 95vw;
     max-height: 90vh;
@@ -18,12 +18,11 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 18px 45px rgba(0,0,0,.25);
-    animation: aparecer .18s ease-out;
-    position: relative;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .25);
+    animation: aparecerCrear .18s ease-out;
 }
 
-@keyframes aparecer {
+@keyframes aparecerCrear {
     from {
         opacity: 0;
         transform: translateY(-12px) scale(.98);
@@ -35,7 +34,7 @@
     }
 }
 
-.modal-header {
+.modal-crear-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -43,13 +42,13 @@
     border-bottom: 1px solid #ececec;
 }
 
-    .modal-header h3 {
+    .modal-crear-header h3 {
         margin: 0;
         font-size: 20px;
         font-weight: 600;
     }
 
-.btn-cerrar {
+.btn-cerrar-crear {
     border: none;
     background: transparent;
     font-size: 22px;
@@ -58,48 +57,49 @@
     transition: .2s;
 }
 
-    .btn-cerrar:hover {
+    .btn-cerrar-crear:hover {
         color: #d32f2f;
     }
 
-.modal-body {
+.modal-crear-body {
     padding: 22px;
     overflow-y: auto;
 }
 
-    .modal-body h4 {
+    .modal-crear-body h4 {
         margin-top: 0;
         margin-bottom: 12px;
         font-size: 16px;
     }
 
-.combo-ruta {
+.combo-ruta-crear {
     width: 100%;
     padding: 10px 12px;
     margin-bottom: 12px;
     border-radius: 8px;
     border: 1px solid #d8d8d8;
     font-size: 14px;
-    background: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
     outline: none;
 }
 
-    .combo-ruta:focus {
+    .combo-ruta-crear:focus {
         border-color: #2d7ff9;
     }
 
-.campo {
+.campo-crear {
     margin-top: 18px;
 }
 
-    .campo label {
+    .campo-crear label {
         display: block;
         margin-bottom: 6px;
         font-weight: 600;
         font-size: 14px;
     }
 
-.input {
+.input-crear {
     width: 100%;
     padding: 10px 12px;
     border-radius: 8px;
@@ -108,51 +108,11 @@
     font-size: 14px;
 }
 
-    .input:focus {
+    .input-crear:focus {
         border-color: #2d7ff9;
     }
 
-.lista-archivos {
-    margin-top: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.archivo-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 14px;
-    background: #f6f8fb;
-    border-radius: 8px;
-    border: 1px solid #e8e8e8;
-}
-
-    .archivo-item span {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-.btn-eliminar {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 50%;
-    background: #ef5350;
-    color: white;
-    cursor: pointer;
-    transition: .2s;
-}
-
-    .btn-eliminar:hover {
-        background: #d32f2f;
-    }
-
-.modal-footer {
+.modal-crear-footer {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -160,119 +120,60 @@
     border-top: 1px solid #ececec;
 }
 
-.btn-cancelar,
-.btn-guardar {
+.btn-cancelar-crear,
+.btn-guardar-crear {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     padding: 10px 18px;
     border-radius: 8px;
-    border: none;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
+    border: none;
     transition: background .2s;
 }
 
-.btn-cancelar {
+.btn-cancelar-crear {
     background: #ececec;
     color: #333;
 }
 
-    .btn-cancelar:hover {
+    .btn-cancelar-crear:hover {
         background: #dcdcdc;
     }
 
-.btn-guardar {
+.btn-guardar-crear {
     background: #2d7ff9;
     color: white;
 }
 
-    .btn-guardar:hover:not(:disabled) {
+    .btn-guardar-crear:hover:not(:disabled) {
         background: #1f69d5;
     }
 
-    .btn-guardar:disabled {
+    .btn-guardar-crear:disabled {
         background: #9fbdf5;
         cursor: not-allowed;
     }
 
-.loading {
+.loading-crear {
     text-align: center;
     padding: 40px;
     color: #777;
 }
 
-.mensaje-ok-flotante {
-    background: #e7f7eb;
-    color: #218838;
-    padding: 12px;
-    border-top: 1px solid #c3e6cb;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Scroll */
-.modal-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-    background: #c9c9c9;
-    border-radius: 20px;
-}
-
-.modal-body::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-/* DARK MODE */
-[data-theme="dark"] .modal-subir {
-    background: #202225;
-    color: white;
-}
-
-[data-theme="dark"] .modal-header,
-[data-theme="dark"] .modal-footer {
-    border-color: #3d3d3d;
-}
-
-[data-theme="dark"] .combo-ruta,
-[data-theme="dark"] .input {
-    background: #2d2f34;
-    color: white;
-    border-color: #555;
-}
-
-[data-theme="dark"] .archivo-item {
-    background: #2b2d31;
-    border-color: #444;
-}
-
-[data-theme="dark"] .btn-cancelar {
-    background: #3a3d42;
-    color: white;
-}
-
-    [data-theme="dark"] .btn-cancelar:hover {
-        background: #4a4d52;
-    }
-
-[data-theme="dark"] .loading {
-    color: #c0c0c0;
-}
-
-.spinner {
+.spinner-crear {
     width: 16px;
     height: 16px;
     border: 2px solid rgba(255,255,255,.35);
     border-top: 2px solid white;
     border-radius: 50%;
-    animation: girar .7s linear infinite;
+    animation: girarCrear .7s linear infinite;
 }
 
-@keyframes girar {
+@keyframes girarCrear {
     from {
         transform: rotate(0);
     }
@@ -280,4 +181,55 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+.mensaje-ok-crear {
+    margin-top: 20px;
+    background: #e7f7eb;
+    color: #218838;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Scroll bonito */
+.modal-crear-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-crear-body::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 20px;
+}
+
+/* DARK MODE */
+[data-theme="dark"] .modal-crear {
+    background: #202225;
+    color: white;
+}
+
+[data-theme="dark"] .modal-crear-header,
+[data-theme="dark"] .modal-crear-footer {
+    border-color: #3d3d3d;
+}
+
+[data-theme="dark"] .combo-ruta-crear,
+[data-theme="dark"] .input-crear {
+    background: #2d2f34;
+    color: white;
+    border-color: #555;
+}
+
+[data-theme="dark"] .btn-cancelar-crear {
+    background: #3a3d42;
+    color: white;
+}
+
+    [data-theme="dark"] .btn-cancelar-crear:hover {
+        background: #4a4d52;
+    }
+
+[data-theme="dark"] .loading-crear {
+    color: #c0c0c0;
 }

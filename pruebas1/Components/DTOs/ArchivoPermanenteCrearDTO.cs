@@ -12,6 +12,6 @@ namespace pruebas1.Components.DTOs
     {
         public string IdCarpetaPadre { get; set; } = null!;
         public string? NombreCarpeta { get; set; }
-        public IList<IFormFile> Archivos { get; set; } = new List<IFormFile>();
+        public IList<IBrowserFile> Archivos { get; set; } = new List<IBrowserFile>();
     }
 }

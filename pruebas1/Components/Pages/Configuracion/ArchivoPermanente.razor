@@ -9,12 +9,10 @@
 @inject IJSRuntime JS
 
 <div class="archivo-header">
-
     <div class="header-info">
         <h2>Archivo Permanente</h2>
         <p>Consulta y administración documental.</p>
     </div>
-
 </div>
 
 <div class="acciones">
@@ -22,6 +20,11 @@
     <button class="btn-subir"
             @onclick="AbrirModalSubir">
         📤 Subir archivos
+    </button>
+
+    <button class="btn-subir" 
+            @onclick="AbrirModalCrearCarpeta">
+        📁 Nueva carpeta
     </button>
 
     <button class="btn-sincronizar"
@@ -50,6 +53,10 @@
                    OnClose="CerrarModalSubir"
                    OnGuardado="RecargarArbol" />
 
+<ModalCrearCarpeta Visible="@MostrarModalCrearCarpeta"
+                   OnClose="CerrarModalCrearCarpeta"
+                   OnCarpetaCreada="RecargarArbol" />
+
 <ModalArchivoPermanente Visible="@MostrarModalOpciones"
                         Nodo="@NodoSeleccionado"
                         OnClose="CerrarModalOpciones"
@@ -58,7 +65,6 @@
 <div class="archivo-layout">
 
     <!-- Árbol -->
-
     <aside class="tree-panel">
 
         @if (cargando)
@@ -78,33 +84,28 @@
             @foreach (var nodo in Arbol)
             {
                 <ArchivoPermanenteNodo Nodo="nodo"
-                                       OnArchivoSeleccionado="SeleccionarDocumento"
-                                       OnAbrirOpciones="AbrirOpcionesNodo" />
+                                     OnArchivoSeleccionado="SeleccionarDocumento"
+                                     OnAbrirOpciones="AbrirOpcionesNodo" />
             }
         }
 
     </aside>
 
     <!-- Visor -->
-
     <section class="viewer-panel">
 
         @if (string.IsNullOrWhiteSpace(documentUrl))
         {
             <div class="empty-state">
-
                 <div class="empty-icon">
                     📄
                 </div>
-
                 <h3>
                     Ningún documento seleccionado
                 </h3>
-
                 <p>
                     Selecciona un documento desde el árbol.
                 </p>
-
             </div>
         }
         else
@@ -137,11 +138,17 @@
         }
     }
 
+    private void SeleccionarCarpetaPadre(ArchivoPermanenteNodoDTO nodo)
+    {
+        idCarpetaPadreSeleccionada = nodo.IdSharePoint; // Guardamos el ID de SharePoint de la carpeta seleccionada
+    }
+
     private bool cargando;
     private bool MostrarModalSubir;
-
+    private bool MostrarModalCrearCarpeta; 
     private bool MostrarModalOpciones;
 
+    private string idCarpetaPadreSeleccionada = "root"; 
     private ArchivoPermanenteNodoDTO? NodoSeleccionado;
 
     protected override async Task OnInitializedAsync()
@@ -172,9 +179,20 @@
         return Task.CompletedTask;
     }
 
+    private void AbrirModalCrearCarpeta()
+    {
+        MostrarModalCrearCarpeta = true;
+    }
+
+    private void CerrarModalCrearCarpeta()
+    {
+        MostrarModalCrearCarpeta = false;
+    }
+
     private async Task RecargarArbol()
     {
         MostrarModalSubir = false;
+        MostrarModalCrearCarpeta = false;
 
         await CargarArbol();
     }

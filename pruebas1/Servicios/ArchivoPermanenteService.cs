@@ -1,6 +1,7 @@
 ﻿using pruebas1.Components.DTOs;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Diagnostics;
 
 namespace pruebas1.Servicios
 {
@@ -65,40 +66,51 @@ namespace pruebas1.Servicios
 
         #region Archivos
 
-        public async Task<bool> SubirArchivo(ArchivoPermanenteCrearFrontDTO dto)
+        public async Task SubirArchivoAsync(ArchivoPermanenteCrearDTO dto)
         {
-            using var form = new MultipartFormDataContent();
+            using var content = new MultipartFormDataContent();
 
-            form.Add(
-                new StringContent(dto.IdCarpetaPadre),
-                "idCarpetaPadre");
+            // --- DEBUG EN EL FRONT-END ---
+            Debug.WriteLine("=== DEBUG SUBIDA DE ARCHIVOS ===");
+            Debug.WriteLine($"IdCarpetaPadre enviado: '{dto.IdCarpetaPadre}'");
+            Debug.WriteLine($"NombreCarpeta enviado: '{dto.NombreCarpeta}'");
 
-            if (!string.IsNullOrWhiteSpace(dto.NombreCarpeta))
+            content.Add(new StringContent(dto.IdCarpetaPadre ?? string.Empty), nameof(dto.IdCarpetaPadre));
+
+            if (!string.IsNullOrEmpty(dto.NombreCarpeta))
             {
-                form.Add(
-                    new StringContent(dto.NombreCarpeta),
-                    "nombreCarpeta");
+                content.Add(new StringContent(dto.NombreCarpeta), nameof(dto.NombreCarpeta));
             }
 
-            foreach (var archivo in dto.Archivos)
+            if (dto.Archivos != null)
             {
-                var contenido = new StreamContent(
-                    archivo.OpenReadStream(100 * 1024 * 1024));
+                foreach (var archivo in dto.Archivos)
+                {
+                    Debug.WriteLine($"Archivo adjunto: {archivo.Name} ({archivo.Size} bytes, tipo: {archivo.ContentType})");
 
-                contenido.Headers.ContentType =
-                    new MediaTypeHeaderValue(archivo.ContentType);
+                    var stream = archivo.OpenReadStream();
+                    var streamContent = new StreamContent(stream);
 
-                form.Add(
-                    contenido,
-                    "archivos",
-                    archivo.Name);
+                    streamContent.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
+                    content.Add(streamContent, "Archivos", archivo.Name);
+                }
+            }
+            else
+            {
+                Debug.WriteLine("⚠️ Alerta: dto.Archivos viene nulo o vacío.");
             }
 
-            var response = await _http.PostAsync(
-                "/archivoPermanente/archivo-permanente/subir",
-                form);
+            Debug.WriteLine($"URL de destino: {_http.BaseAddress}archivoPermanente/archivo-permanente/subir");
+            Debug.WriteLine("================================");
+            // -----------------------------
 
-            return response.IsSuccessStatusCode;
+            var response = await _http.PostAsync("/archivoPermanente/archivo-permanente/subir", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error del servidor: {error}");
+            }
         }
 
         public async Task<Stream?> DescargarArchivo(int idArchivo)

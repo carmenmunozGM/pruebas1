@@ -9,5 +9,6 @@ namespace pruebas1.Components.DTOs
     public class CrearCarpetaDTO
     {
         public string Nombre { get; set; } = null!;
+        public string? IdCarpetaPadre { get; set; }
     }
 }

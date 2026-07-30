@@ -2,28 +2,18 @@
 @using pruebas1.Components.DTOs
 @using pruebas1.Servicios
 @inject IJSRuntime JS
-
 @inject ArchivoPermanenteService ArchivoService
 
 @if (Visible)
 {
     <div class="modal-subir-overlay">
-
         <div class="modal-subir">
-
             <div class="modal-header">
-
                 <h3>📤 Subir archivos</h3>
-
-                <button class="btn-cerrar"
-                        @onclick="Cerrar">
-                    ✕
-                </button>
-
+                <button class="btn-cerrar" @onclick="Cerrar">✕</button>
             </div>
 
             <div class="modal-body">
-
                 @if (Cargando)
                 {
                     <div class="loading">
@@ -40,7 +30,6 @@
 
                         <select class="combo-ruta"
                                 @onchange="(e) => SeleccionarNivel(indice, e.Value?.ToString())">
-
                             <option value="">
                                 Seleccione...
                             </option>
@@ -48,11 +37,10 @@
                             @foreach (var item in Niveles[i])
                             {
                                 <option value="@item.Id"
-                                        selected="@(Seleccionados.Count > indice &&
-                                                                                                                                    Seleccionados[indice]?.Id == item.Id)">
-                    @($"{item.Codigo} - {item.Nombre}")
-                </option>
-                                }
+                                        selected="@(Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id)">
+                                    @($"{item.Codigo} - {item.Nombre}")
+                                </option>
+                            }
 
                             @if (MostrarCrearCarpeta && indice == Niveles.Count - 1)
                             {
@@ -60,76 +48,58 @@
                                     ➕ Crear nueva carpeta...
                                 </option>
                             }
-
                         </select>
                     }
 
                     @if (CreandoNuevaCarpeta)
                     {
                         <div class="campo">
-
-                            <label>
-                                Nombre de la carpeta
-                            </label>
-
+                            <label>Nombre de la carpeta</label>
                             <input class="input"
                                    @bind="NombreCarpeta"
-                                   @bind:event="oninput" />
-
+                                   @bind:event="oninput"
+                                   placeholder="Escribe el nombre..." />
                         </div>
                     }
 
                     @if (PuedeMostrarSelectorArchivos)
                     {
                         <div class="campo">
-
                             <label>
-                                @(CreandoNuevaCarpeta
-                                                    ? "Archivos (opcional)"
-                                                    : "Archivos")
-                </label>
-
-                            <InputFile multiple
-                                       OnChange="ArchivosSeleccionados" />
-
+                                @(CreandoNuevaCarpeta ? "Archivos (opcional)" : "Archivos")
+                            </label>
+                            <InputFile multiple OnChange="ArchivosSeleccionados" class="input-file-oculto" />
+                            <div class="input-file-fake">
+                                📂 Seleccionar archivos...
+                            </div>
                         </div>
-                        }
+                    }
 
                     @if (Archivos.Any())
                     {
                         <div class="lista-archivos">
-
                             @foreach (var archivo in Archivos)
                             {
                                 <div class="archivo-item">
-
                                     <span>📄 @archivo.Name</span>
-
-                                    <button class="btn-eliminar"
-                                            @onclick="() => QuitarArchivo(archivo)">
+                                    <button class="btn-eliminar" @onclick="() => QuitarArchivo(archivo)">
                                         ✕
                                     </button>
-
                                 </div>
                             }
-
                         </div>
                     }
                 }
-
             </div>
 
             <div class="modal-footer">
-
-                <button class="btn-cancelar"
-                        @onclick="Cerrar">
+                <button class="btn-cancelar" @onclick="Cerrar">
                     Cancelar
                 </button>
 
                 <button class="btn-guardar"
                         disabled="@(!PuedeSubir || Subiendo)"
                         @onclick="Subir">
-
                     @if (Subiendo)
                     {
                         <span class="spinner"></span>
@@ -139,20 +109,16 @@
                     {
                         <span>📤 Subir</span>
                     }
-
-                    @if (GuardadoCorrectamente)
-                    {
-                        <div class="mensaje-ok">
-                            ✔ Archivos cargados correctamente
-                        </div>
-                    }
-
                 </button>
-
             </div>
 
+            @if (GuardadoCorrectamente)
+            {
+                <div class="mensaje-ok-flotante">
+                    ✔ Archivos cargados correctamente
+                </div>
+            }
         </div>
-
     </div>
 }
 
@@ -168,32 +134,19 @@
     public EventCallback OnGuardado { get; set; }
 
     private bool Cargando;
-
     private List<UbicacionDTO> Ubicaciones = new();
-
-    // Cada posición representa un ComboBox
     private List<List<UbicacionDTO>> Niveles = new();
-
-    // Lo seleccionado en cada ComboBox
     private List<UbicacionDTO?> Seleccionados = new();
-
     private List<IBrowserFile> Archivos = new();
-
     private string NombreCarpeta = "";
-
     private UbicacionDTO? CarpetaSeleccionada;
-
     private bool CreandoNuevaCarpeta;
-
     private bool MostrarCrearCarpeta;
-
     private bool Subiendo;
-
     private bool GuardadoCorrectamente;
 
     private bool PuedeMostrarSelectorArchivos =>
-        CreandoNuevaCarpeta ||
-        (CarpetaSeleccionada?.PermiteArchivos ?? false);
+        CreandoNuevaCarpeta || (CarpetaSeleccionada?.PermiteArchivos ?? false);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -204,14 +157,11 @@
             return;
 
         Cargando = true;
-
         Ubicaciones = await ArchivoService.ObtenerUbicaciones();
 
         Niveles.Clear();
         Seleccionados.Clear();
-
         Niveles.Add(Ubicaciones);
-
         Cargando = false;
     }
 
@@ -232,21 +182,15 @@
             return;
         }
 
-        // Opción especial: Crear nueva carpeta
         if (valor == "-1")
         {
             CreandoNuevaCarpeta = true;
-
             CarpetaSeleccionada = Seleccionados.LastOrDefault();
-
             return;
         }
 
-        var seleccionado = Niveles[nivel]
-            .First(x => x.Id == int.Parse(valor));
-
+        var seleccionado = Niveles[nivel].First(x => x.Id == int.Parse(valor));
         Seleccionados.Add(seleccionado);
-
         CarpetaSeleccionada = seleccionado;
 
         if (seleccionado.Hijos.Any())
@@ -254,8 +198,6 @@
             Niveles.Add(seleccionado.Hijos);
         }
 
-        // Si esta carpeta es dinámica, mostramos la opción
-        // "Crear nueva carpeta..." en el siguiente combo.
         if (seleccionado.EsDinamica)
         {
             MostrarCrearCarpeta = true;
@@ -265,14 +207,12 @@
     private void ArchivosSeleccionados(InputFileChangeEventArgs e)
     {
         Archivos = e.GetMultipleFiles().ToList();
-
         StateHasChanged();
     }
 
     private void QuitarArchivo(IBrowserFile archivo)
     {
         Archivos.Remove(archivo);
-
         StateHasChanged();
     }
 
@@ -283,11 +223,9 @@
             if (CarpetaSeleccionada == null)
                 return false;
 
-            // Crear carpeta nueva
             if (CreandoNuevaCarpeta)
                 return !string.IsNullOrWhiteSpace(NombreCarpeta);
 
-            // Carpeta existente
             if (CarpetaSeleccionada.PermiteArchivos)
                 return Archivos.Any();
 
@@ -304,32 +242,25 @@
         {
             Subiendo = true;
 
-            var dto = new ArchivoPermanenteCrearFrontDTO
+            var dto = new ArchivoPermanenteCrearDTO
             {
                 IdCarpetaPadre = CarpetaSeleccionada.IdSharePoint!,
                 NombreCarpeta = NombreCarpeta,
                 Archivos = Archivos
             };
 
-            bool ok = await ArchivoService.SubirArchivo(dto);
-
-            if (!ok)
-                return;
+            await ArchivoService.SubirArchivoAsync(dto);
 
             GuardadoCorrectamente = true;
-
             StateHasChanged();
 
-            await Task.Delay(900);
-
+            await Task.Delay(1200);
             await Limpiar();
-
             await OnGuardado.InvokeAsync();
         }
         catch (IOException ex)
         {
-            await JS.InvokeVoidAsync("alert",
-                $"No fue posible subir el archivo.\n\n{ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"No fue posible subir el archivo.\n\n{ex.Message}");
         }
         catch (Exception ex)
         {
@@ -344,30 +275,20 @@
     private async Task Cerrar()
     {
         await Limpiar();
-
         await OnClose.InvokeAsync();
     }
 
     private Task Limpiar()
     {
         NombreCarpeta = "";
-
         Archivos.Clear();
-
         CarpetaSeleccionada = null;
-
         CreandoNuevaCarpeta = false;
-
         MostrarCrearCarpeta = false;
-
         GuardadoCorrectamente = false;
-
         Niveles.Clear();
-
         Seleccionados.Clear();
-
         Niveles.Add(Ubicaciones);
-
         return Task.CompletedTask;
     }
 }
