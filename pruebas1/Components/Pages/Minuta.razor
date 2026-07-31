@@ -651,12 +651,18 @@
 
             if (response.IsSuccessStatusCode)
             {
-                await JS.InvokeVoidAsync("Swal.fire", new
-                {
-                    icon = "success",
-                    title = "Minuta guardada con éxito 🎉",
-                    confirmButtonText = "OK"
-                });
+                await JS.InvokeVoidAsync("eval", @"
+        Swal.fire({
+            icon: 'success',
+            title: 'Minuta guardada con éxito 🎉',
+            confirmButtonText: 'OK',
+            heightAuto: false,
+            didOpen: () => {
+                const container = document.querySelector('.swal2-container');
+                if (container) container.style.zIndex = '99999';
+            }
+        });
+    ");
 
                 Cerrar();
             }
