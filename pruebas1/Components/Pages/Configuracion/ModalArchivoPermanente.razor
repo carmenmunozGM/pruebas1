@@ -32,25 +32,20 @@
                         @(Nodo.EsCarpeta ? "Carpeta" : "Archivo")
                     </div>
 
-                    @if (!Nodo.EsCarpeta)
+                    @if (!Nodo.EsCarpeta && Permisos?.Descargar == true)
                     {
-                        <button class="accion descargar"
-                                @onclick="Descargar">
-
+                        <button class="accion descargar" @onclick="Descargar">
                             ⬇ Descargar
-
                         </button>
                     }
 
-                <button class="accion eliminar"
-                        @onclick="() => ConfirmandoEliminar = true">
-
-                    🗑
-                    @(Nodo.EsCarpeta
-                                    ? "Eliminar carpeta"
-                                    : "Eliminar archivo")
-
-            </button>
+                    @if (Permisos?.Cargar == true)
+                    {
+                        <button class="accion eliminar" @onclick="() => ConfirmandoEliminar = true">
+                            🗑
+                            @(Nodo.EsCarpeta ? "Eliminar carpeta" : "Eliminar archivo")
+                        </button>
+                    }
                         }
                 else
                 {
@@ -128,6 +123,9 @@
 {
     [Parameter]
     public bool Visible { get; set; }
+
+    [Parameter]
+    public PermisosArchivoDTO? Permisos { get; set; }
 
     [Parameter]
     public ArchivoPermanenteNodoDTO? Nodo { get; set; }

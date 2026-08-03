@@ -1,7 +1,7 @@
 ﻿using pruebas1.Components.DTOs;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Diagnostics;
 
 namespace pruebas1.Servicios
 {
@@ -154,6 +154,42 @@ namespace pruebas1.Servicios
                 "/archivoPermanente/archivo-permanente/ubicaciones")
                 ?? new List<UbicacionDTO>();
         }
+        #endregion
+
+        #region Permisos
+
+        /// <summary>
+        /// Obtiene los permisos del usuario logueado en base a su token.
+        /// </summary>
+        public async Task<PermisosArchivoDTO> ObtenerMisPermisos()
+        {
+            return await _http.GetFromJsonAsync<PermisosArchivoDTO>(
+                "/permisosAP/mis-permisos")
+                ?? new PermisosArchivoDTO { Cargar = false, Visualizar = false, Descargar = false };
+        }
+
+        /// <summary>
+        /// Inserta o actualiza los permisos de un puesto específico.
+        /// </summary>
+        public async Task<bool> UpsertPermisos(UpsertPermisosDTO dto)
+        {
+            var response = await _http.PutAsJsonAsync(
+                "/permisosAP/upsert",
+                dto);
+
+            return response.IsSuccessStatusCode;
+        }
+
+        /// <summary>
+        /// Obtiene la lista general de todos los permisos configurados por puesto.
+        /// </summary>
+        public async Task<List<PermisosGeneralesDTO>> ObtenerTodosLosPermisos()
+        {
+            return await _http.GetFromJsonAsync<List<PermisosGeneralesDTO>>(
+                "/permisosAP/todos")
+                ?? new List<PermisosGeneralesDTO>();
+        }
+
         #endregion
     }
 }

@@ -17,15 +17,16 @@
 
 <div class="acciones">
 
-    <button class="btn-subir"
-            @onclick="AbrirModalSubir">
-        📤 Subir archivos
-    </button>
+    @if (permisosAP?.Cargar == true)
+    {
+        <button class="btn-subir" @onclick="AbrirModalSubir">
+            📤 Subir archivos
+        </button>
 
-    <button class="btn-subir" 
-            @onclick="AbrirModalCrearCarpeta">
-        📁 Nueva carpeta
-    </button>
+        <button class="btn-subir" @onclick="AbrirModalCrearCarpeta">
+            📁 Nueva carpeta
+        </button>
+    }
 
     <button class="btn-sincronizar"
             @onclick="ActualizarArchivoPermanente"
@@ -59,6 +60,7 @@
 
 <ModalArchivoPermanente Visible="@MostrarModalOpciones"
                         Nodo="@NodoSeleccionado"
+                        Permisos="@permisosAP"
                         OnClose="CerrarModalOpciones"
                         OnEliminado="RecargarArbol" />
 
@@ -91,31 +93,24 @@
 
     </aside>
 
-    <!-- Visor -->
-    <section class="viewer-panel">
-
-        @if (string.IsNullOrWhiteSpace(documentUrl))
-        {
-            <div class="empty-state">
-                <div class="empty-icon">
-                    📄
+    @if (permisosAP?.Visualizar == true)
+    {
+        <!-- Visor -->
+        <section class="viewer-panel">
+            @if (string.IsNullOrWhiteSpace(documentUrl))
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h3>Ningún documento seleccionado</h3>
+                    <p>Selecciona un documento desde el árbol.</p>
                 </div>
-                <h3>
-                    Ningún documento seleccionado
-                </h3>
-                <p>
-                    Selecciona un documento desde el árbol.
-                </p>
-            </div>
-        }
-        else
-        {
-            <iframe class="pdf-viewer"
-                    src="@documentUrl">
-            </iframe>
-        }
-
-    </section>
+            }
+            else
+            {
+                <iframe class="pdf-viewer" src="@documentUrl"></iframe>
+            }
+        </section>
+    }
 
 </div>
 
@@ -151,11 +146,14 @@
     private string idCarpetaPadreSeleccionada = "root"; 
     private ArchivoPermanenteNodoDTO? NodoSeleccionado;
 
+    private PermisosArchivoDTO? permisosAP;
+
     protected override async Task OnInitializedAsync()
     {
+        // Obtener permisos antes de cargar el árbol
+        permisosAP = await ArchivoService.ObtenerMisPermisos();
         await CargarArbol();
     }
-
     private async Task CargarArbol()
     {
         cargando = true;

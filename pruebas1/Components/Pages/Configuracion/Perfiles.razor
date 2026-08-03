@@ -3,13 +3,14 @@
 @using static System.Net.WebRequestMethods
 @inject AreasService AreasService
 @inject PerfilesService PerfilesService
+@inject ArchivoPermanenteService ArchivoPermanenteService
 @inject HttpClient Http
 @inject HorariosService HorariosService
 
 <div class="perfiles-section">
     <div class="section-header">
-        <h2>Perfiles</h2>
-        <p>Gestiona los permisos y roles de los empleados</p>
+        <h2>Perfiles y Permisos</h2>
+        <p>Gestiona los roles de los empleados y accesos al Archivo Permanente</p>
     </div>
 
     <div class="search-section">
@@ -21,52 +22,96 @@
             <input type="text"
                    @bind="searchName"
                    @bind:event="oninput"
-                   placeholder="Buscar por nombre..." />
+                   placeholder="Buscar por nombre o puesto..." />
         </div>
-        <select class="area-filter" @bind="selectedArea">
-            <option value="">Todas las áreas</option>
-            @foreach (var area in areaList)
-            {
-                <option value="@area.Area">@area.Area</option>
-            }
-        </select>
+
+        @if (!isModoArchivo)
+        {
+            <select class="area-filter" @bind="selectedArea">
+                <option value="">Todas las áreas</option>
+                @foreach (var area in areaList)
+                {
+                    <option value="@area.Area">@area.Area</option>
+                }
+            </select>
+        }
+
+        <button class="save-button" style="margin-left: 10px; background-color: @(isModoArchivo ? "#2da549" : "#4543ec");"
+                @onclick="ToggleModo">
+            <span>@(isModoArchivo ? "Perfil por persona" : "Permisos Archivo Permanente")</span>
+        </button>
     </div>
 
     <div class="perfiles-container">
-        <table class="perfiles-table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Puesto</th>
-                    <th>Tipo de Usuario</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var (employee, index) in filteredEmployees.Select((emp, idx) => (emp, idx)))
-                {
+        @if (!isModoArchivo)
+        {
+            <!-- TABLA DE EMPLEADOS (PERFILES) -->
+            <table class="perfiles-table">
+                <thead>
                     <tr>
-                        <td>
-                            <div class="employee-info">
-                                <div class="employee-avatar" style="background: @GetAvatarColor(index)">
-                                    @GetInitials(employee.Nombre)
-                                </div>
-                                <span>@employee.Nombre</span>
-                            </div>
-                        </td>
-                        <td>@employee.Puesto</td>
-                        <td>
-                            <select class="user-type-select" @bind="employee.PerfilId">
-                                @foreach (var perfil in perfilesList)
-                                {
-                                    <option value="@perfil.Id">@perfil.Descripcion</option>
-                                }
-                            </select>
-                           
-                        </td>
+                        <th>Nombre</th>
+                        <th>Puesto</th>
+                        <th>Tipo de Usuario</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var (employee, index) in filteredEmployees.Select((emp, idx) => (emp, idx)))
+                    {
+                        <tr>
+                            <td>
+                                <div class="employee-info">
+                                    <div class="employee-avatar" style="background: @GetAvatarColor(index)">
+                                        @GetInitials(employee.Nombre)
+                                    </div>
+                                    <span>@employee.Nombre</span>
+                                </div>
+                            </td>
+                            <td>@employee.Puesto</td>
+                            <td>
+                                <select class="user-type-select" @bind="employee.PerfilId">
+                                    @foreach (var perfil in perfilesList)
+                                    {
+                                        <option value="@perfil.Id">@perfil.Descripcion</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <!-- TABLA DE PUESTOS (ARCHIVO PERMANENTE) -->
+            <table class="perfiles-table">
+                <thead>
+                    <tr>
+                        <th>Puesto</th>
+                        <th style="text-align: center;">Visualizar</th>
+                        <th style="text-align: center;">Cargar</th>
+                        <th style="text-align: center;">Descargar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var puesto in filteredPuestos)
+                    {
+                        <tr>
+                            <td style="font-weight: 500;">@puesto.NombrePuesto</td>
+                            <td style="text-align: center;">
+                                <input type="checkbox" @bind="puesto.Visualizar" style="transform: scale(1.5);" />
+                            </td>
+                            <td style="text-align: center;">
+                                <input type="checkbox" @bind="puesto.Cargar" style="transform: scale(1.5);" />
+                            </td>
+                            <td style="text-align: center;">
+                                <input type="checkbox" @bind="puesto.Descargar" style="transform: scale(1.5);" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
         <div class="save-section">
             <button class="save-button" @onclick="HandleSave">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,10 +119,11 @@
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
                     <polyline points="7 3 7 8 15 8"></polyline>
                 </svg>
-                <span>Guardar Cambios</span>
+                <span>Guardar Cambios @(isModoArchivo ? "de Archivo" : "de Perfiles")</span>
             </button>
         </div>
     </div>
+
     @if (!string.IsNullOrEmpty(message))
     {
         <div class="message-toast">
@@ -89,25 +135,34 @@
 @code {
     string? selectedArea;
     List<AreaDTO> areaList = new();
-
     List<PerfilesDTO> perfilesList = new();
 
-    List<EmpleadoPerfilDTO> empleadosList = new();
+    // Listas separadas para cada vista
     List<EmployeeInfo> employees = new();
+    List<PuestoInfo> puestos = new();
 
     private string message = "";
     private string searchName = "";
-
     string? selectedPerfil;
 
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
 
+    bool isModoArchivo = false;
+
     protected override async Task OnInitializedAsync()
     {
         areaList = await AreasService.GetAreas();
         perfilesList = await PerfilesService.GetPerfiles();
-        await CargarEmpleados();
+        await CargarDatos();
+    }
+
+    private void ToggleModo()
+    {
+        isModoArchivo = !isModoArchivo;
+        // Limpiamos los filtros al cambiar de vista
+        searchName = "";
+        selectedArea = "";
     }
 
     private async Task<bool> ValidarHora()
@@ -118,25 +173,22 @@
         {
             alertaHora = resultado;
             mostrarAlerta = true;
-
             await InvokeAsync(StateHasChanged);
-
             return false;
         }
 
         return true;
     }
 
-    private async Task CargarEmpleados()
+    private async Task CargarDatos()
     {
+        // 1. Cargar Empleados
         var empleadosDto = await PerfilesService.GetEmpleadosPerfiles();
-
         employees = empleadosDto
             .OrderBy(e => e.Clave)
             .Select(e =>
             {
                 var perfil = perfilesList.FirstOrDefault(p => p.Descripcion == e.Perfil);
-
                 return new EmployeeInfo
                 {
                     Clave = e.Clave,
@@ -149,8 +201,27 @@
                 };
             })
             .ToList();
+
+        // 2. Cargar Puestos (Permisos de Archivo Permanente)
+        var permisosAPGlobales = await ArchivoPermanenteService.ObtenerTodosLosPermisos();
+
+        if (permisosAPGlobales != null)
+        {
+            puestos = permisosAPGlobales.Select(p => new PuestoInfo
+            {
+                ClavePuesto = p.ClavePuesto,
+                NombrePuesto = p.Puesto, // Ajusta esta propiedad si en tu DTO se llama diferente (ej. Descripcion, Nombre)
+                Visualizar = p.Visualizar,
+                Cargar = p.Cargar,
+                Descargar = p.Descargar,
+                VisualizarOriginal = p.Visualizar,
+                CargarOriginal = p.Cargar,
+                DescargarOriginal = p.Descargar
+            }).OrderBy(p => p.NombrePuesto).ToList();
+        }
     }
 
+    // CLASES DE ESTADO
     private class EmployeeInfo
     {
         public int Clave { get; set; }
@@ -158,23 +229,51 @@
         public string Area { get; set; } = string.Empty;
         public string Puesto { get; set; } = string.Empty;
         public string Perfil { get; set; } = string.Empty;
-
         public int PerfilId { get; set; }
         public int PerfilOriginalId { get; set; }
 
         public bool Modificado => PerfilId != PerfilOriginalId;
     };
 
-    private string[] colors = new string[] 
-    { 
+    private class PuestoInfo
+    {
+        public string ClavePuesto { get; set; } = string.Empty; // <-- Cambiar de int a string
+        public string NombrePuesto { get; set; } = string.Empty;
+
+        public bool Visualizar { get; set; }
+        public bool Cargar { get; set; }
+        public bool Descargar { get; set; }
+
+        public bool VisualizarOriginal { get; set; }
+        public bool CargarOriginal { get; set; }
+        public bool DescargarOriginal { get; set; }
+
+        public bool ModificadoAP => Visualizar != VisualizarOriginal ||
+                                    Cargar != CargarOriginal ||
+                                    Descargar != DescargarOriginal;
+    }
+
+    // FILTROS
+    private List<EmployeeInfo> filteredEmployees => employees
+        .Where(e => string.IsNullOrWhiteSpace(searchName) ||
+                    e.Nombre.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+        .Where(e => string.IsNullOrEmpty(selectedArea) ||
+                    e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    private List<PuestoInfo> filteredPuestos => puestos
+        .Where(p => string.IsNullOrWhiteSpace(searchName) ||
+                    p.NombrePuesto.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    // UTILIDADES VISUALES
+    private string[] colors = new string[]
+    {
         "#dd0203", "#f78701", "#f7e801",
         "#2da549", "#4543ec", "#85119a"
     };
 
-    private string GetAvatarColor(int index)
-    {
-        return colors[index % colors.Length];
-    }
+    private string GetAvatarColor(int index) => colors[index % colors.Length];
 
     private string GetInitials(string name)
     {
@@ -182,63 +281,97 @@
         return string.Join("", parts.Select(p => p.Substring(0, 1).ToUpper()));
     }
 
-    private List<EmployeeInfo> filteredEmployees
-    {
-        get
-        {
-            return employees
-                .Where(e =>
-                    string.IsNullOrWhiteSpace(searchName) ||
-                    e.Nombre.Contains(searchName, StringComparison.OrdinalIgnoreCase))
-                .Where(e =>
-                    string.IsNullOrEmpty(selectedArea) ||
-                    e.Area.Equals(selectedArea, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-    }
-
+    // GUARDADO
     private async Task HandleSave()
     {
         if (!await ValidarHora())
             return;
 
-        var cambios = employees
-            .Where(e => e.Modificado)
-            .Select(e => new EditarPerfilDTO
+        bool operacionExitosa = false;
+
+        if (!isModoArchivo)
+        {
+            // Guardar Perfiles (Empleados)
+            var cambiosPerfiles = employees
+                .Where(e => e.Modificado)
+                .Select(e => new EditarPerfilDTO
+                {
+                    ClavePersonal = e.Clave,
+                    IdPerfil = e.PerfilId
+                })
+                .ToList();
+
+            if (!cambiosPerfiles.Any())
             {
-                ClavePersonal = e.Clave,
-                IdPerfil = e.PerfilId
-            })
-            .ToList();
+                await MostrarMensajeTemporal("No hay cambios de perfiles");
+                return;
+            }
 
-        if (!cambios.Any())
-        {
-            message = "No hay cambios";
-            await InvokeAsync(StateHasChanged);
+            operacionExitosa = await PerfilesService.GuardarPerfiles(cambiosPerfiles);
 
-            await Task.Delay(2000);
-
-            message = "";
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        var ok = await PerfilesService.GuardarPerfiles(cambios);
-
-        if (ok)
-        {
-            foreach (var e in employees)
-                e.PerfilOriginalId = e.PerfilId;
-
-            message = "Cambios guardados correctamente";
+            if (operacionExitosa)
+            {
+                foreach (var e in employees.Where(e => e.Modificado))
+                    e.PerfilOriginalId = e.PerfilId;
+            }
         }
         else
-            message = "Error al guardar";
+        {
+            // Guardar Archivo Permanente (Puestos)
+            var cambiosAP = puestos
+                .Where(p => p.ModificadoAP)
+                .ToList();
 
+            if (!cambiosAP.Any())
+            {
+                await MostrarMensajeTemporal("No hay cambios en los permisos de archivo");
+                return;
+            }
+
+            bool todoExitoso = true;
+
+            foreach (var p in cambiosAP)
+            {
+                var dto = new UpsertPermisosDTO
+                {
+                    ClavePuesto = p.ClavePuesto,
+                    Cargar = p.Cargar,
+                    Visualizar = p.Visualizar,
+                    Descargar = p.Descargar
+                };
+
+                var resultadoItem = await ArchivoPermanenteService.UpsertPermisos(dto);
+                if (!resultadoItem)
+                {
+                    todoExitoso = false;
+                    break;
+                }
+            }
+
+            operacionExitosa = todoExitoso;
+
+            if (operacionExitosa)
+            {
+                foreach (var p in cambiosAP)
+                {
+                    p.VisualizarOriginal = p.Visualizar;
+                    p.CargarOriginal = p.Cargar;
+                    p.DescargarOriginal = p.Descargar;
+                }
+            }
+        }
+
+        if (operacionExitosa)
+            await MostrarMensajeTemporal("Cambios guardados correctamente");
+        else
+            await MostrarMensajeTemporal("Error al guardar");
+    }
+
+    private async Task MostrarMensajeTemporal(string msg)
+    {
+        message = msg;
         await InvokeAsync(StateHasChanged);
-
         await Task.Delay(2000);
-
         message = "";
         await InvokeAsync(StateHasChanged);
     }
