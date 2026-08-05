@@ -12,12 +12,12 @@
 .modal-crear {
     width: 700px;
     max-width: 95vw;
-    max-height: 90vh;
+    max-height: 140vh;
     background: white;
     border-radius: 14px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 18px 45px rgba(0, 0, 0, .25);
     animation: aparecerCrear .18s ease-out;
 }
@@ -63,7 +63,7 @@
 
 .modal-crear-body {
     padding: 22px;
-    overflow-y: auto;
+    overflow:visible;   
 }
 
     .modal-crear-body h4 {
@@ -232,4 +232,97 @@
 
 [data-theme="dark"] .loading-crear {
     color: #c0c0c0;
+}
+
+/* --- ESTILOS DEL DROPDOWN PERSONALIZADO --- */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.custom-select-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-select-list {
+    position: absolute;
+    top: calc(100% + 4px); /* Aparece justo debajo */
+    left: 0;
+    width: 100%;
+    max-height: 360px; /* 🔥 AQUÍ LIMITAS LA ALTURA DE LA LISTA 🔥 */
+    overflow-y: auto; /* Agrega scroll si pasa de los 220px */
+    background: white;
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    z-index: 100000;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-select-item {
+    padding: 10px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+
+    .custom-select-item:last-child {
+        border-bottom: none;
+    }
+
+    .custom-select-item:hover {
+        background: #f4f8ff;
+    }
+
+    .custom-select-item.seleccionado {
+        background: #2d7ff9;
+        color: white;
+    }
+
+/* Scroll bonito para la lista */
+.custom-select-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-select-list::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 10px;
+}
+
+/* Modo oscuro */
+[data-theme="dark"] .custom-select-list {
+    background: #2d2f34;
+    border-color: #555;
+}
+
+[data-theme="dark"] .custom-select-item {
+    border-color: #444;
+}
+
+    [data-theme="dark"] .custom-select-item:hover {
+        background: #3a3d42;
+    }
+
+    [data-theme="dark"] .custom-select-item.seleccionado {
+        background: #2d7ff9;
+    }
+
+/* --- Capa invisible para cerrar el menú --- */
+.dropdown-overlay-cerrar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999; /* Por debajo de la lista, pero por encima de todo lo demás */
+    cursor: default;
+    /* background: rgba(255, 0, 0, 0.2); Descomenta esta línea si quieres ver la capa para hacer pruebas */
 }

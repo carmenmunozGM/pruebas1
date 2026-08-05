@@ -68,7 +68,10 @@
                             <label>
                                 @(CreandoNuevaCarpeta ? "Archivos (opcional)" : "Archivos")
                             </label>
-                            <InputFile multiple OnChange="ArchivosSeleccionados" class="input-file-oculto" />
+                            <InputFile multiple
+                                       OnChange="ArchivosSeleccionados"
+                                       class="input-file-oculto"
+                                       maxAllowedSize="78643200" />
                             <div class="input-file-fake">
                                 📂 Seleccionar archivos...
                             </div>
@@ -260,11 +263,27 @@
         }
         catch (IOException ex)
         {
-            await JS.InvokeVoidAsync("alert", $"No fue posible subir el archivo.\n\n{ex.Message}");
+            // 🔥 REEMPLAZO 1: Alerta de error de IO
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Error al subir",
+                text = $"No fue posible subir el archivo.\n\n{ex.Message}",
+                icon = "error",
+                confirmButtonText = "Entendido",
+                confirmButtonColor = "#2d7ff9"
+            });
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            // 🔥 REEMPLAZO 2: Alerta de error general
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "Ocurrió un error",
+                text = ex.Message,
+                icon = "error",
+                confirmButtonText = "Entendido",
+                confirmButtonColor = "#2d7ff9"
+            });
         }
         finally
         {

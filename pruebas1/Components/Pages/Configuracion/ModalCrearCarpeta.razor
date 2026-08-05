@@ -23,31 +23,49 @@
                 {
                     <h4>Ruta destino</h4>
 
+                    @* 🔥 NUEVO: Capa invisible para atrapar los clics fuera del menú *@
+                    @if (MenuAbierto.Any(m => m))
+                    {
+                        <div class="dropdown-overlay-cerrar" @onclick="CerrarTodosLosMenus"></div>
+                    }
+
                     @for (int i = 0; i < Niveles.Count; i++)
                     {
                         int indice = i;
 
-                        <select class="combo-ruta-crear"
-                                @onchange="(e) => SeleccionarNivel(indice, e.Value?.ToString())">
+                        <div class="custom-select-wrapper">
+                            <div class="combo-ruta-crear custom-select-header" @onclick="() => AlternarMenu(indice)">
+                                <span>@(ObtenerNombreSeleccionado(indice) ?? "Seleccione...")</span>
+                                <span style="font-size: 12px; color: #666;">▼</span>
+                            </div>
 
-                            @* Si es el primer nivel, agregamos la opción explícita para la raíz *@
-                            @if (indice == 0)
+                            @if (MenuAbierto.Count > indice && MenuAbierto[indice])
                             {
-                                <option value="root">📁 Carpeta Raíz (Principal)</option>
-                            }
-                            else
-                            {
-                                <option value="">Seleccione...</option>
-                            }
+                                <ul class="custom-select-list">
+                                    @if (indice == 0)
+                                    {
+                                        <li class="custom-select-item @(CarpetaSeleccionada?.IdSharePoint == "root" ? "seleccionado" : "")"
+                                            @onclick="@(() => SeleccionarOpcion(indice, "root"))">
+                                            📁 Carpeta Raíz (Principal)
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="custom-select-item" @onclick="@(() => SeleccionarOpcion(indice, ""))">
+                                            Seleccione...
+                                        </li>
+                                    }
 
-                            @foreach (var item in Niveles[i])
-                            {
-                                <option value="@item.Id"
-                                        selected="@(Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id)">
-                                    @($"{item.Codigo} - {item.Nombre}")
-                                </option>
+                                    @foreach (var item in Niveles[i])
+                                    {
+                                        <li class="custom-select-item @(Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id ? "seleccionado" : "")"
+                                            @onclick="@(() => SeleccionarOpcion(indice, item.Id.ToString()))">
+                                            @($"{item.Codigo} - {item.Nombre}")
+                                        </li>
+                                    }
+                                </ul>
                             }
-                        </select>
+                        </div>
                     }
 
                     <div class="campo-crear">
@@ -102,6 +120,7 @@
     private List<UbicacionDTO> Ubicaciones = new();
     private List<List<UbicacionDTO>> Niveles = new();
     private List<UbicacionDTO?> Seleccionados = new();
+    private List<bool> MenuAbierto = new(); // 🟢 Controla qué menús están abiertos
 
     private UbicacionDTO? CarpetaSeleccionada;
     private string NombreCarpeta = string.Empty;
@@ -120,15 +139,57 @@
 
         Niveles.Clear();
         Seleccionados.Clear();
+        MenuAbierto.Clear();
+
         Niveles.Add(Ubicaciones);
+        MenuAbierto.Add(false); // Inicializa el menú del nivel 0 como cerrado
 
         // AQUÍ ESTABLECEMOS LA RAÍZ POR DEFECTO AL ABRIR
         CarpetaSeleccionada = new UbicacionDTO
         {
-            IdSharePoint = "root" // O el identificador que use tu backend para la raíz
+            IdSharePoint = "root"
         };
 
         Cargando = false;
+    }
+
+    // 🟢 Nuevo método para abrir/cerrar el menú desplegable personalizado
+    private void AlternarMenu(int nivel)
+    {
+        bool estadoActual = MenuAbierto[nivel];
+
+        // Cierra todos los menús
+        for (int i = 0; i < MenuAbierto.Count; i++)
+        {
+            MenuAbierto[i] = false;
+        }
+
+        // Abre el que se clickeó (si estaba cerrado)
+        MenuAbierto[nivel] = !estadoActual;
+    }
+
+    // 🟢 Nuevo método para cuando se hace clic en un <li>
+    private void SeleccionarOpcion(int nivel, string valor)
+    {
+        MenuAbierto[nivel] = false; // Cierra el menú
+        SeleccionarNivel(nivel, valor); // Ejecuta tu lógica original
+    }
+
+    // 🟢 Nuevo método para mostrar el texto correcto en el cuadro simulado
+    private string ObtenerNombreSeleccionado(int nivel)
+    {
+        if (nivel == 0)
+        {
+            if (Seleccionados.Count > 0 && Seleccionados[0] != null)
+                return $"{Seleccionados[0].Codigo} - {Seleccionados[0].Nombre}";
+
+            return "📁 Carpeta Raíz (Principal)";
+        }
+
+        if (Seleccionados.Count > nivel && Seleccionados[nivel] != null)
+            return $"{Seleccionados[nivel].Codigo} - {Seleccionados[nivel].Nombre}";
+
+        return null;
     }
 
     private void SeleccionarNivel(int nivel, string? valor)
@@ -138,6 +199,9 @@
 
         while (Seleccionados.Count > nivel)
             Seleccionados.RemoveAt(nivel);
+
+        while (MenuAbierto.Count > nivel + 1)
+            MenuAbierto.RemoveAt(nivel + 1); // 🟢 Sincronizamos el estado visual de los menús
 
         // Si el usuario selecciona la opción raíz explícitamente en el primer nivel
         if (nivel == 0 && valor == "root")
@@ -161,6 +225,7 @@
         if (seleccionado.Hijos.Any())
         {
             Niveles.Add(seleccionado.Hijos);
+            MenuAbierto.Add(false); // 🟢 Agregamos estado para el nuevo nivel
         }
     }
 
@@ -168,7 +233,6 @@
     {
         get
         {
-            // Ya no bloqueamos si CarpetaSeleccionada es null, porque ahora por defecto apunta a "root"
             if (CarpetaSeleccionada == null || string.IsNullOrWhiteSpace(CarpetaSeleccionada.IdSharePoint))
                 return false;
 
@@ -185,7 +249,6 @@
         {
             Guardando = true;
 
-            // 🟢 SOLUCIÓN: Si la selección es "root", enviamos null (o cadena vacía) al backend
             string? idPadreEnviar = CarpetaSeleccionada.IdSharePoint == "root"
                                     ? null
                                     : CarpetaSeleccionada.IdSharePoint;
@@ -211,7 +274,15 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"No fue posible crear la carpeta.\n\n{ex.Message}");
+            // 🔥 AQUÍ REEMPLAZAMOS EL ALERT FEO POR SWEETALERT 🔥
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "No se pudo crear",
+                text = $"No fue posible crear la carpeta.\n\n{ex.Message}",
+                icon = "error",
+                confirmButtonText = "Entendido",
+                confirmButtonColor = "#2d7ff9" // Este es el azul que usas en tu botón de "Crear"
+            });
         }
         finally
         {
@@ -231,11 +302,22 @@
         GuardadoCorrectamente = false;
         Niveles.Clear();
         Seleccionados.Clear();
-        Niveles.Add(Ubicaciones);
+        MenuAbierto.Clear();
 
-        // 🟢 Agrega esto para que al limpiar siempre apunte a la raíz por defecto
+        Niveles.Add(Ubicaciones);
+        MenuAbierto.Add(false);
+
         CarpetaSeleccionada = new UbicacionDTO { IdSharePoint = "root" };
 
         return Task.CompletedTask;
-    }               
+    }
+
+    // 🟢 Nuevo método para cerrar los menús al hacer clic fuera
+    private void CerrarTodosLosMenus()
+    {
+        for (int i = 0; i < MenuAbierto.Count; i++)
+        {
+            MenuAbierto[i] = false;
+        }
+    }
 }

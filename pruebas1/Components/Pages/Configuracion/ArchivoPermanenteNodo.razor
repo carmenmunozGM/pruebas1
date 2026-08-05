@@ -1,4 +1,5 @@
 ﻿@using pruebas1.Components.DTOs
+@using Microsoft.AspNetCore.Components.Web
 
 <div class="tree-node">
 
@@ -6,7 +7,8 @@
     {
         <div class="tree-folder"
              @onclick="Toggle"
-             @ondblclick="AbrirOpciones">
+             @oncontextmenu="AbrirOpciones"
+             @oncontextmenu:preventDefault="true">
 
             @if (Nodo.Hijos.Any())
             {
@@ -41,7 +43,8 @@
     {
         <div class="tree-file"
              @onclick="Seleccionar"
-             @ondblclick="AbrirOpciones">
+             @oncontextmenu="AbrirOpciones"
+             @oncontextmenu:preventDefault="true">
 
             📄 <span class="tree-text" title="@Nodo.Nombre">@Nodo.Nombre</span>
 
@@ -73,7 +76,7 @@
         await OnArchivoSeleccionado.InvokeAsync(Nodo);
     }
 
-    private async Task AbrirOpciones()
+    private async Task AbrirOpciones(MouseEventArgs e)
     {
         await OnAbrirOpciones.InvokeAsync(Nodo);
     }

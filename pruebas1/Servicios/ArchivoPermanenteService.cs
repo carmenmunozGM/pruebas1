@@ -84,14 +84,31 @@ namespace pruebas1.Servicios
 
             if (dto.Archivos != null)
             {
+                const long TAMANO_MAXIMO_ARCHIVO = 75 * 1024 * 1024; // 75 MB
+
                 foreach (var archivo in dto.Archivos)
                 {
                     Debug.WriteLine($"Archivo adjunto: {archivo.Name} ({archivo.Size} bytes, tipo: {archivo.ContentType})");
 
-                    var stream = archivo.OpenReadStream();
+                    if (archivo.Size > TAMANO_MAXIMO_ARCHIVO)
+                    {
+                        throw new Exception(
+                            $"El archivo '{archivo.Name}' supera el tamaño máximo permitido de 75 MB.");
+                    }
+
+                    if (!archivo.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new Exception(
+                            $"El archivo '{archivo.Name}' no es un PDF.");
+                    }
+
+                    var stream = archivo.OpenReadStream(TAMANO_MAXIMO_ARCHIVO);
+
                     var streamContent = new StreamContent(stream);
 
-                    streamContent.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
+                    streamContent.Headers.ContentType =
+                        new MediaTypeHeaderValue("application/pdf");
+
                     content.Add(streamContent, "Archivos", archivo.Name);
                 }
             }
@@ -104,13 +121,28 @@ namespace pruebas1.Servicios
             Debug.WriteLine("================================");
             // -----------------------------
 
-            var response = await _http.PostAsync("/archivoPermanente/archivo-permanente/subir", content);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Error del servidor: {error}");
+                var response = await _http.PostAsync(
+                    "/archivoPermanente/archivo-permanente/subir",
+                    content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new Exception(error);
+                }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+
+                if (ex.InnerException != null)
+                    Debug.WriteLine("INNER: " + ex.InnerException);
+
+                throw;
+            }
+
         }
 
         public async Task<Stream?> DescargarArchivo(int idArchivo)

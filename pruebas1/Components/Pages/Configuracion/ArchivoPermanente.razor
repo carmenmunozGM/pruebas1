@@ -86,8 +86,8 @@
             @foreach (var nodo in Arbol)
             {
                 <ArchivoPermanenteNodo Nodo="nodo"
-                                     OnArchivoSeleccionado="SeleccionarDocumento"
-                                     OnAbrirOpciones="AbrirOpcionesNodo" />
+                                       OnArchivoSeleccionado="SeleccionarDocumento"
+                                       OnAbrirOpciones="AbrirOpcionesNodo" />
             }
         }
 
@@ -140,10 +140,10 @@
 
     private bool cargando;
     private bool MostrarModalSubir;
-    private bool MostrarModalCrearCarpeta; 
+    private bool MostrarModalCrearCarpeta;
     private bool MostrarModalOpciones;
 
-    private string idCarpetaPadreSeleccionada = "root"; 
+    private string idCarpetaPadreSeleccionada = "root";
     private ArchivoPermanenteNodoDTO? NodoSeleccionado;
 
     private PermisosArchivoDTO? permisosAP;
@@ -207,15 +207,19 @@
         {
             documentUrl = null;
 
+            // Reemplazo de alert por SweetAlert2 (Swal.fire)
             await JS.InvokeVoidAsync(
-                "alert",
-                "Solo es posible visualizar archivos PDF.");
+                "Swal.fire",
+                "Atención",
+                "Solo es posible visualizar archivos PDF.",
+                "warning"
+            );
 
             return;
         }
 
         documentUrl =
-            $"{ArchivoService.UrlBase}/archivoPermanente/archivo-permanente/visualizar/{nodo.IdBD}";
+   $"{ArchivoService.UrlBase}/archivoPermanente/archivo-permanente/visualizar/{nodo.IdBD}#toolbar=0&navpanes=0&scrollbar=0";
 
         StateHasChanged();
     }
@@ -265,9 +269,13 @@
 
             await RecargarArbol();
 
+            // Reemplazo de alert por SweetAlert2 (Swal.fire)
             await JS.InvokeVoidAsync(
-                "alert",
-                "Archivo Permanente actualizado correctamente.");
+                "Swal.fire",
+                "¡Éxito!",
+                "Archivo Permanente actualizado correctamente.",
+                "success"
+            );
         }
         finally
         {
