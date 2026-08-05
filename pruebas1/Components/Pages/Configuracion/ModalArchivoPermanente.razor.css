@@ -16,7 +16,9 @@
     overflow: hidden;
     box-shadow: 0 20px 45px rgba(0,0,0,.25);
 }
-
+.swal2-container {
+    z-index: 999999 !important;
+}
 .modal-header {
     display: flex;
     justify-content: space-between;

@@ -125,5 +125,7 @@ h1:focus {
         background: #334155;
     }
 
-
-
+/* Forzar que SweetAlert2 esté por encima de cualquier modal en todo el sitio */
+.swal2-container {
+    z-index: 999999 !important;
+}

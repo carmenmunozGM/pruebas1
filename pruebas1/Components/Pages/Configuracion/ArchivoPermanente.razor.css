@@ -15,7 +15,9 @@
     margin-top: 6px;
     color: #777;
 }
-
+.swal2-container {
+    z-index: 999999 !important;
+}
 .acciones {
     display: flex;
     gap: 12px;

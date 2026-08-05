@@ -16,7 +16,9 @@
     .tree-folder:hover {
         background: #edf4ff;
     }
-
+.swal2-container {
+    z-index: 999999 !important;
+}
 .tree-children {
     margin-left: 22px;
     border-left: 1px solid #e3e3e3;
