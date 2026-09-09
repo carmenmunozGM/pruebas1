@@ -1,10 +1,10 @@
 ﻿@using pruebas1.Components.DTOs
 @using pruebas1.Servicios
-
+@inject ArchivoPermanenteService archivoPermanenteService
 @inject UsuarioState UsuarioState
-
 @inject NavigationManager navigate
 @inject LoginService loginService
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <div class="menu-container sticky-top">
@@ -12,7 +12,6 @@
         <div class="container-fluid d-flex justify-content-between align-items-center">
 
             <img class="navbar-brand" src="/images/logomail.png" style="width: 250px; border-radius:15px; height: auto;" alt="Logotipo" />
-
 
             <div class="d-flex align-items-center">
                 <div class="navbar-nav ms-auto">
@@ -38,20 +37,56 @@
                 <a class="nav-link user-nav dropdown-toggle"
                    href="#" id="userDropdown"
                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    👤 
+                    👤
                     @nombreCompleto (@clavePersonal)
-
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" style="cursor:pointer" @onclick="configur">Configuración</a></li>
+                <ul class="dropdown-menu dropdown-menu-end rounded-xl overflow-hidden shadow-lg border border-gray-200" aria-labelledby="userDropdown">
+                    <li>
+                        <a class="dropdown-item custom-menu-item" style="cursor:pointer" @onclick="configur">
+                            <span class="menu-icon">⚙️</span>
+                            <span>Configuración</span>
+                        </a>
+                    </li>
+
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" style="cursor:pointer" @onclick="cerrarsesion">Cerrar sesión</a></li>
+
+                    <li>
+                        <a class="dropdown-item custom-menu-item" style="cursor:pointer" @onclick="IrArchivoInstitucional">
+                            <span class="menu-icon">🏛️</span>
+                            <span>Archivo Institucional</span>
+                        </a>
+                    </li>
+                    
+                    @if (MostrarArchivoPermanente)
+                    {
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item custom-menu-item" style="cursor:pointer" @onclick="IrArchivoPermanente">
+                                <span class="menu-icon">📂</span>
+                                <span>Archivo Permanente</span>
+                            </a>
+                        </li>
+                    }
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li>
+                        <a class="dropdown-item custom-menu-item" style="cursor:pointer" @onclick="cerrarsesion">
+                            <span class="menu-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                            </span>
+                            <span>Cerrar sesión</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 </div>
-
 
 <style scoped>
     /* ---- ELIMINAR DESBORDES ---- */
@@ -64,12 +99,9 @@
         max-width: 100%;
         box-sizing: border-box;
     }
+
     /* 1. Contenedor Fijo/Sticky */
     .menu-container {
-        /*position: sticky;
-            top: 0;
-            z-index: 2000;
-            background-color: #C6E9F0 !important; */
         position: fixed;
         top: 0;
         left: 0;
@@ -77,10 +109,12 @@
         z-index: 2000;
         background-color: #C6E9F0;
     }
+
     /* ---- CONTROLAR EL DESBORDAMIENTO ---- */
     .container-fluid {
         flex-wrap: wrap !important;
     }
+
     /* ---- LOGO ---- */
     .navbar-brand {
         max-width: 250px;
@@ -91,76 +125,108 @@
         font-size: 1.4rem;
         color: black;
     }
-
+    .dropdown {
+    position: relative !important;
+}
     .navbar .dropdown .nav-link,
     .navbar .dropdown .user-nav {
         color: black !important;
     }
 
-    .navbar .dropdown .user-nav {
-        color: black !important; /* aquí cambias el color */
+    /* ---- DROPDOWN PERSONALIZADO Y UNIFORME ---- */
+  .dropdown-menu {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    background-color: #ffffff !important;
+    padding: 6px 0 !important;
+
+    /* Posicionamiento exacto justo debajo de la flecha */
+    right: 0 !important;
+    left: auto !important;
+    top: 100% !important;
+    margin-top: 2px !important;
+    transform: none !important;
+}
+    .custom-menu-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+        color: #374151 !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
     }
 
+    .custom-menu-item .menu-icon {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 20px !important;
+        font-size: 16px !important;
+        flex-shrink: 0 !important;
+    }
 
+    .custom-menu-item:hover,
+    .custom-menu-item:focus {
+        background-color: #f3f4f6 !important;
+        color: #111827 !important;
+    }
+    .dropdown-divider {
+    margin: 6px 0 !important;
+    border: none !important;
+    border-top: 1px solid #e5e7eb !important;
+    opacity: 1 !important;
+    width: 100% !important;
+}
+
+    
     /* 3. Contenedor de la píldora del Submenú */
     .subnav-float {
         background-color: transparent;
-        padding: 4px 0; /* Espacio vertical */
+        padding: 4px 0;
     }
 
-    /* 4. Estilo de la "Píldora Flotante" - ¡FONDO TRANSPARENTE AQUÍ! */
+    /* 4. Estilo de la "Píldora Flotante" */
     .subnav-pill {
         background-color: transparent;
         padding: 4px 10px;
         display: flex;
-        /* AUMENTAMOS EL ESPACIO ENTRE BOTONES */
-        gap: 8px; /* Era 5px */
-        /* La sombra (shadow-sm) da el efecto flotante sobre el fondo blanco del .menu-container */
+        gap: 8px;
     }
 
     /* 5. Estilos de los botones dentro de la píldora */
     .subnav-btn {
-        /* Reset de estilos de Bootstrap 'btn' que podrían causar problemas */
         appearance: none;
         border: none;
         margin: 0;
         padding: 0;
         cursor: pointer;
-        /* Estilos personalizados */
         background-color: transparent;
-        /* AUMENTAMOS EL TAMAÑO DE LA FUENTE */
-        font-size: 1.39rem; /* Era 1rem */
+        font-size: 1.39rem;
         font-weight: 600;
         color: #000;
         transition: all 0.2s ease;
         border-radius: 18px;
-        /* AUMENTAMOS EL RELLENO (PADDING) DEL BOTÓN */
-        padding: 10px 20px; /* Era 4px 12px */
+        padding: 10px 20px;
         line-height: 1.5;
     }
 
-        /* Asegurar que los estados se mantengan específicos */
-        .subnav-btn:hover {
-            background-color: white; /* Un color de fondo sutil al pasar el ratón */
-            color: #007BFF;
-        }
+    .subnav-btn:hover {
+        background-color: white;
+        color: #007BFF;
+    }
 
-        .subnav-btn:focus,
-        .subnav-btn:active:focus {
-            outline: none; /* Quita el contorno de enfoque por defecto si no lo quieres */
-        }
+    .subnav-btn:focus,
+    .subnav-btn:active:focus {
+        outline: none;
+    }
 
-
-        /* Opcional: Estilo para el botón activo/seleccionado */
-        .subnav-btn.active {
-            background-color: #0B3C4A;
-            color: black;
-        }
-
-    @@media (max-width: 768px) {
-        .navbar-brand {
-            max-width: 150px;
-        }
+    .subnav-btn.active {
+        background-color: #0B3C4A;
+        color: black;
     }
 
     /* ---- SUBMENÚ RESPONSIVO ---- */
@@ -184,36 +250,23 @@
         max-width: 100%;
     }
 
-    /* MÓVILES */
-    @@media (max-width: 480px) {
-        .subnav-btn {
-            padding: 8px 10px;
-            font-size: 0.85rem;
-        }
-    }
-
     /* --- ADAPTACIÓN AL MODO OSCURO PARA EL NAVMENU --- */
-
-    /* Cambiar el fondo de la barra de navegación */
     [data-theme="dark"] .menu-container {
         background: linear-gradient(90deg,#0b3c4a, #002E4A) !important;
         border-bottom: 1px solid #1e293b;
     }
 
-    /* Cambiar el color de los textos y botones del menú */
     [data-theme="dark"] .navbar .nav-link,
     [data-theme="dark"] .navbar .user-nav,
     [data-theme="dark"] .subnav-btn {
-        color: #f8fafc !important; /* Blanco grisáceo */
+        color: #f8fafc !important;
     }
 
-        /* Evitar que los botones se vuelvan blancos al hacer hover */
-        [data-theme="dark"] .subnav-btn:hover {
-            background-color: #1e293b !important;
-            color: #3b82f6 !important;
-        }
+    [data-theme="dark"] .subnav-btn:hover {
+        background-color: #1e293b !important;
+        color: #3b82f6 !important;
+    }
 
-    /* Dropdown (Configuración / Cerrar sesión) */
     [data-theme="dark"] .dropdown-menu {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
@@ -223,20 +276,20 @@
         color: #f8fafc !important;
     }
 
-        [data-theme="dark"] .dropdown-item:hover {
-            background-color: #334155 !important;
-        }
+    [data-theme="dark"] .dropdown-item:hover {
+        background-color: #334155 !important;
+    }
 
-    /* Arreglar el fondo del body que el NavMenu está controlando */
     [data-theme="dark"] html,
     [data-theme="dark"] body {
         background-color: #0f172a !important;
     }
 </style>
 
-
-
 @code {
+    public PermisosArchivoDTO? permisosAP { get; set; }
+    public bool MostrarArchivoPermanente { get; set; } = false;
+
     private void dias()
     {
         navigate.NavigateTo("/dia2");
@@ -251,38 +304,38 @@
     {
         navigate.NavigateTo("/calendario");
     }
+
     private void plan()
     {
         navigate.NavigateTo("/plantrabajo");
     }
+
     private void autoevaluacion()
     {
         navigate.NavigateTo("/autoevaluacion");
     }
+
     private void configur()
     {
         navigate.NavigateTo("/configuracion");
     }
 
+    private void IrArchivoInstitucional()
+    {
+        navigate.NavigateTo("/archivo-institucional");
+    }
+
+    private void IrArchivoPermanente()
+    {
+        navigate.NavigateTo("/archivo-permanente");
+    }
 
     public string nombreusuario { get; set; } = "";
 
-    /*protected override async Task OnInitializedAsync()
-    {
-        var obj = loginService.obtenerUsuarioLogueado();
-        nombreusuario = obj.NombreUsuario;
-
-        // 🔹 Asegurar que AgendaActual tenga un valor correcto al iniciar
-        if (loginService.AgendaActual == null && obj.IdAgendasAsignadas?.Count > 0)
-        {
-            loginService.SetAgendaActual(obj.IdAgendasAsignadas[0]);
-        }
-    }*/
     protected override async Task OnInitializedAsync()
     {
         var obj = loginService.obtenerUsuarioLogueado();
 
-        // 👤 Nombre completo desde Login
         if (!string.IsNullOrWhiteSpace(obj.NombreRed))
         {
             nombreCompleto = obj.NombreRed;
@@ -292,29 +345,34 @@
             nombreCompleto = obj.NombreUsuario;
         }
 
-        // 🔑 Clave personal (idempleado)
         clavePersonal = obj.IdEmpleado;
+        try
+        {
+            permisosAP = await archivoPermanenteService.ObtenerMisPermisos();
+            if (permisosAP != null)
+            {
+                MostrarArchivoPermanente = permisosAP.Cargar || permisosAP.Visualizar || permisosAP.Descargar;
+            }
+        }
+        catch
+        {
+            MostrarArchivoPermanente = false;
+        }
 
-        // 📅 Agenda
         if (loginService.AgendaActual == null && obj.IdAgendasAsignadas?.Count > 0)
         {
             loginService.SetAgendaActual(obj.IdAgendasAsignadas[0]);
         }
     }
 
-
     public async Task cerrarsesion()
     {
-        // Limpiar LoginService + UsuarioState
         loginService.cerrarSesion(UsuarioState);
-        UsuarioState.Reset();          // ⚡ Resetea el estado
-
-        // Navegar a login
-        navigate.NavigateTo("/", forceLoad: true); // fuerza recarga completa
+        UsuarioState.Reset();
+        navigate.NavigateTo("/", forceLoad: true);
     }
 
-
-    /*modaal de agregar*/
+    /* Modal de agregar */
     public bool ShowModal { get; set; } = false;
     public enum FormTypes { Evento, Tarea, Administrativa }
     public FormTypes FormType { get; set; } = FormTypes.Administrativa;
@@ -331,7 +389,6 @@
     private List<string> subtasks = new List<string>();
     public string nombreCompleto { get; set; } = "";
     public int clavePersonal { get; set; }
-
 
     public void OpenModal()
     {
@@ -387,7 +444,6 @@
         FormType = type;
         showOtherLocationInput = false;
         showOtherTaskNameInput = false;
-        // Limpiar subtasks al cambiar de tipo para simular formulario nuevo
         if (type != FormTypes.Tarea)
         {
             subtasks.Clear();

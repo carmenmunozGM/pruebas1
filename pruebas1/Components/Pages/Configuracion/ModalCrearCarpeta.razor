@@ -26,27 +26,56 @@
                     @for (int i = 0; i < Niveles.Count; i++)
                     {
                         int indice = i;
+                        bool esRaiz = (indice == 0);
+                        bool estaAbierto = DropdownAbiertoIndice == indice;
+                        string textoSeleccionado = ObtenerTextoSeleccionado(indice);
+                        var listaOpciones = ObtenerOpcionesFiltradas(indice);
 
-                        <select class="combo-ruta-crear"
-                                @onchange="(e) => SeleccionarNivel(indice, e.Value?.ToString())">
+                        <div class="custom-select-container">
+                            <div class="custom-select-trigger" @onclick="() => ToggleDropdown(indice)">
+                                <span>@textoSeleccionado</span>
+                                <span class="arrow">▼</span>
+                            </div>
 
-                            @if (indice == 0)
+                            @if (estaAbierto)
                             {
-                                <option value="root">📁 Carpeta Raíz (Principal)</option>
-                            }
-                            else
-                            {
-                                <option value="">Seleccione...</option>
-                            }
+                                <div class="custom-select-menu">
+                                    <div class="search-box-inside">
+                                        <input type="text"
+                                               class="input-search-dropdown"
+                                               placeholder="🔍 Buscar..."
+                                               @bind="TextoBusqueda"
+                                               @bind:event="oninput"
+                                               @onclick:stopPropagation />
+                                    </div>
+                                    <ul class="custom-select-options">
+                                        @if (esRaiz)
+                                        {
+                                            <li class="@(Seleccionados.Count == 0 ? "selected" : "")"
+                                                @onclick='() => SeleccionarOpcion(indice, "root", "📁 Carpeta Raíz (Principal)")'>
+                                                📁 Carpeta Raíz (Principal)
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li class="@(Seleccionados.Count <= indice ? "selected" : "")"
+                                                @onclick='() => SeleccionarOpcion(indice, "", "Seleccione...")'>
+                                                Seleccione...
+                                            </li>
+                                        }
 
-                            @foreach (var item in Niveles[i])
-                            {
-                                <option value="@item.IdSharePoint"
-                                        selected="@(Seleccionados.Count > indice && Seleccionados[indice]?.IdSharePoint == item.IdSharePoint)">
-                                    @item.Nombre
-                                </option>
+                                        @foreach (var item in listaOpciones)
+                                        {
+                                            bool esSeleccionado = Seleccionados.Count > indice && Seleccionados[indice]?.IdSharePoint == item.IdSharePoint;
+                                            <li class="@(esSeleccionado ? "selected" : "")"
+                                                @onclick='() => SeleccionarOpcion(indice, item.IdSharePoint, item.Nombre)'>
+                                                @item.Nombre
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
                             }
-                        </select>
+                        </div>
                     }
 
                     <div class="campo-crear">
@@ -90,6 +119,76 @@
     </div>
 }
 
+<style>
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .custom-select-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        margin-top: 4px;
+    }
+
+    .search-box-inside {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .input-search-dropdown {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .custom-select-options {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: 180px;
+        overflow-y: auto;
+    }
+
+        .custom-select-options li {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            .custom-select-options li:hover {
+                background-color: #f0f4f8;
+            }
+
+            .custom-select-options li.selected {
+                background-color: #e2e8f0;
+                font-weight: bold;
+            }
+</style>
+
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public string IdCarpetaPadre { get; set; } = "root";
@@ -99,7 +198,10 @@
     private bool Cargando;
     private bool Guardando;
     private bool GuardadoCorrectamente;
-    private bool _visibleAnterior; 
+    private bool _visibleAnterior;
+
+    private int? DropdownAbiertoIndice;
+    private string TextoBusqueda = string.Empty;
 
     private List<UbicacionDTO> Ubicaciones = new();
     private List<List<UbicacionDTO>> Niveles = new();
@@ -110,7 +212,6 @@
 
     protected override async Task OnParametersSetAsync()
     {
- 
         if (Visible && !_visibleAnterior)
         {
             await CargarUbicacionesFrescas();
@@ -140,6 +241,46 @@
         StateHasChanged();
     }
 
+    private void ToggleDropdown(int indice)
+    {
+        if (DropdownAbiertoIndice == indice)
+        {
+            DropdownAbiertoIndice = null;
+        }
+        else
+        {
+            DropdownAbiertoIndice = indice;
+            TextoBusqueda = string.Empty;
+        }
+    }
+
+    private List<UbicacionDTO> ObtenerOpcionesFiltradas(int nivel)
+    {
+        var listaBase = Niveles[nivel];
+        if (string.IsNullOrWhiteSpace(TextoBusqueda))
+            return listaBase;
+
+        return listaBase.Where(x => x.Nombre != null && x.Nombre.Contains(TextoBusqueda, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    private string ObtenerTextoSeleccionado(int nivel)
+    {
+        if (Seleccionados.Count > nivel && Seleccionados[nivel] != null)
+        {
+            return Seleccionados[nivel]!.Nombre;
+        }
+
+        return nivel == 0 ? "📁 Carpeta Raíz (Principal)" : "Seleccione...";
+    }
+
+    private void SeleccionarOpcion(int nivel, string valor, string nombre)
+    {
+        DropdownAbiertoIndice = null;
+        TextoBusqueda = string.Empty;
+
+        SeleccionarNivel(nivel, valor);
+    }
+
     private void SeleccionarNivel(int nivel, string? valor)
     {
         while (Niveles.Count > nivel + 1)
@@ -160,7 +301,8 @@
             return;
         }
 
-        var seleccionado = Niveles[nivel].FirstOrDefault(x => x.IdSharePoint == valor);
+        var listaOrigen = Niveles[nivel];
+        var seleccionado = listaOrigen.FirstOrDefault(x => x.IdSharePoint == valor);
 
         if (seleccionado != null)
         {
@@ -236,6 +378,8 @@
     private Task Limpiar()
     {
         NombreCarpeta = string.Empty;
+        TextoBusqueda = string.Empty;
+        DropdownAbiertoIndice = null;
         GuardadoCorrectamente = false;
         Niveles.Clear();
         Seleccionados.Clear();

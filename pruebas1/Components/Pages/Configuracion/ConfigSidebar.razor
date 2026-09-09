@@ -61,6 +61,17 @@
                     <span>Archivo Permanente</span>
                 </button>
             }
+            <button class="nav-item @(CurrentSection == "archivoInstitucional" ? "active" : "")"
+                    @onclick='() => OnSectionChange.InvokeAsync("archivoInstitucional")'>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 22h16"></path>
+                    <path d="M6 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l2-3h6l2 3h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="10" width="12" height="12" rx="1"></rect>
+                    <line x1="10" y1="14" x2="14" y2="14"></line>
+                    <line x1="10" y1="17" x2="14" y2="17"></line>
+                </svg>
+                <span>Archivo Institucional</span>
+            </button>
 
             @if(Admin || superAdmin){
             <button class="nav-item @(CurrentSection == "administrar" ? "active" : "")" 

@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
-using pruebas1.Servicios;
-using System.Globalization;
+﻿using AgendaFront.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 using Microsoft.Web.WebView2.Core;
+using pruebas1.Servicios;
+using System.Globalization;
 namespace pruebas1
 {
     public static class MauiProgram
@@ -51,14 +52,14 @@ namespace pruebas1
             builder.Services.AddScoped<InfoPersonalService>();
             builder.Services.AddScoped<Updater>();
             builder.Services.AddScoped<StartupService>();
-
+            builder.Services.AddScoped<ArchivoInstitucionalService>();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
                 return new HttpClient
                 {
-                BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
-               //    BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
+                //BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
+                  BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
                 // BaseAddress = new Uri("https://redgm.site:9097/")  //SERVIDOR PRUEBAS
                 };
             });

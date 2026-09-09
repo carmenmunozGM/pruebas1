@@ -1,0 +1,372 @@
+﻿@page "/archivo-institucional"
+
+@using AgendaFront.DTOs
+@using AgendaFront.Services
+
+@inject ArchivoInstitucionalService ArchivoInstitucionalService
+
+<div class="page-container">
+
+    <header class="page-header">
+
+        <div class="header-titles">
+            <h1>Archivo Institucional</h1>
+            <p>Consulta y administración documental.</p>
+        </div>
+
+        <div class="toolbar">
+
+            <button class="btn-refresh"
+                    @onclick="ActualizarEstructuraAsync"
+                    disabled="@Cargando">
+
+                <span class="icon">🔄</span>
+
+                @(Cargando ? "Actualizando..." : "Actualizar estructura")
+
+            </button>
+
+            <div class="search-box">
+
+                <input type="text"
+                       placeholder="Buscar documento..."
+                       @bind="searchTerm"
+                       @bind:event="oninput" />
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <div class="main-layout">
+        <aside class="sidebar-tree">
+
+            @if (Cargando)
+            {
+                <div class="status-msg">
+                    Cargando archivo institucional...
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(Error))
+            {
+                <div class="status-msg error">
+                    @Error
+                </div>
+            }
+            else if (!Carpetas.Any())
+            {
+                <div class="status-msg">
+                    No se encontraron carpetas institucionales.
+                </div>
+            }
+            else
+            {
+                <div class="tree-container">
+
+                    @foreach (var carpeta in CarpetasFiltradas)
+                    {
+                        <div class="folder-group">
+
+                            <div class="folder-item root-folder" @onclick="() => ToggleFolder(carpeta)">
+                                <span class="arrow">@(carpeta.IsExpanded ? "▼" : "▶")</span>
+                                <span class="folder-icon">📁</span>
+                                <span class="text">@carpeta.Nombre</span>
+                            </div>
+
+                            @if (carpeta.IsExpanded)
+                            {
+                                <div class="folder-content">
+
+                                    @RenderChildren(carpeta)
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </aside>
+
+        <main class="viewer-container">
+
+            @if (ArchivoActual != null)
+            {
+                var urlPdf = ObtenerUrlVisualizacion(ArchivoActual);
+
+                if (!string.IsNullOrWhiteSpace(urlPdf))
+                {
+                    <iframe src="@urlPdf"
+                            class="pdf-frame"
+                            title="@ArchivoActual.Nombre"
+                            oncontextmenu="return false;">
+                    </iframe>
+                }
+                else
+                {
+                    <div class="empty-viewer">
+
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <h2>
+                            No se pudo obtener el documento
+                        </h2>
+
+                        <p>
+                            El archivo no tiene un identificador válido.
+                        </p>
+
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-viewer">
+
+                    <div class="empty-icon">
+                        📄
+                    </div>
+
+                    <h2>
+                        Ningún documento seleccionado
+                    </h2>
+
+                    <p>
+                        Selecciona un documento desde el árbol.
+                    </p>
+
+                </div>
+            }
+
+        </main>
+
+    </div>
+
+</div>
+
+
+@code {
+    private List<ArchivoInstitucionalNodoDTO> Carpetas = new();
+
+    private ArchivoInstitucionalNodoDTO? ArchivoActual;
+
+    private bool Cargando = true;
+
+    private string? Error;
+
+    private string searchTerm = "";
+
+    private IEnumerable<ArchivoInstitucionalNodoDTO> CarpetasFiltradas
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Carpetas;
+            }
+
+            return Carpetas.Where(c =>
+                c.Nombre.Contains(
+                    searchTerm,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarArchivoInstitucionalAsync();
+    }
+
+    // =========================================================
+    // ACCIÓN DEL BOTÓN "ACTUALIZAR ESTRUCTURA"
+    // =========================================================
+    private async Task ActualizarEstructuraAsync()
+    {
+        try
+        {
+            Cargando = true;
+            Error = null;
+
+            // 1. Ejecuta el POST de sincronización con OneDrive/SharePoint (sustituye el uso manual de Swagger)
+            bool sincronizado = await ArchivoInstitucionalService.SincronizarEstructuraAsync();
+
+            if (!sincronizado)
+            {
+                Error = "No se pudo sincronizar la estructura con OneDrive/SharePoint.";
+                return;
+            }
+
+            // 2. Vuelve a consultar el árbol de la base de datos actualizado
+            await CargarArchivoInstitucionalAsync();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error al actualizar la estructura: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private async Task CargarArchivoInstitucionalAsync()
+    {
+        try
+        {
+            Cargando = true;
+            Error = null;
+
+            ArchivoActual = null;
+
+            Carpetas = await ArchivoInstitucionalService.ObtenerArbolAsync();
+
+            foreach (var carpeta in Carpetas)
+            {
+                CerrarCarpetaRecursivamente(carpeta);
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = $"No fue posible cargar el Archivo Institucional: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private void CerrarCarpetaRecursivamente(ArchivoInstitucionalNodoDTO nodo)
+    {
+        nodo.IsExpanded = false;
+
+        if (nodo.Hijos == null)
+        {
+            return;
+        }
+
+        foreach (var hijo in nodo.Hijos)
+        {
+            if (hijo.EsCarpeta)
+            {
+                CerrarCarpetaRecursivamente(hijo);
+            }
+        }
+    }
+
+    private void ToggleFolder(ArchivoInstitucionalNodoDTO carpeta)
+    {
+        carpeta.IsExpanded = !carpeta.IsExpanded;
+    }
+
+    private void SeleccionarArchivo(ArchivoInstitucionalNodoDTO archivo)
+    {
+        if (archivo.EsCarpeta)
+        {
+            return;
+        }
+
+        ArchivoActual = archivo;
+    }
+
+    private string ObtenerUrlVisualizacion(ArchivoInstitucionalNodoDTO archivo)
+    {
+        if (archivo.IdBD == null)
+        {
+            return string.Empty;
+        }
+
+        return ArchivoInstitucionalService
+            .ObtenerUrlVisualizacion(archivo.IdBD.Value)
+            + "#toolbar=0&navpanes=0&scrollbar=1&view=FitH";
+    }
+
+    private IEnumerable<ArchivoInstitucionalNodoDTO> ObtenerArchivos(ArchivoInstitucionalNodoDTO carpeta)
+    {
+        if (carpeta.Hijos == null)
+        {
+            return Enumerable.Empty<ArchivoInstitucionalNodoDTO>();
+        }
+
+        return carpeta.Hijos.Where(x => !x.EsCarpeta);
+    }
+
+    private IEnumerable<ArchivoInstitucionalNodoDTO> ObtenerSubcarpetas(ArchivoInstitucionalNodoDTO carpeta)
+    {
+        if (carpeta.Hijos == null)
+        {
+            return Enumerable.Empty<ArchivoInstitucionalNodoDTO>();
+        }
+
+        return carpeta.Hijos.Where(x => x.EsCarpeta);
+    }
+
+    private RenderFragment RenderChildren(ArchivoInstitucionalNodoDTO carpeta)
+    {
+        return builder =>
+        {
+            int sequence = 0;
+
+            foreach (var archivo in ObtenerArchivos(carpeta))
+            {
+                var archivoLocal = archivo;
+
+                builder.OpenElement(sequence++, "div");
+                builder.AddAttribute(sequence++, "class", $"file-item {(ArchivoActual?.IdBD == archivoLocal.IdBD ? "selected" : "")}");
+                builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create(this, () => SeleccionarArchivo(archivoLocal)));
+                builder.AddAttribute(sequence++, "title", archivoLocal.Nombre);
+                builder.OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "file-icon");
+                builder.AddContent(sequence++, "📄");
+                builder.CloseElement();
+                builder.OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "text");
+                builder.AddContent(sequence++, archivoLocal.Nombre);
+                builder.CloseElement();
+
+                builder.CloseElement();
+            }
+
+            foreach (var subcarpeta in ObtenerSubcarpetas(carpeta))
+            {
+                var subcarpetaLocal = subcarpeta;
+
+                builder.OpenElement(sequence++, "div");
+                builder.AddAttribute(sequence++, "class", "subfolder");
+
+                builder.OpenElement(sequence++, "div");
+                builder.AddAttribute(sequence++, "class", "folder-item root-folder");
+                builder.AddAttribute(sequence++, "onclick", EventCallback.Factory.Create(this, () => ToggleFolder(subcarpetaLocal)));
+
+                builder.OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "arrow");
+                builder.AddContent(sequence++, subcarpetaLocal.IsExpanded ? "▼" : "▶");
+                builder.CloseElement();
+
+                builder.OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "folder-icon");
+                builder.AddContent(sequence++, "📁");
+                builder.CloseElement();
+
+                builder.OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "text");
+                builder.AddContent(sequence++, subcarpetaLocal.Nombre);
+                builder.CloseElement();
+
+                builder.CloseElement();
+
+                if (subcarpetaLocal.IsExpanded)
+                {
+                    builder.AddContent(sequence++, RenderChildren(subcarpetaLocal));
+                }
+
+                builder.CloseElement();
+            }
+        };
+    }
+}

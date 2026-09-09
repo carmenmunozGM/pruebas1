@@ -24,8 +24,6 @@ namespace pruebas1.Servicios
             this.httpClient = httpClient;
             _http = httpClient;
         }
-
-        // CREAR TAREA
         public async Task<bool> CrearTareaApi(TareaCreada tarea)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
@@ -41,7 +39,7 @@ namespace pruebas1.Servicios
                 fechaInicio = tarea.FechaInicio,
                 fechaFin = tarea.FechaFin,
                 esRecurrente = tarea.EsRecurrente,
-                reglaRecurrencia = tarea.ReglaRecurrencia,  // ya viene calculada desde el componente
+                reglaRecurrencia = tarea.ReglaRecurrencia, 
                 todoElDia = true,
                 idPrioridad = tarea.Prioridad,
                 idCreador = idCreador,
@@ -72,14 +70,10 @@ namespace pruebas1.Servicios
                 var usuario = loginService.obtenerUsuarioLogueado();
                 if (usuario == null || string.IsNullOrEmpty(usuario.Token))
                     return false;
-
-                // Header Authorization
                 httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", usuario.Token);
 
                 int idAgenda = evento.IdAgenda > 0 ? evento.IdAgenda : usuario.IdAgendasAsignadas.FirstOrDefault();
-
-                // Obtener IDs de participantes
                 var idsParticipantes = evento.ParticipantesSeleccionados != null && evento.ParticipantesSeleccionados.Any()
                     ? evento.ParticipantesSeleccionados
                     : (evento.ParticipantesLista?.Select(p => p.Id).ToList() ?? new List<int>());
@@ -93,11 +87,10 @@ namespace pruebas1.Servicios
                     fechaFin = (evento.FechaFin ?? DateTime.Now).ToString("yyyy-MM-ddTHH:mm:ss"),
                     esRecurrente = evento.EsRecurrente,
                     reglaRecurrencia = string.IsNullOrEmpty(evento.ReglaRecurrencia) ? null : evento.ReglaRecurrencia,
-                    // Ahora usamos la prioridad del usuario
                     idPrioridad = evento.Prioridad > 0 ? evento.Prioridad : 1,
                     idSala = evento.IdSala > 0 ? evento.IdSala : null as int?,
                     ubicacion = evento.Ubicacion ?? "",
-                    idsParticipantes = idsParticipantes // API espera este campo
+                    idsParticipantes = idsParticipantes 
                 };
 
                 var json = JsonSerializer.Serialize(dto);
@@ -124,8 +117,6 @@ namespace pruebas1.Servicios
             }
         }
 
-
-        // OBTENER AGENDA ASIGNADAS
         public async Task<List<int>> ObtenerAgendaAsignadasAsync()
         {
             var usuario = loginService.obtenerUsuarioLogueado();
@@ -206,11 +197,6 @@ namespace pruebas1.Servicios
                 return lista;
             }
         }
-
-
-
-        // PATCH
-        // ===== PATCH TAREA =====
         public async Task<bool> CambiarEstadoTareaAsync(int id, bool estado)
         {
             try
@@ -237,8 +223,6 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
-
-        // ===== PATCH SUBTAREA =====
         public async Task<bool> CambiarEstadoSubtareaAsync(int id, bool estado)
         {
             try
@@ -295,7 +279,6 @@ namespace pruebas1.Servicios
 
             return lista;
         }
-        //--- ESTE SERV ES PARA SALAS 
         public async Task<bool> SalaOcupadaAsync(int idSala, DateTime inicio, DateTime fin)
         {
             var query = new
@@ -309,7 +292,6 @@ namespace pruebas1.Servicios
                 query
             );
 
-            // Si el backend falla, NO permitas crear el evento
             if (!response.IsSuccessStatusCode)
                 throw new Exception("No se pudo validar la ocupación de la sala.");
 
@@ -321,9 +303,6 @@ namespace pruebas1.Servicios
             public bool Ocupada { get; set; }
             public string Origen { get; set; } = "";
         }
-
-
-        // ===== PATCH EVENTO =====
         public async Task<bool> CambiarEstadoEventoAsync(int id, bool estado)
         {
             try
@@ -350,9 +329,6 @@ namespace pruebas1.Servicios
                 return false;
             }
         }
-
-        // ===================== EDITAR =====================
-
         public async Task EditarEventoAsync(int id, EditAgendaItemModel model)
         {
             var usuario = loginService.obtenerUsuarioLogueado();
@@ -410,11 +386,9 @@ namespace pruebas1.Servicios
 
             await httpClient.DeleteAsync($"/eventos/{id}");
         }
-
-        // Corrección en AgendaService.cs
         public async Task EditarTareaAsync(int id, EditAgendaItemModel model)
         {
-            // ... headers ...
+      
             var dto = new
             {
                 // ... otros campos ...

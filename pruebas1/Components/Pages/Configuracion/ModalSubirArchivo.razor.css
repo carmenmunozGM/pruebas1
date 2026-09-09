@@ -17,7 +17,8 @@
     border-radius: 14px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* Se cambió overflow: hidden por visible para permitir desplegables flotantes */
+    overflow: visible;
     box-shadow: 0 18px 45px rgba(0,0,0,.25);
     animation: aparecer .18s ease-out;
     position: relative;
@@ -57,16 +58,19 @@
     color: #666;
     transition: .2s;
 }
+
 .swal2-container {
     z-index: 999999 !important;
 }
-    .btn-cerrar:hover {
-        color: #d32f2f;
-    }
+
+.btn-cerrar:hover {
+    color: #d32f2f;
+}
 
 .modal-body {
     padding: 22px;
-    overflow-y: auto;
+    /* Se permite overflow visible para desplegar opciones sobre el footer */
+    overflow: visible;
 }
 
     .modal-body h4 {
@@ -75,20 +79,89 @@
         font-size: 16px;
     }
 
-.combo-ruta {
+/* CUSTOM SELECT CON BUSCADOR */
+.custom-select-container {
+    position: relative;
     width: 100%;
-    padding: 10px 12px;
     margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid #d8d8d8;
-    font-size: 14px;
-    background: #fff;
-    outline: none;
 }
 
-    .combo-ruta:focus {
+.custom-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: border-color .2s;
+}
+
+    .custom-select-trigger:hover {
         border-color: #2d7ff9;
     }
+
+.custom-select-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 999999 !important;
+    background: #ffffff;
+    border: 1px solid #d8d8d8;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.search-box-inside {
+    padding: 8px 10px;
+    background: #f9fafb;
+    border-bottom: 1px solid #ececec;
+}
+
+.input-search-dropdown {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    outline: none;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+    .input-search-dropdown:focus {
+        border-color: #2d7ff9;
+    }
+
+.custom-select-options {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+    .custom-select-options li {
+        padding: 9px 14px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+        transition: background-color 0.15s;
+    }
+
+        .custom-select-options li:hover {
+            background-color: #f0f4f8;
+        }
+
+        .custom-select-options li.selected {
+            background-color: #e8f1fe;
+            color: #2d7ff9;
+            font-weight: 600;
+        }
 
 .campo {
     margin-top: 18px;
@@ -215,16 +288,19 @@
     font-weight: 600;
 }
 
-/* Scroll */
+/* Scroll para opciones e historial */
+.custom-select-options::-webkit-scrollbar,
 .modal-body::-webkit-scrollbar {
     width: 8px;
 }
 
+.custom-select-options::-webkit-scrollbar-thumb,
 .modal-body::-webkit-scrollbar-thumb {
     background: #c9c9c9;
     border-radius: 20px;
 }
 
+.custom-select-options::-webkit-scrollbar-track,
 .modal-body::-webkit-scrollbar-track {
     background: transparent;
 }
@@ -240,12 +316,41 @@
     border-color: #3d3d3d;
 }
 
-[data-theme="dark"] .combo-ruta,
+[data-theme="dark"] .custom-select-trigger,
 [data-theme="dark"] .input {
     background: #2d2f34;
     color: white;
     border-color: #555;
 }
+
+[data-theme="dark"] .custom-select-menu {
+    background: #202225;
+    border-color: #555;
+}
+
+[data-theme="dark"] .search-box-inside {
+    background: #2b2d31;
+    border-bottom-color: #444;
+}
+
+[data-theme="dark"] .input-search-dropdown {
+    background: #2d2f34;
+    color: white;
+    border-color: #555;
+}
+
+[data-theme="dark"] .custom-select-options li {
+    color: #ddd;
+}
+
+    [data-theme="dark"] .custom-select-options li:hover {
+        background-color: #2b2d31;
+    }
+
+    [data-theme="dark"] .custom-select-options li.selected {
+        background-color: #1e3a8a;
+        color: #93c5fd;
+    }
 
 [data-theme="dark"] .archivo-item {
     background: #2b2d31;

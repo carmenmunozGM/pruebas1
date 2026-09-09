@@ -27,28 +27,54 @@
                     @for (int i = 0; i < Niveles.Count; i++)
                     {
                         int indice = i;
+                        bool esUltimoNivel = (indice == Niveles.Count - 1);
+                        bool estaAbierto = DropdownAbiertoIndice == indice;
+                        string textoSeleccionado = ObtenerTextoSeleccionado(indice);
+                        var listaOpciones = ObtenerOpcionesFiltradas(indice);
 
-                        <select class="combo-ruta"
-                                @onchange="(e) => SeleccionarNivel(indice, e.Value?.ToString())">
-                            <option value="">
-                                Seleccione...
-                            </option>
+                        <div class="custom-select-container">
+                            <div class="custom-select-trigger" @onclick="() => ToggleDropdown(indice)">
+                                <span>@textoSeleccionado</span>
+                                <span class="arrow">▼</span>
+                            </div>
 
-                            @foreach (var item in Niveles[i])
+                            @if (estaAbierto)
                             {
-                                <option value="@item.Id"
-                                        selected="@(Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id)">
-                                    @($"{item.Codigo} - {item.Nombre}")
-                                </option>
-                            }
+                                <div class="custom-select-menu">
+                                    <div class="search-box-inside">
+                                        <input type="text"
+                                               class="input-search-dropdown"
+                                               placeholder="🔍 Buscar..."
+                                               @bind="TextoBusqueda"
+                                               @bind:event="oninput"
+                                               @onclick:stopPropagation />
+                                    </div>
+                                    <ul class="custom-select-options">
+                                        <li class="@(Seleccionados.Count <= indice && !CreandoNuevaCarpeta ? "selected" : "")"
+                                            @onclick='() => SeleccionarOpcion(indice, "", "Seleccione...")'>
+                                            Seleccione...
+                                        </li>
 
-                            @if (MostrarCrearCarpeta && indice == Niveles.Count - 1)
-                            {
-                                <option value="-1">
-                                    ➕ Crear nueva carpeta...
-                                </option>
+                                        @foreach (var item in listaOpciones)
+                                        {
+                                            bool esSeleccionado = Seleccionados.Count > indice && Seleccionados[indice]?.Id == item.Id && !CreandoNuevaCarpeta;
+                                            <li class="@(esSeleccionado ? "selected" : "")"
+                                                @onclick='() => SeleccionarOpcion(indice, item.Id.ToString(), $"{item.Codigo} - {item.Nombre}")'>
+                                                @($"{item.Codigo} - {item.Nombre}")
+                                            </li>
+                                        }
+
+                                        @if (MostrarCrearCarpeta && esUltimoNivel)
+                                        {
+                                            <li class="@(CreandoNuevaCarpeta ? "selected" : "")"
+                                                @onclick='() => SeleccionarOpcion(indice, "-1", "➕ Crear nueva carpeta...")'>
+                                                ➕ Crear nueva carpeta...
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
                             }
-                        </select>
+                        </div>
                     }
 
                     @if (CreandoNuevaCarpeta)
@@ -125,6 +151,76 @@
     </div>
 }
 
+<style>
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .custom-select-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        margin-top: 4px;
+    }
+
+    .search-box-inside {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .input-search-dropdown {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .custom-select-options {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: 180px;
+        overflow-y: auto;
+    }
+
+        .custom-select-options li {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            .custom-select-options li:hover {
+                background-color: #f0f4f8;
+            }
+
+            .custom-select-options li.selected {
+                background-color: #e2e8f0;
+                font-weight: bold;
+            }
+</style>
+
 @code
 {
     [Parameter]
@@ -137,6 +233,9 @@
     public EventCallback OnGuardado { get; set; }
 
     private bool Cargando;
+    private int? DropdownAbiertoIndice;
+    private string TextoBusqueda = string.Empty;
+
     private List<UbicacionDTO> Ubicaciones = new();
     private List<List<UbicacionDTO>> Niveles = new();
     private List<UbicacionDTO?> Seleccionados = new();
@@ -166,6 +265,55 @@
         Seleccionados.Clear();
         Niveles.Add(Ubicaciones);
         Cargando = false;
+    }
+
+    private void ToggleDropdown(int indice)
+    {
+        if (DropdownAbiertoIndice == indice)
+        {
+            DropdownAbiertoIndice = null;
+        }
+        else
+        {
+            DropdownAbiertoIndice = indice;
+            TextoBusqueda = string.Empty;
+        }
+    }
+
+    private List<UbicacionDTO> ObtenerOpcionesFiltradas(int nivel)
+    {
+        var listaBase = Niveles[nivel];
+        if (string.IsNullOrWhiteSpace(TextoBusqueda))
+            return listaBase;
+
+        return listaBase.Where(x =>
+            (x.Nombre != null && x.Nombre.Contains(TextoBusqueda, StringComparison.OrdinalIgnoreCase)) ||
+            (x.Codigo != null && x.Codigo.Contains(TextoBusqueda, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+    }
+
+    private string ObtenerTextoSeleccionado(int nivel)
+    {
+        if (CreandoNuevaCarpeta && nivel == Niveles.Count - 1)
+        {
+            return "➕ Crear nueva carpeta...";
+        }
+
+        if (Seleccionados.Count > nivel && Seleccionados[nivel] != null)
+        {
+            var item = Seleccionados[nivel]!;
+            return $"{item.Codigo} - {item.Nombre}";
+        }
+
+        return "Seleccione...";
+    }
+
+    private void SeleccionarOpcion(int nivel, string valor, string nombre)
+    {
+        DropdownAbiertoIndice = null;
+        TextoBusqueda = string.Empty;
+
+        SeleccionarNivel(nivel, valor);
     }
 
     private void SeleccionarNivel(int nivel, string? valor)
@@ -263,7 +411,6 @@
         }
         catch (IOException ex)
         {
-            // 🔥 REEMPLAZO 1: Alerta de error de IO
             await JS.InvokeVoidAsync("Swal.fire", new
             {
                 title = "Error al subir",
@@ -275,7 +422,6 @@
         }
         catch (Exception ex)
         {
-            // 🔥 REEMPLAZO 2: Alerta de error general
             await JS.InvokeVoidAsync("Swal.fire", new
             {
                 title = "Ocurrió un error",
@@ -304,6 +450,8 @@
         CarpetaSeleccionada = null;
         CreandoNuevaCarpeta = false;
         MostrarCrearCarpeta = false;
+        DropdownAbiertoIndice = null;
+        TextoBusqueda = string.Empty;
         GuardadoCorrectamente = false;
         Niveles.Clear();
         Seleccionados.Clear();
