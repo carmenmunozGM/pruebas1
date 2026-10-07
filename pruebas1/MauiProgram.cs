@@ -53,13 +53,14 @@ namespace pruebas1
             builder.Services.AddScoped<Updater>();
             builder.Services.AddScoped<StartupService>();
             builder.Services.AddScoped<ArchivoInstitucionalService>();
+            builder.Services.AddScoped<AdopcionAgendaService>();
             // HttpClient compartido
             builder.Services.AddScoped(sp =>
             {
                 return new HttpClient
                 {
-                BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
-                  //BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
+                //BaseAddress = new Uri("https://redgm.site:9096/") //SERVIDOR PRODUCCION
+                  BaseAddress = new Uri("http://localhost:5231/")     //LOCAL
                 //BaseAddress = new Uri("https://redgm.site:9097/")  //SERVIDOR PRUEBAS
                 };
             });

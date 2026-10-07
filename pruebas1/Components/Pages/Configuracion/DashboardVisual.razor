@@ -1,15 +1,20 @@
 ﻿@page "/dashboard"
+@using pruebas1.Servicios
+@using pruebas1.Components.DTOs
+@inject AreasService AreasService
+@inject EmpleadosService EmpleadosService
+@inject AdopcionAgendaService AdopcionAgendaService
 
 <div class="dashboard-shell">
     <div class="dashboard-content">
 
                 <div class="dashboard-heading">
                     <div>
-                        <div class="eyebrow">AGENDA · DASHBOARD</div>
-                        <h1>Vista general del despacho</h1>
-                        <p>Adopción, tareas, órdenes, autoevaluación y servicio al cliente en una sola lectura.</p>
+                        <div class="eyebrow">AGENDA GM </div>
+                <h1>DASHBOARD</h1>
+                        <p>Uso de la aplicación, tareas, órdenes, autoevaluación y servicio al cliente en una sola lectura.</p>
                     </div>
-                    <div class="period-chip">📅 @PeriodLabel</div>
+                    
                 </div>
 
                 <section class="dash-card filters-card">
@@ -24,45 +29,69 @@
                     <div class="filters-grid">
                         <label>
                             AÑO
-                            <select @bind="Year">
-                                <option value="2026">2026</option>
-                            </select>
+
+                    <select @bind="Year">
+                     
+                        @foreach (var year in Years)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
                         </label>
 
-                        <label>
-                            MES
-                            <select @bind="Month">
-                                @foreach (var m in Months)
-                                {
-                                    <option value="@m.Value">@m.Label</option>
-                                }
-                            </select>
-                        </label>
+
+                <label>
+                    PERIODO DESDE
+                    <select @bind="MonthFrom">
+                        <option value="">Selecciona mes</option>
+                        @foreach (var m in Months)
+                        {
+                            <option value="@m.Value">@m.Label</option>
+                        }
+                    </select>
+                </label>
+
+                <label>
+                    PERIODO HASTA
+                    <select @bind="MonthTo">
+                        <option value="">Selecciona mes</option>
+                        @foreach (var m in Months)
+                        {
+                            <option value="@m.Value">@m.Label</option>
+                        }
+                    </select>
+                </label>
 
                         <label>
                             ÁREA
-                            <select @bind="AreaFilter" @bind:after="AreaChanged">
-                                <option value="">Todo el despacho</option>
-                                @foreach (var area in Areas)
-                                {
-                                    <option value="@area.Id">@area.Name</option>
-                                }
-                            </select>
+                    <select @bind="AreaFilter" @bind:after="AreaChanged">
+                        <option value="">Todo el despacho</option>
+
+                        @foreach (var area in AreasFiltro)
+                        {
+                            <option value="@area.Clave">@area.Area</option>
+                        }
+                    </select>
                         </label>
 
                         <label>
                             PERSONA
                             <select @bind="PersonFilter">
                                 <option value="">Todas las personas</option>
-                                @foreach (var person in People.Where(p => string.IsNullOrWhiteSpace(AreaFilter) || p.AreaId == AreaFilter))
-                                {
-                                    <option value="@person.Name">@person.Name</option>
-                                }
+                        @foreach (var empleado in Empleados.Where(e =>
+                                                string.IsNullOrWhiteSpace(AreaFilter) ||
+                                                e.Area == AreasFiltro.FirstOrDefault(a => a.Clave.ToString() == AreaFilter)?.Area))
+                        {
+                            <option value="@empleado.Nombre">@empleado.Nombre</option>
+                        }
                             </select>
                         </label>
 
-                        <button class="btn-primary" @onclick="ApplyFilters">✓ Aplicar filtros</button>
-                        <button class="btn-secondary" @onclick="ClearFilters">↺ Limpiar</button>
+                <div class="filter-actions">
+                    <button class="btn-primary" @onclick="ApplyFilters">✓ Aplicar filtros</button>
+                    <button class="btn-secondary" @onclick="ClearFilters">↺ Limpiar</button>
+                </div>
+              
                     </div>
 
                     @if (!string.IsNullOrWhiteSpace(Active.Area) || !string.IsNullOrWhiteSpace(Active.Person))
@@ -77,43 +106,49 @@
 
                 <!-- 01 ADOPCIÓN -->
                 <section class="dash-section">
+
                     <div class="section-heading">
+
+                @if (CargandoAdopcion)
+                {
+                    <p class="muted">Cargando datos de Adopción de Agenda...</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(ErrorAdopcion))
+                {
+                    <p class="metric-detail red">@ErrorAdopcion</p>
+                }
                         <div class="section-number">01</div>
                         <div>
-                            <h2>👥 Adopción de Agenda</h2>
-                            <p>Primero medimos si la herramienta realmente se usa. Después bajamos a área y persona.</p>
+                            <h2>👥 Uso de la agenda gm</h2>
+                    <p>Total de ingresos y usuarios activos para comprobar si la plataforma realmente se utiliza.</p>
                         </div>
                     </div>
 
                     <div class="metric-grid adoption-grid">
                         <div class="dash-card adoption-card">
-                            <div class="donut" style="@DonutStyle(Adoption, "#6366c1")">
-                                <div class="donut-inner">@Adoption%</div>
+                    <div class="donut" style="@DonutStyle((int)Math.Round(AdopcionDatos.PorcentajeAdopcion), "#6366c1")">
+                        <div class="donut-inner">@AdopcionDatos.PorcentajeAdopcion.ToString("F1")%</div>
                             </div>
                             <div>
                                 <div class="metric-label">Adopción</div>
-                                <div class="metric-big">@ActiveUsers de @TotalPeople</div>
+                        <div class="metric-big">@AdopcionDatos.EmpleadosConActividad de @AdopcionDatos.TotalEmpleados</div>
                                 <div class="metric-detail purple">empleados con actividad</div>
                             </div>
                         </div>
 
                         <div class="metric-card">
                             <div class="metric-label">🟢 Con actividad</div>
-                            <div class="metric-value">@ActiveUsers</div>
+                    <div class="metric-value">@AdopcionDatos.EmpleadosConActividad</div>
                             <div class="metric-detail green">usan Agenda</div>
                         </div>
 
                         <div class="metric-card">
                             <div class="metric-label">⚪ Sin actividad</div>
-                            <div class="metric-value">@(TotalPeople - ActiveUsers)</div>
+                    <div class="metric-value">@AdopcionDatos.EmpleadosSinActividad</div>
                             <div class="metric-detail red">sin registro</div>
                         </div>
 
-                        <div class="metric-card">
-                            <div class="metric-label">📆 Actividad registrada</div>
-                            <div class="metric-value">@TotalAgenda</div>
-                            <div class="metric-detail purple">eventos / agenda</div>
-                        </div>
                     </div>
 
                     <div class="two-columns">
@@ -123,18 +158,27 @@
                                 <div><h3>Adopción por área</h3><p>Porcentaje de personas con actividad.</p></div>
                             </div>
 
-                            <div class="horizontal-bars">
-                                @foreach (var area in AreaRows)
-                                {
-                                    <div class="hbar-row">
-                                        <span>@area.Short</span>
-                                        <div class="bar-track">
-                                            <div class="bar-fill" style="@BarStyle(area.Adoption, area.Color)"></div>
-                                        </div>
-                                        <b>@area.Adoption%</b>
+
+                    <div class="horizontal-bars">
+                        @foreach (var area in AdopcionDatos.Areas)
+                        {
+                            var color = Areas.FirstOrDefault(a =>
+                            a.Name == area.Area || a.Short == area.Area)?.Color ?? "#7f83d9";
+
+                            var nombreCorto = Areas.FirstOrDefault(a =>
+                            a.Name == area.Area || a.Short == area.Area)?.Short ?? area.Area;
+
+                            <div class="hbar-row">
+                                <span>@nombreCorto</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill"
+                                         style="@BarStyle(area.PorcentajeAdopcion, color)">
                                     </div>
-                                }
+                                </div>
+                                <b>@area.PorcentajeAdopcion.ToString("F1")%</b>
                             </div>
+                        }
+                    </div>
                         </div>
 
                         <div class="dash-card chart-card">
@@ -143,47 +187,52 @@
                                 <div><h3>Tendencia de uso</h3><p>Evolución mensual de adopción.</p></div>
                             </div>
 
-                            <div class="trend-chart">
-                                @foreach (var item in AdoptionTrend.Select((value, index) => new { value, index }))
-                                {
-                                    <div class="trend-point" style="@TrendPointStyle(item.value)">
-                                        <span>@item.value%</span>
-                                    </div>
-                                }
+
+                    <div class="trend-chart">
+                        @foreach (var item in AdopcionDatos.TendenciaMensual)
+                        {
+                            var porcentaje = (int)Math.Round(item.PorcentajeAdopcion);
+
+                            <div class="trend-point" style="@TrendPointStyle(porcentaje)">
+                                <span>@porcentaje%</span>
                             </div>
-                            <div class="trend-labels">
-                                @foreach (var m in DashMonths)
-                                {
-                                    <span>@m</span>
-                                }
-                            </div>
+                        }
+                    </div>
+
+                    <div class="trend-labels">
+                        @foreach (var item in AdopcionDatos.TendenciaMensual)
+                        {
+                            <span>@item.NombreMes</span>
+                        }
+                    </div>
                         </div>
                     </div>
 
                     <div class="dash-card table-card">
                         <div class="table-header">
                             <div><h3>🧑‍💼 Uso individual</h3><p>Quién entra a la Agenda y quién no.</p></div>
-                            <span class="small-badge">@TotalPeople personas</span>
+                    <span class="small-badge">    @AdopcionDatos.Empleados.Count personas</span>
                         </div>
                         <div class="table-scroll">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Empleado</th><th>Área</th><th>Agenda</th><th>Tareas</th><th>Actividades cliente</th>
+                                        <th>Empleado</th><th>Área</th><th>Días</th><th>Ultima Fecha</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    @foreach (var p in PeopleRows)
-                                    {
-                                        <tr>
-                                            <td>@p.Name</td>
-                                            <td>@AreaShort(p.AreaId)</td>
-                                            <td>@p.Agenda</td>
-                                            <td>@p.Tasks</td>
-                                            <td>@p.ClientActivities</td>
-                                        </tr>
-                                    }
-                                </tbody>
+
+                        <tbody>
+                            @foreach (var p in AdopcionDatos.Empleados)
+                            {
+                                <tr>
+                                    <td>@p.Nombre</td>
+                                    <td>@p.Area</td>
+                                    <td>@p.AccesosRegistrados</td>
+                                    <td>@(p.UltimoAcceso?.ToString("dd/MM/yyyy") ?? "Sin registro")</td>
+                                    
+                                </tr>
+                            }
+                        </tbody>
                             </table>
                         </div>
                     </div>
@@ -193,7 +242,7 @@
                 <section class="dash-section">
                     <div class="section-heading">
                         <div class="section-number">02</div>
-                        <div><h2>📝 Tareas</h2><p>Carga, cumplimiento de fecha y retraso. La lectura sigue despacho → área → empleado.</p></div>
+                        <div><h2>📝 Bloque de Tareas</h2><p>Carga, cumplimiento de fecha y retraso. La lectura sigue despacho → área → empleado.</p></div>
                     </div>
 
                     <div class="metric-grid four">
@@ -266,7 +315,7 @@
                 <section class="dash-section">
                     <div class="section-heading">
                         <div class="section-number">03</div>
-                        <div><h2>📑 Órdenes de trabajo</h2><p>No solo cuántas están vencidas: antigüedad, acumulación, recuperación y detalle individual.</p></div>
+                        <div><h2>📑Bloque de Órdenes de trabajo</h2><p>No solo cuántas están vencidas: antigüedad, acumulación, recuperación y detalle individual.</p></div>
                     </div>
 
                     <div class="metric-grid five">
@@ -345,7 +394,7 @@
                 <section class="dash-section">
                     <div class="section-heading">
                         <div class="section-number">04</div>
-                        <div><h2>📋 Autoevaluación</h2><p>Separamos tres cosas: cobertura del registro, cumplimiento de actividades y consistencia entre periodos.</p></div>
+                        <div><h2>📋Bloque de Autoevaluación</h2><p>Separamos tres cosas: cobertura del registro, cumplimiento de actividades y consistencia entre periodos.</p></div>
                     </div>
 
                     <div class="metric-grid ae-grid">
@@ -357,33 +406,16 @@
                         <div class="metric-card"><div class="metric-label">⚪ No registraron</div><div class="metric-value">@AeNotRegistered</div></div>
                         <div class="metric-card"><div class="metric-label">📈 Cumplimiento</div><div class="metric-value">@AeCompliance%</div><div class="metric-detail purple">actividades declaradas</div></div>
                     </div>
-
-                    <div class="dash-card table-card">
-                        <div class="table-header"><div><h3>🏢 Autoevaluación por área</h3><p>Personas registradas y nivel de cumplimiento.</p></div></div>
-                        <div class="table-scroll">
-                            <table>
-                                <thead><tr><th>Área</th><th>Personas</th><th>Registraron</th><th>Cobertura</th><th>Cumplimiento</th></tr></thead>
-                                <tbody>
-                                    @foreach (var a in AreaRows)
-                                    {
-                                        var average = a.People == 0 ? 0 : (int)Math.Round(People.Where(p => p.AreaId == a.Id).Select(p => p.Index).DefaultIfEmpty().Average());
-                                        <tr><td>@a.Short</td><td>@a.People</td><td>@a.Active</td><td>@Percent(a.Active,a.People)%</td><td>@average%</td></tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
                     <div class="dash-card table-card table-gap">
                         <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Registro y cumplimiento de autoevaluación por empleado.</p></div><span class="small-badge">@PeopleRows.Count() personas</span></div>
                         <div class="table-scroll">
                             <table>
-                                <thead><tr><th>Empleado</th><th>Área</th><th>Registro</th><th>Esperadas</th><th>Realizadas</th><th>Cumplimiento</th></tr></thead>
+                                <thead><tr><th>Empleado</th><th>Área</th><th>Cumplimiento</th></tr></thead>
                                 <tbody>
                                     @foreach (var p in PeopleRows)
                                     {
                                         var realized = (int)Math.Round(10 * p.Index / 100.0);
-                                        <tr><td>@p.Name</td><td>@AreaShort(p.AreaId)</td><td><span class="pill @(p.Active ? "pill-green" : "pill-red")">@(p.Active ? "Registrada" : "Pendiente")</span></td><td>10</td><td>@realized</td><td>@p.Index%</td></tr>
+                                        <tr><td>@p.Name</td><td>@AreaShort(p.AreaId)</td><td>@p.Index%</td></tr>
                                     }
                                 </tbody>
                             </table>
@@ -395,7 +427,7 @@
                 <section class="dash-section">
                     <div class="section-heading">
                         <div class="section-number">05</div>
-                        <div><h2>🤝 Servicio al cliente</h2><p>Horas planeadas contra reales, servicios, actividades y reprogramaciones.</p></div>
+                        <div><h2>🤝 Bloque de Servicio al cliente</h2><p>Horas planeadas contra reales, servicios, actividades y reprogramaciones.</p></div>
                     </div>
 
                     <div class="metric-grid four">
@@ -470,24 +502,24 @@
     </div>
 
 @code {
+
+
+
     private string Year { get; set; } = "2026";
-    private string Month { get; set; } = "08";
+    private string MonthFrom { get; set; } = "";
+    private string MonthTo { get; set; } = "";
     private string AreaFilter { get; set; } = "";
     private string PersonFilter { get; set; } = "";
-
-    private FilterState Active { get; set; } = new("2026", "08", "", "");
-
-    private readonly List<AreaModel> Areas =
-    [
-        new("CON","Asesoría Contable","Contable","#2563eb"),
-        new("LEG","Asesoría Legal","Legal","#7c3aed"),
-        new("AUD","Auditoría","Auditoría","#0891b2"),
-        new("TI","Tecnologías de Información","TI","#f59e0b"),
-        new("FIS","Asesoría Fiscal","Fiscal","#0f766e"),
-        new("RH","Recursos Humanos","RH","#db2777"),
-        new("ADM","Administración","Administración","#64748b"),
-        new("DIR","Dirección","Dirección","#dc2626")
-    ];
+    private List<AreaDTO> AreasFiltro { get; set; } = [];
+    private List<int> Years { get; } =
+    Enumerable.Range(2026, 10).ToList();
+    private List<EmpleadoDTO> Empleados { get; set; } = [];
+    private AdopcionAgendaDTO AdopcionDatos { get; set; } = new();
+    private bool CargandoAdopcion { get; set; }
+    private string ErrorAdopcion { get; set; } = "";
+    private FilterState Active { get; set; } =
+      new("2026", "08", "08", "", "");
+    
 
     private readonly List<PersonModel> People =
     [
@@ -580,10 +612,20 @@
     private readonly int[] AdoptionTrend = [71,75,78,80,84,80];
 
     private readonly List<MonthItem> Months =
-    [
-        new("03","Marzo"), new("04","Abril"), new("05","Mayo"),
-        new("06","Junio"), new("07","Julio"), new("08","Agosto")
-    ];
+  [
+      new("01", "Enero"),
+    new("02", "Febrero"),
+    new("03", "Marzo"),
+    new("04", "Abril"),
+    new("05", "Mayo"),
+    new("06", "Junio"),
+    new("07", "Julio"),
+    new("08", "Agosto"),
+    new("09", "Septiembre"),
+    new("10", "Octubre"),
+    new("11", "Noviembre"),
+    new("12", "Diciembre")
+  ];
 
 
     private PersonModel? SelectedPerson => People.FirstOrDefault(p => p.Name == Active.Person);
@@ -654,9 +696,19 @@
     private IEnumerable<ClientArea> FilteredClientAreas =>
         ClientAreas.Where(a => string.IsNullOrWhiteSpace(Active.Area) || a.Name == AreaShort(Active.Area));
 
-    private string PeriodLabel =>
-        $"{Months.FirstOrDefault(m => m.Value == Active.Month)?.Label ?? "Agosto"} {Active.Year}";
+    private string PeriodLabel
+    {
+        get
+        {
+            var desde = Months.FirstOrDefault(m => m.Value == Active.MonthFrom)?.Label ?? "Agosto";
+            var hasta = Months.FirstOrDefault(m => m.Value == Active.MonthTo)?.Label ?? "Agosto";
 
+            if (Active.MonthFrom == Active.MonthTo)
+                return $"{desde} {Active.Year}";
+
+            return $"{desde} - {hasta} {Active.Year}";
+        }
+    }
     private int Scoped(int value) => (int)Math.Round(value * ScopeFactor);
 
     private string AreaShort(string id) => Areas.FirstOrDefault(a => a.Id == id)?.Short ?? id;
@@ -672,7 +724,65 @@
         var b = TaskTotal == 0 ? a : a + TaskPending*100.0/TaskTotal;
         return $"background:conic-gradient(#7f83d9 0 {a:F1}%,#e0ad68 {a:F1}% {b:F1}%,#d98d8d {b:F1}% 100%)";
     }
+    protected override async Task OnInitializedAsync()
+    {
+        AreasFiltro = await AreasService.GetAreas();
 
+        Empleados = await EmpleadosService.GetEmpleados();
+        await CargarAdopcionAsync(
+    Year, MonthFrom, MonthTo, AreaFilter, PersonFilter);
+    }
+
+    private async Task CargarAdopcionAsync(
+        string year,
+        string monthFrom,
+        string monthTo,
+        string areaFilter,
+        string personFilter)
+    {
+        CargandoAdopcion = true;
+        ErrorAdopcion = "";
+
+        try
+        {
+            int anio = int.Parse(year);
+            int mesDesde = string.IsNullOrWhiteSpace(monthFrom)
+                ? 1
+                : int.Parse(monthFrom);
+            int mesHasta = string.IsNullOrWhiteSpace(monthTo)
+                ? 12
+                : int.Parse(monthTo);
+
+            if (mesDesde < 1 || mesHasta > 12 || mesDesde > mesHasta)
+            {
+                ErrorAdopcion = "Selecciona un rango de meses válido.";
+                return;
+            }
+
+            string? nombreArea = null;
+
+            if (!string.IsNullOrWhiteSpace(areaFilter))
+            {
+                nombreArea = AreasFiltro.FirstOrDefault(
+                    a => a.Clave.ToString() == areaFilter)?.Area;
+            }
+
+            AdopcionDatos = await AdopcionAgendaService.ObtenerAdopcionAsync(
+                anio,
+                mesDesde,
+                mesHasta,
+                nombreArea,
+                string.IsNullOrWhiteSpace(personFilter) ? null : personFilter);
+        }
+        catch (Exception)
+        {
+            ErrorAdopcion = "No se pudieron cargar los datos de Adopción de Agenda.";
+        }
+        finally
+        {
+            CargandoAdopcion = false;
+        }
+    }
     private static string BarStyle(double value,string color) =>
         $"width:{Math.Clamp(value,0,100):F0}%;background:{color};";
 
@@ -695,24 +805,52 @@
         SelectedPerson != null ? Math.Max(0,(int)Math.Round(value*.12)) :
         Active.Area != "" ? Scoped(value) : value;
 
-    private void ApplyFilters()
+
+    private async Task ApplyFilters()
     {
-        Active = new FilterState(Year,Month,AreaFilter,PersonFilter);
+        Active = new FilterState(
+            Year, MonthFrom, MonthTo, AreaFilter, PersonFilter);
+
+        await CargarAdopcionAsync(
+            Active.Year,
+            Active.MonthFrom,
+            Active.MonthTo,
+            Active.Area,
+            Active.Person);
     }
 
-    private void ClearFilters()
+    private async Task ClearFilters()
     {
         Year = "2026";
-        Month = "08";
+        MonthFrom = "";
+        MonthTo = "";
         AreaFilter = "";
         PersonFilter = "";
-        Active = new FilterState("2026","08","","");
-    }
 
+        Active = new FilterState("2026", "", "", "", "");
+
+        await CargarAdopcionAsync(
+            Active.Year,
+            Active.MonthFrom,
+            Active.MonthTo,
+            Active.Area,
+            Active.Person);
+    }
     private void AreaChanged()
     {
         PersonFilter = "";
     }
+    private readonly List<AreaModel> Areas =
+[
+    new("CON","Asesoría Contable","Contable","#2563eb"),
+    new("LEG","Asesoría Legal","Legal","#7c3aed"),
+    new("AUD","Auditoría","Auditoría","#0891b2"),
+    new("TI","Tecnologías de Información","TI","#f59e0b"),
+    new("FIS","Asesoría Fiscal","Fiscal","#0f766e"),
+    new("RH","Recursos Humanos","RH","#db2777"),
+    new("ADM","Administración","Administración","#64748b"),
+    new("DIR","Dirección","Dirección","#dc2626")
+];
 
     private record AreaModel(string Id,string Name,string Short,string Color);
     private record PersonModel(string Name,string AreaId,bool Active,int Agenda,int Tasks,int ClientActivities,int Index);
@@ -728,6 +866,12 @@
     private record BacklogItem(string Month,int Value);
     private record MonthItem(string Value,string Label);
     private record NavItem(string Icon,string Label,bool Active=false);
-    private record FilterState(string Year,string Month,string Area,string Person);
+    private record FilterState(
+     string Year,
+     string MonthFrom,
+     string MonthTo,
+     string Area,
+     string Person
+ );
     private record AreaRow(string Id,string Name,string Short,string Color,int People,int Active,int Adoption);
 }

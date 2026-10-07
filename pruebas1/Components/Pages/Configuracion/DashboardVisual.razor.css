@@ -167,7 +167,8 @@
 
 .dashboard-heading {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    text-align: center;
     align-items: flex-end;
     gap: 16px;
     margin-bottom: 18px;
@@ -185,12 +186,15 @@
 .dashboard-heading h1 {
     margin: 0;
     font-size: 26px;
+    text-align: center;
     line-height: 1.15;
     font-weight: 850;
 }
 
 .dashboard-heading p {
     margin: 6px 0 0;
+    text-align: center;
+
     color: #7b8494;
     font-size: 12px;
 }
@@ -301,7 +305,9 @@
 
 .section-heading {
     display: flex;
-    align-items: flex-start;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     gap: 12px;
     margin-bottom: 14px;
 }
@@ -321,6 +327,7 @@
 
 .section-heading h2 {
     margin: 0;
+    text-align: center;
     font-size: 18px;
     font-weight: 800;
 }
@@ -328,8 +335,10 @@
 .section-heading p {
     margin: 4px 0 0;
     color: #718096;
+    text-align: center;
     font-size: 12px;
 }
+
 
 .metric-grid {
     display: grid;
@@ -471,6 +480,7 @@
         color: #172033;
         font-size: 13px;
         font-weight: 850;
+      
     }
 
     .chart-title p,
@@ -696,7 +706,10 @@ tbody tr:hover {
         color: #64748b;
         font-size: 11px;
     }
-
+.dashboard-heading > div {
+    width: 100%;
+    text-align: center;
+}
 .legend-dot {
     display: inline-block;
     width: 9px;
@@ -1015,4 +1028,9 @@ tbody tr:hover {
     .table-scroll {
         max-height: 350px;
     }
+}
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }

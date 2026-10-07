@@ -16,7 +16,11 @@ namespace pruebas1.Servicios
         {
             _http = http;
         }
-
+        public async Task<List<EmpleadoDTO>> GetEmpleados()
+        {
+            var empleados = await _http.GetFromJsonAsync<List<EmpleadoDTO>>("/empleado");
+            return empleados ?? new List<EmpleadoDTO>();
+        }
         public async Task<List<EmpleadoDTO>> GetPendientes()
         {
             var respuesta = await _http.GetFromJsonAsync<List<EmpleadoDTO>>(
