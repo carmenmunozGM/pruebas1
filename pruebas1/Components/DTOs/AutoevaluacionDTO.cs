@@ -6,19 +6,17 @@ using System.Threading.Tasks;
 
 namespace pruebas1.Components.DTOs
 {
-    // DTO que viene del backend para mostrar en pantalla
     public class AutoevaluacionDTO
     {
         public string Bloque { get; set; } = "";
         public List<TareaAutoDTO> Tareas { get; set; } = new();
     }
 
-    // archivo: pruebas1.Components.DTOs (añadir o modificar)
 
     public class RegistroGeneradoDTO
     {
         public int IdRegistro { get; set; }
-        public DateOnly Fecha { get; set; }        // coincide con lo que envía el backend
+        public DateOnly Fecha { get; set; }        
         public bool Realizado { get; set; }
     }
 
@@ -29,10 +27,8 @@ namespace pruebas1.Components.DTOs
         public string Periodicidad { get; set; } = "";
         public string Programado { get; set; } = "";
 
-        // ✅ NUEVO: lista de registros (uno por fecha) tal como lo devuelve el backend
         public List<RegistroGeneradoDTO> Registros { get; set; } = new();
 
-        // 👍 Helper: fecha real programada (primera fecha si existe)
         public DateOnly? FechaProgramadaReal =>
             Registros != null && Registros.Count > 0 ? Registros.First().Fecha : (DateOnly?)null;
     }
