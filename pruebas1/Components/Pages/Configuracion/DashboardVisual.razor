@@ -7,6 +7,7 @@
 @inject TotalTareasService TotalTareasService
 @inject TareasDuracionService TareasDuracionService
 @inject AutoevaluacionService AutoevaluacionService
+@inject DashboardOrdenesService DashboardService
 
 @using APIProyectoSPEC.DTOs
 
@@ -79,13 +80,27 @@
                     </select>
                 </label>
 
-                <label>
+              @*   <label>
                     PERSONA
                     <select @bind="PersonFilter">
                         <option value="">Todas las personas</option>
                         @foreach (var empleado in Empleados.Where(e =>
                                                 string.IsNullOrWhiteSpace(AreaFilter) ||
                                                 e.Area == AreasFiltro.FirstOrDefault(a => a.Clave.ToString() == AreaFilter)?.Area))
+                        {
+                            <option value="@empleado.Nombre">@empleado.Nombre</option>
+                        }
+                    </select>
+                </label> *@
+                <label>
+                    PERSONA
+                    <select @bind="PersonFilter">
+                        <option value="">Todas las personas</option>
+
+                        @foreach (var empleado in Empleados.Where(e =>
+                                                string.IsNullOrWhiteSpace(AreaFilter) ||
+                                                e.Area == AreasFiltro.FirstOrDefault(a =>
+                                                a.Clave.ToString() == AreaFilter)?.Area))
                         {
                             <option value="@empleado.Nombre">@empleado.Nombre</option>
                         }
@@ -377,84 +392,125 @@
         </section>
 
         <!-- 03 ORDENES -->
+        <!-- 03 ORDENES -->
+        <!-- 03 ORDENES -->
         <section class="dash-section">
             <div class="section-heading">
                 <div class="section-number">03</div>
-                <div><h2>📑Bloque de Órdenes de trabajo</h2><p>No solo cuántas están vencidas: antigüedad, acumulación, recuperación y detalle individual.</p></div>
+                <div><h2>📑 Bloque de Órdenes de trabajo y Trámites</h2><p>Métricas unificadas del despacho (Año 2026).</p></div>
             </div>
 
+            <!-- CUADRÍCULA DE MÉTRICAS -->
             <div class="metric-grid five">
-                <div class="metric-card"><div class="metric-label">📦 Total</div><div class="metric-value">@OrderTotal</div></div>
-                <div class="metric-card"><div class="metric-label">🔴 Vencidas</div><div class="metric-value">@OrderOverdue</div><div class="metric-detail red">requieren seguimiento</div></div>
-                <div class="metric-card"><div class="metric-label">🟠 Próximas</div><div class="metric-value">@OrderUpcoming</div><div class="metric-detail orange">por vencer</div></div>
-                <div class="metric-card"><div class="metric-label">📅 Hoy</div><div class="metric-value">@OrderToday</div><div class="metric-detail orange">atención inmediata</div></div>
-
+                <div class="metric-card"><div class="metric-label">📦 Total</div><div class="metric-value">@DashboardData.Total</div></div>
+                <div class="metric-card"><div class="metric-label">🔴 Vencidas</div><div class="metric-value">@DashboardData.Vencidas</div><div class="metric-detail red">requieren seguimiento</div></div>
+                <div class="metric-card"><div class="metric-label">🟠 Próximas</div><div class="metric-value">@DashboardData.Proximas</div><div class="metric-detail orange">por vencer</div></div>
+                <div class="metric-card"><div class="metric-label">📅 Hoy</div><div class="metric-value">@DashboardData.Hoy</div><div class="metric-detail orange">atención inmediata</div></div>
+                <div class="metric-card"><div class="metric-label">⏳ Pendientes Aceptar</div><div class="metric-value">@DashboardData.PendientesAceptarTerminacion</div><div class="metric-detail">por cerrar orden</div></div>
             </div>
 
+            <!-- GRÁFICAS -->
             <div class="two-columns">
+                <!-- Gráfica 1: Días de las órdenes vencidas (Renderizado de barras en px garantizado) -->
                 <div class="dash-card chart-card">
-                    <div class="chart-title"><span>⏳</span><div><h3>Días de las órdenes vencidas</h3><p>Distribución de antigüedad.</p></div></div>
-                    <div class="column-chart">
-                        @foreach (var item in Aging)
+                    <div class="chart-title"><span>⏳</span><div><h3>Días de las órdenes vencidas</h3><p>Distribución por rangos de días hábiles.</p></div></div>
+                    <div class="column-chart" style="display: flex; gap: 12px; align-items: flex-end; height: 180px; padding-top: 25px;">
+                        @{
+                            var resRangos = RangosAtrasoCalculados;
+                        }
+                        @foreach (var item in resRangos.Lista)
                         {
-                            var value = ScopedOrderValue(item.Value);
-                            <div class="column-item">
-                                <div class="column-value">@value</div>
-                                <div class="column-bar-area"><div class="column-bar" style="@ColumnStyle(value)"></div></div>
-                                <span>@item.Label</span>
+                            int alturaPx = (int)Math.Round((item.Valor / (double)resRangos.Maximo) * 110);
+                            if (item.Valor > 0 && alturaPx < 8) alturaPx = 8; // Altura mínima para que siempre sea visible
+
+                            <div class="column-item" style="flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                                <div class="column-value" style="font-weight: bold; font-size: 13px; margin-bottom: 4px;">@item.Valor <span style="font-size:10px; color:#6b7280;">(@item.Porcentaje%)</span></div>
+                                <div class="column-bar-area" style="width: 100%; height: 110px; display: flex; align-items: flex-end; justify-content: center; background: #f3f4f6; border-radius: 4px; padding: 2px;">
+                                    <div class="column-bar" style="width: 80%; height: @(alturaPx)px; background: #3b82f6; border-radius: 3px;"></div>
+                                </div>
+                                <span style="font-size: 11px; margin-top: 6px; font-weight: 600;">@item.Rango</span>
                             </div>
                         }
                     </div>
                 </div>
 
+                <!-- Gráfica 2: Histórico por mes (Enero - Diciembre) -->
                 <div class="dash-card chart-card">
-                    <div class="chart-title"><span>📈</span><div><h3>Histórico por mes / vencidas</h3><p>Órdenes vencidas acumuladas por periodo.</p></div></div>
-                    <div class="backlog-chart">
-                        @foreach (var item in Backlog)
+                    <div class="chart-title"><span>📈</span><div><h3>Histórico por mes (Enero - Diciembre)</h3><p>Órdenes vencidas acumuladas por cada mes del año.</p></div></div>
+                    <div class="backlog-chart" style="display: flex; gap: 4px; align-items: flex-end; height: 180px; padding-top: 25px;">
+                        @foreach (var item in HistoricoMensualCalculado)
                         {
-                            var value = ScopedOrderValue(item.Value);
-                            <div class="backlog-column">
-                                <b>@value</b>
-                                <div class="backlog-bar" style="@HeightStyle(value, 44)"></div>
-                                <span>@item.Month</span>
+                            <div class="backlog-column" style="flex: 1; text-align: center;">
+                                <b style="font-size: 10px;">@item.Cantidad</b>
+                                <div class="backlog-bar" style="background: #3b82f6; width: 100%; height:@(item.Cantidad * 2.5 > 110 ? 110 : item.Cantidad * 2.5)px; min-height: @(item.Cantidad > 0 ? "6px" : "2px"); border-radius: 2px;"></div>
+                                <span style="font-size: 9px; display: block; margin-top: 4px; font-weight: 600;">@item.Mes</span>
                             </div>
                         }
                     </div>
-                    <div class="last-period"><span>Último periodo</span><b>@ScopedOrderValue(44) vencidas</b></div>
                 </div>
             </div>
 
+            <!-- TABLA 1: COMPARACIÓN POR ÁREA -->
             <div class="dash-card table-card table-gap">
-                <div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Volumen, vencimientos y carga histórica por área.</p></div></div>
+                <div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Volumen de órdenes por área oficial del despacho.</p></div></div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Área</th><th>Total</th><th>Atendidas</th><th>Próximas</th><th>Vencidas</th><th>Hoy</th><th>Vencidas +90d</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Área</th>
+                                <th>Vencidas</th>
+                                <th>Próximas</th>
+                                <th>Hoy</th>
+                                <th>Pendientes por aceptar terminación</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            @foreach (var a in FilteredOrderAreas)
+                            @foreach (var a in TablaAreasCalculada)
                             {
-                                <tr><td>@a.Name</td><td>@a.Total</td><td>@a.Attended</td><td>@a.Upcoming</td><td>@a.Overdue</td><td>@a.Today</td><td>@(string.IsNullOrWhiteSpace(Active.Area) ? 1 : Math.Max(0, (int)Math.Round(3 * ScopeFactor)))</td></tr>
+                                <tr>
+                                    <td><b>@a.Area</b></td>
+                                    <td><span class="pill" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 12px; font-weight: bold;">@a.Vencidas</span></td>
+                                    <td>@a.Proximas</td>
+                                    <td>@a.Hoy</td>
+                                    <td>@a.PendientesAceptar</td>
+                                </tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- TABLA 2: ANÁLISIS INDIVIDUAL POR EMPLEADO -->
             <div class="dash-card table-card table-gap">
-                <div class="table-header"><div><h3>👤 Análisis individual</h3><p>Vencidas, atraso promedio, máxima antigüedad y recuperación por empleado.</p></div><span class="small-badge">@PeopleRows.Count() personas</span></div>
+                <div class="table-header">
+                    <div><h3>👤 Análisis individual por empleado</h3><p>Desglose de órdenes vencidas y días hábiles totales de atraso.</p></div>
+                    <span class="small-badge" style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">@TablaEmpleadosCalculada.Count() empleados con atrasos</span>
+                </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Empleado</th><th>Área</th><th>Vencidas</th><th>Atraso promedio</th><th>Máximo atraso</th><th>Recuperadas</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Nombre Empleado</th>
+                                <th>Área</th>
+                                <th>Órdenes Vencidas</th>
+                                <th>Días hábiles totales de atraso</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            @foreach (var p in FilteredOrderPeople)
+                            @foreach (var p in TablaEmpleadosCalculada)
                             {
-                                <tr><td>@p.Name</td><td>@p.Area</td><td>@p.Overdue</td><td>@p.Avg días</td><td><span class="pill" style="color:@OldColor(p.Max);background:@OldBackground(p.Max)">@p.Max días</span></td><td>@p.Recovered</td></tr>
+                                <tr>
+                                    <td><b>@p.Empleado</b></td>
+                                    <td>@p.Area</td>
+                                    <td><span class="pill" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 12px; font-weight: bold;">@p.OrdenesVencidas</span></td>
+                                    <td><span class="pill" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 12px; font-weight: bold;">@p.DiasHabilesAtrasoTotal días</span></td>
+                                </tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
-
         <!-- 04 AUTOEVALUACION -->
         <section class="dash-section">
         <div class="section-heading">
@@ -599,6 +655,7 @@
     private static string NormRed(string? s) =>
     Norm((s ?? "").Split('\\').Last());
     private Dictionary<int, AdopcionEmpleadoDTO> AdopcionPorId = new();
+    private DashboardOrdenTrabajoDTO DashboardData { get; set; } = new();
 
     private Dictionary<string, (string Nombre, string Area)> AliasPorUsuario = new();
 
@@ -883,13 +940,7 @@
      new("Administración",69,48,9,12), new("Dirección",51,43,6,2)
     ];
 
-    private readonly List<OrderArea> OrderAreas =
-    [
-        new("Contable",38,20,13,4,1), new("Legal",24,12,8,3,1), new("Auditoría",31,16,9,4,2),
-        new("TI",27,13,8,4,2), new("Fiscal",35,18,11,4,2), new("RH",19,10,6,2,1),
-        new("Administración",28,9,10,4,5), new("Dirección",16,7,6,1,2)
-    ];
-
+   
     private readonly List<OrderOldest> Oldest =
     [
         new("OT-105","Orden de trabajo",350,"Contable","Mariana López"),
@@ -1007,9 +1058,9 @@
     TaskAreas.Where(a => AreaActivaNombre == null ||
         string.Equals(a.Name, AreaActivaNombre, StringComparison.OrdinalIgnoreCase));
 
-    private IEnumerable<OrderArea> FilteredOrderAreas =>
-        OrderAreas.Where(a => string.IsNullOrWhiteSpace(Active.Area) || a.Name == AreaShort(Active.Area));
-
+    // private IEnumerable<OrderArea> FilteredOrderAreas =>
+    //     OrderAreas.Where(a => string.IsNullOrWhiteSpace(Active.Area) || a.Name == AreaShort(Active.Area));
+    
     private IEnumerable<OrderOldest> FilteredOldest =>
         Oldest.Where(o => string.IsNullOrWhiteSpace(Active.Area) || o.Area == AreaShort(Active.Area))
               .Where(o => string.IsNullOrWhiteSpace(Active.Person) || o.Person == Active.Person);
@@ -1060,7 +1111,7 @@
         {
 
             await CargarAutoevaluacionesPorPeriodoAsync();
-
+            await CargarDashboardOrdenesAsync(2026, 1, 12, null, null);
             var m = TaskDuracionList.FirstOrDefault();
 
             var resumenAe = await AutoevaluacionService.ObtenerResumenAutoevaluacionAsync();
@@ -1295,6 +1346,11 @@
             PersonFilter
         );
 
+        // Llamamos al servicio de órdenes pasándole los filtros activos
+        int? anio = int.TryParse(Active.Year, out var y) ? y : null;
+        int? mStart = int.TryParse(Active.MonthFrom, out var ms) ? ms : null;
+        int? mEnd = int.TryParse(Active.MonthTo, out var me) ? me : null;
+
         await Task.WhenAll(
             CargarAdopcionAsync(
                 Active.Year,
@@ -1304,10 +1360,10 @@
                 Active.Person
             ),
             CargarAutoevaluacionesPorPeriodoAsync(),
-            CargarTareasPeriodoAsync()
+            CargarTareasPeriodoAsync(),
+            CargarDashboardOrdenesAsync(anio, mStart, mEnd, Active.Area, Active.Person) // <-- NUEVO
         );
     }
-
     private async Task ClearFilters()
     {
         Year = "2026";
@@ -1326,9 +1382,53 @@
                 Active.Area,
                 Active.Person),
 
-            CargarTareasPeriodoAsync()
+            CargarTareasPeriodoAsync(),
+            CargarDashboardOrdenesAsync(2026, null, null, null, null) // <-- NUEVO
         );
     }
+    private async Task CargarDashboardOrdenesAsync(
+    int? anio,
+    int? mesInicio,
+    int? mesFin,
+    string? area,
+    string? persona)
+    {
+        try
+        {
+            string? numeroPersonal = null;
+
+            if (!string.IsNullOrWhiteSpace(persona))
+            {
+                var empleado = Empleados.FirstOrDefault(e =>
+                    string.Equals(e.Nombre, persona,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (empleado == null)
+                {
+                    DashboardData = new DashboardOrdenTrabajoDTO();
+                    Console.WriteLine(
+                        $"No se encontró el empleado seleccionado: {persona}");
+                    return;
+                }
+
+                numeroPersonal = empleado.ClavePersonal.ToString();
+            }
+
+            DashboardData = await DashboardService.ObtenerDashboardAsync(
+                anio,
+                mesInicio,
+                mesFin,
+                area,
+                numeroPersonal
+            ) ?? new DashboardOrdenTrabajoDTO();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"Error al cargar el dashboard de órdenes: {ex.Message}");
+        }
+    }
+    
     private void AreaChanged()
     {
         PersonFilter = "";
@@ -1367,4 +1467,176 @@
      string Person
  );
     private record AreaRow(string Id, string Name, string Short, string Color, int People, int Active, int Adoption);
-}
+    // =========================================================================
+    // DINÁMICOS PARA ÓRDENES Y TRÁMITES (USANDO TUS SERVICIOS REALES DE BD)
+    // =========================================================================
+    // =========================================================================
+    // CÁLCULOS 100% REALES BASADOS EN EL JSON OFICIAL DEL BACKEND
+    // =========================================================================
+
+    // 1. Rangos de días hábiles de atraso
+    private (List<(string Rango, int Valor, double Porcentaje)> Lista, int Maximo) RangosAtrasoCalculados
+    {
+        get
+        {
+            var todasVencidas = DashboardData.OrdenesTrabajo
+                .Where(x => string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x.DiasHabilesAtraso)
+                .Concat(
+                    DashboardData.OrdenesTramite
+                        .Where(x => string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase))
+                        .Select(x => x.DiasHabilesAtraso)
+                ).ToList();
+
+            int total = todasVencidas.Count == 0 ? 1 : todasVencidas.Count;
+
+            int r1_6 = todasVencidas.Count(d => d >= 1 && d <= 6);
+            int r7_11 = todasVencidas.Count(d => d >= 7 && d <= 11);
+            int r12_20 = todasVencidas.Count(d => d >= 12 && d <= 20);
+            int r21_30 = todasVencidas.Count(d => d >= 21 && d <= 30);
+            int rMas30 = todasVencidas.Count(d => d > 30);
+
+            var lista = new List<(string Rango, int Valor, double Porcentaje)>
+            {
+                ("1-6 días", r1_6, Math.Round(r1_6 * 100.0 / total, 1)),
+                ("7-11 días", r7_11, Math.Round(r7_11 * 100.0 / total, 1)),
+                ("12-20 días", r12_20, Math.Round(r12_20 * 100.0 / total, 1)),
+                ("21-30 días", r21_30, Math.Round(r21_30 * 100.0 / total, 1)),
+                ("+30 días", rMas30, Math.Round(rMas30 * 100.0 / total, 1))
+            };
+
+            int max = Math.Max(1, lista.Max(x => x.Valor));
+            return (lista, max);
+        }
+    }
+
+    // 2. Histórico Mensual (Agrupado por mes de fechaFinal)
+    private List<(string Mes, int Cantidad)> HistoricoMensualCalculado
+    {
+        get
+        {
+            var mesesNombres = new[] { "", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic" };
+
+            var mesesTrabajo = DashboardData.OrdenesTrabajo
+                .Where(x => string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase) && x.fechaFinal != default)
+                .Select(x => x.fechaFinal.Month);
+
+            var mesesTramite = DashboardData.OrdenesTramite
+                .Where(x => string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase) && x.FechaFinal.HasValue)
+                .Select(x => x.FechaFinal!.Value.Month);
+
+            var vencidasMeses = mesesTrabajo.Concat(mesesTramite).ToList();
+
+            var resultado = new List<(string Mes, int Cantidad)>();
+            for (int i = 1; i <= 12; i++)
+            {
+                resultado.Add((mesesNombres[i], vencidasMeses.Count(m => m == i)));
+            }
+            return resultado;
+        }
+    }
+
+    // 3. Tabla Comparación por Área (Cruzando la Clave numérica del JSON con AreasFiltro)
+    private record AreaStats(string Area, int Vencidas, int Proximas, int Hoy, int PendientesAceptar);
+
+    private IEnumerable<AreaStats> TablaAreasCalculada
+    {
+        get
+        {
+            if (AreasFiltro == null || !AreasFiltro.Any())
+                return Enumerable.Empty<AreaStats>();
+
+            return AreasFiltro.Select(areaDto =>
+            {
+                string claveStr = areaDto.Clave.ToString();
+                string nombreAreaReal = areaDto.Area;
+
+                int vencidas = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase))
+                             + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase));
+
+                int proximas = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && (string.Equals(x.estado, "Próximo", StringComparison.OrdinalIgnoreCase) || string.Equals(x.estado, "Proximo", StringComparison.OrdinalIgnoreCase)))
+                             + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && (string.Equals(x.Estado, "Próxima", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Estado, "Proxima", StringComparison.OrdinalIgnoreCase)));
+
+                int hoy = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && string.Equals(x.estado, "Hoy", StringComparison.OrdinalIgnoreCase))
+                        + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && string.Equals(x.Estado, "Hoy", StringComparison.OrdinalIgnoreCase));
+
+                int pendientes = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && x.estado != null && x.estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase))
+                               + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && x.Estado != null && x.Estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase));
+
+                return new AreaStats(nombreAreaReal, vencidas, proximas, hoy, pendientes);
+            });
+        }
+    }
+
+    // 4. Tabla Análisis Individual por Empleado
+    // 4. Tabla Análisis Individual por Empleado (Suma Órdenes Simples + Múltiples por Tarea + Trámites)
+    private record EmpleadoStats(string Empleado, string Area, int OrdenesVencidas, int DiasHabilesAtrasoTotal);
+
+    private IEnumerable<EmpleadoStats> TablaEmpleadosCalculada
+    {
+        get
+        {
+            if (Empleados == null || !Empleados.Any())
+                return Enumerable.Empty<EmpleadoStats>();
+
+            return Empleados.Select(emp =>
+            {
+                string nombreEmp = emp.Nombre ?? string.Empty;
+                string areaEmp = emp.Area ?? "Sin Área";
+
+                if (string.IsNullOrWhiteSpace(nombreEmp))
+                    return new EmpleadoStats("Sin Nombre", areaEmp, 0, 0);
+
+                // 1. TIPO 1: Órdenes de Trabajo Simples (Responsable directo en la orden)
+                var trabSimples = DashboardData.OrdenesTrabajo
+                    .Where(x => (x.bitMultiple != true)
+                             && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase)
+                             && !string.IsNullOrEmpty(x.nombreResponsable)
+                             && x.nombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                // 2. TIPO 2: Órdenes de Trabajo Múltiples (Responsable asignado a nivel de Tarea)
+                var trabMultiples = DashboardData.OrdenesTrabajo
+                    .Where(x => x.bitMultiple == true
+                             && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase)
+                             && x.tareas != null
+                             && x.tareas.Any(t => !string.IsNullOrEmpty(t.NombreResponsable)
+                                               && t.NombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                // 3. TIPO 3: Órdenes de Trámite
+                var tramites = DashboardData.OrdenesTramite
+                    .Where(x => string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase)
+                             && !string.IsNullOrEmpty(x.NombreResponsable)
+                             && x.NombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                // Totalización unificada de los 3 tipos de órdenes
+                int totalVencidas = trabSimples.Count + trabMultiples.Count + tramites.Count;
+
+                int totalDiasAtraso = trabSimples.Sum(x => x.DiasHabilesAtraso)
+                                    + trabMultiples.Sum(x => x.DiasHabilesAtraso)
+                                    + tramites.Sum(x => x.DiasHabilesAtraso);
+
+                return new EmpleadoStats(nombreEmp, areaEmp, totalVencidas, totalDiasAtraso);
+            })
+            .OrderByDescending(e => e.OrdenesVencidas)
+            .ThenBy(e => e.Empleado);
+        }
+    }
+    private IEnumerable<AreaStats> FilteredOrderAreas => TablaAreasCalculada;
+    private string? NumeroPersonalSeleccionado
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Active.Person))
+                return null;
+
+            var empleado = Empleados.FirstOrDefault(e =>
+                string.Equals(e.Nombre, Active.Person,
+                    StringComparison.OrdinalIgnoreCase));
+
+            return empleado?.ClavePersonal.ToString();
+        }
+    }
+    }

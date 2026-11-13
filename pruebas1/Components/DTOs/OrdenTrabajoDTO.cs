@@ -19,11 +19,18 @@ namespace pruebas1.Components.DTOs
         public DateTime fechaFinal { get; set; }
         public string estado { get; set; }
         public bool? bitMultiple { get; set; }
+        public string? nombreResponsable { get; set; } = string.Empty;
+        public int? IdPerPersonalResponsable { get; set; }
+        public string? NumeroPersonalResponsable { get; set; }
+        public int DiasHabilesAtraso { get; set; }
+        public string areaNombre { get; set; } = "Sin área";
         public List<TareaDTO> tareas { get; set; } = new();
     }
 
     public class TareaDTO
     {
+        public int? IdPerPersonalResponsable { get; set; }
+        public string? NumeroPersonalResponsable { get; set; }
         public string strNombreTarea { get; set; }
         public string strDescripcionAutor { get; set; }
         public string avance { get; set; }

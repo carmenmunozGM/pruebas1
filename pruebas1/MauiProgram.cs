@@ -54,6 +54,7 @@ namespace pruebas1
             builder.Services.AddScoped<StartupService>();
             builder.Services.AddScoped<ArchivoInstitucionalService>();
             builder.Services.AddScoped<AdopcionAgendaService>();
+            builder.Services.AddScoped<DashboardOrdenesService>();
             builder.Services.AddScoped<TotalTareasService>();
             builder.Services.AddScoped<TareasDuracionService>();
             // HttpClient compartido
