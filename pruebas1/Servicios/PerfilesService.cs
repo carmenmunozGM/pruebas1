@@ -1,4 +1,5 @@
-﻿using pruebas1.Components.DTOs;
+﻿using APIProyectoSPEC.DTOs;
+using pruebas1.Components.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace pruebas1.Servicios
 {
     public class PerfilesService
     {
-        private readonly HttpClient _http; 
+        private readonly HttpClient _http;
 
         public PerfilesService(HttpClient http)
         {
@@ -48,6 +49,43 @@ namespace pruebas1.Servicios
                 $"/empleado/permisos");
 
             return respuesta ?? new PermisosDTO();
+        }
+
+        // --- PERMISOS DE DASHBOARD ---
+
+        public async Task<bool> GetMiAccesoDashboard()
+        {
+            return await _http.GetFromJsonAsync<bool>(
+                "/api/permisos-dashboard/mi-acceso");
+        }
+
+        public async Task<List<PermisoDashboardDTO>> GetPermisosDashboard()
+        {
+            var respuesta = await _http.GetFromJsonAsync<List<PermisoDashboardDTO>>(
+                "/api/permisos-dashboard/todos");
+
+            return respuesta ?? new List<PermisoDashboardDTO>();
+        }
+
+        public async Task<bool> GuardarPermisoDashboard(UpsertPermisoDashboardDTO dto)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"[Dashboard PUT] BaseAddress={_http.BaseAddress} | ClavePuesto={dto.ClavePuesto} | Visualizar={dto.VisualizarDashboard}");
+
+            var response = await _http.PutAsJsonAsync(
+                "/api/permisos-dashboard/upsert",
+                dto);
+
+            System.Diagnostics.Debug.WriteLine(
+                $"[Dashboard PUT] StatusCode={(int)response.StatusCode} ({response.StatusCode})");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var detalle = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"Error GuardarPermisoDashboard: {detalle}");
+            }
+
+            return response.IsSuccessStatusCode;
         }
     }
 }
