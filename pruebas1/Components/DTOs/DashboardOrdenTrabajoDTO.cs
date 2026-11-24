@@ -1,4 +1,6 @@
-﻿namespace pruebas1.Components.DTOs
+﻿using APIProyectoSPEC.DTOs;
+
+namespace pruebas1.Components.DTOs
 {
     public class DashboardOrdenTrabajoDTO
     {
@@ -18,6 +20,7 @@
         public List<GraficaHistoricoMensualDTO> GraficaHistoricoMensual { get; set; } = new();
         public List<TablaComparacionAreaDTO> TablaComparacionAreas { get; set; } = new();
         public List<TablaEmpleadoDTO> TablaEmpleados { get; set; } = new();
+        public List<OrdenTrabajoEmpleadoResumenDTO> EmpleadosResumen { get; set; } = new();
     }
 
     public class GraficaRangosAtrasoDTO

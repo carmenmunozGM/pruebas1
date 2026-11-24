@@ -80,7 +80,7 @@
                     </select>
                 </label>
 
-              @*   <label>
+                @*   <label>
                     PERSONA
                     <select @bind="PersonFilter">
                         <option value="">Todas las personas</option>
@@ -118,10 +118,10 @@
             {
                 <div class="filter-summary">
                     🔎 Vista filtrada · @(string.IsNullOrWhiteSpace(Active.Person)
-                                                                        ? Areas.FirstOrDefault(a => a.Id == Active.Area)?.Name
-                                                                        : Active.Person)
-                </div>
-            }
+                                    ? Areas.FirstOrDefault(a => a.Id == Active.Area)?.Name
+                                    : Active.Person)
+            </div>
+                        }
         </section>
 
         <!-- 01 ADOPCIÓN -->
@@ -149,6 +149,10 @@
                     <p>Total de ingresos y usuarios activos para comprobar si la plataforma realmente se utiliza.</p>
                 </div>
             </div>
+            @if (HayFiltro)
+            {
+                <div class="filter-summary">🔎 Vista filtrada · @ResumenFiltro</div>
+            }
 
             <div class="metric-grid adoption-grid">
                 <div class="dash-card adoption-card">
@@ -345,13 +349,16 @@
             <div class="two-columns task-columns">
                 <div class="dash-card chart-card">
                     <div class="chart-title"><span>🍩</span><div><h3>Estado de tareas</h3><p>Distribución del trabajo.</p></div></div>
-                    <div class="donut-panel" style="position: relative; display: flex; align-items: center; justify-content: space-around; padding: 20px 0;"><div style="position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;">
-                    <div class="donut task-donut" style="@TaskDonutStyle(); width: 180px; height: 180px; border-radius: 50%;">
-                    <div class="donut-inner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;"><span style="font-size: 1.2rem; font-weight: bold; color: #1f2937;">@TaskTotal</span></div></div>
+                    <div class="donut-panel" style="position: relative; display: flex; align-items: center; justify-content: space-around; padding: 20px 0;">
+                        <div style="position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;">
+                            <div class="donut task-donut" style="@TaskDonutStyle(); width: 180px; height: 180px; border-radius: 50%;">
+                                <div class="donut-inner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;"><span style="font-size: 1.2rem; font-weight: bold; color: #1f2937;">@TaskTotal</span></div>
+                            </div>
                             <span style="position: absolute; top: 10px; right: -25px; color: #8b5cf6; font-weight: bold; font-size: 0.85rem; background: #fff; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">@PctCompletadas%</span>
                             <span style="position: absolute; bottom: 20px; right: -25px; color: #f59e0b; font-weight: bold; font-size: 0.85rem; background: #fff; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">@PctPendientes%</span>
-                            <span style="position: absolute; top: 50%; left: -35px; transform: translateY(-50%); color: #ef4444; font-weight: bold; font-size: 0.85rem; background: #fff; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">@PctDiasRecorridos%</span></div>
-                    <div class="legend-list" style="flex-grow: 1; max-width: 260px; margin-left: 20px;">
+                            <span style="position: absolute; top: 50%; left: -35px; transform: translateY(-50%); color: #ef4444; font-weight: bold; font-size: 0.85rem; background: #fff; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">@PctDiasRecorridos%</span>
+                        </div>
+                        <div class="legend-list" style="flex-grow: 1; max-width: 260px; margin-left: 20px;">
                             <div><span><i class="legend-dot purple-bg"></i>Completadas</span><div><b style="color: #8b5cf6;">@TaskCompleted</b><span class="legend-pct" style="color: #8b5cf6;"></span></div></div>
                             <div><span><i class="legend-dot orange-bg"></i>Pendientes</span><div><b style="color: #f59e0b;">@TaskPending</b><span class="legend-pct" style="color: #f59e0b;"></span></div></div>
                             <div><span><i class="legend-dot red-bg"></i>Días Recorridos</span><div><b style="color: #ef4444;">@TaskDays</b><span class="legend-pct" style="color: #ef4444;"></span></div></div>
@@ -359,16 +366,20 @@
                     </div>
                 </div>
 
-                <div class="dash-card chart-card"><div class="chart-title"><span>⏱️</span><div><h3>Retraso sobre fecha comprometida</h3><p>Cuántos días después se terminó o sigue abierta.</p></div></div>
-                            @foreach (var bucket in DelayBuckets)
-                        {
-                <div class="delay-item"><div class="delay-head"><span>@bucket.Label</span><b>@bucket.Value</b></div><div class="progress"><div class="progress-fill" style="@BarStyle(TaskOverdue == 0 ? 0 : bucket.Value * 100.0 / TaskOverdue, bucket.Color)"></div></div></div>
-                        }
+                <div class="dash-card chart-card">
+                    <div class="chart-title"><span>⏱️</span><div><h3>Retraso sobre fecha comprometida</h3><p>Cuántos días después se terminó o sigue abierta.</p></div></div>
+                    @foreach (var bucket in DelayBuckets)
+                    {
+                        <div class="delay-item"><div class="delay-head"><span>@bucket.Label</span><b>@bucket.Value</b></div><div class="progress"><div class="progress-fill" style="@BarStyle(TaskOverdue == 0 ? 0 : bucket.Value * 100.0 / TaskOverdue, bucket.Color)"></div></div></div>
+                    }
                 </div>
             </div>
 
-            <div class="dash-card table-card"><div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Detalle de volumen y cumplimiento.</p></div></div><div class="table-scroll">
-                    <table><thead><tr><th>Área</th><th>Registradas</th><th>En fecha</th><th>Pendientes</th><th>Vencidas</th><th>Cumplimiento</th></tr></thead><tbody>
+            <div class="dash-card table-card">
+                <div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Detalle de volumen y cumplimiento.</p></div></div><div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Área</th><th>Registradas</th><th>En fecha</th><th>Pendientes</th><th>Vencidas</th><th>Cumplimiento</th></tr></thead>
+                        <tbody>
                             @foreach (var a in FilteredTaskAreas)
                             {
                                 <tr><td>@a.Name</td><td>@a.Total</td> <td>@a.OnTime</td><td>@a.Pending</td><td>@a.Overdue</td><td><span class="pill pill-purple">@Percent(a.OnTime, a.Total)%</span></td></tr>
@@ -379,8 +390,11 @@
             </div>
 
             <div class="dash-card table-card table-gap">
-            <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Tareas registradas, cumplimiento y vencimientos por empleado.</p></div><span class="small-badge">@TareasPersonas.Count() personas</span></div>
-            <div class="table-scroll"><table><thead><tr><th>Empleado</th><th>Área</th><th>Registradas</th><th>En fecha</th><th>Pendientes</th><th>Vencidas</th><th>Cumplimiento</th></tr></thead><tbody>
+                <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Tareas registradas, cumplimiento y vencimientos por empleado.</p></div><span class="small-badge">@TareasPersonas.Count() personas</span></div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Empleado</th><th>Área</th><th>Registradas</th><th>En fecha</th><th>Pendientes</th><th>Vencidas</th><th>Cumplimiento</th></tr></thead>
+                        <tbody>
                             @foreach (var p in TareasPersonas)
                             {
                                 <tr><td>@p.Nombre</td><td>@p.Area</td><td>@p.Registradas</td><td>@p.EnFecha</td><td>@p.Pendientes</td><td>@p.Vencidas</td><td><span class="pill pill-purple">@p.Cumplimiento.ToString("0.#")%</span></td></tr>
@@ -391,14 +405,17 @@
             </div>
         </section>
 
-        <!-- 03 ORDENES -->
-        <!-- 03 ORDENES -->
+
         <!-- 03 ORDENES -->
         <section class="dash-section">
             <div class="section-heading">
                 <div class="section-number">03</div>
                 <div><h2>📑 Bloque de Órdenes de trabajo y Trámites</h2><p>Métricas unificadas del despacho (Año 2026).</p></div>
             </div>
+            @if (HayFiltro)
+            {
+                <div class="filter-summary">🔎 Vista filtrada · @ResumenFiltro</div>
+            }
 
             <!-- CUADRÍCULA DE MÉTRICAS -->
             <div class="metric-grid five">
@@ -484,7 +501,7 @@
             <div class="dash-card table-card table-gap">
                 <div class="table-header">
                     <div><h3>👤 Análisis individual por empleado</h3><p>Desglose de órdenes vencidas y días hábiles totales de atraso.</p></div>
-                    <span class="small-badge" style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">@TablaEmpleadosCalculada.Count() empleados con atrasos</span>
+                    <span class="small-badge" style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold;">@TablaEmpleadosCalculada.Count() empleados mostrados</span>
                 </div>
                 <div class="table-scroll">
                     <table>
@@ -502,8 +519,20 @@
                                 <tr>
                                     <td><b>@p.Empleado</b></td>
                                     <td>@p.Area</td>
-                                    <td><span class="pill" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 12px; font-weight: bold;">@p.OrdenesVencidas</span></td>
-                                    <td><span class="pill" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 12px; font-weight: bold;">@p.DiasHabilesAtrasoTotal días</span></td>
+
+                                    <td>
+                                        <span class="pill"
+                                              style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-weight:bold;">
+                                            @p.OrdenesVencidas
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="pill"
+                                              style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-weight:bold;">
+                                            @p.DiasHabilesAtrasoTotal días
+                                        </span>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -513,28 +542,29 @@
         </section>
         <!-- 04 AUTOEVALUACION -->
         <section class="dash-section">
-        <div class="section-heading">
-            <div class="section-number">04</div>
-            <div><h2>📋Bloque de Autoevaluación</h2><p>Separamos tres cosas: cobertura del registro, cumplimiento de actividades y consistencia entre periodos.</p></div>
-        </div>
-        @if (HayFiltro)
-        {
-            <div class="filter-summary">🔎 Vista filtrada · @ResumenFiltro</div>
-        }
-
-        <div class="metric-grid ae-grid">
-            <div class="dash-card adoption-card">
-                <div class="donut" style="@DonutStyle((int)Math.Round(AeCoverage), "#7f83d9")"><div class="donut-inner">@AeCoverage.ToString("0.#")%</div></div>
-                <div><div class="metric-label">Registraron</div><div class="metric-big">@AeRegistered/@AeExpected</div><div class="metric-detail purple">personas con registro</div></div>
+            <div class="section-heading">
+                <div class="section-number">04</div>
+                <div><h2>📋Bloque de Autoevaluación</h2><p>Separamos tres cosas: cobertura del registro, cumplimiento de actividades y consistencia entre periodos.</p></div>
             </div>
-            <div class="metric-card"><div class="metric-label">✓ Registraron</div><div class="metric-value">@AeRegistered</div></div>
-            <div class="metric-card"><div class="metric-label">⚪ No registraron</div><div class="metric-value">@AeNotRegistered</div></div>
-            <div class="metric-card"><div class="metric-label">📈 Cumplimiento</div><div class="metric-value">@AeCompliance.ToString("0.#")%</div><div class="metric-detail purple">actividades declaradas</div></div>
-        </div>
-        <div class="dash-card table-card table-gap">
-        <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Registro y cumplimiento de autoevaluación por empleado.</p></div><span class="small-badge">@AeExpected personas</span></div>
-        <div class="table-scroll"><table>
-                    <thead><tr> <th>Empleado</th><th>Área</th><th>Cumplimiento</th></tr></thead>
+            @if (HayFiltro)
+            {
+                <div class="filter-summary">🔎 Vista filtrada · @ResumenFiltro</div>
+            }
+
+            <div class="metric-grid ae-grid">
+                <div class="dash-card adoption-card">
+                    <div class="donut" style="@DonutStyle((int)Math.Round(AeCoverage), "#7f83d9")"><div class="donut-inner">@AeCoverage.ToString("0.#")%</div></div>
+                    <div><div class="metric-label">Registraron</div><div class="metric-big">@AeRegistered/@AeExpected</div><div class="metric-detail purple">personas con registro</div></div>
+                </div>
+                <div class="metric-card"><div class="metric-label">✓ Registraron</div><div class="metric-value">@AeRegistered</div></div>
+                <div class="metric-card"><div class="metric-label">⚪ No registraron</div><div class="metric-value">@AeNotRegistered</div></div>
+                <div class="metric-card"><div class="metric-label">📈 Cumplimiento</div><div class="metric-value">@AeCompliance.ToString("0.#")%</div><div class="metric-detail purple">actividades declaradas</div></div>
+            </div>
+            <div class="dash-card table-card table-gap">
+                <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Registro y cumplimiento de autoevaluación por empleado.</p></div><span class="small-badge">@AeExpected personas</span></div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr> <th>Empleado</th><th>Área</th><th>Cumplimiento</th></tr></thead>
                         <tbody>
                             @foreach (var p in AeTabla)
                             {
@@ -545,87 +575,90 @@
                                 </tr>
                             }
                         </tbody>
-                </table>
+                    </table>
+                </div>
             </div>
-        </div>
         </section>
 
-    <!-- 05 SERVICIO -->
-    <section class="dash-section">
-        <div class="section-heading">
-            <div class="section-number">05</div>
-            <div><h2>🤝 Bloque de Servicio al cliente</h2><p>Horas planeadas contra reales, servicios, actividades y reprogramaciones.</p></div>
-        </div>
+        <!-- 05 SERVICIO -->
+        <section class="dash-section">
+            <div class="section-heading">
+                <div class="section-number">05</div>
+                <div><h2>🤝 Bloque de Servicio al cliente</h2><p>Horas planeadas contra reales, servicios, actividades y reprogramaciones.</p></div>
+            </div>
+            @if (HayFiltro)
+            {
+                <div class="filter-summary">🔎 Vista filtrada · @ResumenFiltro</div>
+            }
+            <div class="metric-grid four">
+                <div class="metric-card"><div class="metric-label">🕒 Horas planeadas</div><div class="metric-value">@ClientPlanned h</div></div>
+                <div class="metric-card"><div class="metric-label">⏱️ Horas reales</div><div class="metric-value">@ClientReal h</div></div>
+                <div class="metric-card"><div class="metric-label">↕ Desviación</div><div class="metric-value">@(ClientVariance >= 0 ? "+" : "")@ClientVariance%</div><div class="metric-detail orange">real vs planeado</div></div>
+                <div class="metric-card"><div class="metric-label">🔁 Reprogramaciones</div><div class="metric-value">@ClientRescheduled</div><div class="metric-detail red">actividades movidas</div></div>
+            </div>
 
-        <div class="metric-grid four">
-            <div class="metric-card"><div class="metric-label">🕒 Horas planeadas</div><div class="metric-value">@ClientPlanned h</div></div>
-            <div class="metric-card"><div class="metric-label">⏱️ Horas reales</div><div class="metric-value">@ClientReal h</div></div>
-            <div class="metric-card"><div class="metric-label">↕ Desviación</div><div class="metric-value">@(ClientVariance >= 0 ? "+" : "")@ClientVariance%</div><div class="metric-detail orange">real vs planeado</div></div>
-            <div class="metric-card"><div class="metric-label">🔁 Reprogramaciones</div><div class="metric-value">@ClientRescheduled</div><div class="metric-detail red">actividades movidas</div></div>
-        </div>
-
-        <div class="two-columns client-columns">
-            <div class="dash-card chart-card">
-                <div class="chart-title"><span>📊</span><div><h3>Planeado vs real por servicio</h3><p>Detecta servicios que consumen más tiempo del previsto.</p></div></div>
-                @foreach (var service in ClientServices)
-                {
-                    var planned = SelectedPerson != null ? (int)Math.Round(service.Planned * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(service.Planned * ScopeFactor) : service.Planned;
-                    var real = SelectedPerson != null ? (int)Math.Round(service.Real * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(service.Real * ScopeFactor) : service.Real;
-                    <div class="service-row">
-                        <div class="service-name">@service.Name</div>
-                        <div class="service-bars">
-                            <div class="service-bar planned" style="@WidthStyle(planned, 350)">P @planned</div>
-                            <div class="service-bar real" style="@WidthStyle(real, 350)">R @real</div>
+            <div class="two-columns client-columns">
+                <div class="dash-card chart-card">
+                    <div class="chart-title"><span>📊</span><div><h3>Planeado vs real por servicio</h3><p>Detecta servicios que consumen más tiempo del previsto.</p></div></div>
+                    @foreach (var service in ClientServices)
+                    {
+                        var planned = SelectedPerson != null ? (int)Math.Round(service.Planned * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(service.Planned * ScopeFactor) : service.Planned;
+                        var real = SelectedPerson != null ? (int)Math.Round(service.Real * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(service.Real * ScopeFactor) : service.Real;
+                        <div class="service-row">
+                            <div class="service-name">@service.Name</div>
+                            <div class="service-bars">
+                                <div class="service-bar planned" style="@WidthStyle(planned, 350)">P @planned</div>
+                                <div class="service-bar real" style="@WidthStyle(real, 350)">R @real</div>
+                            </div>
                         </div>
-                    </div>
-                }
-                <div class="service-legend"><span><i class="legend-dot planned-bg"></i>Planeado</span><span><i class="legend-dot real-bg"></i>Real</span></div>
+                    }
+                    <div class="service-legend"><span><i class="legend-dot planned-bg"></i>Planeado</span><span><i class="legend-dot real-bg"></i>Real</span></div>
+                </div>
+
+                <div class="dash-card chart-card">
+                    <div class="chart-title"><span>🏷️</span><div><h3>Empresas con mayor carga</h3><p>Horas reales registradas.</p></div></div>
+                    @foreach (var company in ClientCompanies)
+                    {
+                        var hours = SelectedPerson != null ? (int)Math.Round(company.Hours * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(company.Hours * ScopeFactor) : company.Hours;
+                        <div class="company-row">
+                            <div class="company-head"><span>@company.Name</span><b>@hours h</b></div>
+                            <div class="progress"><div class="progress-fill" style="@BarStyle(hours / 148.0 * 100, company == ClientCompanies.First() ? "#7f83d9" : "#b8bcc8")"></div></div>
+                        </div>
+                    }
+                </div>
             </div>
 
-            <div class="dash-card chart-card">
-                <div class="chart-title"><span>🏷️</span><div><h3>Empresas con mayor carga</h3><p>Horas reales registradas.</p></div></div>
-                @foreach (var company in ClientCompanies)
-                {
-                    var hours = SelectedPerson != null ? (int)Math.Round(company.Hours * (double)TotalClientActivities / DashClientActivities) : Active.Area != "" ? (int)Math.Round(company.Hours * ScopeFactor) : company.Hours;
-                    <div class="company-row">
-                        <div class="company-head"><span>@company.Name</span><b>@hours h</b></div>
-                        <div class="progress"><div class="progress-fill" style="@BarStyle(hours / 148.0 * 100, company == ClientCompanies.First() ? "#7f83d9" : "#b8bcc8")"></div></div>
-                    </div>
-                }
+            <div class="dash-card table-card table-gap">
+                <div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Horas planeadas, reales y reprogramaciones.</p></div></div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Área</th><th>Planeadas</th><th>Reales</th><th>Desviación</th><th>Reprogramadas</th></tr></thead>
+                        <tbody>
+                            @foreach (var a in FilteredClientAreas)
+                            {
+                                <tr><td>@a.Name</td><td>@a.Planned h</td><td>@a.Real h</td><td>@a.Variance h</td><td>@a.Rescheduled</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="dash-card table-card table-gap">
-            <div class="table-header"><div><h3>🏢 Comparación por área</h3><p>Horas planeadas, reales y reprogramaciones.</p></div></div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr><th>Área</th><th>Planeadas</th><th>Reales</th><th>Desviación</th><th>Reprogramadas</th></tr></thead>
-                    <tbody>
-                        @foreach (var a in FilteredClientAreas)
-                        {
-                            <tr><td>@a.Name</td><td>@a.Planned h</td><td>@a.Real h</td><td>@a.Variance h</td><td>@a.Rescheduled</td></tr>
-                        }
-                    </tbody>
-                </table>
+            <div class="dash-card table-card table-gap">
+                <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Carga de servicio registrada por empleado.</p></div></div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Empleado</th><th>Área</th><th>Horas</th><th>Actividades</th><th>Índice de agenda</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in PeopleRows)
+                            {
+                                //<tr><td>@p.Name</td><td>@AreaShort(p.AreaId)</td><td>@Math.Round(p.ClientActivities * 5.9) h</td><td>@p.ClientActivities</td><td>@p.Index%</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
-        <div class="dash-card table-card table-gap">
-            <div class="table-header"><div><h3>👤 Detalle individual</h3><p>Carga de servicio registrada por empleado.</p></div></div>
-            <div class="table-scroll">
-                <table>
-                    <thead><tr><th>Empleado</th><th>Área</th><th>Horas</th><th>Actividades</th><th>Índice de agenda</th></tr></thead>
-                    <tbody>
-                        @foreach (var p in PeopleRows)
-                        {
-                            //<tr><td>@p.Name</td><td>@AreaShort(p.AreaId)</td><td>@Math.Round(p.ClientActivities * 5.9) h</td><td>@p.ClientActivities</td><td>@p.Index%</td></tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-</div>
+        </section>
+    </div>
 </div>
 
 @code {
@@ -940,18 +973,8 @@
      new("Administración",69,48,9,12), new("Dirección",51,43,6,2)
     ];
 
-   
-    private readonly List<OrderOldest> Oldest =
-    [
-        new("OT-105","Orden de trabajo",350,"Contable","Mariana López"),
-        new("OT-220","Orden de trámite",190,"Legal","Jorge Molina"),
-        new("OT-135","Trabajo múltiple",95,"Auditoría","Patricia Ríos"),
-        new("OT-410","Orden de trabajo",63,"TI","Carmen Muñoz"),
-        new("OT-318","Orden de trámite",58,"Fiscal","Eduardo Silva"),
-        new("OT-287","Orden de trabajo",51,"Administración","Rosalía López"),
-        new("OT-194","Trabajo múltiple",46,"RH","Gabriela Santiago"),
-        new("OT-376","Orden de trabajo",41,"Dirección","Alberto Méndez")
-    ];
+
+
 
     private readonly List<OrderPerson> OrderPeople =
     [
@@ -1060,10 +1083,7 @@
 
     // private IEnumerable<OrderArea> FilteredOrderAreas =>
     //     OrderAreas.Where(a => string.IsNullOrWhiteSpace(Active.Area) || a.Name == AreaShort(Active.Area));
-    
-    private IEnumerable<OrderOldest> FilteredOldest =>
-        Oldest.Where(o => string.IsNullOrWhiteSpace(Active.Area) || o.Area == AreaShort(Active.Area))
-              .Where(o => string.IsNullOrWhiteSpace(Active.Person) || o.Person == Active.Person);
+
 
     private IEnumerable<OrderPerson> FilteredOrderPeople =>
         OrderPeople.Where(o => string.IsNullOrWhiteSpace(Active.Area) || o.Area == AreaShort(Active.Area))
@@ -1428,7 +1448,7 @@
                 $"Error al cargar el dashboard de órdenes: {ex.Message}");
         }
     }
-    
+
     private void AreaChanged()
     {
         PersonFilter = "";
@@ -1470,10 +1490,6 @@
     // =========================================================================
     // DINÁMICOS PARA ÓRDENES Y TRÁMITES (USANDO TUS SERVICIOS REALES DE BD)
     // =========================================================================
-    // =========================================================================
-    // CÁLCULOS 100% REALES BASADOS EN EL JSON OFICIAL DEL BACKEND
-    // =========================================================================
-
     // 1. Rangos de días hábiles de atraso
     private (List<(string Rango, int Valor, double Porcentaje)> Lista, int Maximo) RangosAtrasoCalculados
     {
@@ -1546,22 +1562,42 @@
             if (AreasFiltro == null || !AreasFiltro.Any())
                 return Enumerable.Empty<AreaStats>();
 
-            return AreasFiltro.Select(areaDto =>
+            // Si hay un área seleccionada, la tabla debe mostrar exclusivamente esa área.
+            // Sin filtro se conserva el catálogo completo del despacho.
+            var areasConsulta = AreasFiltro.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(Active.Area))
+            {
+                areasConsulta = areasConsulta.Where(a =>
+                    string.Equals(
+                        a.Clave.ToString(),
+                        Active.Area.Trim(),
+                        StringComparison.OrdinalIgnoreCase));
+            }
+
+            return areasConsulta.Select(areaDto =>
             {
                 string claveStr = areaDto.Clave.ToString();
                 string nombreAreaReal = areaDto.Area;
 
-                int vencidas = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase))
-                             + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase));
+                // El backend puede entregar la clave del área o su nombre, según el DTO.
+                // Se aceptan ambas representaciones para que los conteos no dependan de ello.
+                bool EsEstaArea(string? valorArea) =>
+                    !string.IsNullOrWhiteSpace(valorArea) &&
+                    (string.Equals(valorArea.Trim(), claveStr, StringComparison.OrdinalIgnoreCase) ||
+                     Norm(valorArea) == Norm(nombreAreaReal));
 
-                int proximas = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && (string.Equals(x.estado, "Próximo", StringComparison.OrdinalIgnoreCase) || string.Equals(x.estado, "Proximo", StringComparison.OrdinalIgnoreCase)))
-                             + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && (string.Equals(x.Estado, "Próxima", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Estado, "Proxima", StringComparison.OrdinalIgnoreCase)));
+                int vencidas = DashboardData.OrdenesTrabajo.Count(x => EsEstaArea(x.areaNombre) && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase))
+                             + DashboardData.OrdenesTramite.Count(x => EsEstaArea(x.AreaNombre) && string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase));
 
-                int hoy = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && string.Equals(x.estado, "Hoy", StringComparison.OrdinalIgnoreCase))
-                        + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && string.Equals(x.Estado, "Hoy", StringComparison.OrdinalIgnoreCase));
+                int proximas = DashboardData.OrdenesTrabajo.Count(x => EsEstaArea(x.areaNombre) && (string.Equals(x.estado, "Próximo", StringComparison.OrdinalIgnoreCase) || string.Equals(x.estado, "Proximo", StringComparison.OrdinalIgnoreCase)))
+                             + DashboardData.OrdenesTramite.Count(x => EsEstaArea(x.AreaNombre) && (string.Equals(x.Estado, "Próxima", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Estado, "Proxima", StringComparison.OrdinalIgnoreCase)));
 
-                int pendientes = DashboardData.OrdenesTrabajo.Count(x => x.areaNombre == claveStr && x.estado != null && x.estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase))
-                               + DashboardData.OrdenesTramite.Count(x => x.AreaNombre == claveStr && x.Estado != null && x.Estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase));
+                int hoy = DashboardData.OrdenesTrabajo.Count(x => EsEstaArea(x.areaNombre) && string.Equals(x.estado, "Hoy", StringComparison.OrdinalIgnoreCase))
+                        + DashboardData.OrdenesTramite.Count(x => EsEstaArea(x.AreaNombre) && string.Equals(x.Estado, "Hoy", StringComparison.OrdinalIgnoreCase));
+
+                int pendientes = DashboardData.OrdenesTrabajo.Count(x => EsEstaArea(x.areaNombre) && x.estado != null && x.estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase))
+                               + DashboardData.OrdenesTramite.Count(x => EsEstaArea(x.AreaNombre) && x.Estado != null && x.Estado.Contains("Aceptar", StringComparison.OrdinalIgnoreCase));
 
                 return new AreaStats(nombreAreaReal, vencidas, proximas, hoy, pendientes);
             });
@@ -1569,61 +1605,50 @@
     }
 
     // 4. Tabla Análisis Individual por Empleado
-    // 4. Tabla Análisis Individual por Empleado (Suma Órdenes Simples + Múltiples por Tarea + Trámites)
     private record EmpleadoStats(string Empleado, string Area, int OrdenesVencidas, int DiasHabilesAtrasoTotal);
-
-    private IEnumerable<EmpleadoStats> TablaEmpleadosCalculada
+    private IEnumerable<OrdenTrabajoEmpleadoResumenDTO> TablaEmpleadosCalculada
     {
         get
         {
-            if (Empleados == null || !Empleados.Any())
-                return Enumerable.Empty<EmpleadoStats>();
+            var resumenApi = DashboardData.EmpleadosResumen ?? new List<OrdenTrabajoEmpleadoResumenDTO>();
 
-            return Empleados.Select(emp =>
+            // Usamos el catálogo oficial de Empleados activos (~80) como base
+            var baseActivos = Empleados.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(AreaActivaNombre))
             {
-                string nombreEmp = emp.Nombre ?? string.Empty;
-                string areaEmp = emp.Area ?? "Sin Área";
+                baseActivos = baseActivos.Where(e => Norm(e.Area) == Norm(AreaActivaNombre));
+            }
 
-                if (string.IsNullOrWhiteSpace(nombreEmp))
-                    return new EmpleadoStats("Sin Nombre", areaEmp, 0, 0);
+            if (!string.IsNullOrWhiteSpace(Active.Person))
+            {
+                baseActivos = baseActivos.Where(e => Norm(e.Nombre) == Norm(Active.Person));
+            }
 
-                // 1. TIPO 1: Órdenes de Trabajo Simples (Responsable directo en la orden)
-                var trabSimples = DashboardData.OrdenesTrabajo
-                    .Where(x => (x.bitMultiple != true)
-                             && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase)
-                             && !string.IsNullOrEmpty(x.nombreResponsable)
-                             && x.nombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+            return baseActivos
+                .Select(emp =>
+                {
+                    var match = resumenApi.FirstOrDefault(r =>
+                        r.IdPerPersonal == emp.Id ||
+                        Norm(r.Empleado) == Norm(emp.Nombre) ||
+                        Norm(r.NombreEmpleado) == Norm(emp.Nombre));
 
-                // 2. TIPO 2: Órdenes de Trabajo Múltiples (Responsable asignado a nivel de Tarea)
-                var trabMultiples = DashboardData.OrdenesTrabajo
-                    .Where(x => x.bitMultiple == true
-                             && string.Equals(x.estado, "Vencido", StringComparison.OrdinalIgnoreCase)
-                             && x.tareas != null
-                             && x.tareas.Any(t => !string.IsNullOrEmpty(t.NombreResponsable)
-                                               && t.NombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-
-                // 3. TIPO 3: Órdenes de Trámite
-                var tramites = DashboardData.OrdenesTramite
-                    .Where(x => string.Equals(x.Estado, "Vencida", StringComparison.OrdinalIgnoreCase)
-                             && !string.IsNullOrEmpty(x.NombreResponsable)
-                             && x.NombreResponsable.Equals(nombreEmp, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-                // Totalización unificada de los 3 tipos de órdenes
-                int totalVencidas = trabSimples.Count + trabMultiples.Count + tramites.Count;
-
-                int totalDiasAtraso = trabSimples.Sum(x => x.DiasHabilesAtraso)
-                                    + trabMultiples.Sum(x => x.DiasHabilesAtraso)
-                                    + tramites.Sum(x => x.DiasHabilesAtraso);
-
-                return new EmpleadoStats(nombreEmp, areaEmp, totalVencidas, totalDiasAtraso);
-            })
-            .OrderByDescending(e => e.OrdenesVencidas)
-            .ThenBy(e => e.Empleado);
+                    return new OrdenTrabajoEmpleadoResumenDTO
+                    {
+                        IdPerPersonal = emp.Id,
+                        Empleado = emp.Nombre,
+                        NombreEmpleado = emp.Nombre,
+                        Area = emp.Area,
+                        OrdenesVencidas = match?.OrdenesVencidas ?? 0,
+                        DiasHabilesAtrasoTotal = match?.DiasHabilesAtrasoTotal ?? 0
+                    };
+                })
+                .OrderByDescending(x => x.OrdenesVencidas)
+                .ThenByDescending(x => x.DiasHabilesAtrasoTotal)
+                .ThenBy(x => x.Empleado);
         }
     }
+  
     private IEnumerable<AreaStats> FilteredOrderAreas => TablaAreasCalculada;
     private string? NumeroPersonalSeleccionado
     {
@@ -1639,4 +1664,4 @@
             return empleado?.ClavePersonal.ToString();
         }
     }
-    }
+}
