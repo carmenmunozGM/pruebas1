@@ -673,7 +673,7 @@
     private AdopcionAgendaDTO AdopcionDatos { get; set; } = new();
     private bool CargandoAdopcion { get; set; }
     private string ErrorAdopcion { get; set; } = "";
-    private FilterState Active { get; set; } = new("2026", "08", "08", "", "");
+    private FilterState Active { get; set; } = new("2026", "", "", "", "");
     private int TotalTareasApi { get; set; }
     private List<TareaDuracionDTO> TaskDuracionList = new();
     private string ErrorTareas { get; set; } = "";
@@ -941,7 +941,11 @@
         .Where(p => !HayPersona || Norm(AeNombre(p)) == Norm(Active.Person));
 
     private IEnumerable<TotalAutoevaluacionesDTO> AeTabla =>
-    AeFiltrados.Where(p => EnCatalogo(p.Id)).OrderBy(p => AeNombre(p));
+    AeFiltrados
+        .Where(p => EnCatalogo(p.Id))
+        .GroupBy(p => p.Id)
+        .Select(g => g.First())
+        .OrderBy(p => AeNombre(p));
 
     private int AeExpected => AeTabla.Count();
     private int AeRegistered => AeTabla.Count(p => p.Cumplimiento > 0);
@@ -1145,6 +1149,19 @@
             var detalle = await AutoevaluacionService.ObtenerDetalleIndividualAsync();
             DetalleEmpleados = detalle.GroupBy(p => p.Id).Select(g => g.First()).ToList();
 
+            // Nombres duplicados con distinto Id
+            var duplicados = AeTabla
+                .GroupBy(p => Norm(AeNombre(p)))
+                .Where(g => g.Count() > 1)
+                .Select(g => $"{g.Key}: Ids {string.Join(",", g.Select(x => x.Id))}");
+
+            foreach (var d in duplicados)
+                Console.WriteLine($"DUPLICADO: {d}");
+
+            // Lista completa para comparar contra tu plantilla real
+            foreach (var p in AeTabla)
+                Console.WriteLine($"{p.Id} | {AeNombre(p)} | {AeArea(p)}");
+
             // Totales de tareas
             var resTotal = await TotalTareasService.ObtenerTotalTareasAsync();
             if (resTotal != null) TotalTareasApi = resTotal.TotalTareas;
@@ -1229,12 +1246,6 @@
     private async Task CargarAutoevaluacionesPorPeriodoAsync()
     {
         var (desde, hasta) = ObtenerPeriodoAutoevaluacion();
-
-        DetalleEmpleados =
-            await AutoevaluacionService.ObtenerDetalleIndividualAsync(
-                desde,
-                hasta
-            );
     }
 
     private async Task CargarTareasPeriodoAsync()
@@ -1372,13 +1383,7 @@
         int? mEnd = int.TryParse(Active.MonthTo, out var me) ? me : null;
 
         await Task.WhenAll(
-            CargarAdopcionAsync(
-                Active.Year,
-                Active.MonthFrom,
-                Active.MonthTo,
-                Active.Area,
-                Active.Person
-            ),
+            CargarAdopcionAsync(Active.Year, Active.MonthFrom, Active.MonthTo, Active.Area, Active.Person),
             CargarAutoevaluacionesPorPeriodoAsync(),
             CargarTareasPeriodoAsync(),
             CargarDashboardOrdenesAsync(anio, mStart, mEnd, Active.Area, Active.Person) // <-- NUEVO

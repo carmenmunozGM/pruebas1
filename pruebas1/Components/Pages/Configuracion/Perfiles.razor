@@ -10,7 +10,7 @@
 <div class="perfiles-section">
     <div class="section-header">
         <h2>Perfiles y Permisos</h2>
-        <p>Gestiona los roles de los empleados y accesos al Archivo Permanente</p>
+        <p>Gestiona los roles de los empleados y accesos al Archivo Permanente y Dashboard</p>
     </div>
 
     <div class="search-section">
@@ -25,7 +25,7 @@
                    placeholder="Buscar por nombre o puesto..." />
         </div>
 
-        @if (!isModoArchivo)
+        @if (modoActual == ModoVista.Perfiles)
         {
             <select class="area-filter" @bind="selectedArea">
                 <option value="">Todas las áreas</option>
@@ -36,14 +36,24 @@
             </select>
         }
 
-        <button class="save-button" style="margin-left: 10px; background-color: @(isModoArchivo ? "#2da549" : "#4543ec");"
-                @onclick="ToggleModo">
-            <span>@(isModoArchivo ? "Perfil por persona" : "Permisos Archivo Permanente")</span>
+        <button class="save-button" style="margin-left: 10px; background-color: @(modoActual == ModoVista.Perfiles ? "#2da549" : "#4543ec");"
+                @onclick="() => CambiarModo(ModoVista.Perfiles)">
+            <span>Perfil por persona</span>
+        </button>
+
+        <button class="save-button" style="margin-left: 10px; background-color: @(modoActual == ModoVista.ArchivoPermanente ? "#2da549" : "#4543ec");"
+                @onclick="() => CambiarModo(ModoVista.ArchivoPermanente)">
+            <span>Permisos Archivo Permanente</span>
+        </button>
+
+        <button class="save-button" style="margin-left: 10px; background-color: @(modoActual == ModoVista.Dashboard ? "#2da549" : "#4543ec");"
+                @onclick="() => CambiarModo(ModoVista.Dashboard)">
+            <span>Permisos Dashboard</span>
         </button>
     </div>
 
     <div class="perfiles-container">
-        @if (!isModoArchivo)
+        @if (modoActual == ModoVista.Perfiles)
         {
             <!-- TABLA DE EMPLEADOS (PERFILES) -->
             <table class="perfiles-table">
@@ -80,7 +90,7 @@
                 </tbody>
             </table>
         }
-        else
+        else if (modoActual == ModoVista.ArchivoPermanente)
         {
             <!-- TABLA DE PUESTOS (ARCHIVO PERMANENTE) -->
             <table class="perfiles-table">
@@ -111,6 +121,31 @@
                 </tbody>
             </table>
         }
+        else if (modoActual == ModoVista.Dashboard)
+        {
+            <!-- TABLA DE PUESTOS (DASHBOARD) -->
+            <table class="perfiles-table">
+                <thead>
+                    <tr>
+                        <th>Puesto</th>
+                        <th style="text-align: center;">Visualizar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var puesto in filteredPuestos)
+                    {
+                        <tr>
+                            <td style="font-weight: 500;">@puesto.NombrePuesto</td>
+                            <td style="text-align: center;">
+                                <input type="checkbox"
+                                       @bind="puesto.VisualizarDashboard"
+                                       style="transform: scale(1.5);" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
 
         <div class="save-section">
             <button class="save-button" @onclick="HandleSave">
@@ -119,7 +154,7 @@
                     <polyline points="17 21 17 13 7 13 7 21"></polyline>
                     <polyline points="7 3 7 8 15 8"></polyline>
                 </svg>
-                <span>Guardar Cambios @(isModoArchivo ? "de Archivo" : "de Perfiles")</span>
+                <span>@TextoBotonGuardar</span>
             </button>
         </div>
     </div>
@@ -133,6 +168,15 @@
 </div>
 
 @code {
+    private enum ModoVista
+    {
+        Perfiles,
+        ArchivoPermanente,
+        Dashboard
+    }
+
+    private ModoVista modoActual = ModoVista.Perfiles;
+
     string? selectedArea;
     List<AreaDTO> areaList = new();
     List<PerfilesDTO> perfilesList = new();
@@ -148,7 +192,12 @@
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
 
-    bool isModoArchivo = false;
+    private string TextoBotonGuardar => modoActual switch
+    {
+        ModoVista.ArchivoPermanente => "Guardar Cambios de Archivo",
+        ModoVista.Dashboard => "Guardar Cambios de Dashboard",
+        _ => "Guardar Cambios de Perfiles"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,9 +206,9 @@
         await CargarDatos();
     }
 
-    private void ToggleModo()
+    private void CambiarModo(ModoVista nuevoModo)
     {
-        isModoArchivo = !isModoArchivo;
+        modoActual = nuevoModo;
         // Limpiamos los filtros al cambiar de vista
         searchName = "";
         selectedArea = "";
@@ -202,21 +251,53 @@
             })
             .ToList();
 
-        // 2. Cargar Puestos (Permisos de Archivo Permanente)
+        // 2. Cargar Puestos (Permisos de Archivo Permanente + Dashboard)
         var permisosAPGlobales = await ArchivoPermanenteService.ObtenerTodosLosPermisos();
+        var permisosDashboardGlobales = await PerfilesService.GetPermisosDashboard();
 
         if (permisosAPGlobales != null)
         {
-            puestos = permisosAPGlobales.Select(p => new PuestoInfo
+            var dashPorClave = (permisosDashboardGlobales ?? new())
+                .Where(d => !string.IsNullOrWhiteSpace(d.ClavePuesto))
+                .GroupBy(d => d.ClavePuesto.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var dashPorNombre = (permisosDashboardGlobales ?? new())
+                .Where(d => !string.IsNullOrWhiteSpace(d.Puesto))
+                .GroupBy(d => d.Puesto.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            puestos = permisosAPGlobales.Select(p =>
             {
-                ClavePuesto = p.ClavePuesto,
-                NombrePuesto = p.Puesto, // Ajusta esta propiedad si en tu DTO se llama diferente (ej. Descripcion, Nombre)
-                Visualizar = p.Visualizar,
-                Cargar = p.Cargar,
-                Descargar = p.Descargar,
-                VisualizarOriginal = p.Visualizar,
-                CargarOriginal = p.Cargar,
-                DescargarOriginal = p.Descargar
+                string claveApTrim = (p.ClavePuesto ?? string.Empty).Trim();
+                string nombrePuestoTrim = (p.Puesto ?? string.Empty).Trim();
+
+                PermisoDashboardDTO? dashMatch = null;
+                if (!string.IsNullOrWhiteSpace(claveApTrim))
+                    dashPorClave.TryGetValue(claveApTrim, out dashMatch);
+
+                if (dashMatch == null && !string.IsNullOrWhiteSpace(nombrePuestoTrim))
+                    dashPorNombre.TryGetValue(nombrePuestoTrim, out dashMatch);
+
+                string claveFinalDashboard = !string.IsNullOrWhiteSpace(dashMatch?.ClavePuesto)
+                    ? dashMatch!.ClavePuesto.Trim()
+                    : claveApTrim;
+
+                bool puedeVerDash = dashMatch?.VisualizarDashboard ?? false;
+
+                return new PuestoInfo
+                {
+                    ClavePuesto = claveFinalDashboard,
+                    NombrePuesto = p.Puesto,
+                    Visualizar = p.Visualizar,
+                    Cargar = p.Cargar,
+                    Descargar = p.Descargar,
+                    VisualizarOriginal = p.Visualizar,
+                    CargarOriginal = p.Cargar,
+                    DescargarOriginal = p.Descargar,
+                    VisualizarDashboard = puedeVerDash,
+                    VisualizarDashboardOriginal = puedeVerDash
+                };
             }).OrderBy(p => p.NombrePuesto).ToList();
         }
     }
@@ -233,11 +314,11 @@
         public int PerfilOriginalId { get; set; }
 
         public bool Modificado => PerfilId != PerfilOriginalId;
-    };
+    }
 
     private class PuestoInfo
     {
-        public string ClavePuesto { get; set; } = string.Empty; // <-- Cambiar de int a string
+        public string ClavePuesto { get; set; } = string.Empty;
         public string NombrePuesto { get; set; } = string.Empty;
 
         public bool Visualizar { get; set; }
@@ -248,9 +329,14 @@
         public bool CargarOriginal { get; set; }
         public bool DescargarOriginal { get; set; }
 
+        public bool VisualizarDashboard { get; set; }
+        public bool VisualizarDashboardOriginal { get; set; }
+
         public bool ModificadoAP => Visualizar != VisualizarOriginal ||
                                     Cargar != CargarOriginal ||
                                     Descargar != DescargarOriginal;
+
+        public bool ModificadoDashboard => VisualizarDashboard != VisualizarDashboardOriginal;
     }
 
     // FILTROS
@@ -289,7 +375,7 @@
 
         bool operacionExitosa = false;
 
-        if (!isModoArchivo)
+        if (modoActual == ModoVista.Perfiles)
         {
             // Guardar Perfiles (Empleados)
             var cambiosPerfiles = employees
@@ -315,7 +401,7 @@
                     e.PerfilOriginalId = e.PerfilId;
             }
         }
-        else
+        else if (modoActual == ModoVista.ArchivoPermanente)
         {
             // Guardar Archivo Permanente (Puestos)
             var cambiosAP = puestos
@@ -358,6 +444,45 @@
                     p.CargarOriginal = p.Cargar;
                     p.DescargarOriginal = p.Descargar;
                 }
+            }
+        }
+        else if (modoActual == ModoVista.Dashboard)
+        {
+            // Guardar Permisos del Dashboard (Puestos)
+            var cambiosDashboard = puestos
+                .Where(p => p.ModificadoDashboard)
+                .ToList();
+
+            if (!cambiosDashboard.Any())
+            {
+                await MostrarMensajeTemporal("No hay cambios en los permisos del Dashboard");
+                return;
+            }
+
+            bool todoExitoso = true;
+
+            foreach (var p in cambiosDashboard)
+            {
+                var dto = new UpsertPermisoDashboardDTO
+                {
+                    ClavePuesto = p.ClavePuesto,
+                    VisualizarDashboard = p.VisualizarDashboard
+                };
+
+                var resultadoItem = await PerfilesService.GuardarPermisoDashboard(dto);
+                if (!resultadoItem)
+                {
+                    todoExitoso = false;
+                    break;
+                }
+            }
+
+            operacionExitosa = todoExitoso;
+
+            if (operacionExitosa)
+            {
+                foreach (var p in cambiosDashboard)
+                    p.VisualizarDashboardOriginal = p.VisualizarDashboard;
             }
         }
 
