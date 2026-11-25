@@ -81,7 +81,22 @@ namespace pruebas1.Servicios
         public async Task<UsuarioLoginDTO> login(LoginDTO loginDTO)
         {
             var respuesta = await httpClient.PostAsJsonAsync("login", loginDTO);
+            return await ProcesarRespuestaLogin(respuesta);
+        }
 
+        // NUEVO: entrada desde el ERP
+        public async Task<UsuarioLoginDTO> loginSso(string token)
+        {
+            var respuesta = await httpClient.PostAsJsonAsync("login/sso", new { token });
+
+            if (respuesta.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                throw new Exception("El acceso desde el ERP expiró o ya fue usado. Vuelve a dar clic en Agenda.");
+
+            return await ProcesarRespuestaLogin(respuesta);
+        }
+
+        private async Task<UsuarioLoginDTO> ProcesarRespuestaLogin(HttpResponseMessage respuesta)
+        {
             if (!respuesta.IsSuccessStatusCode)
             {
                 var error = await respuesta.Content.ReadAsStringAsync();

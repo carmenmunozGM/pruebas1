@@ -19,7 +19,7 @@ namespace pruebas1.Servicios
 
                 await mgr.DownloadUpdatesAsync(update);
 
-                mgr.ApplyUpdatesAndRestart(update);
+                mgr.WaitExitThenApplyUpdates(update.TargetFullRelease, silent: true, restart: false);
 
                 return true;
             }

@@ -19,7 +19,16 @@
             <h2>Bienvenido a <span>Grupo Méndez</span></h2>
             <h3>Agenda GM</h3>
         </div>
-
+                @if (entrandoPorSso)
+        {
+            <!-- Entrando desde la Red GM: sin campos ni botón, para que nadie interrumpa -->
+            <div class="sso-cargando">
+                <span class="spinner-border" aria-hidden="true"></span>
+                <p>Ingresando desde la Red GM...</p>
+            </div>
+        }
+        else
+        {
         <!-- Usuario -->
         <div class="form-group">
             <label>Usuario</label>
@@ -60,6 +69,7 @@
                 <button type="submit" class="btn-login">Ingresar</button>
             </div>
         }
+        }
 
     </div>
 </EditForm>
@@ -85,6 +95,16 @@
         width: 100%;
         max-width: 400px;
         text-align: center;
+    }
+
+    .sso-cargando {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem 0;
+        color: #263C63;
+        font-size: 1.1rem;
     }
 
     /* Encabezado */
@@ -150,6 +170,33 @@
     HoraSistemaDTO? alertaHora;
     bool mostrarAlerta = false;
 
+    // Token que mandó la Red GM (pruebas1.exe --sso <token>). Solo se usa una vez.
+    private string? tokenSso;
+
+    // Mientras sea true, en lugar del formulario se muestra "Ingresando desde la Red GM"
+    private bool entrandoPorSso;
+
+    protected override void OnInitialized()
+    {
+        // Se lee antes de dibujar la pantalla, para que el formulario ni siquiera aparezca
+        tokenSso = SsoArgs.Tomar();
+        entrandoPorSso = !string.IsNullOrEmpty(tokenSso);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !entrandoPorSso) return;
+
+        bool entro = await EntrarAsync(() => loginService.loginSso(tokenSso!));
+
+        if (!entro)
+        {
+            // Algo falló (token vencido, sin conexión, hora desfasada): se muestra el login normal
+            entrandoPorSso = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task<bool> ValidarHora()
     {
         var resultado = await HorariosService.GetHorario();
@@ -167,47 +214,53 @@
         return true;
     }
 
-    private async Task Ingresar()
+    // Botón "Ingresar": para el usuario no cambia nada
+    private Task Ingresar() => EntrarAsync(() => loginService.login(loginDTO));
+
+    // Antes era el contenido de Ingresar(); ahora lo comparten el login normal y el SSO
+    private async Task<bool> EntrarAsync(Func<Task<UsuarioLoginDTO>> autenticar)
     {
-        if (!await ValidarHora())
-            return;
+        if (!await ValidarHora()) return false;
 
-            Loading = true;
-            mensajeError = string.Empty;
 
-    try
-    {
-        // Login
-        var usuario = await loginService.login(loginDTO);
+        Loading = true;
+        mensajeError = string.Empty;
+        StateHasChanged();   // muestra el "cargando" también cuando entra por SSO
 
-        // Obtener agendas asignadas
-        usuario.IdAgendasAsignadas = await AgendaService.ObtenerAgendaAsignadasAsync();
+        try
+        {
+            // Login (normal o SSO)
+            var usuario = await autenticar();
 
-        // Guardar usuario
-        loginService.guardarUsuario(usuario);
+            // Obtener agendas asignadas
+            usuario.IdAgendasAsignadas = await AgendaService.ObtenerAgendaAsignadasAsync();
 
-        // UsuarioState
-        int agendaActual = usuario.IdAgendasAsignadas?.FirstOrDefault() ?? 0;
-        UsuarioState.SetUsuario(usuario.IdUsuario, agendaActual);
+            // Guardar usuario
+            loginService.guardarUsuario(usuario);
 
-        Console.WriteLine($"[Login] IdUsuario: {usuario.IdUsuario}, IdAgenda: {agendaActual}");
+            // UsuarioState
+            int agendaActual = usuario.IdAgendasAsignadas?.FirstOrDefault() ?? 0;
+            UsuarioState.SetUsuario(usuario.IdUsuario, agendaActual);
 
-        await AgendaService.ObtenerTareasApi(agendaActual);
-        await AgendaService.ObtenerEventos(agendaActual);
+            Console.WriteLine($"[Login] IdUsuario: {usuario.IdUsuario}, IdAgenda: {agendaActual}");
 
-        navigate.NavigateTo("/dia2");
-    }
-    catch (Exception ex)
-    {
-        mensajeError = ex.Message;
-    }
-    finally
-    {
-        Loading = false;
-    }
+            await AgendaService.ObtenerTareasApi(agendaActual);
+            await AgendaService.ObtenerEventos(agendaActual);
+
+            navigate.NavigateTo("/dia2");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+            return false;
+        }
+        finally
+        {
+            Loading = false;
+        }
     }
 }
-
 <ReusableHorarioAlert @key="mostrarAlerta"
                       HoraSistema="alertaHora"
                       Visible="mostrarAlerta" />
